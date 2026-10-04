@@ -392,7 +392,7 @@ export function createEngine(opts) {
    * 顺序铁律（meta-system §4.2 Z6）：先 interrupt 旧会话释放并发名额、后 dispatch 新会话。
    * 简报宽限：ports.promptHandoff 超时/空 → no-handoff-summary 照常接手。
    */
-  async function bambooRelay(treeId, leaf, rt, briefFallback = null) {
+  async function bambooRelay(treeId, leaf, rt, state, briefFallback = null) {
     needPort('promptHandoff'); needPort('interrupt'); needPort('dispatch')
     let brief = briefFallback
     let briefState = briefFallback ? 'manual' : 'ok'
@@ -419,6 +419,9 @@ export function createEngine(opts) {
     rt.segmentChain.push(session.sessionId)
     rt.subagentSessionId = session.sessionId
     rt.lastHandoffAt = clock.now()
+    leaf.context_usage_pct = 0   // E2E 终验修复：接力后水位清零（新会话全新上下文；残留会引发连环接力烧链）
+    leaf.drift_history.push({ ts: nowIso(clock), leaf_id: leaf.leaf_id, kind: 'rhythm', severity: 'low', action: 'handoff', to_session: session.sessionId, reason: `bamboo relay #${rt.segmentChain.length} (${briefState})` })
+    state.drift_log.push(leaf.drift_history[leaf.drift_history.length - 1])   // 源语义对齐：竹节留痕入 drift_log
     rt.dispatchedAt = clock.now()   // 基准时刻重置（sweep 误判保护）
     rt.lastOutputAt = clock.now()
     return { relay: 'ok', briefState, sessionId: session.sessionId }
@@ -468,7 +471,7 @@ export function createEngine(opts) {
             try { if (typeof ports.usagePct === 'function') usage = await ports.usagePct(rt.subagentSessionId) } catch { usage = null }
             const pct = (typeof usage === 'number') ? usage : (leaf.context_usage_pct ?? 0)
             if (pct >= orchCfg.bambooThresholdPct && leaf.role !== 'root') {
-              const r = await bambooRelay(treeId, leaf, rt)
+              const r = await bambooRelay(treeId, leaf, rt, state)
               events.push({ leaf_id: leaf.leaf_id, event: 'bamboo', ...r })
             }
           }
