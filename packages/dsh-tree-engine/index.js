@@ -16,6 +16,7 @@
  */
 import { createEngine } from './src/engine.js'
 import { createVerifier } from './src/verify.js'
+import { createAdversarial } from './src/adversarial.js'
 import { fsStore } from './src/store.js'
 import { systemClock } from './src/clock.js'
 import { configFromEnv } from './src/config.js'
@@ -193,36 +194,52 @@ let verifier = null
 /** 当前 sweep 停止器（热更时清理上一代僵尸定时器——E2E#5）。 */
 let currentStopSweep = null
 
-/** 简易 glob（'*'/'**' 展开为段匹配；够 artifact 判定，非全量 minimatch）。 */
-async function hostGlob(pattern, cwd) {
-  const dirs = [[]]
-  const out = []
+/** 简易 glob（'*' 与双星展开为段匹配；够 artifact 判定，非全量 minimatch）。
+ *  advtx E2E 修复：①双星支持零段匹配（cwd 顶层文件可命中「双星斜杠星.md」）②返回绝对路径
+ *  （此前返回相对路径、readFile 按引擎进程 cwd 解析 → ctx.cwd≠进程 cwd 即 ENOENT）；Set 去重。 */
+export async function hostGlob(pattern, cwd) {
   const segs = pattern.split('/')
-  async function walk(prefix, depth) {
-    if (depth >= segs.length) return
+  const out = new Set()
+  const MAX_DEPTH = 16
+  async function walk(absDir, prefix, depth) {
+    if (depth >= segs.length || prefix.length > MAX_DEPTH) return
     const seg = segs[depth]
     const last = depth === segs.length - 1
     let entries
-    try { entries = await fsp.readdir(path.join(cwd, ...prefix), { withFileTypes: true }) } catch { return }
+    try { entries = await fsp.readdir(absDir, { withFileTypes: true }) } catch { return }
+    if (seg === '**') {
+      // 零段匹配：'**' 不消费任何段，直接用下一段在当前目录匹配（顶层文件命中路径）
+      await walk(absDir, prefix, depth + 1)
+      if (last) {
+        // '**' 为尾段（如 'docs/**'）：递归收集全部文件
+        const collect = async (d) => {
+          let es; try { es = await fsp.readdir(d, { withFileTypes: true }) } catch { return }
+          for (const e of es) { if (e.name.startsWith('.')) continue; const c = path.join(d, e.name); if (e.isDirectory()) await collect(c); else out.add(c) }
+        }
+        await collect(absDir)
+      }
+      for (const e of entries) {
+        const child = path.join(absDir, e.name)
+        if (e.isDirectory()) await walk(child, [...prefix, e.name], depth)      // ** 继续深入
+      }
+      return
+    }
     for (const e of entries) {
       if (e.name.startsWith('.') && seg !== '.**') continue
-      if (seg === '**') {
-        await walk([...prefix, e.name], depth)          // ** 深入同层
-        if (e.isDirectory()) await walk([...prefix, e.name], depth + 1)
-      } else if (seg.includes('*')) {
+      const child = path.join(absDir, e.name)
+      if (seg.includes('*')) {
         const re = new RegExp('^' + seg.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*') + '$')
-        if (re.test(e.name)) {
-          if (last) { if (e.isFile()) out.push(path.join(...prefix, e.name)) }
-          else if (e.isDirectory()) await walk([...prefix, e.name], depth + 1)
-        }
+        if (!re.test(e.name)) continue
+        if (last) { if (e.isFile()) out.add(child) }
+        else if (e.isDirectory()) await walk(child, [...prefix, e.name], depth + 1)
       } else if (e.name === seg) {
-        if (last) { if (e.isFile()) out.push(path.join(...prefix, e.name)) }
-        else if (e.isDirectory()) await walk([...prefix, e.name], depth + 1)
+        if (last) { if (e.isFile()) out.add(child) }
+        else if (e.isDirectory()) await walk(child, [...prefix, e.name], depth + 1)
       }
     }
   }
-  await walk([], 0)
-  return out
+  await walk(path.resolve(cwd), [], 0)
+  return [...out].sort()
 }
 
 function hostExec(cmd, { cwd, timeoutMs = 600_000 } = {}) {
@@ -257,6 +274,109 @@ function callerOf(exec) {
 /** 派发缺省机制（E2E 实证：ContinuableStartSpec.provider 是会话生成机制名 spawn|fork，非 LLM 供应商；
  *  模型路由在 request.agentOptions {provider, model, reasoningEffort}）。 */
 const DEFAULT_MECHANISM = process.env.TREE_ENGINE_MECHANISM ?? 'spawn'
+
+/** 攻击审计缺省路由（异族 + 最强档：随感 #33/#30——检验者不得用次级模型、不得与执行者同源；
+ *  环境覆盖 TREE_ENGINE_JUDGE_ASSIGNEE='{"provider":...,"model":...}'）。 */
+function judgeAssignee() {
+  const fallback = { provider: 'deepseek-official', model: 'deepseek-v4-pro' }
+  const raw = process.env.TREE_ENGINE_JUDGE_ASSIGNEE
+  if (!raw) return fallback
+  try { const a = JSON.parse(raw); return (a && typeof a === 'object' && a.provider && a.model) ? a : fallback }
+  catch { return fallback }
+}
+
+/** 攻击超时钳制（30s–600s，缺省 300s——E2E 实证真实异族 judge 需 2-4 分钟）。 */
+function clampAttackTimeout(ms) {
+  if (!Number.isFinite(ms)) return 300_000
+  return Math.max(30_000, Math.min(600_000, Math.round(ms)))
+}
+
+/** tree_verify 执行时的 exec 快照（攻击会话派发需要活 parent Agent——同 dispatch 捕获模式）。 */
+let verifyExec = null
+/** apply 期捕获：宿主服务表与自诊断日志（tree_verify adversarial 攻击/修复端口用）。 */
+let servicesRef = null
+let diagRef = (m) => { try { console.error(`[tree-engine] ${m}`) } catch {} }
+
+/** 从攻击会话 readSession 快照防御性提取 `ATTACK_VERDICT: {...}` JSON 行。 */
+function extractAttackVerdict(snap) {
+  const texts = []
+  const visit = (v, depth) => {
+    if (!v || depth > 8 || texts.length > 30) return
+    if (typeof v === 'string') { if (v.length > 10 && v.length < 60_000) texts.push(v); return }
+    if (Array.isArray(v)) { for (const x of v) visit(x, depth + 1); return }
+    if (typeof v === 'object') for (const k of ['text', 'content', 'message', 'messages', 'turns', 'blocks', 'output', 'entries', 'items']) if (k in v) visit(v[k], depth + 1)
+  }
+  visit(snap, 0)
+  for (const t of texts.reverse()) {
+    const i = t.indexOf('ATTACK_VERDICT:')
+    if (i >= 0) {
+      try { return JSON.parse(t.slice(i + 'ATTACK_VERDICT:'.length).split('\n')[0].trim()) } catch { /* 非 JSON 行继续找 */ }
+    }
+  }
+  return null
+}
+
+/** 派发异族攻击评审会话并回收裁决。
+ *  回收双通道（advtx 复跑实证 readSession 轮询与 judge 完成时序不稳——裁决常在超时后/形状不达）：
+ *  ①文件握手（主）：judge 被要求把裁决 JSON 写到 verdictPath，引擎轮询该文件（确定性）；
+ *  ②readSession 提取（辅）：ATTACK_VERDICT 行兜底。超时 fail-closed（缺省 300s）。 */
+async function runAttackSession(services, log, { treeId, leafId, round, rubric, target, timeoutMs = 300_000 }) {
+  const parentAgent = verifyExec?.agent
+  if (!parentAgent) throw new Error('no live parent Agent for attack session (tree_verify must be called via tool exec)')
+  const assignee = judgeAssignee()
+  // 握手路径强制绝对化（advtx 三跑实证：dataDir 可能是相对路径——引擎与 judge 各按自己 cwd 解析，
+  // 引擎轮询 profile 侧 / judge 写工作区侧，永远握不上手）
+  const verdictDir = path.resolve(dataDir, 'attack')
+  const verdictPath = path.join(verdictDir, `${treeId}_${leafId}_r${round}.json`)
+  try { await fsp.mkdir(verdictDir, { recursive: true }); await fsp.rm(verdictPath, { force: true }) } catch { /* 尽力而为 */ }
+  const prompt = [
+    `你是树 ${treeId}/${leafId} 第 ${round} 轮的攻击审计员（红队）。以下是验收标准与攻击目标。`,
+    `验收标准：\n${rubric.map((r, i) => `${i + 1}. ${r}`).join('\n')}`,
+    `攻击目标（${target.kind}）：\n${String(target.text).slice(0, 12_000)}`,
+    '',
+    '尽力推翻它：事实错误、夸大、逻辑漏洞、未兑现承诺、遗漏。裁决必须只基于目标文本与你的知识，不得臆造目标中不存在的内容。',
+    '完成后必须做两件事：',
+    `①把裁决 JSON 原样写入文件 ${verdictPath}（内容恰为 {"pass":true|false,"findings":["问题1","问题2"]}，用写文件工具或 pwsh 均可）`,
+    '②在回答末尾输出同一行：ATTACK_VERDICT: {"pass":...,"findings":[...]}',
+    'pass=true 仅当找不到任何实质问题；找到任一实质问题即 pass=false 并逐条列出 findings。写完文件即可结束，不要等待。',
+  ].join('\n')
+  const start = {
+    provider: DEFAULT_MECHANISM,
+    label: `tree-attack:${treeId}/${leafId}#r${round}`,
+    signal: new AbortController().signal,
+    request: { prompt: [{ type: 'text', text: prompt }], parent: parentAgent, agentOptions: assignee },
+  }
+  const r = await services.subagents.startContinuable(start)
+  const judgeId = r?.childId ?? r?.sessionId
+  if (!judgeId) throw new Error(`unrecognized startContinuable result: ${JSON.stringify(r).slice(0, 200)}`)
+  const normalize = (v) => (v && typeof v.pass === 'boolean')
+    ? { pass: v.pass, findings: Array.isArray(v.findings) ? v.findings.map(String) : [], detail: `judge=${assignee.provider}/${assignee.model} round=${round}` }
+    : null
+  const tryOnce = async () => {
+    // ① 文件握手（主通道）
+    try {
+      const raw = await fsp.readFile(verdictPath, 'utf-8')
+      const v = normalize(JSON.parse(raw))
+      if (v) return v
+    } catch { /* 文件未就绪：走辅通道 */ }
+    // ② readSession 提取（辅通道）
+    try {
+      const v = normalize(extractAttackVerdict(await services.sessionQuery.readSession(judgeId)))
+      if (v) return v
+    } catch { /* 快照暂不可读 */ }
+    return null
+  }
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    await new Promise((res) => setTimeout(res, 5_000))
+    const v = await tryOnce()
+    if (v) { try { services.subagents.interrupt(judgeId, { kind: 'parent', parentSessionId: verifyExec?.agent?.session?.id }) } catch { /* 尽力而为 */ } return v }
+  }
+  await new Promise((res) => setTimeout(res, 8_000))
+  const final = await tryOnce()
+  if (final) return final
+  return { pass: false, findings: [], detail: `attack session timeout > ${timeoutMs}ms (fail-closed), judge=${assignee.provider}/${assignee.model}` }
+}
 
 function toError(r) {
   const err = new Error(`${r.error.code}: ${r.error.message}`)
@@ -414,24 +534,30 @@ const TREE_VERIFY = {
   name: 'tree_verify',
   description:
     'Run verification policies on a node (batch-1 modes: self-report | artifact | command). Policy resolution: explicit policyId → leaf.taskType map → default. ' +
-    'cwd = node workspace (from leaf.path resolved against exec cwd, or exec cwd). Verdicts recorded to leaf.verification; pass required before succeeded.',
+    'cwd = node workspace (from leaf.path resolved against exec cwd, or exec cwd). Verdicts recorded to leaf.verification; pass required before succeeded. ' +
+    'adversarial: attack-defense-audit iteration (≤max_rounds, default 3) — structural checks + cross-family judge attack; FAIL rounds feed findings back to the executor for repair.',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
-      action: { type: 'string', enum: ['run', 'dod'] },
+      action: { type: 'string', enum: ['run', 'dod', 'adversarial'] },
       tree_id: { type: 'string' }, leaf_id: { type: 'string' },
       policy_id: { type: 'string', description: 'Explicit policy override; omit to resolve via taskType/default.' },
       cwd: { type: 'string', description: 'Workspace root for artifact/command checks; defaults to exec cwd.' },
+      max_rounds: { type: 'number', description: 'Adversarial iteration cap (1-5, default 3).' },
+      attack_timeout_ms: { type: 'number', description: 'Per-round judge session timeout ms (30_000-600_000, default 300_000).' },
     },
     required: ['action', 'tree_id'],
   },
-  output: { schema: { type: 'object' }, render: ok((v) => `tree_verify: ${v?.result?.pass ? 'PASS' : 'FAIL'} (${(v?.result?.verdicts ?? []).map((x) => x.mode).join(',')})`) },
+  output: { schema: { type: 'object' }, render: ok((v) => `tree_verify: ${v?.result?.pass ? 'PASS' : 'FAIL'} (${(v?.result?.verdicts ?? []).map((x) => x.mode).join(',')}${v?.result?.rounds ? ` × ${v.result.rounds.length} 轮` : ''})`) },
   execute: async (args, exec) => {
+    verifyExec = exec   // 攻击会话派发的 parent Agent 捕获（同 dispatch 模式）
     // 策略路由（§5.2）：显式 policyId > leaf.taskType（经 taskTypeMap 映射）> default
     let policyId = args.policy_id
+    let leaf = null
     if (!policyId && args.leaf_id) {
       const lr = await engine.call('leaf:get', [args.tree_id, args.leaf_id])
-      if (lr.ok) policyId = lr.leaf.taskType ?? 'default'
+      if (lr.ok) leaf = lr.leaf
+      policyId = leaf?.taskType ?? 'default'
     }
     if (args.action === 'dod') {
       const text = verifier.dodPrompt(policyId ?? 'default')
@@ -439,6 +565,60 @@ const TREE_VERIFY = {
     }
     policyId = policyId ?? 'default'
     const cwd = args.cwd ?? exec?.cwd ?? process.cwd()
+
+    if (args.action === 'adversarial') {
+      if (!args.leaf_id) throw new Error('tree_verify adversarial requires leaf_id')
+      if (!leaf) { const lr = await engine.call('leaf:get', [args.tree_id, args.leaf_id]); if (!lr.ok) throw toError(lr); leaf = lr.leaf }
+        const adv = createAdversarial({
+        verifier,
+        attack: (o) => runAttackSession(servicesRef, diagRef, { treeId: args.tree_id, leafId: args.leaf_id, timeoutMs: clampAttackTimeout(args.attack_timeout_ms), ...o }),
+        fix: async ({ round, findings }) => {
+          const findingsText = findings.map((f) => `- ${f}`).join('\n')
+          // 路径①:交棒通道回注原执行者(父会话仍活时;同竹节 prompt 模式)
+          try {
+            const rt = leaf.runtime
+            if (rt?.subagentSessionId && rt?.parentSessionId) {
+              await servicesRef.subagents.prompt({
+                requestId: `tree-attack-fix-${Date.now().toString(36)}`,
+                parentSessionId: rt.parentSessionId, childSessionId: rt.subagentSessionId, mode: 'continuable', delivery: 'queue',
+                content: [{ type: 'text', text: `第 ${round} 轮攻击审计未通过。审计发现：\n${findingsText}\n\n请立即修复你此前产出的产物（只改产物文件/结论本身），不要重新登记 done。修完输出一行：FIX_DONE <一句话>` }],
+              })
+              return true
+            }
+          } catch { /* 原会话通道不可用 → 路径② */ }
+          // 路径②(advtx 四跑实证需要):同叶重派修复任务(新会话),轮询至 succeeded(≤240s)再进下一轮
+          const r = await engine.call('dispatch:start', [args.tree_id, args.leaf_id, {
+            prompt: `第 ${round} 轮异族攻击审计未通过,你是一次性修复执行者。审计发现：\n${findingsText}\n\n请立即修复本节点此前的产物文件(只按 findings 修正,不要重写无关内容),修完按结算指令 tree_report 登记 done 事件(summary 写修复要点)。`,
+            parentAgent: exec?.agent, parentSessionId: callerOf(exec),
+          }], callerOf(exec))
+          if (!r.ok) return false
+          const deadline = Date.now() + 240_000
+          while (Date.now() < deadline) {
+            await new Promise((res) => setTimeout(res, 10_000))
+            const g = await engine.call('leaf:get', [args.tree_id, args.leaf_id])
+            if (g.ok && g.leaf.runtime?.state === 'succeeded') return true
+          }
+          return false
+        },
+        wait: (ms) => new Promise((r) => setTimeout(r, ms)),
+        record: (result) => engine.call('leaf:set-verification', [args.tree_id, args.leaf_id, result]).then((r) => { if (!r.ok) throw toError(r) }),
+        maxRounds: args.max_rounds,
+      })
+      // 攻击目标：结构检查的 artifact 全文优先；否则 leaf 的 done/progress 事件证据
+      const target = async (round, structural) => {
+        const artifactPath = structural.verdicts.map((v) => v.artifact).filter(Boolean)[0]
+        if (artifactPath) {
+          try { return { kind: `artifact ${artifactPath}`, text: await fsp.readFile(path.resolve(cwd, artifactPath), 'utf-8') } } catch { /* 读失败回落 */ }
+        }
+        const ev = leaf.events ?? []
+        return { kind: 'leaf events', text: JSON.stringify(ev.slice(-8).map((e) => ({ type: e.type, meta: e.meta }))) }
+      }
+      const result = await adv.run({ treeId: args.tree_id, leafId: args.leaf_id, policyId, cwd, target, fixWaitMs: 60_000 })
+      const e = await engine.call('event:append', [args.tree_id, args.leaf_id, 'progress', { verification: { policy_id: result.policyId, pass: result.pass, rounds: result.rounds.length } }])
+      if (!e.ok) throw toError(e)
+      return { result }
+    }
+
     const result = await verifier.runVerifications(policyId, { cwd })
     // 落账：leaf.verification（裁决判据持久化）+ progress 事件（观测层）；PASS 才可 set-status done 的闸由调用方遵守
     if (args.leaf_id) {
@@ -511,12 +691,14 @@ export function apply(ctx) {
   /** 文件自诊断（Loader 缓存下唯一可靠观测通道）：apply 全程留痕 + 全程容错。 */
   const diagPath = path.join(dataDir, 'apply.log')
   const diag = (msg) => { try { fsp.mkdir(path.dirname(diagPath), { recursive: true }).then(() => fsp.appendFile(diagPath, `${new Date().toISOString()} ${msg}\n`)).catch(() => {}) } catch {} }
-  diag(`apply() entered (v0.3.9); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
+  diag(`apply() entered (v0.4.0); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
   try {
     ctx.inject(['tools', 'subagents', 'sessionQuery'], (scoped) => {
       try {
         const services = scoped || ctx
         const log = (m) => { console.error(`[tree-engine] ${m}`); diag(m) }
+        servicesRef = services   // tree_verify adversarial 攻击/修复端口捕获
+        diagRef = diag
         diag('inject callback entered')
 
         // 时钟：timer 权威结论（asar 源 cordis-plugin-timer 实证）——ctx.mixin("timer")，ctx.timer 直接可用；

@@ -26,6 +26,16 @@
 
 证据落盘：[docs/engine-spec.md §8](../../docs/engine-spec.md)；smoke 清单收窄至 5 项装载实测。
 
+## v0.4.0 增量：对抗式验证(异族攻击-防御-审计迭代,≤3 轮)
+
+- **tree_verify {action:"adversarial"}**:每轮 = 结构检查(既有 policy/taskType 路由)+ **异族红队攻击会话**(缺省 DeepSeek-V4-Pro,`TREE_ENGINE_JUDGE_ASSIGNEE` 可配;与执行者异族防同源偏置——随感 #33/#30)→ FAIL 则 findings 回注执行者修复 → 下一轮;≤max_rounds(1-5,缺省 3)。
+- **裁决回收双通道**:文件握手为主(judge 把裁决 JSON 写引擎指定绝对路径,轮询文件——确定性免疫会话形状/时序)+ readSession ATTACK_VERDICT 提取为辅;超时 fail-closed(缺省 300s,`attack_timeout_ms` 30s–600s 可调,超时后终局再收一次)。
+- **修复回注双路径**:①交棒通道 prompt 原执行者(父会话活)②**同叶自动重派修复会话**(原父会话死时兜底;轮询其 succeeded 再进下一轮,attempt 递增留痕)。
+- **裁决落账**:`leaf:set-verification` 透传 rounds 逐轮(structural/attack/findings/fixed)。
+- **hostGlob P0 修复**(advtx E2E 抓出):①'**' 零段匹配(顶层文件可命中)②返回绝对路径(此前相对路径按引擎进程 cwd 解析→ENOENT);Set 去重;单测回归(export hostGlob)。
+- **E2E 四轮迭代实证(tree advtx)**:GLM worker 埋两雷(光速 10 倍错误 + 100% 夸大)→ DeepSeek 红队 100% 命中并挖出逻辑矛盾 → **全自动**(无人工干预)重派修复会话真实清除埋雷 → 复审;终态 3 轮 FAIL 属红队逐轮升级(攻强守弱),闭环每环均被观测。已知行为:对抗强度螺旋下 max_rounds 可能耗尽,终态 FAIL=如实反映"仍有可攻击点"。
+- **测试**:61 项全绿(含攻防循环/结构跳过攻击/端口 fail-closed/rounds 落账/hostGlob 回归)。
+
 ## v0.3.9 增量：竹节简报回收 + 验证 batch-2 + usagePct + Config 校验 + 差分扩面（handoff §7 任务 3–8 主体）
 
 - **K1–K5 交棒简报回收 + 宽限**（任务 4）：promptHandoff 发交棒指令后按 grace 轮询 readSession（上限 min(graceMs,12s)），防御性提取含 K1/K2/K5 标记的简报全文；超时/不可提取 → no-handoff-summary 降级。**E2E 真机实证（tree e2erly）：chain 0→2，bamboo(ok) 全文回收，attempt=1，succeeded**。

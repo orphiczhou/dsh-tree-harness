@@ -217,7 +217,12 @@ export function createEngine(opts) {
       if (!result || typeof result !== 'object' || typeof result.pass !== 'boolean') {
         treeError('E_SCHEMA_INVALID', 'verification result object with boolean "pass" required')
       }
-      leaf.verification = { ts: nowIso(clock), policy_id: result.policyId ?? null, pass: result.pass, verdicts: result.verdicts ?? [] }
+      leaf.verification = {
+        ts: nowIso(clock), policy_id: result.policyId ?? null, pass: result.pass,
+        verdicts: result.verdicts ?? [],
+        // 对抗式验证（adversarial.js）逐轮裁决透传
+        ...(Array.isArray(result.rounds) ? { rounds: result.rounds } : {}),
+      }
       await store.write(treeId, state)
       return { leaf: { leaf_id: leafId, verification: leaf.verification } }
     })
