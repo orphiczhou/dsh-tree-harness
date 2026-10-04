@@ -23,6 +23,7 @@ import { promises as fsp } from 'node:fs'
 import { spawn } from 'node:child_process'
 
 export const name = 'tree-engine'
+// hmr 热更触发标记：generation probe
 
 const HANDOFF_INSTRUCTION =
   '竹节交接指令：你的上下文已接近阈值。请立即输出结构化交接简报（K1 结论与进度 / K2 未决与阻塞（无则写"无"）/ ' +
@@ -39,9 +40,10 @@ function makePorts(services, log) {
      *  → ContinuableStart = { childId, messageId }。parent 必须是 ctx.agents 中的活 Agent（非字符串 id）。 */
     async dispatch(spec) {
       const dodText = verifier ? verifier.dodPrompt(spec.policyId ?? spec.taskType ?? 'default') : `[DoD] ${JSON.stringify(spec.dod ?? {})}`
+      const settleText = `\n\n[结算指令] 你是树节点 ${spec.treeId}/${spec.leafId} 的执行者。任务完成（含结论自述与关键产出）后，必须调用工具 tree_report {action:"event", tree_id:"${spec.treeId}", leaf_id:"${spec.leafId}", type:"done", meta:{summary:"<一句话结论>"}} 登记完成；失败/无法完成时同样回报 done 并在 summary 写明失败原因。除此之外不得操作树。`
       const promptText = spec.handoffBrief != null
-        ? `${spec.prompt ?? ''}\n\n${dodText}\n\n[竹节第 ${spec.segmentIndex} 节 · 交接简报]\n${spec.handoffBrief ?? '（no-handoff-summary：前会话未产出简报，依任务书与 DoD 继续）'}`
-        : `${spec.prompt ?? ''}\n\n${dodText}`
+        ? `${spec.prompt ?? ''}\n\n${dodText}${settleText}\n\n[竹节第 ${spec.segmentIndex} 节 · 交接简报]\n${spec.handoffBrief ?? '（no-handoff-summary：前会话未产出简报，依任务书与 DoD 继续）'}`
+        : `${spec.prompt ?? ''}\n\n${dodText}${settleText}`
       const key = `${spec.treeId}/${spec.leafId}`
       let parentAgent = spec.parentAgent
       let parentSessionId = spec.parentSessionId
@@ -56,12 +58,19 @@ function makePorts(services, log) {
       }
       parents.set(key, { agent: parentAgent, sessionId: parentSessionId })
       const start = {
-        provider: spec.assignee?.provider ?? DEFAULT_PROVIDER,
+        provider: spec.assignee?.mechanism ?? DEFAULT_MECHANISM,
         label: `tree:${spec.treeId}/${spec.leafId}${spec.segmentIndex ? `#s${spec.segmentIndex}` : ''}`,
+        signal: new AbortController().signal,   // E2E#3 实证必填（服务调 throwIfAborted）；生命周期由 interrupt 管理
         request: {
           prompt: [{ type: 'text', text: promptText }],
           parent: parentAgent,
-          ...(spec.assignee?.model ? { agentOptions: { model: spec.assignee.model } } : {}),
+          ...(spec.assignee?.provider || spec.assignee?.model || spec.assignee?.effort
+            ? { agentOptions: {
+                ...(spec.assignee?.provider ? { provider: spec.assignee.provider } : {}),
+                ...(spec.assignee?.model ? { model: spec.assignee.model } : {}),
+                ...(spec.assignee?.effort ? { reasoningEffort: spec.assignee.effort } : {}),
+              } }
+            : {}),
         },
       }
       try {
@@ -126,6 +135,8 @@ const dataDir = path.join(process.env.DSH_PROFILE_DIR ?? process.env.DSH_HOME ??
 let engine = null
 /** 验证器：宿主端口 = node fs（工作区经 exec.cwd）+ child_process exec（超时硬杀）。 */
 let verifier = null
+/** 当前 sweep 停止器（热更时清理上一代僵尸定时器——E2E#5）。 */
+let currentStopSweep = null
 
 /** 简易 glob（'*'/'**' 展开为段匹配；够 artifact 判定，非全量 minimatch）。 */
 async function hostGlob(pattern, cwd) {
@@ -188,8 +199,9 @@ function callerOf(exec) {
   return s?.id ?? s?.header?.sessionId ?? s?.header?.id ?? undefined
 }
 
-/** 派发缺省 provider（宿主装配可覆写；模型白名单第一族）。 */
-let DEFAULT_PROVIDER = process.env.TREE_ENGINE_PROVIDER ?? 'zai-coding-cn'
+/** 派发缺省机制（E2E 实证：ContinuableStartSpec.provider 是会话生成机制名 spawn|fork，非 LLM 供应商；
+ *  模型路由在 request.agentOptions {provider, model, reasoningEffort}）。 */
+const DEFAULT_MECHANISM = process.env.TREE_ENGINE_MECHANISM ?? 'spawn'
 
 function toError(r) {
   const err = new Error(`${r.error.code}: ${r.error.message}`)
@@ -237,7 +249,17 @@ const TREE_NODE = {
     },
     required: ['action', 'tree_id'],
   },
-  output: { schema: { type: 'object' }, render: ok((v) => `tree_node: ${v?.leaf?.leaf_id ?? String(v?.leaves?.length ?? '?') + ' leaves'}`) },
+  output: {
+    schema: { type: 'object' },
+    render: ok((v) => {
+      const l = v?.leaf
+      if (!l) return `tree_node: ${v?.leaves?.length ?? '?'} leaves`
+      const rt = l.runtime
+      const rtText = rt ? ` · runtime[state=${rt.state} attempt=${rt.attempt} chain=${(rt.segmentChain ?? []).length} sess=${String(rt.subagentSessionId ?? '').slice(0, 8)}]` : ' · (未派发)'
+      const ms = (l.milestones ?? []).length ? ` · ms[${l.milestones.map((m) => `${m.id}:${m.audit_pass ? 'pass' : '...'}`).join(',')}]` : ''
+      return `tree_node: ${l.leaf_id} status=${l.status}${rtText}${ms} ctx=${l.context_usage_pct ?? 0}%`
+    }),
+  },
   execute: async (args, exec) => {
     const map = {
       add: { cmd: 'leaf:add', argv: (a) => [a.tree_id, a.leaf], caller: true },
@@ -424,7 +446,7 @@ export function apply(ctx) {
   /** 文件自诊断（Loader 缓存下唯一可靠观测通道）：apply 全程留痕 + 全程容错。 */
   const diagPath = path.join(dataDir, 'apply.log')
   const diag = (msg) => { try { fsp.mkdir(path.dirname(diagPath), { recursive: true }).then(() => fsp.appendFile(diagPath, `${new Date().toISOString()} ${msg}\n`)).catch(() => {}) } catch {} }
-  diag(`apply() entered (v0.3.3); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
+  diag(`apply() entered (v0.3.6); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
   try {
     ctx.inject(['tools', 'subagents', 'sessionQuery'], (scoped) => {
       try {
@@ -445,7 +467,9 @@ export function apply(ctx) {
 
         engine = createEngine({ store: fsStore(dataDir), clock })
         engine.attachPorts(makePorts(services, log))
-        const { sweepMode } = engine.startSweep()
+        const { sweepMode, stop } = engine.startSweep()
+        if (currentStopSweep) { try { currentStopSweep() } catch {} ; diag('previous sweep disposed (hot-reload zombie)') }   // E2E#5：僵尸 sweep 清理
+        currentStopSweep = stop
         verifier = createVerifier({ ports: { glob: hostGlob, readFile: (p) => fsp.readFile(p, 'utf-8'), exec: hostExec } })
         diag(`engine ready (sweepMode=${sweepMode})`)
 

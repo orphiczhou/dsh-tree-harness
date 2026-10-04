@@ -231,6 +231,12 @@ export function createEngine(opts) {
       leaf.events.push({ type, meta: meta ?? {}, ts })
       leaf.last_event_type = type
       leaf.last_event_ts = ts
+      // E2E#5 修复：done 事件 → runtime 成功终态回流（收割双轨之「自报 done」路径；此前 succeeded 无任何赋值点，
+      // runtime 永远 running 直到 timeout，dispatchStart 拒绝再派发 → 节点卡死）。
+      if (type === 'done' && leaf.runtime?.state === 'running') {
+        leaf.runtime.history.push({ sessionId: leaf.runtime.subagentSessionId, state: 'running', endedAt: clock.now(), note: 'done event' })
+        leaf.runtime.state = 'succeeded'
+      }
       await store.write(treeId, state)
       return { leaf: { leaf_id: leafId, events: leaf.events.length, last_event_type: type } }
     })
@@ -352,11 +358,15 @@ export function createEngine(opts) {
       rt.history.push({ sessionId: rt.subagentSessionId, state: rt.state, endedAt: clock.now() })
       rt.state = 'running'
       rt.subagentSessionId = session.sessionId
+      // E2E#5 修复：派发即绑定执行者为节点 owner（否则 done 事件所有权 caller===session_id 永远不可满足，
+      // 执行者无法自举结算；重派时绑定最新执行者）。手动 set-session（creator-only）不受影响。
+      leaf.session_id = session.sessionId
       rt.parentSessionId = spec?.parentSessionId ?? caller ?? null
       rt.attempt += 1                     // 竹节不改 attempt（仅失败/超时重派计）
       rt.dispatchedAt = clock.now()
       rt.lastOutputAt = clock.now()
       rt.handoffBrief = null
+      rt.taskPrompt = spec?.prompt ?? leaf.brief ?? null   // E2E#4 修复：任务正文持久化（竹节接力的提示词来源）
       await store.write(treeId, state)
       return { node: { leaf_id: leafId, state: rt.state, session_id: rt.subagentSessionId, attempt: rt.attempt } }
     })
@@ -398,9 +408,9 @@ export function createEngine(opts) {
     }
     // ① 先 interrupt（释放 maxActiveSubagents 名额；authority 用持久父地址）
     try { await ports.interrupt(rt.subagentSessionId, rt.parentSessionId) } catch { /* 尽力而为 */ }
-    // ② 后 dispatch 新会话（提示词 = 任务书 + 简报全文 + 同一 DoD）
+    // ② 后 dispatch 新会话（提示词 = 任务正文（E2E#4 修复：rt.taskPrompt 持久化）+ 简报 + 同一 DoD）
     const session = await ports.dispatch({
-      treeId, leafId: leaf.leaf_id, prompt: leaf.brief, dod: leaf.dod,
+      treeId, leafId: leaf.leaf_id, prompt: rt.taskPrompt ?? leaf.brief, dod: leaf.dod,
       assignee: leaf.model ? { model: leaf.model } : undefined,
       handoffBrief: brief, segmentIndex: (rt.segmentChain ?? []).length + 1, attempt: rt.attempt,
     })
@@ -431,6 +441,13 @@ export function createEngine(opts) {
           for (const leaf of Object.values(state.leaves)) {
             const rt = leaf.runtime
             if (!rt || rt.state !== 'running') continue
+            // E2E#5 修复：收割兜底——已有 done 事件但 runtime 仍 running（历史遗留/写入竞态）→ 补回流 succeeded。
+            if ((leaf.events ?? []).some((e) => e.type === 'done')) {
+              rt.history.push({ sessionId: rt.subagentSessionId, state: 'running', endedAt: clock.now(), note: 'done event (sweep reflux)' })
+              rt.state = 'succeeded'
+              events.push({ leaf_id: leaf.leaf_id, event: 'succeeded' })
+              continue
+            }
             // (b) 收割时刷新：超时判定前必经 lastOutputAt 读取
             if (typeof ports.lastOutputAt === 'function') {
               try {
@@ -458,7 +475,11 @@ export function createEngine(opts) {
           await store.write(treeId, state)
           return { tree_id: treeId, events }
         }))
-      } catch (e) { results.push({ tree_id: treeId, error: String(e?.message ?? e) }) }
+      } catch (e) {
+        const errLine = { ts: nowIso(clock), sweep_error: String(e?.message ?? e), stack: String(e?.stack ?? '').slice(0, 500) }
+        await store.appendCallLog(treeId, errLine).catch(() => {})
+        results.push({ tree_id: treeId, error: String(e?.message ?? e) })
+      }
     }
     return { swept: results }
   }

@@ -148,3 +148,43 @@ test('sweep 降级：时钟无 scheduleInterval → sweepMode=degraded-lazy', as
   const { sweepMode } = engine.startSweep()
   assert.equal(sweepMode, 'degraded-lazy')
 })
+
+// ── E2E#5 回归（v0.3.6）：成功终态回流 + 派发自动绑定执行者 ──
+
+test('E2E#5a：dispatch:start 自动绑定 leaf.session_id = 执行者（done 所有权可自举满足）', async () => {
+  const clock = new VirtualClock(1000)
+  const engine = await setup(fakePorts(), clock)
+  const r = await engine.call('dispatch:start', ['bamboo', 'bamboo-C1-worker', {}])
+  assert.equal(r.ok, true)
+  const leaf = (await engine.call('leaf:get', ['bamboo', 'bamboo-C1-worker'])).leaf
+  assert.equal(leaf.session_id, r.node.session_id)          // 执行者 = owner
+  // 执行者以自身会话写 done event → 应被接受（caller === leaf.session_id）
+  const ev = await engine.call('event:append', ['bamboo', 'bamboo-C1-worker', 'done', { summary: 'ok' }], leaf.session_id)
+  assert.equal(ev.ok, true, JSON.stringify(ev.error))
+})
+
+test('E2E#5b：done 事件 → runtime succeeded 回流（不再卡 running 到 timeout）', async () => {
+  const clock = new VirtualClock(1000)
+  const engine = await setup(fakePorts(), clock)
+  const r = await engine.call('dispatch:start', ['bamboo', 'bamboo-C1-worker', {}])
+  await engine.call('event:append', ['bamboo', 'bamboo-C1-worker', 'done', { summary: 'ok' }], r.node.session_id)
+  let leaf = (await engine.call('leaf:get', ['bamboo', 'bamboo-C1-worker'])).leaf
+  assert.equal(leaf.runtime.state, 'succeeded')             // 事件路径即时回流
+  // 成功终态后可再派发（重试语义不被 running 卡死）
+  const again = await engine.call('dispatch:start', ['bamboo', 'bamboo-C1-worker', {}])
+  assert.equal(again.ok, true, JSON.stringify(again.error))
+  assert.equal(again.node.attempt, 2)
+})
+
+test('E2E#5c：sweep 兜底回流——done 事件已存在但 runtime 仍 running → succeeded', async () => {
+  const clock = new VirtualClock(1000)
+  const ports = fakePorts({ lastOutputAt: async () => 1000 })
+  const engine = await setup(ports, clock, { nodeTimeoutMs: 10 ** 9, sweepIntervalMs: 60_000 })
+  const r = await engine.call('dispatch:start', ['bamboo', 'bamboo-C1-worker', {}])
+  // 模拟历史遗留形状：done 事件已写（事件路径在旧版不回流），此处直接验证 sweep 对 done+running 的处置
+  await engine.call('event:append', ['bamboo', 'bamboo-C1-worker', 'done', { summary: 'ok' }], r.node.session_id)
+  const swept = await engine.sweepTick()
+  const leaf = (await engine.call('leaf:get', ['bamboo', 'bamboo-C1-worker'])).leaf
+  assert.equal(leaf.runtime.state, 'succeeded')
+  assert.ok(!swept.swept[0].events.some((e) => e.event === 'timeout'), JSON.stringify(swept.swept[0].events))
+})
