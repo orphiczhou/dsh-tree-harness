@@ -191,3 +191,99 @@ test('日志/维护命令：drift 枚举 / heartbeat / communication / nudge-res
   r = await engine.call('restore', ['macp2', 'no-such-backup'])
   assert.equal(r.error.code, 'E_BACKUP_NOT_FOUND')
 })
+
+// ── §7 任务1：dependencies 引擎侧 enforcement ─────────────
+test('dependencies：装载期形状/存在性/自指/重复 全部拦截；合法声明落账', async () => {
+  const { engine } = await seeded({ node_budget: 5 })
+  const mk = (id, deps) => engine.call('leaf:add', ['macp2', { leaf_id: id, session_id: null, parent: 'macp2-root', role: 'worker', added_by: ROOT, ...(deps ? { dependencies: deps } : {}) }], ROOT)
+  let r = await mk('macp2-C3-worker', 'not-array')
+  assert.equal(r.error.code, 'E_SCHEMA_INVALID')
+  r = await mk('macp2-C3-worker', [])
+  assert.equal(r.error.code, 'E_SCHEMA_INVALID')
+  r = await mk('macp2-C3-worker', ['macp2-ghost'])
+  assert.equal(r.error.code, 'E_LEAF_NOT_FOUND')
+  r = await mk('macp2-C3-worker', ['macp2-C3-worker'])
+  assert.equal(r.error.code, 'E_SCHEMA_INVALID')
+  r = await mk('macp2-C3-worker', ['macp2-C1-worker', 'macp2-C1-worker'])
+  assert.equal(r.error.code, 'E_SCHEMA_INVALID')
+  // 合法：依赖存在即通过并落账
+  r = await mk('macp2-C3-worker', ['macp2-C1-worker'])
+  assert.equal(r.ok, true, JSON.stringify(r.error))
+  const leaf = (await engine.call('leaf:get', ['macp2', 'macp2-C3-worker'])).leaf
+  assert.deepEqual(leaf.dependencies, ['macp2-C1-worker'])
+})
+
+test('dependencies 环检测：既有环上挂新依赖不误伤（DFS 纵深防御不拦合法链）', async () => {
+  const { engine, store } = await seeded({ node_budget: 5 })
+  const mk = (id, deps) => engine.call('leaf:add', ['macp2', { leaf_id: id, session_id: null, parent: 'macp2-root', role: 'worker', added_by: ROOT, ...(deps ? { dependencies: deps } : {}) }], ROOT)
+  await mk('macp2-C3-worker', ['macp2-C1-worker'])
+  await mk('macp2-C4-worker', ['macp2-C3-worker'])
+  // 洁净室直改（validate 测试同款手法）：C3 反向依赖 C4 构成既有环 C3→C4→C3
+  const st = await store.read('macp2')
+  st.leaves['macp2-C3-worker'].dependencies = ['macp2-C4-worker']
+  await store.write('macp2', st)
+  // 新候选 C5 依赖 C3：DFS 命中在栈节点（非候选自身）→ 非候选成环，不误伤
+  //（add-不可变模型下候选成环除自指外不可能出现；DFS 为纵深防御，此处固化不误伤语义）
+  const r = await mk('macp2-C5-worker', ['macp2-C1-worker', 'macp2-C3-worker'])
+  assert.equal(r.ok, true, JSON.stringify(r.error))
+})
+
+test('依赖闸：dependencies 未全部 done → dispatch 拒；全 done → 放行；taskType 透传派发端口', async () => {
+  const { engine, store } = await seeded({ node_budget: 5 })
+  const mk = (id, deps, taskType) => engine.call('leaf:add', ['macp2', { leaf_id: id, session_id: null, parent: 'macp2-root', role: 'worker', added_by: ROOT, ...(deps ? { dependencies: deps } : {}), ...(taskType ? { taskType } : {}) }], ROOT)
+  await mk('macp2-C3-worker', ['macp2-C1-worker'], 'code-change')
+  await mk('macp2-C4-worker')
+  const seen = []
+  engine.attachPorts({ dispatch: async (spec) => { seen.push(spec); return { sessionId: `sess-${seen.length}` } } })
+  // C1 未 done → 拒
+  let r = await engine.call('dispatch:start', ['macp2', 'macp2-C3-worker', { prompt: 'p' }], undefined)
+  assert.equal(r.ok, false)
+  assert.equal(r.error.code, 'E_DEPENDENCY_NOT_MET')
+  assert.ok(r.error.message.includes('macp2-C1-worker'))
+  // C1 走 done 三重闸（event 先行 + milestone audit_pass；milestone 面经 store 直改注入，等价 E2E audit_append）
+  await engine.call('event:append', ['macp2', 'macp2-C1-worker', 'done', { self_check: [] }], S1_)
+  const st = await store.read('macp2')
+  st.leaves['macp2-C1-worker'].milestones.push({ id: 'm1', audit_pass: true })
+  await store.write('macp2', st)
+  r = await engine.call('leaf:set-status', ['macp2', 'macp2-C1-worker', 'done'], S1_)
+  assert.equal(r.ok, true, JSON.stringify(r.error))
+  // 依赖满足 → 放行 + taskType 透传
+  r = await engine.call('dispatch:start', ['macp2', 'macp2-C3-worker', { prompt: 'p' }], undefined)
+  assert.equal(r.ok, true, JSON.stringify(r.error))
+  assert.equal(seen.at(-1).taskType, 'code-change')
+  // 无 taskType 节点 → undefined（宿主回落 default）
+  r = await engine.call('dispatch:start', ['macp2', 'macp2-C4-worker', { prompt: 'p' }], undefined)
+  assert.equal(r.ok, true, JSON.stringify(r.error))
+  assert.equal(seen.at(-1).taskType, undefined)
+  // runtime succeeded（工具面正常路径：worker 报 done 事件 → 回流 succeeded，无需 status done）也满足依赖闸
+  const st2 = await store.read('macp2')
+  st2.leaves['macp2-C4-worker'].runtime = { state: 'succeeded', subagentSessionId: 'sess-2', history: [] }
+  await store.write('macp2', st2)
+  const r5 = await engine.call('leaf:add', ['macp2', { leaf_id: 'macp2-C6-worker', session_id: null, parent: 'macp2-root', role: 'worker', added_by: ROOT, dependencies: ['macp2-C4-worker'] }], ROOT)
+  assert.equal(r5.ok, true, JSON.stringify(r5.error))
+  const r6 = await engine.call('dispatch:start', ['macp2', 'macp2-C6-worker', { prompt: 'p' }], undefined)
+  assert.equal(r6.ok, true, JSON.stringify(r6.error))
+})
+
+// ── §7 任务2：taskType 验证策略路由 + 裁决落账 ─────────────
+test('leaf:set-verification：裁决持久化到 leaf.verification；非法入参拒', async () => {
+  const { engine } = await seeded()
+  let r = await engine.call('leaf:set-verification', ['macp2', 'macp2-C1-worker', { pass: 'yes' }])
+  assert.equal(r.error.code, 'E_SCHEMA_INVALID')
+  const result = { policyId: 'self-report', pass: true, verdicts: [{ mode: 'self-report', pass: true }] }
+  r = await engine.call('leaf:set-verification', ['macp2', 'macp2-C1-worker', result])
+  assert.equal(r.ok, true)
+  const leaf = (await engine.call('leaf:get', ['macp2', 'macp2-C1-worker'])).leaf
+  assert.equal(leaf.verification.pass, true)
+  assert.equal(leaf.verification.policy_id, 'self-report')
+  assert.ok(leaf.verification.ts)
+})
+
+test('taskType 非字符串拒；合法字符串落账（策略映射在验证器层）', async () => {
+  const { engine } = await seeded()
+  let r = await engine.call('leaf:add', ['macp2', { leaf_id: 'macp2-C3-worker', session_id: null, parent: 'macp2-root', path: 'C3', role: 'worker', added_by: ROOT, taskType: 42 }], ROOT)
+  assert.equal(r.error.code, 'E_SCHEMA_INVALID')
+  r = await engine.call('leaf:add', ['macp2', { leaf_id: 'macp2-C3-worker', session_id: null, parent: 'macp2-root', path: 'C3', role: 'worker', added_by: ROOT, taskType: 'research' }], ROOT)
+  assert.equal(r.ok, true, JSON.stringify(r.error))
+  assert.equal((await engine.call('leaf:get', ['macp2', 'macp2-C3-worker'])).leaf.taskType, 'research')
+})

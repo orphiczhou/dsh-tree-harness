@@ -107,6 +107,31 @@ export function createEngine(opts) {
         }
       }
       if (session_id && !isStrictUuidV4(session_id)) treeError('E_INVALID_UUID_STRICT', `session_id "${session_id}" must be strict UUID v4`)
+      // 依赖声明校验（§7 任务1：dependencies 引擎侧 enforcement——装载期形状/存在性/环检测）
+      const deps = leaf.dependencies
+      if (deps !== undefined) {
+        if (!Array.isArray(deps) || deps.length === 0 || deps.some((d) => typeof d !== 'string' || !d)) {
+          treeError('E_SCHEMA_INVALID', 'dependencies must be a non-empty array of leaf_id strings')
+        }
+        if (new Set(deps).size !== deps.length) treeError('E_SCHEMA_INVALID', 'dependencies contains duplicates')
+        if (deps.includes(leaf_id)) treeError('E_SCHEMA_INVALID', `leaf "${leaf_id}" cannot depend on itself`)
+        for (const d of deps) mustLeaf(state, d)
+        // 环检测：沿既有 leaves 的 dependencies 深搜，回到候选 leaf 即成环（永不满足 → 派发死锁）
+        const onStack = new Set([leaf_id]); let cyclic = false
+        const dfs = (id) => {
+          for (const next of state.leaves[id]?.dependencies ?? []) {
+            if (onStack.has(next)) { if (next === leaf_id) cyclic = true; continue }
+            onStack.add(next); dfs(next); onStack.delete(next)
+            if (cyclic) return
+          }
+        }
+        for (const d of deps) { onStack.add(d); dfs(d); onStack.delete(d); if (cyclic) break }
+        if (cyclic) treeError('E_DEPENDENCY_CYCLE', `dependencies of "${leaf_id}" form a cycle (would deadlock dispatch)`)
+      }
+      // taskType 校验（§7 任务2：自由字符串；策略路由在验证器 taskTypeMap，未知类型回落 default）
+      if (leaf.taskType !== undefined && typeof leaf.taskType !== 'string') {
+        treeError('E_SCHEMA_INVALID', `taskType "${String(leaf.taskType)}" must be a string`)
+      }
       // 防借身份：caller 必须 === added_by（R2 洁净室 D2-B1）
       assertCallerIs(caller, added_by, 'leaf_add (added_by)')
       // 会话唯一 + 预算（E2E 修复：null 会话（PENDING 型）跳过冲突/预算——与 root.session_id=null 不冲突）
@@ -181,6 +206,20 @@ export function createEngine(opts) {
       leaf.session_id = sessionId
       await store.write(treeId, state)
       return { leaf: { leaf_id: leafId, session_id: sessionId } }
+    })
+  }
+
+  // ── set-verification（验证裁决落账：taskType 路由的判据持久化到 leaf）──
+  async function setVerification(args) {
+    const [treeId, leafId, result] = args
+    return withTree(treeId, async (state) => {
+      const leaf = mustLeaf(state, leafId)
+      if (!result || typeof result !== 'object' || typeof result.pass !== 'boolean') {
+        treeError('E_SCHEMA_INVALID', 'verification result object with boolean "pass" required')
+      }
+      leaf.verification = { ts: nowIso(clock), policy_id: result.policyId ?? null, pass: result.pass, verdicts: result.verdicts ?? [] }
+      await store.write(treeId, state)
+      return { leaf: { leaf_id: leafId, verification: leaf.verification } }
     })
   }
 
@@ -348,9 +387,19 @@ export function createEngine(opts) {
       if (leaf.role === 'root') treeError('E_SCHEMA_INVALID', 'cannot dispatch root leaf')
       const rt = runtimeOf(leaf)
       if (rt.state === 'running') treeError('E_SCHEMA_INVALID', `node "${leafId}" already running (cancel or wait harvest first)`)
+      // 依赖闸（§7 任务1）：所有 dependencies 节点必须已 succeeded（runtime 终态成功 ∨ status done——
+      // done 三重闸需 milestone 面经 store/直改注入，工具面正常路径是 runtime succeeded 回流）
+      if (Array.isArray(leaf.dependencies) && leaf.dependencies.length > 0) {
+        const depDone = (d) => state.leaves[d]?.status === 'done' || state.leaves[d]?.runtime?.state === 'succeeded'
+        const unmet = leaf.dependencies.filter((d) => !depDone(d))
+        if (unmet.length > 0) {
+          treeError('E_DEPENDENCY_NOT_MET', `node "${leafId}" dispatch blocked: dependencies not succeeded [${unmet.map((d) => `${d}(status=${state.leaves[d]?.status ?? 'missing'},runtime=${state.leaves[d]?.runtime?.state ?? 'none'})`).join(', ')}]`)
+        }
+      }
       needPort('dispatch')
       const session = await ports.dispatch({
         treeId, leafId, prompt: spec?.prompt ?? leaf.brief, assignee: spec?.assignee, dod: spec?.dod ?? leaf.dod,
+        taskType: spec?.taskType ?? leaf.taskType,
         parentAgent: spec?.parentAgent, parentSessionId: spec?.parentSessionId ?? caller,
         attempt: rt.attempt + 1,
       })
@@ -661,6 +710,7 @@ export function createEngine(opts) {
     init, validate, treeDump, sessionCount,
     'leaf:add': leafAdd, 'leaf:get': leafGet, 'leaf:list-active': leafListActive, 'leaf:list-all': leafListAll,
     'leaf:set-status': setStatus, 'leaf:set-session': setSession, 'leaf:set-context': setContext,
+    'leaf:set-verification': setVerification,
     'event:append': eventAppend, 'event:list': eventList, 'segment:append': segmentAppend,
     'nudge:append': nudgeAppend, 'nudge:reset': nudgeReset,
     'drift:append': driftAppend, 'drift:list': driftList,

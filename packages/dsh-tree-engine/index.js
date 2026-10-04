@@ -238,7 +238,8 @@ const TREE_PLAN = {
 const TREE_NODE = {
   name: 'tree_node',
   description:
-    'Node CRUD. add: {leaf_id, session_id, parent, path, role(commander|worker|auditor), added_by}; naming <prefix>-<Role><seq>-<name>. ' +
+    'Node CRUD. add: {leaf_id, session_id, parent, path, role(commander|worker|auditor), added_by, dependencies?[], taskType?}; naming <prefix>-<Role><seq>-<name>. ' +
+    'dependencies must be existing leaf_ids (cycle-checked; dispatch requires all deps done). taskType routes verification policy (research|question|doc|code-change|default). ' +
     'set-status enforces the closed state machine with done gates (done event first + all milestones audit_pass).',
   parameters: {
     type: 'object', additionalProperties: false,
@@ -357,7 +358,7 @@ const TREE_STATUS = {
 const TREE_VERIFY = {
   name: 'tree_verify',
   description:
-    'Run verification policies on a node (batch-1 modes: self-report | artifact | command). Policy resolution: explicit policyId → taskType map → default. ' +
+    'Run verification policies on a node (batch-1 modes: self-report | artifact | command). Policy resolution: explicit policyId → leaf.taskType map → default. ' +
     'cwd = node workspace (from leaf.path resolved against exec cwd, or exec cwd). Verdicts recorded to leaf.verification; pass required before succeeded.',
   parameters: {
     type: 'object', additionalProperties: false,
@@ -371,16 +372,25 @@ const TREE_VERIFY = {
   },
   output: { schema: { type: 'object' }, render: ok((v) => `tree_verify: ${v?.result?.pass ? 'PASS' : 'FAIL'} (${(v?.result?.verdicts ?? []).map((x) => x.mode).join(',')})`) },
   execute: async (args, exec) => {
-    if (args.action === 'dod') {
-      const text = verifier.dodPrompt(args.policy_id ?? 'default')
-      return { dod: text }
+    // 策略路由（§5.2）：显式 policyId > leaf.taskType（经 taskTypeMap 映射）> default
+    let policyId = args.policy_id
+    if (!policyId && args.leaf_id) {
+      const lr = await engine.call('leaf:get', [args.tree_id, args.leaf_id])
+      if (lr.ok) policyId = lr.leaf.taskType ?? 'default'
     }
+    if (args.action === 'dod') {
+      const text = verifier.dodPrompt(policyId ?? 'default')
+      return { dod: text, ...(policyId ? { resolved_policy_id: policyId } : {}) }
+    }
+    policyId = policyId ?? 'default'
     const cwd = args.cwd ?? exec?.cwd ?? process.cwd()
-    const result = await verifier.runVerifications(args.policy_id ?? 'default', { cwd })
-    // 落账：节点观察字段 verification（PASS 才可 set-status done 的验证层闸由调用方遵守）
+    const result = await verifier.runVerifications(policyId, { cwd })
+    // 落账：leaf.verification（裁决判据持久化）+ progress 事件（观测层）；PASS 才可 set-status done 的闸由调用方遵守
     if (args.leaf_id) {
-      const r = await engine.call('event:append', [args.tree_id, args.leaf_id, 'progress', { verification: result }])
+      const r = await engine.call('leaf:set-verification', [args.tree_id, args.leaf_id, result])
       if (!r.ok) throw toError(r)
+      const e = await engine.call('event:append', [args.tree_id, args.leaf_id, 'progress', { verification: { policy_id: result.policyId, pass: result.pass } }])
+      if (!e.ok) throw toError(e)
     }
     return { result }
   },
@@ -446,7 +456,7 @@ export function apply(ctx) {
   /** 文件自诊断（Loader 缓存下唯一可靠观测通道）：apply 全程留痕 + 全程容错。 */
   const diagPath = path.join(dataDir, 'apply.log')
   const diag = (msg) => { try { fsp.mkdir(path.dirname(diagPath), { recursive: true }).then(() => fsp.appendFile(diagPath, `${new Date().toISOString()} ${msg}\n`)).catch(() => {}) } catch {} }
-  diag(`apply() entered (v0.3.6); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
+  diag(`apply() entered (v0.3.8); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
   try {
     ctx.inject(['tools', 'subagents', 'sessionQuery'], (scoped) => {
       try {

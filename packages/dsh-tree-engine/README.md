@@ -26,6 +26,14 @@
 
 证据落盘：[docs/engine-spec.md §8](../../docs/engine-spec.md)；smoke 清单收窄至 5 项装载实测。
 
+## v0.3.8 增量：dependencies enforcement + taskType 验证路由（handoff §7 任务 1/2）
+
+- **节点 `dependencies` 引擎侧 enforcement**：leaf:add 装载期校验（string[] / 存在性 / 自指 / 重复 / DFS 环检测纵深防御）；`dispatch:start` 前置依赖闸——所有依赖节点须 `status=done ∨ runtime.state=succeeded`，否则 `E_DEPENDENCY_NOT_MET`（含各依赖当前状态明细）。
+- **`leaf.taskType` 验证策略自动路由**：leaf:add 存字段（字符串校验）；派发端口透传 taskType（DoD 注入按类型取模板）；tree_verify 缺省 policy_id 时按 `leaf.taskType → taskTypeMap → default` 解析（research/question→research-answer，doc→artifact-doc，code-change→code-change）；裁决经新命令 `leaf:set-verification` 持久化到 `leaf.verification{ts,policy_id,pass,verdicts}` + progress 事件观测。
+- **E2E 真机实证（tree e2edep，单代际）**：B2 依赖 B1——B1 未完成时 dispatch B2 被拒（E_DEPENDENCY_NOT_MET 原文含状态明细）；B1 done 事件回流 succeeded 后同调用放行；B2 产物 [demo/e2edep-notes.md](../../demo/e2edep-notes.md)；verify 无 policy_id 路由至 artifact 模式（policy_id 落账为请求键 "doc"，verdicts.mode=artifact 证明模板命中）；validate 0 issues。
+- **测试**：**52 项全绿**（47 + 5 新增：装载期拦截 / 环不误伤 / 依赖闸双向 / set-verification 落账 / taskType 校验）。
+- ⚠️ 工程教训复现：pwsh `Set-Content -Encoding utf8` 仍引入 BOM + mojibake（GBK 读入）——文件改动一律 write/edit 工具，本轮已用 git checkout 恢复重做。
+
 ## v0.3 边界（诚实声明）
 
 1. 装载 smoke 未做（同 v0.2：startContinuable/prompt/interrupt 形状、caller 提取、timer 注入——今晚装载后实测）；
