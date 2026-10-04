@@ -1,0 +1,266 @@
+{
+  "meta": {
+    "paradigm": "AC v1.3.0 (DUAL-GATE + 双Arbiter + Prober)",
+    "document": { "name": "PLAN-v1.3.md", "path": "D:\\Codes\\proma-easy-dsh\\docs\\PLAN-v1.3.md" },
+    "current_version": "1.7-draft",
+    "current_doc_sha256": "213dcc352cba079e80e60c417e519876c2d964d57d82a38504130647681c1d6b",
+    "version_history": [
+      { "version": "1.0-draft", "sha256": "5df76689227a84322728922c4a56282ae648716a917fc0956375712af1aa8b1f", "mtime": "2026-10-02T18:43:05.1349802Z" },
+      { "version": "1.1-draft", "sha256": "8b0348bc07926e02343e3ff7b87f8cf44c8b929ee47d66c9a63606c6d3f5d7a7", "mtime": "2026-10-02T18:53:53.7704044Z", "produced_by": "Defender R1 (14/14 accept)" },
+      { "version": "1.2-draft", "sha256": "0971ca1edca7b660be4bfcdfdab037d30ab3f1d47f18b81420abb77d852fafcc", "mtime": "2026-10-02T19:12:03.6052563Z", "produced_by": "Defender R2 (9 accept / 1 refute / 1 clarify)" },
+      { "version": "1.3-draft", "sha256": "cbcf209b9e0a848621a139702b379da2003cb14fc783dc5d4fc46738c0f00041", "mtime": "2026-10-02T19:24:11.9155929Z", "produced_by": "Defender R3 (6 accept / 1 refute; REPAIR_MODE_RESET 三层同步修复法)" },
+      { "version": "1.4-draft", "sha256": "57651d99c4ae9c0dc76eba065b0b9df86cc88ec389fd4aee904073e270a1ae24", "mtime": "2026-10-02T19:36:24.8890393Z", "produced_by": "Defender R4 (8 accept / 2 refute; 三层同步修复法延续)" },
+      { "version": "1.5-draft", "sha256": "359eec0a0c75e4b641fce77943c987937508e0e69f34404aa260a21f8b3185a9", "mtime": "2026-10-02T19:52:24.7118579Z", "produced_by": "Defender R5 (2 accept / 1 clarify / 0 refute)" },
+      { "version": "1.6-draft", "sha256": "45c210d0125544e2ae774c0383c89460c20fd77c822f5631867d9f81f4d57004", "mtime": "2026-10-02T20:07:37.5972375Z", "produced_by": "Defender R6 (5 accept / 2 refute; REPAIR_MODE_RESET#2 对账矩阵修复法 + 4 advisory 伴修)" },
+      { "version": "1.7-draft", "sha256": "213dcc352cba079e80e60c417e519876c2d964d57d82a38504130647681c1d6b", "mtime": "2026-10-02T20:20:52.4640156Z", "produced_by": "Defender R7 (4 accept / 1 clarify / 0 refute)" }
+    ],
+    "models": {
+      "executor": "glm-5.3-flash (DSH host, 编排不担任角色)",
+      "attacker_rotation": ["deepseek-official/deepseek-v4-pro (R1-2)", "zai-coding-cn/glm-5.3 (R3-4)", "minimax-cn/MiniMax-M3 (R5-6)"],
+      "defender_window_rule": "H1 避让：当轮攻击者家族==默认Defender家族时切换（v1.3 §10 常设化）",
+      "defender": { "R1": "zai-coding-cn/glm-5.3", "R2": "zai-coding-cn/glm-5.3", "R3": "deepseek-official/deepseek-flash (H1 避让: R3 攻击者为 Z 族)", "R4": "deepseek-official/deepseek-flash (H1 避让)", "R5-6": "zai-coding-cn/glm-5.3 (默认, 攻击者为 M 族)" },
+      "arbiter_a": "minimax-cn/MiniMax-M3",
+      "arbiter_b": "deepseek-official/deepseek-flash (R3-4 窗口: deepseek-v4-pro, 按 v1.3 §10 H3)",
+      "prober": "deepseek-official/deepseek-flash"
+    },
+    "defender_sources": [
+      "logs/dsh-host-services.txt (DSH Host Service 目录实测导出)",
+      "logs/ref-dsh-session-tree-README.md (已验证 DSH 插件工程范式)",
+      "@local/dsh-session-tree-tools/index.js (host 工具注册实例; symlink → default-workspace)",
+      "D:\\Codes\\tree-harness (树引擎本体仓)"
+    ],
+    "thresholds": { "min_rounds": 2, "max_rounds": 10, "refute_rate": [0.05, 0.40], "regression_rate": 0.30, "arbiter_consistency": 0.70, "escalate_human_pause": 3 },
+    "counters": { "arbiter_escalate_count": 3, "repair_escalate_count": 0, "repair_mode_reset": 2, "regression_rate_over_30_streak": 0 },
+    "discovery_series": { "D_1": 14, "D_2": 11, "D_3": 7, "D_4": 10, "D_5": 3, "D_6": 7, "D_7": 5 },
+    "review_state": "TERMINAL: VERSION_FREEZE (SKILL §1.1(c)) — 人工裁决 defer_to_v_next (2026-10-03)，冻结版本 v1.7-draft，残留转已知限制清单（见 docs/review-report.md），不再追求该版本自洽",
+    "doc_pass_mode": "R6 起改用磁盘原文+哈希闸门（文档 >15K token，依 §3.4.1 分片原则精神；每 Agent 首轮回显 doc_sha256_echo，Executor 预核验本地哈希）",
+    "cross_round_match": { "m12_R1_R2": 0, "m12_R2_R3": 0, "m12_R3_R4": 0, "m12_R4_R5": 0, "m12_R5_R6": 0, "note": "匹配键无重合; E4 尚不满足" }
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "attacker_model": "deepseek-official/deepseek-v4-pro",
+      "doc_version": "1.0-draft",
+      "attacks_count": 14,
+      "clean_dimensions": ["Z"],
+      "defender_responses": { "accept": 14, "refute": 0, "clarify": 0 },
+      "refute_rate": 0.0,
+      "defender_tendency": "overly_compliant (refute_rate<5%)",
+      "escalate_human_event": true,
+      "overly_compliant_audit": {
+        "sample_rule": "跨维度分层抽样 3 条: ATK-I-001 / ATK-L-001 / ATK-G-003",
+        "arbiter_a": { "ATK-I-001": "attack_upheld", "ATK-L-001": "attack_upheld", "ATK-G-003": "attack_upheld" },
+        "arbiter_b": { "ATK-I-001": "attack_upheld", "ATK-L-001": "attack_upheld", "ATK-G-003": "attack_upheld" },
+        "a_b_consistency": "3/3"
+      },
+      "fixed_document": { "path": "docs/PLAN-v1.1.md", "sha256": "8b0348bc07926e02343e3ff7b87f8cf44c8b929ee47d66c9a63606c6d3f5d7a7" },
+      "regression_check": "round 1 无先前修复区域，不适用",
+      "disputes": [],
+      "executor_overreach_check": { "round_k": 1, "attacker_ok": true, "defender_ok": true, "arbiter_a_ok": true, "arbiter_b_ok": true, "all_verified": true, "check_method": "subagent 产出逐条核对" }
+    },
+    {
+      "round": 2,
+      "attacker_model": "deepseek-official/deepseek-v4-pro (stint R2/2)",
+      "doc_version": "1.1-draft",
+      "attacks_count": 11,
+      "clean_dimensions": ["Z"],
+      "defender_responses": { "accept": 9, "refute": 1, "clarify": 1 },
+      "refute_rate": 0.091,
+      "defender_tendency": "normal",
+      "fixed_document": { "path": "docs/PLAN-v1.2.md", "sha256": "0971ca1edca7b660be4bfcdfdab037d30ab3f1d47f18b81420abb77d852fafcc" },
+      "regression_check": { "mechanical_regression_count": 10, "mechanical_regression_rate": 0.91, "fix_induced_estimate": "4-5 条 (36-45%)", "streak_note": "连续>30% 第 1 轮" },
+      "disputes": [
+        { "attack_id": "ATK-U-004", "status": "resolved_by_R3_attacker", "resolution": "attack_dismissed", "reasoning": "v1.2 §4.2 白名单已重写，歧义文本不存在，反驳成立" }
+      ],
+      "executor_overreach_check": { "round_k": 2, "attacker_ok": true, "defender_ok": true, "arbiter_a_ok": true, "arbiter_b_ok": true, "all_verified": true, "check_method": "subagent 产出逐条核对" }
+    },
+    {
+      "round": 3,
+      "attacker_model": "zai-coding-cn/glm-5.3 (硬轮换 stint R1/2)",
+      "doc_version": "1.2-draft",
+      "attacks_count": 7,
+      "clean_dimensions": ["Z", "G"],
+      "defender_model": "deepseek-official/deepseek-flash",
+      "defender_switch_reason": "H1 避让: R3 攻击者为 Z 族, 默认 Defender 也是 Z 族, 换 D 族 deepseek-flash",
+      "defender_responses": { "accept": 6, "refute": 1, "clarify": 0 },
+      "refute_rate": 0.143,
+      "defender_tendency": "normal",
+      "repair_mode_reset": {
+        "triggered": true,
+        "reason": "机械回归率连续 2 轮 >30% (R2 91%, R3 86%)",
+        "strategy": "三层同步修复法 (数据模型→业务流程→验收条件), Defender 已在 strategy_change 字段声明并逐条执行",
+        "streak_reset": true
+      },
+      "fixed_document": { "path": "docs/PLAN-v1.3.md", "sha256": "cbcf209b9e0a848621a139702b379da2003cb14fc783dc5d4fc46738c0f00041" },
+      "regression_check": { "mechanical_regression_count": 6, "mechanical_regression_rate": 0.86, "fix_induced_estimate": "3-4 条 (43-57%: L-008/U-008/F-006 部分)", "streak_note": "触发 REPAIR_MODE_RESET, 计数清零" },
+      "disputes": [
+        { "attack_id": "ATK-F-006", "status": "pending_attacker_review_next_round", "defender_evidence": "sessionQuery 在 dsh-host-services.txt 目录内 (observeSession/filterSessions/...); @local/dsh-session-tree-tools/index.js:101,144 实测用法; §3 实测承诺辖域为 §3 映射表, §4.1 为 S0 待验证项; 附录A.1 自标节选" }
+      ],
+      "defender_side_note": "Defender 发现 Executor 任务书中引用了不存在的路径 logs/dsh-session-tree-tools-index.js, 自行定位到真实安装文件并说明——独立信息源核验有效的直接证据",
+      "executor_overreach_check": { "round_k": 3, "attacker_ok": true, "defender_ok": true, "arbiter_a_ok": true, "arbiter_b_ok": true, "all_verified": true, "check_method": "subagent 产出逐条核对（本轮无 Arbiter 调用; U-004 由 R3 Attacker 按协议裁决）" }
+    },
+    {
+      "round": 4,
+      "attacker_model": "zai-coding-cn/glm-5.3 (stint R2/2)",
+      "doc_version": "1.3-draft",
+      "attacks_count": 10,
+      "clean_dimensions": ["F", "Z"],
+      "defender_model": "deepseek-official/deepseek-flash (H1 避让窗口)",
+      "defender_responses": { "accept": 8, "refute": 2, "clarify": 0 },
+      "refute_rate": 0.20,
+      "defender_tendency": "normal",
+      "fixed_document": { "path": "docs/PLAN-v1.4.md", "sha256": "57651d99c4ae9c0dc76eba065b0b9df86cc88ec389fd4aee904073e270a1ae24" },
+      "regression_check": { "mechanical_regression_count": 9, "mechanical_regression_rate": 0.90, "fix_induced_estimate": "8 条 (80%: I-009/I-010/U-009/L-010/L-011/L-012/G-005/G-007 均位于 R3 三层修复新增文本)", "streak_note": "REPAIR_MODE_RESET 后连续>30% 第 1 轮; 高 fix-induced 反映规约深化暴露新边界, 下轮若再超 30% 触发第二次 reset" },
+      "disputes": [
+        { "attack_id": "ATK-U-010", "status": "pending_attacker_review_next_round", "defender_evidence": "§4.4 M1 行『P0 不做独立页面』(S4 交付物标 P0) 否证 P0⊆MVP; §1 原文为合取辖域; 仍补显式映射行" },
+        { "attack_id": "ATK-G-007", "status": "pending_attacker_review_next_round", "defender_evidence": "approval 服务在 dsh-host-services.txt:171-183 (setPolicy/request/overrideOf); 附录A.1 自称节选非闭集; 已补录并改断言载体为 overrideOf 成对比较 + sessionQuery ask/outcome 审计" }
+      ],
+      "resolved_disputes": [
+        { "attack_id": "ATK-F-006", "resolution": "attack_dismissed", "adjudicated_by": "R4 Attacker", "reasoning": "v1.3 附录A.1 已补录 sessionQuery 条目与注册侧用法; §4.1 现文已带出处; Defender 四点反驳与现文相符" }
+      ],
+      "executor_overreach_check": { "round_k": 4, "attacker_ok": true, "defender_ok": true, "arbiter_a_ok": true, "arbiter_b_ok": true, "all_verified": true, "check_method": "subagent 产出逐条核对（本轮无 Arbiter 调用; F-006 由 R4 Attacker 按协议裁决）" }
+    },
+    {
+      "round": 5,
+      "attacker_model": "minimax-cn/MiniMax-M3 (硬轮换 stint R1/2, 第三家族首次介入)",
+      "doc_version": "1.4-draft",
+      "attacks_count": 3,
+      "clean_dimensions": ["I", "U", "G"],
+      "defender_model": "zai-coding-cn/glm-5.3 (默认归位, 攻击者为 M 族)",
+      "defender_responses": { "accept": 2, "refute": 0, "clarify": 1 },
+      "refute_rate": 0.0,
+      "defender_tendency": "overly_compliant (refute_rate<5%; 但 Clarify 附 L-013 原文行级反证, 未凑配额)",
+      "escalate_human_event": true,
+      "overly_compliant_audit": {
+        "sample_rule": "Accept 总数 2 < 3, 全样本审计: ATK-Z-001 / ATK-F-007",
+        "arbiter_a": { "ATK-Z-001": "attack_upheld", "ATK-F-007": "attack_upheld" },
+        "arbiter_b": { "ATK-Z-001": "attack_upheld", "ATK-F-007": "attack_upheld" },
+        "a_b_consistency": "2/2",
+        "arbiter_advisory_notes": [
+          "Z-001 修复残留(a): sweep 基准时刻 dispatchedAt vs 最近产出 双语义未统一 (§4.3 棒语义倾向最近产出)",
+          "Z-001 修复残留(b): 棒侧 sweep 载体在包 A(S1) 而棒状态属包 C(S3), 跨包读取/入队接口未定义",
+          "Z-001 修复残留(c): §8 超时硬截止断言『之前未被提前收割』措辞歧义 + 棒用例标注 S1 与 §7 棒属 S3 排期错位",
+          "Z-001 修复残留(d): timer 注入不可用无回退分支 (风险低, 本机实测存在)"
+        ],
+        "note": "两 Arbiter 独立核对 timer 服务出处 (dsh-host-services.txt:1737-1758) 证实非虚构引证; advisory 项交 R6 Defender 随轮伴修, 不计入 D_k"
+      },
+      "resolved_disputes": [
+        { "attack_id": "ATK-U-010", "resolution": "attack_dismissed", "adjudicated_by": "R5 Attacker", "reasoning": "v1.4 §1 映射唯一可判定, §4.4 M1 行证实 P0 ⊋ MVP" },
+        { "attack_id": "ATK-G-007", "resolution": "attack_dismissed", "adjudicated_by": "R5 Attacker", "reasoning": "观测载体/判据/出处/S0 验证项四要素齐全" }
+      ],
+      "executor_overreach_check": { "round_k": 5, "attacker_ok": true, "defender_ok": true, "arbiter_a_ok": true, "arbiter_b_ok": true, "all_verified": true, "check_method": "subagent 产出逐条核对" }
+    },
+    {
+      "round": 6,
+      "attacker_model": "minimax-cn/MiniMax-M3 (stint R2/2)",
+      "doc_version": "1.5-draft",
+      "attacks_count": 7,
+      "clean_dimensions": [],
+      "defender_model": "zai-coding-cn/glm-5.3 (默认)",
+      "defender_responses": { "accept": 5, "refute": 2, "clarify": 0 },
+      "refute_rate": 0.286,
+      "defender_tendency": "normal",
+      "repair_mode_reset_2": {
+        "triggered": true,
+        "reason": "机械回归率 R4 90% / R5 100% 连续 2 轮 >30%（R5 漏记，此处补正）+ R6 100%；策略由三层同步修复法改为对账矩阵修复法",
+        "result": "矩阵发现 7 处攻击外跨章节缺口（α-η），全部落修；Config 键总表 §4.7、双状态机同步规则、registerHarvestProvider 接口等新增"
+      },
+      "fixed_document": { "path": "docs/PLAN-v1.6.md", "sha256": "45c210d0125544e2ae774c0383c89460c20fd77c822f5631867d9f81f4d57004" },
+      "regression_check": { "mechanical_regression_count": 7, "mechanical_regression_rate": 1.0, "fix_induced_estimate": "3/7 (43%: F-008/U-011/I-012 位于 R5 新增 sweep/ipc/设置文本)", "streak_note": "触发 reset#2, 计数清零；机械口径已饱和（全文均在历次修复区内），后续轮以 fix-induced 为主判据" },
+      "advisory_companion_fixes": ["ADV-a 基准时刻 max(dispatchedAt,lastOutputAt)", "ADV-b registerHarvestProvider 跨包接口(S0 裁决)", "ADV-c 落定窗口措辞+S1/S3 排期分标", "ADV-d timer 不可用回退+degraded 告警"],
+      "disputes": [
+        { "attack_id": "ATK-F-008", "status": "pending_attacker_review_next_round", "defender_evidence": "注入缝由『引擎核心不 import DSH API』决策必然得出；§8 v1.5 原文已有『假时钟驱动』句（攻击截引）；生产目录本不含测试钩子；屏蔽外部触发与保留 sweep 周期载体不同不冲突；advisory-c 仍补 §4.1 注入缝小节" },
+        { "attack_id": "ATK-I-012", "status": "pending_attacker_review_next_round", "defender_evidence": "P2 语义=未立项，无欠交付路径可言；S0 先于 S2 无待定实施窗；§4.6 第 4 行已规定双失败时登记偏差+P2 裁决，闭环" }
+      ],
+      "executor_overreach_check": { "round_k": 6, "attacker_ok": true, "defender_ok": true, "arbiter_a_ok": true, "arbiter_b_ok": true, "all_verified": true, "check_method": "subagent 产出逐条核对（本轮无 Arbiter 调用）" }
+    },
+    {
+      "round": 7,
+      "attacker_model": "deepseek-official/deepseek-v4-pro (hard_rotation_cycle_reuse, R7-8 窗口 R1/2)",
+      "doc_version": "1.6-draft",
+      "attacks_count": 5,
+      "clean_dimensions": ["F", "Z", "G"],
+      "defender_model": "zai-coding-cn/glm-5.3 (默认)",
+      "defender_responses": { "accept": 4, "refute": 0, "clarify": 1 },
+      "refute_rate": 0.0,
+      "defender_tendency": "overly_compliant (refute_rate<5%) — 但 Clarify 含引擎级实测反证 (tree-engine.cjs L1175/L5407/L5887 逐行核验)",
+      "escalate_human_event": true,
+      "resolved_disputes": [
+        { "attack_id": "ATK-F-008", "resolution": "attack_dismissed", "adjudicated_by": "R7 Attacker", "reasoning": "v1.6 §4.1 注入缝小节已落地, 反驳四点与现文一致" },
+        { "attack_id": "ATK-I-012", "resolution": "attack_dismissed", "adjudicated_by": "R7 Attacker", "reasoning": "P2 语义/排期/偏差登记三重闭环成立" }
+      ],
+      "executor_overreach_check": { "round_k": 7, "attacker_ok": true, "defender_ok": true, "arbiter_a_ok": true, "arbiter_b_ok": true, "all_verified": true, "check_method": "subagent 产出逐条核对（本轮无 Arbiter 调用）" }
+    }
+  ],
+  "all_attacks": [
+    { "id": "ATK-I-001", "round_raised": 1, "dimension": "I", "severity": "minor", "claim": "引擎体量三处矛盾", "defender_response": { "verdict": "accept" }, "arbiter_verdict": "attack_upheld (抽样复审)" },
+    { "id": "ATK-I-002", "round_raised": 1, "dimension": "I", "severity": "blocking", "claim": "里程碑编号撞车", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-I-003", "round_raised": 1, "dimension": "I", "severity": "major", "claim": "面板通路矛盾", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-F-001", "round_raised": 1, "dimension": "F", "severity": "major", "claim": "远程会话裁剪未声明", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-F-002", "round_raised": 1, "dimension": "F", "severity": "major", "claim": "M1-M8 未映射", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-U-001", "round_raised": 1, "dimension": "U", "severity": "major", "claim": "M 编号歧义", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-U-002", "round_raised": 1, "dimension": "U", "severity": "major", "claim": "forkSession 未验证", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-U-003", "round_raised": 1, "dimension": "U", "severity": "minor", "claim": "P0/P2 未定义", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-L-001", "round_raised": 1, "dimension": "L", "severity": "major", "claim": "dispatch 回流未闭合", "defender_response": { "verdict": "accept" }, "arbiter_verdict": "attack_upheld (抽样复审)" },
+    { "id": "ATK-L-002", "round_raised": 1, "dimension": "L", "severity": "major", "claim": "角色序列无终止", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-L-003", "round_raised": 1, "dimension": "L", "severity": "minor", "claim": "回滚注册表未闭合", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-G-001", "round_raised": 1, "dimension": "G", "severity": "minor", "claim": "E2E 终态不可度量", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-G-002", "round_raised": 1, "dimension": "G", "severity": "minor", "claim": "脱敏无测试", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-G-003", "round_raised": 1, "dimension": "G", "severity": "minor", "claim": "差分无判据", "defender_response": { "verdict": "accept" }, "arbiter_verdict": "attack_upheld (抽样复审)" },
+    { "id": "ATK-I-004", "round_raised": 2, "dimension": "I", "severity": "major", "claim": "automation 同名矛盾", "defender_response": { "verdict": "clarify" }, "arbiter_verdict": null },
+    { "id": "ATK-I-005", "round_raised": 2, "dimension": "I", "severity": "major", "claim": "E2E 缺验收步骤", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-I-006", "round_raised": 2, "dimension": "I", "severity": "minor", "claim": "scaffold 工具名不一致", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-F-003", "round_raised": 2, "dimension": "F", "severity": "major", "claim": "telemetry 无决策", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-F-004", "round_raised": 2, "dimension": "F", "severity": "minor", "claim": "inject 白名单缺键", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-F-005", "round_raised": 2, "dimension": "F", "severity": "minor", "claim": "office 来源未申报", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-L-004", "round_raised": 2, "dimension": "L", "severity": "major", "claim": "快照无冻结源/时机矛盾", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-L-005", "round_raised": 2, "dimension": "L", "severity": "minor", "claim": "cancelled 无入边", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-L-006", "round_raised": 2, "dimension": "L", "severity": "minor", "claim": "项目状态缺非终态", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-U-004", "round_raised": 2, "dimension": "U", "severity": "minor", "claim": "remote 注入歧义", "defender_response": { "verdict": "refute" }, "arbiter_verdict": "attack_dismissed (R3 Attacker 裁决: v1.2 歧义已消除)" },
+    { "id": "ATK-G-004", "round_raised": 2, "dimension": "G", "severity": "minor", "claim": "审批不升权不可测", "defender_response": { "verdict": "accept" }, "arbiter_verdict": null },
+    { "id": "ATK-I-007", "round_raised": 3, "dimension": "I", "severity": "major", "claim": "审查协议 Defender 同族窗口矛盾", "defender_response": { "verdict": "accept", "note": "常设化为 H1/H2/H3 不变式 + G0 准入闸 + 逐窗解析表; 本轮已按新规则实际避让" }, "arbiter_verdict": null },
+    { "id": "ATK-I-008", "round_raised": 3, "dimension": "I", "severity": "minor", "claim": "MVP 下界口径 6.5 vs 7", "defender_response": { "verdict": "accept", "note": "更正为精确求和 6.5-10 + 口径段 + §8 静态核对断言" }, "arbiter_verdict": null },
+    { "id": "ATK-F-006", "round_raised": 3, "dimension": "F", "severity": "minor", "claim": "sessionQuery 引用不在实测清单", "defender_response": { "verdict": "refute", "note": "sessionQuery 在目录内且有注册侧实证; §3 承诺辖域为 §3; 附录为节选。已补录台账" }, "arbiter_verdict": null, "status": "pending_attacker_review_next_round" },
+    { "id": "ATK-U-007", "round_raised": 3, "dimension": "U", "severity": "minor", "claim": "B1/B2/B3 无定义", "defender_response": { "verdict": "accept", "note": "§4.2 补定义表 + §8 三条机检断言" }, "arbiter_verdict": null },
+    { "id": "ATK-U-008", "round_raised": 3, "dimension": "U", "severity": "minor", "claim": "S2 双架构并列不唯一", "defender_response": { "verdict": "accept", "note": "定案 stateSource='host-remote' 单点 + S0 判据 + 回退链" }, "arbiter_verdict": null },
+    { "id": "ATK-L-007", "round_raised": 3, "dimension": "L", "severity": "minor", "claim": "skip 分支无终点", "defender_response": { "verdict": "accept", "note": "decision 枚举 {retry,skip,terminate} + skipped 记录 + decide 工具 + §8 断言" }, "arbiter_verdict": null },
+    { "id": "ATK-L-008", "round_raised": 3, "dimension": "L", "severity": "major", "claim": "终止条件硬绑工程经理, quick 序列悬空", "defender_response": { "verdict": "accept", "note": "验收棒 acceptanceRole (缺省末位) 序列无关绑定 + 双序列 E2E 断言" }, "arbiter_verdict": null },
+    { "id": "ATK-I-009", "round_raised": 4, "dimension": "I", "severity": "minor", "claim": "验收棒『落定=唯一入边』vs 双入边矛盾", "defender_response": { "verdict": "accept", "note": "『落定』唯一定义 (running→{succeeded,failed,timeout}); 附录B改二元入边表述" }, "arbiter_verdict": null },
+    { "id": "ATK-I-010", "round_raised": 4, "dimension": "I", "severity": "minor", "claim": "§4.6 升格目标缺失", "defender_response": { "verdict": "accept", "note": "§4.6 补第4行『host-remote 等价只读面』" }, "arbiter_verdict": null },
+    { "id": "ATK-U-009", "round_raised": 4, "dimension": "U", "severity": "major", "claim": "acceptanceRole 位置约束未定义", "defender_response": { "verdict": "accept", "note": "固定 ∈ roles 且=末位; 中位禁止; 双层校验+错误码; §8 校验断言" }, "arbiter_verdict": null },
+    { "id": "ATK-U-010", "round_raised": 4, "dimension": "U", "severity": "minor", "claim": "P0/MVP 辖域映射缺失", "defender_response": { "verdict": "refute", "note": "§4.4『P0 不做独立页面』否证 P0⊆MVP; 仍补显式映射行" }, "arbiter_verdict": null, "status": "pending_attacker_review_next_round" },
+    { "id": "ATK-L-010", "round_raised": 4, "dimension": "L", "severity": "major", "claim": "completed 无出边(重入)", "defender_response": { "verdict": "accept", "note": "闭集迁移表: completed→running(重入)/abandoned; re-entering 三出边; §8 重入闭包断言" }, "arbiter_verdict": null },
+    { "id": "ATK-L-011", "round_raised": 4, "dimension": "L", "severity": "major", "claim": "running 无超时出边致死锁", "defender_response": { "verdict": "accept", "note": "gradeState 补 timeout (与§4.1 同源 30min); failed/timeout 同路径重试-冻结" }, "arbiter_verdict": null },
+    { "id": "ATK-L-012", "round_raised": 4, "dimension": "L", "severity": "minor", "claim": "手动/自动 handoff 无仲裁", "defender_response": { "verdict": "accept", "note": "handoff=恢复出口非第二推进入口; 幂等键 (sequenceEpoch,barIndex); per-sequence 串行化" }, "arbiter_verdict": null },
+    { "id": "ATK-G-005", "round_raised": 4, "dimension": "G", "severity": "minor", "claim": "退化短 id 无客观判据", "defender_response": { "verdict": "accept", "note": "degenerate() 可计算谓词三分支 + untitled 规范退化值; 判据本体唯一在 §4.2" }, "arbiter_verdict": null },
+    { "id": "ATK-G-006", "round_raised": 4, "dimension": "G", "severity": "minor", "claim": "R8 关键信息无定义", "defender_response": { "verdict": "accept", "note": "K1-K5 固定清单 + 机器判定法 + 长度上限二次压缩" }, "arbiter_verdict": null },
+    { "id": "ATK-G-007", "round_raised": 4, "dimension": "G", "severity": "minor", "claim": "审批观测手段无出处", "defender_response": { "verdict": "refute", "note": "approval.overrideOf 在目录 :171-183; 断言载体改为 overrideOf 成对比较+sessionQuery 审计; 补录+S0 验证项" }, "arbiter_verdict": "attack_dismissed (R5 Attacker 裁决: 四要素齐全)" },
+    { "id": "ATK-Z-001", "round_raised": 5, "dimension": "Z", "severity": "major", "claim": "超时检测无内部定时器, 被动触发无法保证硬截止", "defender_response": { "verdict": "accept", "note": "双轨四路径 + ctx.timer.interval 内部 sweep + 硬截止承诺 (阈值+sweep 周期) + 假时钟断言" }, "arbiter_verdict": "attack_upheld (全样本审计 A+B 一致; 附 4 条 advisory 残留)" },
+    { "id": "ATK-F-007", "round_raised": 5, "dimension": "F", "severity": "minor", "claim": "tree-view-ipc.ts 无迁移去向", "defender_response": { "verdict": "accept", "note": "三处同源处置声明 (§4.2 唯一真源): IPC 层不移植, 职责被 host-remote 吸收" }, "arbiter_verdict": "attack_upheld (全样本审计 A+B 一致)" },
+    { "id": "ATK-L-013", "round_raised": 5, "dimension": "L", "severity": "minor", "claim": "awaiting-review 无超时/默认决策, 悬挂不可回收", "defender_response": { "verdict": "clarify", "note": "人工决策状态不设自动超时系设计立场(显式化); 『不可回收』与原文不符(status 可查+三出边+持久化); 补 reviewReminderMinutes 可选提醒" }, "arbiter_verdict": null },
+    { "id": "ATK-I-011", "round_raised": 6, "dimension": "I", "severity": "major", "claim": "re-entering→abandoned 项目表缺先冻结声明", "defender_response": { "verdict": "accept", "note": "项目迁移表补先冻结语义, 三方对齐, §8 同步" }, "arbiter_verdict": null },
+    { "id": "ATK-F-008", "round_raised": 6, "dimension": "F", "severity": "major", "claim": "假时钟测试钩子未声明", "defender_response": { "verdict": "refute", "note": "注入缝由既有架构决策必然得出; 攻击截引 §8 既有假时钟句; advisory-c 仍补注入缝小节" }, "arbiter_verdict": null, "status": "pending_attacker_review_next_round" },
+    { "id": "ATK-L-014", "round_raised": 6, "dimension": "L", "severity": "blocking", "claim": "cancelled 未纳入棒/序列状态机+handoff×cancel 幂等交互缺失", "defender_response": { "verdict": "accept", "note": "gradeState 补 cancelled+三行迁移; handoff×cancel 并发仲裁(handoff:bar-cancelled); §8 六类路径断言" }, "arbiter_verdict": null },
+    { "id": "ATK-U-011", "round_raised": 6, "dimension": "U", "severity": "major", "claim": "Config 键散落无统一 schema", "defender_response": { "verdict": "accept", "note": "新增 §4.7 Config 键总表(8 键, 含 4 个原无名槽位落名)+装载期校验+§8 断言" }, "arbiter_verdict": null },
+    { "id": "ATK-G-008", "round_raised": 6, "dimension": "G", "severity": "major", "claim": "K3 可回溯无判定算法", "defender_response": { "verdict": "accept", "note": "归一化 p(x)+检索文本 T+精确包含谓词+压缩器逐行保留硬约束" }, "arbiter_verdict": null },
+    { "id": "ATK-Z-002", "round_raised": 6, "dimension": "Z", "severity": "major", "claim": "rollback 时 sequenceState 归属未声明", "defender_response": { "verdict": "accept", "note": "双状态机同步规则全表(8 条 ⇔ 映射); accepted→rolled-back ⇔ 序列保持 completed" }, "arbiter_verdict": null },
+    { "id": "ATK-I-012", "round_raised": 6, "dimension": "I", "severity": "minor", "claim": "§4.6 第4行 P2 待定后路径未闭环", "defender_response": { "verdict": "refute", "note": "P2=未立项无欠交付; S0 先于 S2 无待定实施窗; 偏差登记已闭环" }, "arbiter_verdict": "attack_dismissed (R7 Attacker 裁决)" },
+    { "id": "ATK-I-013", "round_raised": 7, "dimension": "I", "severity": "major", "claim": "双状态机同步表漏 awaiting-review→abandoned 行(闭集自相矛盾)", "defender_response": { "verdict": "accept", "note": "同步表补行+§8 放弃分支断言" }, "arbiter_verdict": null },
+    { "id": "ATK-L-015", "round_raised": 7, "dimension": "L", "severity": "major", "claim": "lastOutputAt 产出事件无入边会误判超时", "defender_response": { "verdict": "accept", "note": "双来源绑定: observeSession 订阅(a) + 收割前 readSession/listEvents 强制刷新(b); 事件缺席时(b)兜底; §8 误判保护断言" }, "arbiter_verdict": null },
+    { "id": "ATK-I-014", "round_raised": 7, "dimension": "I", "severity": "minor", "claim": "§4.7 头部规则与 scaffoldTemplatePath 行冲突", "defender_response": { "verdict": "accept", "note": "校验分级(类型约束类/可用性类)+唯一例外键显式声明" }, "arbiter_verdict": null },
+    { "id": "ATK-I-015", "round_raised": 7, "dimension": "I", "severity": "minor", "claim": "sweepMode 字段 §8 无对应断言", "defender_response": { "verdict": "accept", "note": "补 degraded-lazy 分支断言(降级注入+假时钟+外部触发收割)" }, "arbiter_verdict": null },
+    { "id": "ATK-U-012", "round_raised": 7, "dimension": "U", "severity": "minor", "claim": "差分判据 id 必一致 vs 随机 id 白名单歧义", "defender_response": { "verdict": "clarify", "note": "危害主张经引擎实测证伪(leaf_id 为调用方必填语义 id, L1175/L5407/L5887); 文档缺陷仅未分类, v1.7 已逐字段分类修复" }, "arbiter_verdict": null }
+  ],
+  "events": [
+    { "round": 1, "type": "overly_compliant", "detail": "refute_rate 0%; escalate_human 计数 1/3; 抽样复审 3/3 upheld" },
+    { "round": 2, "type": "regression_rate_watch", "detail": "机械回归率 91% >30%, 连续第 1 轮" },
+    { "round": 3, "type": "repair_mode_reset", "detail": "机械回归率连续 2 轮 >30% (91%, 86%) → REPAIR_MODE_RESET; Defender 切换三层同步修复法; 计数清零" },
+    { "round": 3, "type": "defender_family_swap", "detail": "H1 避让首次执行: R3-4 窗口 Defender glm-5.3→deepseek-flash (攻击者为 Z 族); 该规则随后由 I-007 修复常设化进 §10" },
+    { "round": 4, "type": "regression_rate_watch", "detail": "机械回归率 90% (>30%), REPAIR_MODE_RESET 后连续第 1 轮; fix-induced 约 80% (R3 深化暴露新边界)" },
+    { "round": 5, "type": "overly_compliant", "detail": "refute_rate 0% (诚实判断, 附行级反证的 Clarify); escalate_human 计数 2/3 (接近暂停线 3, 下一轮务必避免无反证的 0 refute); 全样本 Arbiter 审计 2/2 upheld + 4 条 advisory 残留交 R6 伴修" },
+    { "round": 6, "type": "repair_mode_reset_2", "detail": "REPAIR_MODE_RESET 第 2 次触发（R4/R5 机械回归率连续>30%，R5 漏记补正）；策略切换为对账矩阵修复法；矩阵额外发现 7 处跨章节缺口（α-η）全部落修" },
+    { "round": 6, "type": "protocol_note", "detail": "doc_pass_mode 自 R6 起改磁盘原文+哈希闸门（>15K token）；R5 漏触发 reset 的编排遗漏已在 R6 补正并记录" },
+    { "round": 7, "type": "pause", "detail": "escalate_human 累计 3/3 → 暂停审查, 请求人工裁决 3 条 overly_compliant 事件（R1/R5/R7）" },
+    { "round": 7, "type": "human_adjudicated", "detail": "人工裁决: defer_to_v_next (三条同裁) → §1.1(c) 版本快照冻结终态; 冻结版本 v1.7-draft (sha256=213dcc35…c1d6b); 残留转已知限制清单 K-1~K-6 (docs/review-report.md); 终态标注 early_stop_human_adjudicated; 审查闭卷" }
+  ]
+}

@@ -1,0 +1,468 @@
+/**
+ * @local/dsh-tree-engine — host adapter v0.2（S1 第二批）
+ *
+ * 装配：
+ *   - 持久化 = fsStore（<DSH_PROFILE_DIR>/tree-engine-data/，原子写 tmp+rename）；
+ *   - 编排端口尽力装配（subagents/sessionQuery/timer 形状待 S1 smoke 冻结；任何端口失败
+ *     fail-closed 返回 E_PORTS_NOT_WIRED / E_PORTS_PROTOCOL，绝不静默降级）；
+ *   - sweep 随插件启动：ctx.get('timer') 可用 → timer 模式；不可用 → degraded-lazy
+ *     （纯惰性收割 + tree_status 显式收割，启动日志告警，不静默）。
+ *
+ * v0.2 边界（诚实声明）：
+ *   - startContinuable / prompt / interrupt 的精确 spec 形状未 smoke（装载后用
+ *     tree_dispatch 单节点实测修正——这正是 S1 smoke 清单第一项）；
+ *   - usagePct 端口暂缺（tokenMeter 形状未定）→ 竹节依赖执行者自报（tree_report {context}），
+ *     这正是源引擎的自报语义，宿主测量接入后自动生效（先到者生效）。
+ */
+import { createEngine } from './src/engine.js'
+import { createVerifier } from './src/verify.js'
+import { fsStore } from './src/store.js'
+import { systemClock } from './src/clock.js'
+import path from 'node:path'
+import { promises as fsp } from 'node:fs'
+import { spawn } from 'node:child_process'
+
+export const name = 'tree-engine'
+
+const HANDOFF_INSTRUCTION =
+  '竹节交接指令：你的上下文已接近阈值。请立即输出结构化交接简报（K1 结论与进度 / K2 未决与阻塞（无则写"无"）/ ' +
+  'K3 产物引用（文件路径或 tool:<name>@<seq>，逐行独立）/ K4 契约变更（无则写"无"）/ K5 继续执行指针），' +
+  '然后停止工作等待收割。不要开始新的任务步骤。'
+
+function makePorts(services, log) {
+  /** 派发者捕获表（E2E 实证 startContinuable 的 request.parent 必须是活 Agent；
+   *  首派从工具 exec.agent 捕获，竹节接力复用；进程内引用，不序列化）。 */
+  const parents = new Map()   // `${treeId}/${leafId}` → { agent, sessionId }
+  return {
+    /** 派发/接力新会话（≅ subagents.startContinuable）。权威形状（asar 源 + E2E 实证）：
+     *  ContinuableStartSpec = { provider*, label*, childId?, request{ prompt: ContentBlock[], parent: Agent }, signal }
+     *  → ContinuableStart = { childId, messageId }。parent 必须是 ctx.agents 中的活 Agent（非字符串 id）。 */
+    async dispatch(spec) {
+      const dodText = verifier ? verifier.dodPrompt(spec.policyId ?? spec.taskType ?? 'default') : `[DoD] ${JSON.stringify(spec.dod ?? {})}`
+      const promptText = spec.handoffBrief != null
+        ? `${spec.prompt ?? ''}\n\n${dodText}\n\n[竹节第 ${spec.segmentIndex} 节 · 交接简报]\n${spec.handoffBrief ?? '（no-handoff-summary：前会话未产出简报，依任务书与 DoD 继续）'}`
+        : `${spec.prompt ?? ''}\n\n${dodText}`
+      const key = `${spec.treeId}/${spec.leafId}`
+      let parentAgent = spec.parentAgent
+      let parentSessionId = spec.parentSessionId
+      if (!parentAgent) {
+        const cached = parents.get(key)
+        if (cached?.agent) ({ agent: parentAgent, sessionId: parentSessionId } = cached)
+      }
+      if (!parentAgent) {
+        const err = new Error('no live parent Agent: dispatch must be invoked via tree_dispatch tool call (exec.agent); bamboo relay requires the dispatcher session still live')
+        err.code = 'E_PORTS_PROTOCOL'
+        throw err
+      }
+      parents.set(key, { agent: parentAgent, sessionId: parentSessionId })
+      const start = {
+        provider: spec.assignee?.provider ?? DEFAULT_PROVIDER,
+        label: `tree:${spec.treeId}/${spec.leafId}${spec.segmentIndex ? `#s${spec.segmentIndex}` : ''}`,
+        request: {
+          prompt: [{ type: 'text', text: promptText }],
+          parent: parentAgent,
+          ...(spec.assignee?.model ? { agentOptions: { model: spec.assignee.model } } : {}),
+        },
+      }
+      try {
+        const r = await services.subagents.startContinuable(start)
+        const sessionId = r?.childId ?? r?.sessionId ?? r?.session?.id
+        if (!sessionId) throw new Error(`unrecognized startContinuable result: ${JSON.stringify(r).slice(0, 200)}`)
+        return { sessionId }
+      } catch (e) {
+        const err = new Error(`ports.dispatch failed: ${e?.message ?? e}`)
+        err.code = 'E_PORTS_PROTOCOL'
+        throw err
+      }
+    },
+    /** 中断旧会话（竹节先 interrupt 后 start 的 ①）。权威形状（asar L852 实证）：
+     *  authority = { kind: 'parent'|'user', parentSessionId }——与子会话 header.parentSession 匹配即可，无需活 Agent。 */
+    async interrupt(sessionId, parentSessionIdHint) {
+      try {
+        let parentSessionId = parentSessionIdHint
+        if (!parentSessionId) {
+          const records = await services.sessionQuery.filterSessions([{ kind: 'id', values: [sessionId] }])
+          parentSessionId = records?.[0]?.header?.parentSession
+        }
+        if (!parentSessionId) throw new Error('cannot resolve parentSession for interrupt authority')
+        services.subagents.interrupt(sessionId, { kind: 'parent', parentSessionId })
+      }
+      catch (e) { log(`ports.interrupt failed for ${sessionId}: ${e?.message ?? e}`) }
+    },
+    /** 交棒指令（≅ subagents.prompt，按持久化父地址授权——tree_send 同款先例）。 */
+    async promptHandoff(sessionId) {
+      try {
+        const records = await services.sessionQuery.filterSessions([{ kind: 'id', values: [sessionId] }])
+        const parent = records?.[0]?.header?.parentSession
+        if (!parent) return null
+        await services.subagents.prompt({
+          requestId: `tree-engine-handoff-${Date.now().toString(36)}`,
+          parentSessionId: parent, childSessionId: sessionId, mode: 'continuable', delivery: 'queue',
+          content: [{ type: 'text', text: HANDOFF_INSTRUCTION }],
+        })
+        // v0.2：简报经收割路径回收；此处返回 null → 接力标 no-handoff-summary 并依任务书继续。
+        // 简报全文回收在 S1 smoke 后接入（readSession 提取 K1–K5 段落）。
+        return null
+      } catch (e) {
+        log(`ports.promptHandoff failed for ${sessionId}: ${e?.message ?? e}`)
+        return null
+      }
+    },
+    /** 收割时刷新 lastOutputAt（readSession 尽力提取；失败保守旧值）。 */
+    async lastOutputAt(sessionId) {
+      try {
+        const snap = await services.sessionQuery.readSession(sessionId)
+        const t = snap?.header?.lastActivityAt ?? snap?.lastActivityAt ?? null
+        return typeof t === 'number' ? t : (t ? Date.parse(t) : null)
+      } catch { return null }
+    },
+    /** 宿主侧上下文测量（tokenMeter 形状待 smoke；暂缺 → 自报信号生效）。 */
+    async usagePct() { return null },
+  }
+}
+
+const dataDir = path.join(process.env.DSH_PROFILE_DIR ?? process.env.DSH_HOME ?? '.', 'tree-engine-data')
+/** 引擎实例：apply() 装配期创建（端口与时钟随服务可用性定形）；服务缺失时保持未装配。 */
+let engine = null
+/** 验证器：宿主端口 = node fs（工作区经 exec.cwd）+ child_process exec（超时硬杀）。 */
+let verifier = null
+
+/** 简易 glob（'*'/'**' 展开为段匹配；够 artifact 判定，非全量 minimatch）。 */
+async function hostGlob(pattern, cwd) {
+  const dirs = [[]]
+  const out = []
+  const segs = pattern.split('/')
+  async function walk(prefix, depth) {
+    if (depth >= segs.length) return
+    const seg = segs[depth]
+    const last = depth === segs.length - 1
+    let entries
+    try { entries = await fsp.readdir(path.join(cwd, ...prefix), { withFileTypes: true }) } catch { return }
+    for (const e of entries) {
+      if (e.name.startsWith('.') && seg !== '.**') continue
+      if (seg === '**') {
+        await walk([...prefix, e.name], depth)          // ** 深入同层
+        if (e.isDirectory()) await walk([...prefix, e.name], depth + 1)
+      } else if (seg.includes('*')) {
+        const re = new RegExp('^' + seg.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*') + '$')
+        if (re.test(e.name)) {
+          if (last) { if (e.isFile()) out.push(path.join(...prefix, e.name)) }
+          else if (e.isDirectory()) await walk([...prefix, e.name], depth + 1)
+        }
+      } else if (e.name === seg) {
+        if (last) { if (e.isFile()) out.push(path.join(...prefix, e.name)) }
+        else if (e.isDirectory()) await walk([...prefix, e.name], depth + 1)
+      }
+    }
+  }
+  await walk([], 0)
+  return out
+}
+
+function hostExec(cmd, { cwd, timeoutMs = 600_000 } = {}) {
+  return new Promise((resolve) => {
+    let stdout = '', stderr = ''
+    let timedOut = false
+    let child
+    try {
+      child = spawn(cmd, { shell: true, cwd })
+    } catch (e) { resolve({ code: -1, stdout: '', stderr: String(e?.message ?? e) }); return }
+    const timer = setTimeout(() => {
+      timedOut = true
+      try { child.kill('SIGKILL') } catch {}
+    }, timeoutMs)
+    child.stdout?.on('data', (d) => { if (stdout.length < 100_000) stdout += d })
+    child.stderr?.on('data', (d) => { if (stderr.length < 100_000) stderr += d })
+    child.on('error', (e) => { clearTimeout(timer); resolve({ code: -1, stdout, stderr: String(e?.message ?? e) }) })
+    child.on('close', (code) => {
+      clearTimeout(timer)
+      if (timedOut) resolve({ code: 124, stdout, stderr: `TIMEOUT: command exceeded ${timeoutMs}ms (=verdict fail)` })
+      else resolve({ code: code ?? -1, stdout, stderr })
+    })
+  })
+}
+
+/** caller 会话 id 权威提取（asar 源 dsh-tools 实证：exec.agent.session 为 Session 对象）。 */
+function callerOf(exec) {
+  const s = exec?.agent?.session
+  return s?.id ?? s?.header?.sessionId ?? s?.header?.id ?? undefined
+}
+
+/** 派发缺省 provider（宿主装配可覆写；模型白名单第一族）。 */
+let DEFAULT_PROVIDER = process.env.TREE_ENGINE_PROVIDER ?? 'zai-coding-cn'
+
+function toError(r) {
+  const err = new Error(`${r.error.code}: ${r.error.message}`)
+  err.code = r.error.code
+  return err
+}
+
+const ok = (text) => (args, value) => [{ type: 'text', text: typeof text === 'function' ? text(value) : text }]
+
+const TREE_PLAN = {
+  name: 'tree_plan',
+  description:
+    'Create and configure a task tree (plan → layered dispatch → bamboo relay → verify). ' +
+    'tree_id: 4-8 chars, lowercase letters/digits/underscore, no hyphen. Root leaf "<tree_id>-root" is created automatically.',
+  parameters: {
+    type: 'object', additionalProperties: false,
+    properties: {
+      action: { type: 'string', enum: ['create'] },
+      tree_id: { type: 'string' },
+      root_brief: { type: 'object', description: 'Root brief (goal, context, constraints).' },
+      root_dod: { type: 'object', description: 'Root definition-of-done.' },
+      session_id: { type: 'string', description: 'Root owner session id (strict UUID v4), optional.' },
+    },
+    required: ['action', 'tree_id', 'root_brief', 'root_dod'],
+  },
+  output: { schema: { type: 'object' }, render: ok((v) => `tree_plan: created tree ${v?.tree?.tree_id ?? '?'} (root ${v?.tree?.root_leaf_id ?? '?'})`) },
+  execute: async (args) => {
+    const r = await engine.call('init', [args.tree_id, args.root_brief, args.root_dod, args.session_id])
+    if (!r.ok) throw toError(r)
+    return r
+  },
+}
+
+const TREE_NODE = {
+  name: 'tree_node',
+  description:
+    'Node CRUD. add: {leaf_id, session_id, parent, path, role(commander|worker|auditor), added_by}; naming <prefix>-<Role><seq>-<name>. ' +
+    'set-status enforces the closed state machine with done gates (done event first + all milestones audit_pass).',
+  parameters: {
+    type: 'object', additionalProperties: false,
+    properties: {
+      action: { type: 'string', enum: ['add', 'get', 'list', 'list-all', 'set-status', 'set-session'] },
+      tree_id: { type: 'string' }, leaf_id: { type: 'string' },
+      leaf: { type: 'object' }, status: { type: 'string' }, session_id: { type: 'string' },
+    },
+    required: ['action', 'tree_id'],
+  },
+  output: { schema: { type: 'object' }, render: ok((v) => `tree_node: ${v?.leaf?.leaf_id ?? String(v?.leaves?.length ?? '?') + ' leaves'}`) },
+  execute: async (args, exec) => {
+    const map = {
+      add: { cmd: 'leaf:add', argv: (a) => [a.tree_id, a.leaf], caller: true },
+      get: { cmd: 'leaf:get', argv: (a) => [a.tree_id, a.leaf_id], caller: false },
+      list: { cmd: 'leaf:list-active', argv: (a) => [a.tree_id], caller: false },
+      'list-all': { cmd: 'leaf:list-all', argv: (a) => [a.tree_id], caller: false },
+      'set-status': { cmd: 'leaf:set-status', argv: (a) => [a.tree_id, a.leaf_id, a.status], caller: true },
+      'set-session': { cmd: 'leaf:set-session', argv: (a) => [a.tree_id, a.leaf_id, a.session_id], caller: true },
+    }
+    const m = map[args.action]
+    if (!m) throw new Error(`tree_node: unknown action "${args.action}"`)
+    const r = await engine.call(m.cmd, m.argv(args), m.caller ? callerOf(exec) : undefined)
+    if (!r.ok) throw toError(r)
+    return r
+  },
+}
+
+const TREE_DISPATCH = {
+  name: 'tree_dispatch',
+  description:
+    'Dispatch / cancel a node execution (engine relays to continuable subagents). start: {prompt?, assignee?{provider,model}, dod?} — ' +
+    'node stays pending→running; bamboo-joint auto-relay runs inside running (context threshold 42%: brief → interrupt old → start successor). ' +
+    'cancel: first-wins vs timeout hard deadline.',
+  parameters: {
+    type: 'object', additionalProperties: false,
+    properties: {
+      action: { type: 'string', enum: ['start', 'cancel'] },
+      tree_id: { type: 'string' }, leaf_id: { type: 'string' },
+      prompt: { type: 'string' },
+      assignee: { type: 'object', description: '{provider?, model?, effort?, preset?}' },
+      dod: { type: 'object' },
+    },
+    required: ['action', 'tree_id', 'leaf_id'],
+  },
+  output: { schema: { type: 'object' }, render: ok((v) => `tree_dispatch: ${v?.node?.leaf_id ?? '?'} → ${v?.node?.state ?? '?'}`) },
+  execute: async (args, exec) => {
+    const cmd = args.action === 'start' ? 'dispatch:start' : 'dispatch:cancel'
+    const argv = args.action === 'start'
+      ? [args.tree_id, args.leaf_id, { prompt: args.prompt, assignee: args.assignee, dod: args.dod, parentAgent: exec?.agent, parentSessionId: callerOf(exec) }]
+      : [args.tree_id, args.leaf_id]
+    const r = await engine.call(cmd, argv, callerOf(exec))
+    if (!r.ok) throw toError(r)
+    return r
+  },
+}
+
+const TREE_REPORT = {
+  name: 'tree_report',
+  description:
+    'Executor upward reporting. context: report context_usage_pct 0-100 (auto-triggers bamboo-joint relay at 42%; this self-report is the ' +
+    'primary usage signal until host-side measurement lands). event: append progress/blocked/plan/brief_echo/done/... (done requires owner session as caller).',
+  parameters: {
+    type: 'object', additionalProperties: false,
+    properties: {
+      action: { type: 'string', enum: ['context', 'event'] },
+      tree_id: { type: 'string' }, leaf_id: { type: 'string' },
+      pct: { type: 'number' }, type: { type: 'string' }, meta: { type: 'object' },
+    },
+    required: ['action', 'tree_id', 'leaf_id'],
+  },
+  output: { schema: { type: 'object' }, render: ok((v) => `tree_report: ok (${v?.leaf?.leaf_id ?? '?'})`) },
+  execute: async (args, exec) => {
+    const r = args.action === 'context'
+      ? await engine.call('leaf:set-context', [args.tree_id, args.leaf_id, args.pct], callerOf(exec))
+      : await engine.call('event:append', [args.tree_id, args.leaf_id, args.type, args.meta], callerOf(exec))
+    if (!r.ok) throw toError(r)
+    return r
+  },
+}
+
+const TREE_STATUS = {
+  name: 'tree_status',
+  description: 'Query: overview (dump), validate (invariants), sessions (budget precheck), harvest (explicit sweep — degraded-lazy mode relies on this).',
+  parameters: {
+    type: 'object', additionalProperties: false,
+    properties: {
+      action: { type: 'string', enum: ['overview', 'validate', 'sessions', 'harvest'] },
+      tree_id: { type: 'string' },
+    },
+    required: ['action', 'tree_id'],
+  },
+  output: { schema: { type: 'object' }, render: ok((v) => v?.swept ? `tree_status: harvest ${v.swept.map((s) => `${s.tree_id}:${(s.events ?? []).map((e) => e.event + (e.relay ? `(${e.relay})` : '')).join(',') || '∅'}`).join(' | ')} (sweepMode=${v.sweepMode})` : v?.issues ? `tree_status: validate ${v.ok ? 'PASS' : 'FAIL'} (${v.issues.length} issues)` : `tree_status: ok (sweepMode=${v?.sweepMode ?? '?'})`) },
+  execute: async (args) => {
+    if (args.action === 'harvest') {
+      const r = await engine.sweepTick()
+      return { ...r, sweepMode: engine.sweepModeOf() }
+    }
+    const cmd = { overview: 'treeDump', validate: 'validate', sessions: 'sessionCount' }[args.action]
+    const r = await engine.call(cmd, [args.tree_id])
+    if (!r.ok) throw toError(r)
+    return { ...r, sweepMode: engine.sweepModeOf() }
+  },
+}
+
+const TREE_VERIFY = {
+  name: 'tree_verify',
+  description:
+    'Run verification policies on a node (batch-1 modes: self-report | artifact | command). Policy resolution: explicit policyId → taskType map → default. ' +
+    'cwd = node workspace (from leaf.path resolved against exec cwd, or exec cwd). Verdicts recorded to leaf.verification; pass required before succeeded.',
+  parameters: {
+    type: 'object', additionalProperties: false,
+    properties: {
+      action: { type: 'string', enum: ['run', 'dod'] },
+      tree_id: { type: 'string' }, leaf_id: { type: 'string' },
+      policy_id: { type: 'string', description: 'Explicit policy override; omit to resolve via taskType/default.' },
+      cwd: { type: 'string', description: 'Workspace root for artifact/command checks; defaults to exec cwd.' },
+    },
+    required: ['action', 'tree_id'],
+  },
+  output: { schema: { type: 'object' }, render: ok((v) => `tree_verify: ${v?.result?.pass ? 'PASS' : 'FAIL'} (${(v?.result?.verdicts ?? []).map((x) => x.mode).join(',')})`) },
+  execute: async (args, exec) => {
+    if (args.action === 'dod') {
+      const text = verifier.dodPrompt(args.policy_id ?? 'default')
+      return { dod: text }
+    }
+    const cwd = args.cwd ?? exec?.cwd ?? process.cwd()
+    const result = await verifier.runVerifications(args.policy_id ?? 'default', { cwd })
+    // 落账：节点观察字段 verification（PASS 才可 set-status done 的验证层闸由调用方遵守）
+    if (args.leaf_id) {
+      const r = await engine.call('event:append', [args.tree_id, args.leaf_id, 'progress', { verification: result }])
+      if (!r.ok) throw toError(r)
+    }
+    return { result }
+  },
+}
+
+const TREE_LOG = {
+  name: 'tree_log',
+  description: 'Query node logs: events (by leaf/type), drift history (by leaf/since), heartbeat tail, communication log.',
+  parameters: {
+    type: 'object', additionalProperties: false,
+    properties: {
+      action: { type: 'string', enum: ['events', 'drift', 'heartbeat', 'communication'] },
+      tree_id: { type: 'string' }, leaf_id: { type: 'string' },
+      type: { type: 'string' }, since: { type: 'string' }, n: { type: 'number' }, target: { type: 'string' },
+    },
+    required: ['action', 'tree_id'],
+  },
+  output: { schema: { type: 'object' }, render: ok((v) => `tree_log: ${v?.events?.length ?? v?.drifts?.length ?? v?.heartbeats?.length ?? v?.communications?.length ?? 0} entries`) },
+  execute: async (args) => {
+    const map = {
+      events: { cmd: 'event:list', argv: (a) => [a.tree_id, a.leaf_id, a.type] },
+      drift: { cmd: 'drift:list', argv: (a) => [a.tree_id, a.leaf_id, a.since] },
+      heartbeat: { cmd: 'heartbeat:tail', argv: (a) => [a.tree_id, a.n] },
+      communication: { cmd: 'communication:list', argv: (a) => [a.tree_id, a.leaf_id, a.target, a.since] },
+    }
+    const m = map[args.action]
+    const r = await engine.call(m.cmd, m.argv(args))
+    if (!r.ok) throw toError(r)
+    return r
+  },
+}
+
+const TREE_MAINTAIN = {
+  name: 'tree_maintain',
+  description:
+    'Maintenance: backup (in-state snapshot, keep 10) / restore (tree_id match + before-restore snapshot) / nudge-reset / register-session (bypass session into budget, idempotent).',
+  parameters: {
+    type: 'object', additionalProperties: false,
+    properties: {
+      action: { type: 'string', enum: ['backup', 'restore', 'nudge-reset', 'register-session'] },
+      tree_id: { type: 'string' }, leaf_id: { type: 'string' },
+      label: { type: 'string' }, backup_file: { type: 'string' },
+      session_id: { type: 'string' }, source: { type: 'string' },
+    },
+    required: ['action', 'tree_id'],
+  },
+  output: { schema: { type: 'object' }, render: ok((v) => `tree_maintain: ok (${v?.backup ?? v?.restored_from ?? v?.registered ?? v?.leaf?.leaf_id ?? '?'})`) },
+  execute: async (args) => {
+    const map = {
+      backup: { cmd: 'backup', argv: (a) => [a.tree_id, a.label] },
+      restore: { cmd: 'restore', argv: (a) => [a.tree_id, a.backup_file] },
+      'nudge-reset': { cmd: 'nudge:reset', argv: (a) => [a.tree_id, a.leaf_id] },
+      'register-session': { cmd: 'tree:register-session', argv: (a) => [a.tree_id, a.session_id, a.source] },
+    }
+    const m = map[args.action]
+    const r = await engine.call(m.cmd, m.argv(args))
+    if (!r.ok) throw toError(r)
+    return r
+  },
+}
+
+export function apply(ctx) {
+  /** 文件自诊断（Loader 缓存下唯一可靠观测通道）：apply 全程留痕 + 全程容错。 */
+  const diagPath = path.join(dataDir, 'apply.log')
+  const diag = (msg) => { try { fsp.mkdir(path.dirname(diagPath), { recursive: true }).then(() => fsp.appendFile(diagPath, `${new Date().toISOString()} ${msg}\n`)).catch(() => {}) } catch {} }
+  diag(`apply() entered (v0.3.3); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
+  try {
+    ctx.inject(['tools', 'subagents', 'sessionQuery'], (scoped) => {
+      try {
+        const services = scoped || ctx
+        const log = (m) => { console.error(`[tree-engine] ${m}`); diag(m) }
+        diag('inject callback entered')
+
+        // 时钟：timer 权威结论（asar 源 cordis-plugin-timer 实证）——ctx.mixin("timer")，ctx.timer 直接可用；
+        // 兜底 ctx.get('timer')；均不可用 → degraded-lazy（显式告警，不静默）
+        let timer = null
+        try { timer = ctx.timer ?? (typeof ctx.get === 'function' ? ctx.get('timer') : null) } catch (e) { diag(`timer resolve failed: ${e?.message ?? e}`) }
+        const clock = systemClock()
+        if (timer && typeof timer.interval === 'function') {
+          clock.scheduleInterval = (cb, ms) => timer.interval(cb, ms)
+        } else {
+          log('sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}')
+        }
+
+        engine = createEngine({ store: fsStore(dataDir), clock })
+        engine.attachPorts(makePorts(services, log))
+        const { sweepMode } = engine.startSweep()
+        verifier = createVerifier({ ports: { glob: hostGlob, readFile: (p) => fsp.readFile(p, 'utf-8'), exec: hostExec } })
+        diag(`engine ready (sweepMode=${sweepMode})`)
+
+        let okCount = 0
+        for (const tool of [TREE_PLAN, TREE_NODE, TREE_DISPATCH, TREE_REPORT, TREE_STATUS, TREE_VERIFY, TREE_LOG, TREE_MAINTAIN]) {
+          try { services.tools.register(tool); okCount += 1; diag(`register OK: ${tool.name}`) }
+          catch (e) { diag(`register FAILED: ${tool.name}: ${e?.message ?? e}`) }
+        }
+        console.log(`[tree-engine] v0.3.3 registered ${okCount}/8 tools (fs persistence @ ${dataDir}; sweepMode=${sweepMode})`)
+        diag(`apply complete: ${okCount}/8 registered`)
+      } catch (e) {
+        diag(`inject callback THREW: ${e?.stack ?? e}`)
+        console.error(`[tree-engine] apply failed: ${e?.stack ?? e}`)
+      }
+    })
+  } catch (e) {
+    diag(`ctx.inject THREW: ${e?.stack ?? e}`)
+    console.error(`[tree-engine] ctx.inject failed: ${e?.stack ?? e}`)
+  }
+}

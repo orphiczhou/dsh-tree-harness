@@ -1,0 +1,17 @@
+{
+  "name": "@local/dsh-tree-engine",
+  "version": "0.3.4",
+  "private": true,
+  "type": "module",
+  "description": "Tree task decomposition & execution engine for DSH: plan → dispatch → bamboo-joint relay → harvest → verify. S1 v0.1: engine core + tree_plan/tree_node/tree_report/tree_status host tools.",
+  "exports": {
+    ".": "./index.js",
+    "./engine": "./src/engine.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": { "patch": "./cordis.patch.yml" }
+  },
+  "icon": "./icon.svg"
+}

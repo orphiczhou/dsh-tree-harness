@@ -1,0 +1,3 @@
+- insert:
+    - id: tree-engine
+      name: '@local/dsh-tree-engine'
