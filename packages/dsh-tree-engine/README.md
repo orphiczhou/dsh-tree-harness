@@ -26,6 +26,17 @@
 
 证据落盘：[docs/engine-spec.md §8](../../docs/engine-spec.md)；smoke 清单收窄至 5 项装载实测。
 
+## v0.3.9 增量：竹节简报回收 + 验证 batch-2 + usagePct + Config 校验 + 差分扩面（handoff §7 任务 3–8 主体）
+
+- **K1–K5 交棒简报回收 + 宽限**（任务 4）：promptHandoff 发交棒指令后按 grace 轮询 readSession（上限 min(graceMs,12s)），防御性提取含 K1/K2/K5 标记的简报全文；超时/不可提取 → no-handoff-summary 降级。**E2E 真机实证（tree e2erly）：chain 0→2，bamboo(ok) 全文回收，attempt=1，succeeded**。
+- **usagePct 宿主测量接入**（任务 5）：tokenMeter.measure（readSession 快照 → measure → pct/context.pct/pressure.pct 防御提取，0–1 归一）；首调用经 apply.log 冻结返回形状；任何失败返回 null → 自报信号生效（先到者生效）。
+- **验证层 batch-2**（任务 6）：`llm-judge`（ports.judge 异族评审，rubric 必填，fail-closed）/ `composite`（checks[] 平铺 AND 链，嵌套 composite 装载期拒）/ `human`（approval=never 降级 = frozen 待裁：pass=false+pending，人工经 policy_id 显式覆盖裁决）。
+- **Config schema 装载期校验**（任务 8，src/config.js）：TREE_ENGINE_CONFIG JSON 全键类型/范围校验，未知键拒绝；非法即装载失败（apply 终止、工具不注册），报错含键名；护栏键进 config、编排键进 orchestra 自动拆分。
+- **差分扩面**（任务 7 主体）：52 组 LCG 生成调用序列（合法+非法混合）逐调用 ok 一致 + 终态投影一致；新冻结偏差 **D-v5**（源可恢复错误自动 drift）/ **D-v6**（源 leaf add 必填 model）登记 [diff.DEVIATIONS.md](tests/diff.DEVIATIONS.md)。
+- **tree-worker SKILL 重写**（任务 3，skills/tree-worker/SKILL.md）：8 工具语法、开工四步/竹节协议/护栏表/一图流；**剔除 tree_leaf_autonomy_override 漂移引用**（用 drift 申报替代）。
+- **E2E**：e2ev39（依赖闸+路由+validate 全过）+ e2erly（竹节 relay 专项，简报全文回收）。
+- **测试**：**56 项全绿**（52 + 4：llm-judge 三态/human 降级+composite 展开/Config 校验）。剩余：observeSession 事件面（§7-9，宿主形状未冻结）与 llm-judge 宿主 judge 端口装配（评审会话派发）列下批。
+
 ## v0.3.8 增量：dependencies enforcement + taskType 验证路由（handoff §7 任务 1/2）
 
 - **节点 `dependencies` 引擎侧 enforcement**：leaf:add 装载期校验（string[] / 存在性 / 自指 / 重复 / DFS 环检测纵深防御）；`dispatch:start` 前置依赖闸——所有依赖节点须 `status=done ∨ runtime.state=succeeded`，否则 `E_DEPENDENCY_NOT_MET`（含各依赖当前状态明细）。

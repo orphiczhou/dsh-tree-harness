@@ -14,11 +14,16 @@ function fakeFsPorts(files) {
   }
 }
 
-test('装载期校验：未知 mode → 报错含键名（不静默回退）', () => {
+test('装载期校验：未知 mode → 报错含键名（不静默回退）；llm-judge 缺 rubric 同拦', () => {
   assert.throws(
-    () => validatePolicies({ 'my-policy': { verify: [{ mode: 'llm-judge', rubric: 'x' }] } }),
-    (e) => e.message.includes('my-policy') && e.message.includes('llm-judge'),
+    () => validatePolicies({ 'my-policy': { verify: [{ mode: 'vibes' }] } }),
+    (e) => e.message.includes('my-policy') && e.message.includes('vibes'),
   )
+  assert.throws(
+    () => validatePolicies({ 'judge-bad': { verify: [{ mode: 'llm-judge' }] } }),
+    (e) => e.message.includes('judge-bad') && e.message.includes('rubric'),
+  )
+  assert.doesNotThrow(() => validatePolicies({ 'judge-ok': { verify: [{ mode: 'llm-judge', rubric: 'r' }] } }))
   assert.throws(
     () => validatePolicies({ 'cmd-bad': { verify: [{ mode: 'command' }] } }),
     (e) => e.message.includes('cmd-bad') && e.message.includes('run'),
@@ -26,6 +31,10 @@ test('装载期校验：未知 mode → 报错含键名（不静默回退）', (
   assert.throws(
     () => validatePolicies({ 'art-bad': { verify: [{ mode: 'artifact' }] } }),
     (e) => e.message.includes('art-bad') && e.message.includes('glob'),
+  )
+  assert.throws(
+    () => validatePolicies({ 'comp-bad': { verify: [{ mode: 'composite' }] } }),
+    (e) => e.message.includes('comp-bad') && e.message.includes('checks'),
   )
   assert.doesNotThrow(() => validatePolicies(DEFAULT_POLICIES))
 })
@@ -101,4 +110,53 @@ test('端口未装配：artifact/command fail-closed（pass=false 且 detail 指
   r = await v.runVerifications('code-change', { cwd: '.' })
   assert.equal(r.pass, false)
   assert.ok(r.verdicts[0].detail.includes('exec'))
+})
+
+// ── batch-2：llm-judge / composite / human ──────────────
+test('llm-judge：judge 端口裁决透传；未装配 fail-closed；非法返回形状 fail', async () => {
+  let v = createVerifier({ policies: { 'judge-x': { verify: [{ mode: 'llm-judge', rubric: '结论含出处' }] } } })
+  let r = await v.runVerifications('judge-x', { cwd: '.' })   // 未装配 judge 端口
+  assert.equal(r.pass, false)
+  assert.ok(r.verdicts[0].detail.includes('judge'))
+  v = createVerifier({ policies: { 'judge-x': { verify: [{ mode: 'llm-judge', rubric: '结论含出处' }] } }, ports: { judge: async () => ({ pass: true, score: 0.9 }) } })
+  r = await v.runVerifications('judge-x', { cwd: '.' })
+  assert.equal(r.pass, true)
+  assert.match(r.verdicts[0].detail, /0\.9/)
+  v = createVerifier({ policies: { 'judge-x': { verify: [{ mode: 'llm-judge', rubric: 'r' }] } }, ports: { judge: async () => ({ oops: 1 }) } })
+  r = await v.runVerifications('judge-x', { cwd: '.' })
+  assert.equal(r.pass, false)
+  assert.ok(r.verdicts[0].detail.includes('invalid shape'))
+})
+
+test('human：approval=never 降级 = frozen 待裁（pass=false + pending=true）；复合策略 AND 短路展开', async () => {
+  const v = createVerifier({
+    policies: {
+      'human-gate': { verify: [{ mode: 'human' }], onFail: 'frozen' },
+      'comp': { verify: [{ mode: 'composite', checks: [{ mode: 'self-report' }, { mode: 'human' }] }], onFail: 'frozen' },
+    },
+  })
+  let r = await v.runVerifications('human-gate', { cwd: '.' })
+  assert.equal(r.pass, false)
+  assert.equal(r.verdicts[0].pending, true)
+  assert.ok(r.verdicts[0].detail.includes('approval=never'))
+  // composite 展开：self-report 过 → human 冻结待裁 → 短路
+  r = await v.runVerifications('comp', { cwd: '.' })
+  assert.equal(r.verdicts.length, 2)
+  assert.deepEqual(r.verdicts.map((x) => x.mode), ['self-report', 'human'])
+  assert.equal(r.pass, false)
+})
+
+// ── Config 装载期校验（§7 任务 8）──────────────────────
+test('validateConfig：未知键/类型/范围 违规报错含键名；合法原样通过', async () => {
+  const { validateConfig, configFromEnv } = await import('../src/config.js')
+  assert.throws(() => validateConfig({ node_budgt: 5 }), (e) => e.message.includes('node_budgt') && e.message.includes('unknown'))
+  assert.throws(() => validateConfig({ node_budget: '20' }), (e) => e.message.includes('node_budget') && e.message.includes('integer'))
+  assert.throws(() => validateConfig({ ctx_segment_threshold: 0 }), (e) => e.message.includes('ctx_segment_threshold') && e.message.includes('range'))
+  assert.throws(() => validateConfig({ commander_max_depth: 9 }), (e) => e.message.includes('commander_max_depth'))
+  assert.deepEqual(validateConfig({ node_budget: 30, graceMs: 5000 }), { node_budget: 30, graceMs: 5000 })
+  // 环境入口拆分：护栏键进 config、编排键进 orchestra
+  const split = configFromEnv({ TREE_ENGINE_CONFIG: '{"node_budget":30,"sweepIntervalMs":60000}' })
+  assert.deepEqual(split, { config: { node_budget: 30 }, orchestra: { sweepIntervalMs: 60000 } })
+  assert.throws(() => configFromEnv({ TREE_ENGINE_CONFIG: '{"bogus":1}' }), (e) => e.message.includes('bogus'))
+  assert.deepEqual(configFromEnv({}), { config: {}, orchestra: {} })
 })

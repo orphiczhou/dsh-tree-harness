@@ -53,7 +53,11 @@ function project(state) {
       milestones: (l.milestones ?? []).map((m) => ({ id: m.id })),
       events: (l.events ?? []).map((e) => ({ type: e.type, meta: e.meta })),
       nudge_count: l.nudge_count ?? 0,
-      drifts: (l.drift_history ?? []).map((d) => ({ kind: d.kind, severity: d.severity, action: d.action, reason: d.reason })),
+      // D-v5（本轮扩面发现）：源引擎对可恢复错误自动记 drift（action=self_correct, reason=auto-logged…），
+      // 本引擎未移植（见 diff.DEVIATIONS.md）——白名单剔除该模式，不掩盖其他 drift 分歧
+      drifts: (l.drift_history ?? [])
+        .filter((d) => !/^auto-logged recoverable error/.test(d.reason ?? ''))
+        .map((d) => ({ kind: d.kind, severity: d.severity, action: d.action, reason: d.reason })),
     }
   }
   return { tree_id: state.tree_id, leaves }
@@ -140,3 +144,63 @@ test('差分：非法输入行为一致（重复 init / 借身份 leaf add / 重
   const d3 = await dst.call('segment:append', ['dtwo', 'dtwo-C1-worker', SEG])
   assert.equal(s3.ok, false); assert.equal(d3.ok, false)
 })
+
+/**
+ * 差分扩面（handoff §7 任务 7）：LCG 生成 ≥50 组调用序列（已冻结命令面内参数化：
+ * init / leaf add / event append / set-context / segment append，含合法与非法混合），
+ * 逐调用 ok 标志一致 + 终态投影逐字段一致。
+ * 域约束（已冻结偏差内）：set-context 仅用 pct<42（源 85 / 本引擎 42 阈值差触发域外）。
+ */
+const SEQ_EVENTS = ['progress', 'blocked', 'plan', 'brief_echo', 'heartbeat_reply', 'status_check', 'bad-type']
+const BAD_LEAVES = [
+  { leaf_id: 'X-C9-worker', session_id: W2, parent: 'x-root', path: 'C9', role: 'worker', added_by: ROOT },          // 前缀错
+  { leaf_id: 'dqxx-C9-worker', session_id: W2, parent: 'dqxx-root', path: 'WRONG', role: 'worker', added_by: ROOT }, // path 不一致
+  { leaf_id: 'dqxx-C9-worker', session_id: W2, parent: 'dqxx-root', path: 'C9', role: 'intern', added_by: ROOT },    // 角色非法
+  { leaf_id: 'dqxx-C9-worker', session_id: W2, parent: 'dqxx-root', path: 'C9', role: 'worker', added_by: W2 },      // 借身份
+]
+const uuid = (i, tag) => `${String(i).padStart(8, '0')}${tag}-0000-4000-8000-00000000000${tag}`
+
+test('差分扩面：52 组生成序列逐调用一致 + 终态投影一致', async () => {
+  const N = 52
+  for (let i = 0; i < N; i++) {
+    const { src, dst, srcDir, dstDir } = await makeEngines('dseq')
+    const TREE = `dq${String(i).padStart(2, '0')}`
+    const W1i = uuid(i, '1'), W2i = uuid(i, '2')
+    let seed = 0x9e37 + i * 7919
+    const rnd = () => { seed = (seed * 1103515245 + 12345) >>> 0; return (seed >>> 16) / 0xffff }
+    const ops = []
+    ops.push(['init', [TREE, { g: 'x' }, { d: 'y' }, ROOT], ROOT])
+    ops.push(['leaf:add', [{ leaf_id: `${TREE}-C1-worker`, session_id: W1i, parent: `${TREE}-root`, path: 'C1', role: 'worker', added_by: ROOT, model: 'glm-5.3', channel: 'main' }], ROOT])
+    const nOps = 4 + Math.floor(rnd() * 5)
+    for (let k = 0; k < nOps; k++) {
+      const r = rnd()
+      if (r < 0.35) {
+        const t = SEQ_EVENTS[Math.floor(rnd() * SEQ_EVENTS.length)]
+        ops.push(['event:append', [TREE, `${TREE}-C1-worker`, t, { k, note: `op${k}` }], W1i])
+      } else if (r < 0.55) {
+        ops.push(['leaf:set-context', [TREE, `${TREE}-C1-worker`, Math.floor(rnd() * 42)], W1i])   // pct<42 域内
+      } else if (r < 0.75) {
+        ops.push(['segment:append', [TREE, `${TREE}-C1-worker`, `${((i * 16 + k) % 0xfffffff).toString(16).padStart(7, '0')}3-0000-4000-8000-000000000003`], W1i])
+      } else if (r < 0.9) {
+        const bad = BAD_LEAVES[Math.floor(rnd() * BAD_LEAVES.length)]
+        const badLeaf = { ...bad, leaf_id: bad.leaf_id.replace('dqxx', TREE).replace('X-C9', `${TREE.slice(0, 2)}C9`), parent: `${TREE}-root` }
+        ops.push(['leaf:add', [TREE, badLeaf], ROOT])
+      } else {
+        ops.push(['init', [TREE, {}, {}, ROOT], ROOT])   // 重复 init → 双方拒
+      }
+    }
+    for (const [cmd, args, caller] of ops) {
+      let s, d
+      if (cmd === 'init') { s = await src.run('init', [args[0], '--root-brief', JSON.stringify(args[1] ?? {}), '--root-dod', JSON.stringify(args[2] ?? {}), ...(args[3] ? ['--session-id', args[3]] : [])], srcDir, caller); d = await dst.call('init', args, caller) }
+      else if (cmd === 'leaf:add') { s = await src.run('leaf', ['add', args[0], '--json', JSON.stringify(args[1])], srcDir, caller); d = await dst.call('leaf:add', args, caller) }
+      else if (cmd === 'event:append') { s = await src.run('event', ['append', args[0], args[1], '--type', args[2], '--json', JSON.stringify(args[3] ?? {})], srcDir, caller); d = await dst.call('event:append', args, caller) }
+      else if (cmd === 'leaf:set-context') { s = await src.run('leaf', ['set-context', args[0], args[1], String(args[2])], srcDir, caller); d = await dst.call('leaf:set-context', args, caller) }
+      else { s = await src.run('segment', ['append', args[0], args[1], args[2]], srcDir, caller); d = await dst.call('segment:append', args, caller) }
+      assert.equal(s.ok, d.ok, `seq#${i} ${cmd} ok 分歧: src=${JSON.stringify(s.error ?? s).slice(0, 200)} dst=${JSON.stringify(d.error ?? d).slice(0, 200)}`)
+    }
+    const srcState = JSON.parse(await fsp.readFile(path.join(srcDir, TREE, 'tree-state.json'), 'utf-8'))
+    const dstState = JSON.parse(await fsp.readFile(path.join(dstDir, TREE, 'tree-state.json'), 'utf-8'))
+    try { assert.deepEqual(project(dstState), project(srcState)) }
+    catch (e) { assert.fail(`seq#${i} 投影分歧: ${e.message.slice(0, 1200)}`) }
+  }
+}, { timeout: 120_000 })

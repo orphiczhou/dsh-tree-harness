@@ -1,11 +1,11 @@
 /**
- * 验证策略层（PLAN §5；S1 第三批 = 第一批模式：self-report / artifact / command）。
- * llm-judge / composite / human 第二批（依赖 smoke 结论：模型路由、ask 通道）。
- * 纯逻辑：fs/exec 经端口注入；装载期校验策略模板（未知 mode / artifact 缺 glob / command 缺 run
- * → 装载失败含键名——§9 断言「策略模板非法→装载失败报错含键名」）。
+ * 验证策略层（PLAN §5）：batch-1 self-report/artifact/command + batch-2 llm-judge/composite/human。
+ * llm-judge 经 ports.judge（宿主装配异族评审会话；未装配 fail-closed）；human 在 approval=never
+ * 运行时降级为 frozen 待裁（工具面手动裁决）；composite = 嵌套 checks[] AND 链（batch-1 的
+ * 多 verify 项 AND 语义泛化）。纯逻辑：fs/exec/judge 经端口注入。
  */
 
-const MODES = ['self-report', 'artifact', 'command']  // 第一批闭集；batch2 追加 llm-judge/composite/human
+const MODES = ['self-report', 'artifact', 'command', 'llm-judge', 'composite', 'human']
 
 /** 内置五模板缺省（§7 verificationPolicies 缺省的 batch-1 子集）。 */
 export const DEFAULT_POLICIES = {
@@ -47,6 +47,15 @@ export function validatePolicies(policies) {
       }
       if (v.mode === 'artifact' && typeof v.glob !== 'string') throw new Error(`verificationPolicies["${id}"]: artifact mode requires "glob"`)
       if (v.mode === 'command' && typeof v.run !== 'string') throw new Error(`verificationPolicies["${id}"]: command mode requires "run"`)
+      if (v.mode === 'llm-judge' && typeof v.rubric !== 'string') throw new Error(`verificationPolicies["${id}"]: llm-judge mode requires "rubric"`)
+      if (v.mode === 'composite' && (!Array.isArray(v.checks) || v.checks.length === 0)) throw new Error(`verificationPolicies["${id}"]: composite mode requires non-empty "checks[]"`)
+      if (v.mode === 'composite') {
+        for (const c of v.checks) {
+          if (!c || typeof c !== 'object' || !MODES.includes(c.mode) || c.mode === 'composite') {
+            throw new Error(`verificationPolicies["${id}"].checks[]: flat composite only (mode ∈ ${MODES.filter((m) => m !== 'composite').join('|')})`)
+          }
+        }
+      }
     }
   }
   return true
@@ -115,6 +124,26 @@ export function createVerifier(opts = {}) {
         }
         return { mode: v.mode, pass: true, detail: `exit=0 (${v.run})`, durationMs: Date.now() - t0 }
       }
+      if (v.mode === 'llm-judge') {
+        if (typeof ports.judge !== 'function') return { mode: v.mode, pass: false, detail: 'llm-judge ports not wired (judge)', durationMs: Date.now() - t0 }
+        try {
+          const j = await ports.judge({ rubric: v.rubric, minScore: v.minScore ?? 0.8, ctx })
+          if (!j || typeof j !== 'object' || typeof j.pass !== 'boolean') {
+            return { mode: v.mode, pass: false, detail: `judge returned invalid shape: ${JSON.stringify(j).slice(0, 200)}`, durationMs: Date.now() - t0 }
+          }
+          return { mode: v.mode, pass: j.pass, detail: j.detail ?? `judge score=${j.score ?? '?'} (min ${v.minScore ?? 0.8})`, durationMs: Date.now() - t0 }
+        } catch (e) {
+          return { mode: v.mode, pass: false, detail: `judge error: ${e?.message ?? e}`, durationMs: Date.now() - t0 }
+        }
+      }
+      if (v.mode === 'human') {
+        // approval=never 降级设计（engine-spec §8-6）：human 裁决冻结待定——pass=false + pending=true，
+        // onFail 语义 frozen：节点不得结算，直到人工经 tree_verify 显式 policy 覆盖裁决。
+        return { mode: v.mode, pass: false, pending: true, detail: 'human adjudication required (approval=never → frozen): resolve manually via tree_verify with explicit policy_id', durationMs: Date.now() - t0 }
+      }
+      if (v.mode === 'composite') {
+        return { mode: v.mode, pass: false, detail: 'composite is expanded by runVerifications (checks[]) and never executed directly', durationMs: Date.now() - t0 }
+      }
       return { mode: v.mode, pass: false, detail: `unknown mode ${v.mode}`, durationMs: Date.now() - t0 }
     } catch (e) {
       return { mode: v.mode, pass: false, detail: `verifier error: ${e?.message ?? e}`, durationMs: Date.now() - t0 }
@@ -122,13 +151,19 @@ export function createVerifier(opts = {}) {
   }
 
   /**
-   * 运行一个策略的全部验证（AND 语义；composite AND 链短路在 batch2 泛化）。
+   * 运行一个策略的全部验证（AND 语义；composite 展开 checks[] 为平铺 AND 链，短路可选）。
    * @returns {{policyId: string, verdicts: object[], pass: boolean, onFail: string}}
    */
   async function runVerifications(policyId, ctx) {
     const p = policyFor(policyId)
-    const verdicts = []
+    // composite 展开：checks[] 平铺进执行链（嵌套 composite 装载期已拒）
+    const chain = []
     for (const v of p.verify) {
+      if (v.mode === 'composite') for (const c of v.checks) chain.push(c)
+      else chain.push(v)
+    }
+    const verdicts = []
+    for (const v of chain) {
       const verdict = await runCheck(v, ctx)
       verdicts.push(verdict)
       if (!verdict.pass && p.shortCircuit !== false) break   // AND 短路

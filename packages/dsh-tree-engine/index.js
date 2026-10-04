@@ -18,6 +18,7 @@ import { createEngine } from './src/engine.js'
 import { createVerifier } from './src/verify.js'
 import { fsStore } from './src/store.js'
 import { systemClock } from './src/clock.js'
+import { configFromEnv } from './src/config.js'
 import path from 'node:path'
 import { promises as fsp } from 'node:fs'
 import { spawn } from 'node:child_process'
@@ -30,10 +31,38 @@ const HANDOFF_INSTRUCTION =
   'K3 产物引用（文件路径或 tool:<name>@<seq>，逐行独立）/ K4 契约变更（无则写"无"）/ K5 继续执行指针），' +
   '然后停止工作等待收割。不要开始新的任务步骤。'
 
-function makePorts(services, log) {
+function makePorts(services, log, opts = {}) {
   /** 派发者捕获表（E2E 实证 startContinuable 的 request.parent 必须是活 Agent；
    *  首派从工具 exec.agent 捕获，竹节接力复用；进程内引用，不序列化）。 */
   const parents = new Map()   // `${treeId}/${leafId}` → { agent, sessionId }
+  const ctxRef = opts.ctx ?? null   // tokenMeter 等经 ctx 直取（mixin 面）的兜底引用
+  /** 简报宽限（handoff §7 任务 4）：promptHandoff 发出交棒指令后轮询 readSession 提取 K1–K5。
+   *  上限 = min(graceMs, 12s)（sweep 逐树串行，过长阻塞同树其他调用）。 */
+  const graceMs = Math.min(opts.graceMs ?? 12_000, 12_000)
+  const pollMs = 2_000
+  let usageShapeLogged = false
+
+  /** 从 readSession 快照防御性提取含 K1 标记的简报文本（形状未冻结——尽力提取，失败降级）。 */
+  function extractHandoffBrief(snap) {
+    const texts = []
+    const visit = (v, depth) => {
+      if (!v || depth > 8 || texts.length > 20) return
+      if (typeof v === 'string') { if (v.length > 20 && v.length < 20_000) texts.push(v); return }
+      if (Array.isArray(v)) { for (const x of v) visit(x, depth + 1); return }
+      if (typeof v === 'object') {
+        for (const k of ['text', 'content', 'message', 'messages', 'turns', 'blocks', 'output', 'entries', 'items']) {
+          if (k in v) visit(v[k], depth + 1)
+        }
+      }
+    }
+    visit(snap, 0)
+    for (const t of texts.reverse()) {   // 最近的在前
+      const i = t.indexOf('K1')
+      if (i >= 0 && /K2/.test(t) && /K5/.test(t)) return t.slice(Math.max(0, i - 200), i + 4_000).trim()
+    }
+    return null
+  }
+
   return {
     /** 派发/接力新会话（≅ subagents.startContinuable）。权威形状（asar 源 + E2E 实证）：
      *  ContinuableStartSpec = { provider*, label*, childId?, request{ prompt: ContentBlock[], parent: Agent }, signal }
@@ -98,7 +127,7 @@ function makePorts(services, log) {
       }
       catch (e) { log(`ports.interrupt failed for ${sessionId}: ${e?.message ?? e}`) }
     },
-    /** 交棒指令（≅ subagents.prompt，按持久化父地址授权——tree_send 同款先例）。 */
+    /** 交棒指令（≅ subagents.prompt，按持久化父地址授权）+ K1–K5 简报宽限回收（任务 4）。 */
     async promptHandoff(sessionId) {
       try {
         const records = await services.sessionQuery.filterSessions([{ kind: 'id', values: [sessionId] }])
@@ -109,8 +138,17 @@ function makePorts(services, log) {
           parentSessionId: parent, childSessionId: sessionId, mode: 'continuable', delivery: 'queue',
           content: [{ type: 'text', text: HANDOFF_INSTRUCTION }],
         })
-        // v0.2：简报经收割路径回收；此处返回 null → 接力标 no-handoff-summary 并依任务书继续。
-        // 简报全文回收在 S1 smoke 后接入（readSession 提取 K1–K5 段落）。
+        // 宽限轮询：旧会话在 grace 期内产出 K1–K5 简报 → 全文回收；超时/不可提取 → null 降级
+        const deadline = Date.now() + graceMs
+        while (Date.now() < deadline) {
+          await new Promise((r) => setTimeout(r, pollMs))
+          try {
+            const snap = await services.sessionQuery.readSession(sessionId)
+            const brief = extractHandoffBrief(snap)
+            if (brief) { log(`handoff brief recovered (${brief.length} chars) for ${String(sessionId).slice(0, 8)}`); return brief }
+          } catch { /* 快照暂不可读：继续宽限 */ }
+        }
+        log(`handoff brief: grace ${graceMs}ms expired for ${String(sessionId).slice(0, 8)} → no-handoff-summary`)
         return null
       } catch (e) {
         log(`ports.promptHandoff failed for ${sessionId}: ${e?.message ?? e}`)
@@ -125,8 +163,25 @@ function makePorts(services, log) {
         return typeof t === 'number' ? t : (t ? Date.parse(t) : null)
       } catch { return null }
     },
-    /** 宿主侧上下文测量（tokenMeter 形状待 smoke；暂缺 → 自报信号生效）。 */
-    async usagePct() { return null },
+    /** 宿主侧上下文测量（handoff §7 任务 5：tokenMeter.measure；形状防御性提取——
+     *  返回字段首次调用经 log 冻结；任何失败返回 null → 自报信号生效（先到者生效语义））。 */
+    async usagePct(sessionId) {
+      try {
+        const meter = services.tokenMeter ?? (typeof ctxRef?.get === 'function' ? ctxRef.get('tokenMeter') : null) ?? ctxRef?.tokenMeter ?? null
+        if (!meter || typeof meter.measure !== 'function') return null
+        const snap = await services.sessionQuery.readSession(sessionId)
+        if (!snap) return null
+        const m = await meter.measure(snap)
+        if (!usageShapeLogged) { usageShapeLogged = true; log(`tokenMeter.measure shape: ${JSON.stringify(m).slice(0, 400)}`) }
+        // 候选字段防御提取：pct / context.pct / pressure.pct / usage.pct（0-100 或 0-1 归一）
+        const cands = [m?.pct, m?.contextPct, m?.context?.pct, m?.pressure?.pct, m?.usage?.pct]
+        for (const c of cands) if (typeof c === 'number' && c >= 0) return c <= 1 ? Math.round(c * 100) : Math.min(100, Math.round(c))
+        return null
+      } catch (e) {
+        if (!usageShapeLogged) { usageShapeLogged = true; log(`tokenMeter.measure unavailable: ${e?.message ?? e} → self-report only`) }
+        return null
+      }
+    },
   }
 }
 
@@ -456,7 +511,7 @@ export function apply(ctx) {
   /** 文件自诊断（Loader 缓存下唯一可靠观测通道）：apply 全程留痕 + 全程容错。 */
   const diagPath = path.join(dataDir, 'apply.log')
   const diag = (msg) => { try { fsp.mkdir(path.dirname(diagPath), { recursive: true }).then(() => fsp.appendFile(diagPath, `${new Date().toISOString()} ${msg}\n`)).catch(() => {}) } catch {} }
-  diag(`apply() entered (v0.3.8); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
+  diag(`apply() entered (v0.3.9); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
   try {
     ctx.inject(['tools', 'subagents', 'sessionQuery'], (scoped) => {
       try {
@@ -475,8 +530,19 @@ export function apply(ctx) {
           log('sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}')
         }
 
-        engine = createEngine({ store: fsStore(dataDir), clock })
-        engine.attachPorts(makePorts(services, log))
+        // Config 装载期校验（§7 任务 8）：TREE_ENGINE_CONFIG JSON → 全键类型/约束校验，
+        // 非法即装载失败（apply 终止、工具不注册），报错含键名——不静默回退
+        let envConfig = { config: {}, orchestra: {} }
+        try { envConfig = configFromEnv() }
+        catch (e) {
+          diag(`config validation FAILED (load aborted): ${e.message}`)
+          console.error(`[tree-engine] config validation failed, plugin NOT loaded: ${e.message}`)
+          return
+        }
+        if (Object.keys(envConfig.config).length || Object.keys(envConfig.orchestra).length) diag(`config loaded: ${JSON.stringify(envConfig)}`)
+
+        engine = createEngine({ store: fsStore(dataDir), clock, ...(Object.keys(envConfig.config).length ? { config: envConfig.config } : {}), ...(Object.keys(envConfig.orchestra).length ? { orchestra: envConfig.orchestra } : {}) })
+        engine.attachPorts(makePorts(services, log, { ctx, graceMs: envConfig.orchestra.graceMs }))
         const { sweepMode, stop } = engine.startSweep()
         if (currentStopSweep) { try { currentStopSweep() } catch {} ; diag('previous sweep disposed (hot-reload zombie)') }   // E2E#5：僵尸 sweep 清理
         currentStopSweep = stop
