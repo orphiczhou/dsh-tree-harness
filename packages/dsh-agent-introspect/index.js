@@ -75,9 +75,15 @@ const SELF_SPEC = {
       temperature: 'unavailable: no temperature field in the host subagent chain (AgentOptions/agent-loop); not configurable at all',
       mutation: 'runtime mutation of agentOptions/toolFilter/persona/permissions is impossible for a started session (resolved once at start); use cancel + re-dispatch with new assignee',
     }
+    const readProjcache = async (p) => JSON.parse(await fsp.readFile(p, 'utf-8'))
     for (const p of projcacheCandidates(sessionId)) {
       try {
-        const raw = JSON.parse(await fsp.readFile(p, 'utf-8'))
+        let raw = await readProjcache(p)
+        // rerout 演示实证:执行者极早期调用时 modelSelection 行可能尚未落盘(懒写竞态)→ 短暂延迟重读一次
+        if (!raw?.record?.rows?.modelSelection && !raw?.modelSelection) {
+          await new Promise((r) => setTimeout(r, 3_000))
+          raw = await readProjcache(p)
+        }
         return lossless({ spec: projectSpec(raw, sessionId), source: `projcache ${p}`, notes })
       } catch { /* 下一候选 */ }
     }
