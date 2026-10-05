@@ -1,0 +1,14 @@
+{
+  "name": "@local/dsh-agent-introspect",
+  "version": "0.1.0",
+  "description": "DSH plugin: subagent self-introspection tool (self_spec) — observe own model/permissions/scope/token usage from session projcache",
+  "type": "module",
+  "main": "index.js",
+  "exports": { ".": "./index.js", "./package.json": "./package.json" },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": { "patch": "./cordis.patch.yml" }
+  },
+  "keywords": ["dsh-plugin"],
+  "license": "MIT"
+}

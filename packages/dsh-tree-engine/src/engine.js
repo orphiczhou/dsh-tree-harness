@@ -415,12 +415,37 @@ export function createEngine(opts) {
       // E2E#5 修复：派发即绑定执行者为节点 owner（否则 done 事件所有权 caller===session_id 永远不可满足，
       // 执行者无法自举结算；重派时绑定最新执行者）。手动 set-session（creator-only）不受影响。
       leaf.session_id = session.sessionId
+      // [agspec-C1] assignee 完整持久化(竹节接力/硬改道重派的 assignee 来源;消除 leaf.model 恒 'unknown')
+      const assignee = (spec?.assignee && typeof spec.assignee === 'object')
+        ? {
+            ...(spec.assignee.provider ? { provider: spec.assignee.provider } : {}),
+            ...(spec.assignee.model ? { model: spec.assignee.model } : {}),
+            ...(spec.assignee.effort ? { effort: spec.assignee.effort } : {}),
+            ...(spec.assignee.preset ? { preset: spec.assignee.preset } : {}),
+          }
+        : null
+      leaf.assignee = assignee
+      // 兼容旧观测字段:有声明才覆盖 'unknown'
+      if (assignee?.model) { leaf.model = assignee.model; leaf.channel = assignee.provider ?? assignee.model }
+      else if (!leaf.model) { leaf.model = 'unknown'; leaf.channel = leaf.channel ?? 'unknown' }
       rt.parentSessionId = spec?.parentSessionId ?? caller ?? null
       rt.attempt += 1                     // 竹节不改 attempt（仅失败/超时重派计）
       rt.dispatchedAt = clock.now()
       rt.lastOutputAt = clock.now()
       rt.handoffBrief = null
-      rt.taskPrompt = spec?.prompt ?? leaf.brief ?? null   // E2E#4 修复：任务正文持久化（竹节接力的提示词来源）
+      // [agspec-C3] 会话配置自描述块：随 taskPrompt 持久化（竹节接力/重派自然保持;宿主 resolve 可能覆盖意图值,
+      // 生效值以 self_spec 工具查询为准;温度在宿主 subagent 链路无配置点——声明≠生效,诚实标注）
+      const declared = [
+        '<session-config-declared>',
+        `label: tree:${treeId}/${leafId}`,
+        `parent session: ${rt.parentSessionId ?? '(engine default)'}`,
+        `assignee(intent): ${JSON.stringify(assignee ?? { note: 'unspecified → host/parent default resolution' })}`,
+        'permissions: inherited from parent at start; approval pinned to "never"; scope fixed for this session lifetime',
+        'note: values above are dispatch INTENT; runtime-effective values may differ (host route/preset overrides). Query tool self_spec for observed values.',
+        'note: temperature is not configurable in the current host subagent chain at all.',
+        '</session-config-declared>',
+      ].join('\n')
+      rt.taskPrompt = `${spec?.prompt ?? leaf.brief ?? ''}\n\n${declared}`   // E2E#4 修复：任务正文持久化（竹节接力的提示词来源）
       await store.write(treeId, state)
       return { node: { leaf_id: leafId, state: rt.state, session_id: rt.subagentSessionId, attempt: rt.attempt } }
     })
@@ -463,9 +488,10 @@ export function createEngine(opts) {
     // ① 先 interrupt（释放 maxActiveSubagents 名额；authority 用持久父地址）
     try { await ports.interrupt(rt.subagentSessionId, rt.parentSessionId) } catch { /* 尽力而为 */ }
     // ② 后 dispatch 新会话（提示词 = 任务正文（E2E#4 修复：rt.taskPrompt 持久化）+ 简报 + 同一 DoD）
+    // [agspec-C2] 接力 assignee 原样透传(此前只恢复 model 且 leaf.model 恒 'unknown' → 接力零路由保持,静默降级)
     const session = await ports.dispatch({
       treeId, leafId: leaf.leaf_id, prompt: rt.taskPrompt ?? leaf.brief, dod: leaf.dod,
-      assignee: leaf.model ? { model: leaf.model } : undefined,
+      assignee: leaf.assignee ?? (leaf.model && leaf.model !== 'unknown' ? { model: leaf.model } : undefined),
       handoffBrief: brief, segmentIndex: (rt.segmentChain ?? []).length + 1, attempt: rt.attempt,
     })
     rt.history.push({ sessionId: rt.subagentSessionId, state: 'running', endedAt: clock.now(), note: 'bamboo-relay' })

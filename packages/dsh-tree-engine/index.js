@@ -71,9 +71,10 @@ function makePorts(services, log, opts = {}) {
     async dispatch(spec) {
       const dodText = verifier ? verifier.dodPrompt(spec.policyId ?? spec.taskType ?? 'default') : `[DoD] ${JSON.stringify(spec.dod ?? {})}`
       const settleText = `\n\n[结算指令] 你是树节点 ${spec.treeId}/${spec.leafId} 的执行者。任务完成（含结论自述与关键产出）后，必须调用工具 tree_report {action:"event", tree_id:"${spec.treeId}", leaf_id:"${spec.leafId}", type:"done", meta:{summary:"<一句话结论>"}} 登记完成；失败/无法完成时同样回报 done 并在 summary 写明失败原因。除此之外不得操作树。`
-      const promptText = spec.handoffBrief != null
+      // [agspec-C3] 自描述块已移至引擎侧渲染(engine dispatchStart,随 taskPrompt 持久化+竹节接力保持)
+      const promptText = (spec.handoffBrief != null
         ? `${spec.prompt ?? ''}\n\n${dodText}${settleText}\n\n[竹节第 ${spec.segmentIndex} 节 · 交接简报]\n${spec.handoffBrief ?? '（no-handoff-summary：前会话未产出简报，依任务书与 DoD 继续）'}`
-        : `${spec.prompt ?? ''}\n\n${dodText}${settleText}`
+        : `${spec.prompt ?? ''}\n\n${dodText}${settleText}`)
       const key = `${spec.treeId}/${spec.leafId}`
       let parentAgent = spec.parentAgent
       let parentSessionId = spec.parentSessionId
@@ -456,7 +457,8 @@ const TREE_NODE = {
 const TREE_DISPATCH = {
   name: 'tree_dispatch',
   description:
-    'Dispatch / cancel a node execution (engine relays to continuable subagents). start: {prompt?, assignee?{provider,model}, dod?} — ' +
+    'Dispatch / cancel a node execution (engine relays to continuable subagents). start: {prompt?, assignee?{provider?,model?,effort?,preset?}, dod?} — ' +
+    'assignee is persisted on the leaf and survives bamboo relays; a <session-config-declared> self-descriptor block is appended to the dispatch prompt. ' +
     'node stays pending→running; bamboo-joint auto-relay runs inside running (context threshold 42%: brief → interrupt old → start successor). ' +
     'cancel: first-wins vs timeout hard deadline.',
   parameters: {

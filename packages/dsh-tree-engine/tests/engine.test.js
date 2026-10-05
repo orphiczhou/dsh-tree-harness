@@ -287,3 +287,26 @@ test('taskType 非字符串拒；合法字符串落账（策略映射在验证�
   assert.equal(r.ok, true, JSON.stringify(r.error))
   assert.equal((await engine.call('leaf:get', ['macp2', 'macp2-C3-worker'])).leaf.taskType, 'research')
 })
+
+// ── agspec C1/C2/C3：assignee 持久化 + 竹节透传 + 自描述块 ──
+test('dispatch:assignee 完整持久化 + leaf.model 覆盖 unknown + taskPrompt 含 <session-config-declared>', async () => {
+  const { engine } = await seeded()
+  const seen = []
+  engine.attachPorts({ dispatch: async (spec) => { seen.push(spec); return { sessionId: 'sess-a' } } })
+  const r = await engine.call('dispatch:start', ['macp2', 'macp2-C1-worker', { prompt: 'p', assignee: { provider: 'zai-coding-cn', model: 'glm-5.3-flash', effort: 'low' }, parentAgent: { id: 'a' }, parentSessionId: 'sess-x' }], undefined)
+  assert.equal(r.ok, true, JSON.stringify(r.error))
+  const leaf = (await engine.call('leaf:get', ['macp2', 'macp2-C1-worker'])).leaf
+  assert.deepEqual(leaf.assignee, { provider: 'zai-coding-cn', model: 'glm-5.3-flash', effort: 'low' })
+  assert.equal(leaf.model, 'glm-5.3-flash')          // 不再 unknown
+  assert.equal(leaf.channel, 'zai-coding-cn')
+  assert.ok(leaf.runtime.taskPrompt.includes('<session-config-declared>'))
+  assert.ok(leaf.runtime.taskPrompt.includes('"provider":"zai-coding-cn"'))
+  assert.ok(leaf.runtime.taskPrompt.includes('temperature'))
+  // 无 assignee → 不覆盖,leaf.model 保持缺省
+  await engine.call('leaf:add', ['macp2', { leaf_id: 'macp2-C7-worker', session_id: null, parent: 'macp2-root', role: 'worker', added_by: ROOT }], ROOT)
+  await engine.call('dispatch:start', ['macp2', 'macp2-C7-worker', { prompt: 'q', parentAgent: { id: 'a' } }], undefined)
+  const l7 = (await engine.call('leaf:get', ['macp2', 'macp2-C7-worker'])).leaf
+  assert.equal(l7.assignee, null)
+  assert.equal(l7.model, 'unknown')
+  assert.ok(l7.runtime.taskPrompt.includes('unspecified'))
+})
