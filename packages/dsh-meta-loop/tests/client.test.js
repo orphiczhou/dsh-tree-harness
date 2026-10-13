@@ -12,10 +12,18 @@ function fakeDom() {
   const makeEl = (tag) => {
     const el = {
       tagName: tag, children: [], attrs: {}, style: {}, dataset: {}, src: '', hidden: false, textContent: '', innerHTML: '',
-      className: '',
-      append(...kids) { el.children.push(...kids) },
+      className: '', __parent: null,
+      append(...kids) { for (const k of kids) { k.__parent = el } el.children.push(...kids) },
       setAttribute(k, v) { el.attrs[k] = v },
+      getAttribute(k) { return el.attrs[k] ?? null },
       addEventListener() {},
+      remove() { if (el.__parent) el.__parent.children = el.__parent.children.filter((c) => c !== el) },
+      closest(sel) {
+        const name = sel.replace(/^\./, '')
+        let cur = el
+        while (cur) { if (String(cur.className).split(/\s+/).includes(name)) return cur; cur = cur.__parent }
+        return null
+      },
       querySelector(sel) { return el.__find ? el.__find(sel) : null },
       querySelectorAll() { return [] },
     }
@@ -24,12 +32,14 @@ function fakeDom() {
   const head = makeEl('head')
   const body = makeEl('body')
   const pill = makeEl('div')
-  body.__find = (sel) => (sel === '.dsh-td-switch' ? pill : null)
+  pill.className = 'dsh-td-switch'
+  const findBtn = () => pill.children.find((c) => c.className === 'dsh-ml-btn') ?? null
+  body.__find = (sel) => (sel === '.dsh-td-switch' ? pill : sel === '.dsh-ml-btn' ? findBtn() : null)
   return {
     document: {
       head, body,
       createElement: makeEl,
-      querySelector: (sel) => (sel === '.dsh-td-switch' ? pill : null),
+      querySelector: (sel) => (sel === '.dsh-td-switch' ? pill : sel === '.dsh-ml-btn' ? findBtn() : null),
       querySelectorAll: () => [],
     },
     pill,
@@ -41,6 +51,7 @@ test('client half:factory 返回 module.exports + apply;apply 把「元方法」
   const dom = fakeDom()
   globalThis.document = dom.document
   globalThis.MutationObserver = class { observe() {} disconnect() {} }
+  globalThis.setInterval = () => 0            // 看门狗定时器:测试里 stub,否则进程不退出
   let captured = null
   globalThis.window = { __ModuleLoader__: { load: (cfg) => { captured = cfg } } }
   try {
@@ -61,6 +72,39 @@ test('client half:factory 返回 module.exports + apply;apply 把「元方法」
     delete globalThis.document
     delete globalThis.window
     delete globalThis.MutationObserver
+    delete globalThis.setInterval
+  }
+})
+
+test('client half:cordisInspect 在场时注册 meta-loop-ui provider 且 query 返回全字段', async () => {
+  const dom = fakeDom()
+  globalThis.document = dom.document
+  globalThis.MutationObserver = class { observe() {} disconnect() {} }
+  globalThis.setInterval = () => 0
+  let captured = null
+  globalThis.window = { __ModuleLoader__: { load: (cfg) => { captured = cfg } } }
+  try {
+    await import(`../client.js?cachebust=${Date.now()}`)
+    const exports = captured.factory()
+    let provider = null
+    const ctx = { inject: (services, cb) => { cb({ cordisInspect: { register: (p) => { provider = p; return () => {} } } }) }, get: () => undefined }
+    exports.apply(ctx)
+    assert.ok(provider, 'cordisInspect 在场时必须注册 provider')
+    assert.equal(provider.manifest.id, 'meta-loop-ui')
+    assert.equal(provider.manifest.methods[0].name, 'panel')
+    const out = provider.query('panel')
+    for (const k of provider.manifest.methods[0].outputSchema.required) {
+      assert.ok(k in out, `query 返回必须含字段 ${k}`)
+      assert.notEqual(out[k], undefined, `字段 ${k} 不得为 undefined(宿主通道拒收)`)
+    }
+    assert.equal(out.pillAttached, true, '按钮已在 thoughtdag 胶囊内')
+    assert.equal(out.standalonePill, false)
+    assert.throws(() => provider.query('nope'), /unknown meta-loop-ui inspect method/)
+  } finally {
+    delete globalThis.document
+    delete globalThis.window
+    delete globalThis.MutationObserver
+    delete globalThis.setInterval
   }
 })
 
