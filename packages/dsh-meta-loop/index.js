@@ -109,6 +109,12 @@ function mountWebPanel(ctx, diag) {
     const prefix = '/metaloop'
     const panelRoot = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/(?=[A-Za-z]:)/, '')), 'panel')
     const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' }
+    // Host 白名单(dsh-thoughtdag 同款 DNS-rebinding 防护;无 Host 头容忍——自定义协议壳不发 Host)
+    const trusted = new Set(['localhost', '127.0.0.1', '::1', ...(process.env.TREE_ENGINE_TRUSTED_HOSTS ?? '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean)])
+    const hostOk = (req) => {
+      const host = String(req?.headers?.host ?? '').replace(/:\d+$/, '').toLowerCase()
+      return host === '' || trusted.has(host)
+    }
     const sendFile = async (res, abs) => {
       try { const body = await fsp.readFile(abs); res.writeHead(200, { 'content-type': MIME[path.extname(abs).toLowerCase()] ?? 'application/octet-stream' }); res.end(body) }
       catch { res.writeHead(404); res.end('not found') }
@@ -122,6 +128,7 @@ function mountWebPanel(ctx, diag) {
     }
     const api = async (req, res) => {
       try {
+        if (!hostOk(req)) { res.writeHead(403); res.end('untrusted host'); return }
         const url = new URL(req.url ?? '/', 'http://dsh.local')
         const p = url.pathname.slice((prefix + '/api').length)
         if (p === '/loops' && req.method === 'GET') {
@@ -146,6 +153,7 @@ function mountWebPanel(ctx, diag) {
     ctx.effect(() => web.register({ kind: 'prefix', path: prefix + '/api', handler: api }), 'meta-loop: api')
     ctx.effect(() => web.register({
       kind: 'prefix', path: prefix, handler: async (req, res) => {
+        if (!hostOk(req)) { res.writeHead(403); res.end('untrusted host'); return }
         const url = new URL(req.url ?? '/', 'http://dsh.local')
         const rel = url.pathname.slice(prefix.length).replace(/^\/+/, '') || 'index.html'
         if (rel.includes('..')) { res.writeHead(403); res.end('forbidden'); return }
