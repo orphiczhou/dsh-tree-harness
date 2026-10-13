@@ -1,12 +1,1 @@
-{
-  "name": "@local/dsh-meta-loop",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "description": "Meta-system method loop harness for DSH: 反馈→分析(1115)→策划(六类)→决策(APX+裕度)→实施→总体检视,跨轮递归记账+机械门禁。治理层:管怎么打循环;任务执行归 tree-engine。",
-  "exports": { ".": "./index.js", "./core": "./src/core.js", "./package.json": "./package.json" },
-  "dsh": {
-    "manifestVersion": 1,
-    "bundle": { "patch": "./cordis.patch.yml" }
-  }
-}
+{"name": "@local/dsh-meta-loop", "version": "0.2.0", "private": true, "type": "module", "description": "Meta-system method loop harness for DSH (six-stage governance loop). Host adapter + same-origin Web panel /metaloop/ + pill entry.", "exports": {".": "./index.js", "./client": "./client.js", "./core": "./src/core.js", "./package.json": "./package.json"}, "dsh": {"manifestVersion": 1, "bundle": {"patch": "./cordis.patch.yml"}, "client": {"platform": "web", "immediately": true, "inject": []}}}
