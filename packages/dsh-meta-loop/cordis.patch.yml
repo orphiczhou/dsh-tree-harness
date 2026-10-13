@@ -1,0 +1,3 @@
+- insert:
+    - id: meta-loop
+      name: '@local/dsh-meta-loop'
