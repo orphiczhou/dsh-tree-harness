@@ -50,13 +50,15 @@ function fakeDom() {
   const body = makeEl('body')
   const pill = makeEl('div')
   pill.className = 'dsh-td-switch'
+  const menubar = makeEl('div')
+  menubar.__rect = { left: 0, top: 0, width: 110, height: 32, right: 110, bottom: 32 }   // 窗体菜单(应用/编辑)
   const findBtn = () => pill.children.find((c) => c.className === 'dsh-ml-btn') ?? body.children.map((p) => p.children?.find((c) => c.className === 'dsh-ml-btn')).find(Boolean) ?? null
   body.__find = (sel) => (sel === '.dsh-td-switch' ? pill : sel === '.dsh-ml-btn' ? findBtn() : null)
   return {
     document: {
       head, body,
       createElement: makeEl,
-      querySelector: (sel) => (sel === '.dsh-td-switch' ? pill : sel === '.dsh-ml-btn' ? findBtn() : null),
+      querySelector: (sel) => (sel === '.dsh-td-switch' ? pill : sel === '.dsh-ml-btn' ? findBtn() : sel === '[role="menubar"]' ? menubar : null),
       querySelectorAll: () => [],
       elementFromPoint: (x, y) => {
         const b = findBtn()
@@ -65,6 +67,7 @@ function fakeDom() {
       },
     },
     pill,
+    menubar,
     body,
   }
 }
@@ -146,11 +149,12 @@ test('client half:胶囊被摆到视口外(y=1032,视口高 1032) → 自动改�
     exports.apply({})
     assert.equal(dom.pill.children.length, 0, '不可见的 thoughtdag 胶囊里不得留按钮')
     const own = dom.body.children.find((c) => c.className === 'dsh-ml-btn')
-    assert.ok(own, '按钮必须直接挂 body(自立模式:脱离容器,fixed 才以视口为参照)')
+    assert.ok(own, '按钮必须直接挂 body(兜底模式:脱离容器,不再受胶囊包含块影响)')
     assert.equal(own.style.position, 'fixed', '内联固定定位(残留实例改不掉)')
-    assert.equal(own.style.left, '12px')
+    assert.equal(own.style.left, '122px', '兜底位也在菜单行右侧(菜单右缘 110 + 12)')
+    assert.equal(own.style.top, '7px', '兜底位与窗体菜单同一行')
     const r = own.getBoundingClientRect()
-    assert.ok(r.top < 1032 && r.left < 2555, '自立位置在视口内')
+    assert.ok(r.top < 1032 && r.left < 2555, '位置在视口内')
   } finally {
     delete globalThis.document
     delete globalThis.window
@@ -159,9 +163,9 @@ test('client half:胶囊被摆到视口外(y=1032,视口高 1032) → 自动改�
   }
 })
 
-test('client half:胶囊贴底半藏(y=1006..1034,视口高 1032) → 就地扶正胶囊,入口留在胶囊内', async () => {
+test('client half:胶囊不在菜单行 → 扶正到「菜单右侧同一行」(用户 2026-10-13 要求)', async () => {
   const dom = fakeDom()
-  dom.pill.__rect = { left: 0, top: 1006, width: 2555, height: 28, right: 2555, bottom: 1034 }   // 只露 26px,贴底
+  dom.pill.__rect = { left: 0, top: 1006, width: 2555, height: 28, right: 2555, bottom: 1034 }   // 贴底、不在菜单行
   globalThis.document = dom.document
   globalThis.MutationObserver = class { observe() {} disconnect() {} }
   globalThis.setInterval = () => 0
@@ -171,9 +175,12 @@ test('client half:胶囊贴底半藏(y=1006..1034,视口高 1032) → 就地扶�
     await import(`../client.js?cachebust=${Date.now()}`)
     const exports = captured.factory()
     exports.apply({})
-    assert.equal(dom.pill.children.length, 1, '入口留在原胶囊内(用户要求:装进原胶囊,不自建替代品)')
-    assert.equal(dom.pill.children[0].className, 'dsh-ml-btn')
-    assert.equal(dom.pill.style.top, '48px', '胶囊不可用时就地扶正到标题栏下方(不改原插件内容)')
+    assert.equal(dom.pill.style.position, 'fixed', '胶囊被就地扶正(内联样式;真机会随之移动)')
+    assert.equal(dom.pill.style.left, '122px', '扶正目标:菜单右缘(110) + 12 间距')
+    const own = dom.body.children.find((c) => c.className === 'dsh-ml-btn')
+    assert.ok(own, 'stub 几何不随内联样式变化,故入口落菜单行兜底位(真机则留在胶囊内)')
+    assert.equal(own.style.left, '122px', '入口始终在菜单行右侧')
+    assert.equal(own.style.top, '7px', '入口与窗体菜单同一行')
     assert.equal(exports.inject.length, 0)
   } finally {
     delete globalThis.document

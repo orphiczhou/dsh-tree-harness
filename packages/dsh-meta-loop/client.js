@@ -14,7 +14,7 @@ window.__ModuleLoader__.load({
 
     const PILL_SELECTOR = '.dsh-td-switch'
     const LABEL = '元方法'
-    const CLIENT_REV = '2026-10-13t'   // 客户端半:入口装进原胶囊;胶囊不可用时候选位逐个探测扶正
+    const CLIENT_REV = '2026-10-13w'   // 客户端半:入口固定在「窗体菜单同一行·菜单右侧」;胶囊也在该行时才装进胶囊
     /** 单实例仲裁:客户端半热更会残留上一实例的定时器(旧策略会把按钮抢回贴边胶囊)——
      *  以加载时刻为 rev,只有最新实例可以操作入口;旧实例的 reconcile/看门狗自动退场。 */
     const INSTANCE_TOKEN = `${CLIENT_REV}#${Date.now()}`
@@ -35,6 +35,19 @@ window.__ModuleLoader__.load({
       if (typeof window === 'undefined') return null
       if (!window.__metaLoopUi) window.__metaLoopUi = { btn: null, ownPill: null, overlay: null, frame: null }
       return window.__metaLoopUi
+    }
+
+    /** 窗体菜单矩形(td-tweak 量的也是它):[role=menubar];退化到顶栏首个按钮容器。 */
+    function menuRect() {
+      try {
+        for (const sel of ['[role="menubar"]', '[role="menubar"] > *', 'header [role="menubar"]']) {
+          const el = document.querySelector(sel)
+          if (!el) continue
+          const r = el.getBoundingClientRect()
+          if (r.width > 0 && r.height > 0) return r
+        }
+      } catch (_) {}
+      return null
     }
 
     /** 真可见性(effect 与 inspect 共用;此前误放在 apply 内 → provider 读到 undefined,2026-10-13f 修):
@@ -154,33 +167,66 @@ window.__ModuleLoader__.load({
         if (!btn || !btn.isConnected) { btn = document.querySelector('.dsh-ml-btn') ?? makeButton(); ui.btn = btn }
         return btn
       }
-      const FIXED_STYLE = { position: 'fixed', left: '12px', bottom: '56px', top: 'auto', zIndex: '130', height: '28px', border: '1px solid #d1d5db', borderRadius: '999px', background: 'rgba(255,255,255,.96)', boxShadow: '0 2px 8px rgba(0,0,0,.10)' }
-      const applyFixed = (el) => { try { for (const [k, v] of Object.entries(FIXED_STYLE)) el.style[k] = v } catch (_) {} }
+      /* 菜单行定位:水平用 td-tweak 量出的菜单右缘(--td-tweak-left,实测 724px),垂直取顶栏菜单行高度。
+         用户要求:入口与窗体菜单同一行、位于菜单右侧。 */
+      const MENU_ROW_TOP = 7
+      const menuRowLeft = () => {
+        try {
+          const v = parseFloat((window.getComputedStyle ? window.getComputedStyle(document.documentElement) : {}).getPropertyValue?.('--td-tweak-left') ?? '')
+          if (isFinite(v) && v > 0) return Math.round(v)
+        } catch (_) {}
+        const m = menuRect()
+        return m ? Math.round(m.right + 12) : 110
+      }
+      const menuRowStyle = () => ({
+        position: 'fixed', top: `${MENU_ROW_TOP}px`, left: `${menuRowLeft()}px`, right: 'auto', transform: 'none', zIndex: '900',
+        height: '28px', border: '1px solid #d1d5db', borderRadius: '999px', background: 'rgba(255,255,255,.96)',
+        boxShadow: '0 2px 8px rgba(0,0,0,.10)', padding: '0 10px',
+      })
+      const FIXED_STYLE = menuRowStyle()
+      const applyFixed = (el) => { try { for (const [k, v] of Object.entries(menuRowStyle())) el.style[k] = v } catch (_) {} }
       const clearFixed = (el) => { try { for (const k of Object.keys(FIXED_STYLE)) el.style[k] = '' } catch (_) {} }
+      /** 是否已在菜单行右侧(用户要的位置):元素竖直中心落在顶栏菜单行带内、水平贴近菜单右缘。 */
+      const atMenuRow = (el) => {
+        try {
+          const r = el.getBoundingClientRect()
+          if (r.height <= 0) return false
+          const wantLeft = menuRowLeft()
+          const bandCenter = MENU_ROW_TOP + 14          // 顶栏菜单行带中心(≈21px)
+          const center = r.top + r.height / 2
+          return Math.abs(center - bandCenter) <= 16 && r.left >= wantLeft - 24 && r.left <= wantLeft + 260
+        } catch (_) { return false }
+      }
 
       /* 入口装进原胶囊(用户 2026-10-13 要求:不要自建替代品、别动原插件的东西)。
          但实测原胶囊被摆在左下角 y≈1009,压在侧栏页脚底下——连它自己的「对话/思维图」都不可见。
          td-tweak 的设计意图是「贴菜单左侧、top:7px」,故这里只做一件最小的事:
          胶囊整体不可见时,用内联样式把它扶回设计位置(fixed; top:7px; left:110px),让三个按钮一起可见。
          不删除、不替换原插件任何节点;若胶囊已在舒适位置则完全不动它。 */
-      const PILL_RESCUE = { position: 'fixed', top: '48px', left: '110px', right: 'auto', transform: 'none', zIndex: '125' }
-      /* 扶正候选位:逐个做「几何+命中」测试,选第一个真正可用者——标题栏/头部各层在不同窗口尺寸下覆盖不同,
-         与其猜,不如让代码自己试(2026-10-13 实证:top:48 被会话头部盖住 → 命中测试不过)。 */
-      const PILL_CANDIDATES = [
-        { top: '48px', left: '110px' },
-        { top: '104px', left: '110px' },
-        { top: '48px', left: '640px' },
-        { top: '104px', left: '640px' },
-        { top: 'auto', bottom: '120px', left: '12px' },
-      ].map((c) => ({ position: 'fixed', right: 'auto', transform: 'none', zIndex: '125', ...c }))
+      /* 扶正候选位:首选「与窗体菜单同一行、菜单右侧」(用户 2026-10-13 要求),其余为兜底;
+         逐个做「几何+命中」测试,选第一个真正可用者——各层遮挡关系随窗口尺寸变化,与其猜,不如让代码自己试。 */
+      const alignCandidates = (pill) => {
+        const list = [{ top: `${MENU_ROW_TOP}px`, left: `${menuRowLeft()}px` }]
+        const m = menuRect()
+        const h = (pill && pill.getBoundingClientRect().height) || 28
+        if (m) list.push({ top: `${Math.round(m.top + Math.max(0, (m.height - h) / 2))}px`, left: `${Math.round(m.right + 12)}px` })
+        list.push(
+          { top: '8px', left: '180px' },
+          { top: '48px', left: `${menuRowLeft()}px` },
+          { top: '104px', left: '110px' },
+          { top: 'auto', bottom: '120px', left: '12px' },
+        )
+        return list.map((c) => ({ position: 'fixed', right: 'auto', transform: 'none', zIndex: '900', ...c }))
+      }
       const rescuePill = (pill) => {
-        if (comfortablyVisible(pill) && actuallyVisible(pill)) return true
-        for (const cand of PILL_CANDIDATES) {
+        if (!pill) return false
+        const cands = alignCandidates(pill)
+        if (comfortablyVisible(pill) && actuallyVisible(pill) && atMenuRow(pill)) return true
+        for (const cand of cands) {
           try { for (const [k, v] of Object.entries(cand)) pill.style[k] = v } catch (_) {}
           if (comfortablyVisible(pill) && actuallyVisible(pill)) return true
         }
-        // 都不行:保留第一个候选(至少在视口内),交调用方决定是否退兜底
-        try { for (const [k, v] of Object.entries(PILL_CANDIDATES[0])) pill.style[k] = v } catch (_) {}
+        try { for (const [k, v] of Object.entries(cands[0])) pill.style[k] = v } catch (_) {}
         return false
       }
       /** 无胶囊环境(未装/未启用 thoughtdag)才用的兜底:按钮直接挂 body + 内联固定位。 */
@@ -189,17 +235,18 @@ window.__ModuleLoader__.load({
         applyFixed(btn)
         if (btn.parentNode !== document.body) { try { document.body.append(btn) } catch (_) {} }
       }
-      /** 装进原胶囊:先放入;若胶囊几何不舒适(贴边/半藏)或按钮点不到(被标题栏等盖住),
-       *  就地把胶囊扶到可用高度再测;都不行才退回兜底入口。 */
+      /** 装进原胶囊:仅当胶囊本身位于「菜单行右侧」且按钮可点时才留在胶囊内;
+       *  否则先尝试把胶囊扶到菜单行,再测;都不行则退回菜单行位置的独立入口(视觉位置一致)。 */
       const toPill = () => {
         const pill = document.querySelector(PILL_SELECTOR)
         if (!pill) return false
         ensureButton()
         clearFixed(btn)
         if (!pill.contains(btn)) pill.append(btn)
-        if (comfortablyVisible(pill) && actuallyVisible(btn)) return true
+        if (comfortablyVisible(pill) && actuallyVisible(btn) && atMenuRow(pill)) return true
         rescuePill(pill)
-        return actuallyVisible(btn)
+        if (comfortablyVisible(pill) && actuallyVisible(btn) && atMenuRow(pill)) return true
+        return false
       }
       const reconcile = () => {
         try {
@@ -207,8 +254,8 @@ window.__ModuleLoader__.load({
           cleanupLegacyContainers()
           const pill = document.querySelector(PILL_SELECTOR)
           if (!pill) { toBodyFallback(); return }
-          if (toPill()) return
-          toBodyFallback()                    // 胶囊实在救不回来 → 兜底入口(不影响原胶囊内容)
+          if (toPill()) { if (!atMenuRow(btn)) toBodyFallback(); return }
+          toBodyFallback()                    // 胶囊不在菜单行/装进去点不到 → 保持菜单行位置的独立入口
         } catch (e) { try { console.error('[meta-loop] reconcile failed', e) } catch (_) {} }
       }
       claimOwnership()
@@ -269,6 +316,12 @@ window.__ModuleLoader__.load({
                     pillBottom: { type: 'number' },
                     pillComfortable: { type: 'boolean' },
                     pillVisible: { type: 'boolean' },
+                    pillTop: { type: 'number' },
+                    pillLeft: { type: 'number' },
+                    menuTop: { type: 'number' },
+                    menuRight: { type: 'number' },
+                    menuHeight: { type: 'number' },
+                    tweakLeftVar: { type: 'string' },
                     styleTagPresent: { type: 'boolean' },
                     ownCount: { type: 'number' },
                     ownPosition: { type: 'string' },
@@ -280,7 +333,7 @@ window.__ModuleLoader__.load({
                     viewportHeight: { type: 'number' },
                     checkedAt: { type: 'string' },
                   },
-                  required: ['clientRev', 'pillAttached', 'standalonePill', 'overlayOpen', 'iframeSrc', 'panelLoaded', 'panelError', 'loopCards', 'panelText', 'entryMode', 'buttonVisible', 'buttonX', 'buttonY', 'pillHeight', 'pillBottom', 'pillComfortable', 'pillVisible', 'styleTagPresent', 'ownCount', 'ownPosition', 'ownX', 'ownY', 'btnPosition', 'btnInlineLeft', 'viewportWidth', 'viewportHeight', 'checkedAt'],
+                  required: ['clientRev', 'pillAttached', 'standalonePill', 'overlayOpen', 'iframeSrc', 'panelLoaded', 'panelError', 'loopCards', 'panelText', 'entryMode', 'buttonVisible', 'buttonX', 'buttonY', 'pillHeight', 'pillBottom', 'pillComfortable', 'pillVisible', 'pillTop', 'pillLeft', 'menuTop', 'menuRight', 'menuHeight', 'tweakLeftVar', 'styleTagPresent', 'ownCount', 'ownPosition', 'ownX', 'ownY', 'btnPosition', 'btnInlineLeft', 'viewportWidth', 'viewportHeight', 'checkedAt'],
                   additionalProperties: false,
                 },
               }],
@@ -293,6 +346,7 @@ window.__ModuleLoader__.load({
                 panelLoaded: false, panelError: '', loopCards: 0, panelText: '',
                 entryMode: '', buttonVisible: false, buttonX: 0, buttonY: 0,
                 pillHeight: 0, pillBottom: 0, pillComfortable: false, pillVisible: false,
+                pillTop: 0, pillLeft: 0, menuTop: 0, menuRight: 0, menuHeight: 0, tweakLeftVar: '',
                 styleTagPresent: false, ownCount: 0, ownPosition: '', ownX: 0, ownY: 0, btnPosition: '', btnInlineLeft: '',
                 viewportWidth: 0, viewportHeight: 0,
                 checkedAt: new Date().toISOString(),
@@ -311,7 +365,15 @@ window.__ModuleLoader__.load({
                   out.btnInlineLeft = String(b.style?.left ?? '')
                 }
                 const pillEl = document.querySelector(PILL_SELECTOR)
-                if (pillEl) { const pr = pillEl.getBoundingClientRect(); out.pillHeight = Math.round(pr.height); out.pillBottom = Math.round(pr.bottom); out.pillComfortable = comfortablyVisible(pillEl); out.pillVisible = actuallyVisible(pillEl) }
+                if (pillEl) {
+                  const pr = pillEl.getBoundingClientRect()
+                  out.pillHeight = Math.round(pr.height); out.pillBottom = Math.round(pr.bottom)
+                  out.pillTop = Math.round(pr.top); out.pillLeft = Math.round(pr.left)
+                  out.pillComfortable = comfortablyVisible(pillEl); out.pillVisible = actuallyVisible(pillEl)
+                }
+                const menu = menuRect()
+                if (menu) { out.menuTop = Math.round(menu.top); out.menuRight = Math.round(menu.right); out.menuHeight = Math.round(menu.height) }
+                try { out.tweakLeftVar = String((window.getComputedStyle ? window.getComputedStyle(document.documentElement) : {}).getPropertyValue?.('--td-tweak-left') ?? '') } catch (_) { out.tweakLeftVar = '?' }
                 out.styleTagPresent = !!document.querySelector('style[data-plugin-css="meta-loop"]')
                 const owns = document.querySelectorAll('.dsh-ml-switch')
                 out.ownCount = owns.length
