@@ -28,7 +28,7 @@ window.__ModuleLoader__.load({
 .dsh-ml-btn:hover{background:#f3f4f6;color:#111827}
 .dsh-ml-btn.active{background:#111827;color:#fff}
 .dsh-ml-mark{display:inline-block;width:7px;height:7px;border-radius:50%;background:#16a34a;margin:0 6px 0 9px;flex:none}
-.dsh-ml-switch{position:fixed;z-index:120;top:12px;left:60%;display:flex;align-items:center;gap:2px;transform:translateX(-50%);-webkit-app-region:no-drag;border:1px solid #d1d5db;border-radius:999px;background:rgba(255,255,255,.96);padding:3px;backdrop-filter:blur(10px)}
+.dsh-ml-switch{position:fixed;z-index:120;top:12px;left:calc(60% + 150px);display:flex;align-items:center;gap:2px;transform:translateX(-50%);-webkit-app-region:no-drag;border:1px solid #d1d5db;border-radius:999px;background:rgba(255,255,255,.96);padding:3px;backdrop-filter:blur(10px)}
 .dsh-ml-overlay{position:fixed;z-index:100;inset:var(--dsh-frame-top-clearance,0px) 0 0 0;background:#faf9f7}
 .dsh-ml-overlay[hidden]{display:none}
 .dsh-ml-overlay iframe{display:block;width:100%;height:100%;border:0}
@@ -67,25 +67,31 @@ window.__ModuleLoader__.load({
         return b
       }
 
-      // ① 优先并入 thoughtdag 胶囊;② 竞速 5s,未出现则自立独立胶囊
+      // ① 优先并入 thoughtdag 胶囊;② 观察期 60s(其客户端惰性加载,可能晚到):晚到的胶囊出现即迁移并入并销毁自立胶囊;
+      //    ③ 观察期结束仍未出现 → 兜底自立独立胶囊(位置右移,避免与迟到的 thoughtdag 胶囊同点重叠)
+      let ownPill = null
       const attachIntoPill = () => {
         const pill = document.querySelector(PILL_SELECTOR)
         if (!pill || pill.querySelector('.dsh-ml-btn')) return false
-        pill.append(makeButton())
+        const btn = document.querySelector('.dsh-ml-btn') ?? makeButton()
+        pill.append(btn)                       // 迁移:已存在的按钮直接搬进真胶囊
+        if (ownPill) { ownPill.remove(); ownPill = null }
         return true
       }
       if (!attachIntoPill()) {
+        const btn = makeButton()
         const mo = new MutationObserver(() => { if (attachIntoPill()) mo.disconnect() })
         mo.observe(document.body, { childList: true, subtree: true })
         setTimeout(() => {
           mo.disconnect()
+          if (document.querySelector(PILL_SELECTOR)) { attachIntoPill(); return }   // 最后一搏
           if (document.querySelector('.dsh-ml-btn')) return
-          const pill = document.createElement('div')
-          pill.className = 'dsh-ml-switch'
-          pill.setAttribute('role', 'group')
-          pill.append(makeButton())
-          document.body.append(pill)
-        }, 5000)
+          ownPill = document.createElement('div')
+          ownPill.className = 'dsh-ml-switch'
+          ownPill.setAttribute('role', 'group')
+          ownPill.append(btn)
+          document.body.append(ownPill)
+        }, 60_000)
       }
     }
 
