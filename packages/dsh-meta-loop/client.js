@@ -14,10 +14,12 @@ window.__ModuleLoader__.load({
 
     const PILL_SELECTOR = '.dsh-td-switch'
     const LABEL = '元方法'
-    const CLIENT_REV = '2026-10-13x'   // 面板与开关归 meta-loop;入口按钮归胶囊插件(td-tweak),检测到即不自建
+    const CLIENT_REV = '2026-10-14a'   // 外部入口不可见/点不到时兜底扶正胶囊(与 td-tweak 钳制同值、幂等)
     /** 单实例仲裁:客户端半热更会残留上一实例的定时器(旧策略会把按钮抢回贴边胶囊)——
      *  以加载时刻为 rev,只有最新实例可以操作入口;旧实例的 reconcile/看门狗自动退场。 */
     const INSTANCE_TOKEN = `${CLIENT_REV}#${Date.now()}`
+    /** 本客户端半物化时刻(≈客户端模块装载进度;启动耗时诊断用)。 */
+    const APPLY_AT_MS = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0
     const ctlOf = () => (typeof window !== 'undefined' ? window.__metaLoopCtl ?? null : null)
     function claimOwnership() {
       try {
@@ -71,7 +73,7 @@ window.__ModuleLoader__.load({
         const r = el.getBoundingClientRect()
         const vw = (typeof window !== 'undefined' && (window.innerWidth || document.documentElement.clientWidth)) || 0
         const vh = (typeof window !== 'undefined' && (window.innerHeight || document.documentElement.clientHeight)) || 0
-        return r.width >= 8 && r.height >= 8 && r.left >= 8 && r.top >= 8 && r.right <= vw - 8 && r.bottom <= vh - 8
+        return r.width >= 8 && r.height >= 8 && r.left >= 4 && r.top >= 4 && r.right <= vw - 4 && r.bottom <= vh - 4
       } catch (_) { return false }
     }
     /* 无硬依赖:cordis 上下文服务全部按需取用(inject 缺省 = 全量 ctx)。 */
@@ -266,7 +268,24 @@ window.__ModuleLoader__.load({
         try {
           if (!isOwner()) return
           cleanupLegacyContainers()
-          if (externalEntry()) return         // 胶囊插件已承载入口 → 本插件只管面板,不碰胶囊
+          if (externalEntry()) {
+            // 入口归胶囊插件(td-tweak):不建自己的按钮。但若该入口/胶囊不可见或点不到,
+            // 本插件做最小兜底扶正(与 td-tweak 自身的钳制同值、幂等)——否则入口形同不存在。
+            const ext = externalEntry()
+            const pill = ext.closest ? ext.closest(PILL_SELECTOR) : null
+            if (pill && (!actuallyVisible(ext) || !comfortablyVisible(pill))) {
+              try {
+                pill.style.position = 'fixed'
+                pill.style.top = `${MENU_ROW_TOP}px`
+                pill.style.left = `${menuRowLeft()}px`
+                pill.style.right = 'auto'
+                pill.style.transform = 'none'
+                pill.style.zIndex = '900'
+              } catch (_) {}
+            }
+            if (btn) { try { btn.remove() } catch (_) {} ; btn = null; ui.btn = null }
+            return
+          }
           const pill = document.querySelector(PILL_SELECTOR)
           if (!pill) { toBodyFallback(); return }
           if (toPill()) { if (!atMenuRow(btn)) toBodyFallback(); return }
@@ -326,6 +345,13 @@ window.__ModuleLoader__.load({
                     entryMode: { type: 'string' },
                     entryOwner: { type: 'string' },
                     apiExposed: { type: 'boolean' },
+                    ownBtnPresent: { type: 'boolean' },
+                    navLoadMs: { type: 'number' },
+                    navDomMs: { type: 'number' },
+                    resourceCount: { type: 'number' },
+                    slowestResources: { type: 'string' },
+                    applyAtMs: { type: 'number' },
+                    domNodes: { type: 'number' },
                     buttonVisible: { type: 'boolean' },
                     buttonX: { type: 'number' },
                     buttonY: { type: 'number' },
@@ -350,7 +376,7 @@ window.__ModuleLoader__.load({
                     viewportHeight: { type: 'number' },
                     checkedAt: { type: 'string' },
                   },
-                  required: ['clientRev', 'pillAttached', 'standalonePill', 'overlayOpen', 'iframeSrc', 'panelLoaded', 'panelError', 'loopCards', 'panelText', 'entryMode', 'entryOwner', 'apiExposed', 'buttonVisible', 'buttonX', 'buttonY', 'pillHeight', 'pillBottom', 'pillComfortable', 'pillVisible', 'pillTop', 'pillLeft', 'menuTop', 'menuRight', 'menuHeight', 'tweakLeftVar', 'styleTagPresent', 'ownCount', 'ownPosition', 'ownX', 'ownY', 'btnPosition', 'btnInlineLeft', 'viewportWidth', 'viewportHeight', 'checkedAt'],
+                  required: ['clientRev', 'pillAttached', 'standalonePill', 'overlayOpen', 'iframeSrc', 'panelLoaded', 'panelError', 'loopCards', 'panelText', 'entryMode', 'entryOwner', 'apiExposed', 'ownBtnPresent', 'navLoadMs', 'navDomMs', 'resourceCount', 'slowestResources', 'applyAtMs', 'domNodes', 'buttonVisible', 'buttonX', 'buttonY', 'pillHeight', 'pillBottom', 'pillComfortable', 'pillVisible', 'pillTop', 'pillLeft', 'menuTop', 'menuRight', 'menuHeight', 'tweakLeftVar', 'styleTagPresent', 'ownCount', 'ownPosition', 'ownX', 'ownY', 'btnPosition', 'btnInlineLeft', 'viewportWidth', 'viewportHeight', 'checkedAt'],
                   additionalProperties: false,
                 },
               }],
@@ -361,7 +387,9 @@ window.__ModuleLoader__.load({
                 clientRev: CLIENT_REV,
                 pillAttached: false, standalonePill: false, overlayOpen: false, iframeSrc: '',
                 panelLoaded: false, panelError: '', loopCards: 0, panelText: '',
-                entryMode: '', entryOwner: '', apiExposed: false, buttonVisible: false, buttonX: 0, buttonY: 0,
+                entryMode: '', entryOwner: '', apiExposed: false,
+                ownBtnPresent: false, navLoadMs: 0, navDomMs: 0, resourceCount: 0, slowestResources: '', applyAtMs: 0, domNodes: 0,
+                buttonVisible: false, buttonX: 0, buttonY: 0,
                 pillHeight: 0, pillBottom: 0, pillComfortable: false, pillVisible: false,
                 pillTop: 0, pillLeft: 0, menuTop: 0, menuRight: 0, menuHeight: 0, tweakLeftVar: '',
                 styleTagPresent: false, ownCount: 0, ownPosition: '', ownX: 0, ownY: 0, btnPosition: '', btnInlineLeft: '',
@@ -373,6 +401,23 @@ window.__ModuleLoader__.load({
                 const own = document.querySelector('.dsh-ml-btn')            // 本插件兜底入口
                 const b = external ?? own
                 out.entryOwner = external ? 'td-tweak' : own ? 'meta-loop' : 'none'
+                out.ownBtnPresent = !!own
+                try {
+                  const nav = (typeof performance !== 'undefined' && performance.timing) ? performance.timing : null
+                  if (nav && nav.navigationStart) {
+                    out.navDomMs = Math.max(0, (nav.domContentLoadedEventEnd || nav.domLoading || 0) - nav.navigationStart)
+                    out.navLoadMs = Math.max(0, (nav.loadEventEnd || nav.domContentLoadedEventEnd || 0) - nav.navigationStart)
+                  }
+                  const res = (typeof performance !== 'undefined' && performance.getEntriesByType) ? performance.getEntriesByType('resource') : []
+                  out.resourceCount = res.length
+                  out.slowestResources = res.slice()
+                    .sort((a, b) => (b.duration || 0) - (a.duration || 0))
+                    .slice(0, 5)
+                    .map((r) => `${String(r.name).split('/').slice(-1)[0]}:${Math.round(r.duration || 0)}ms`)
+                    .join(' | ')
+                  out.applyAtMs = Math.round(APPLY_AT_MS)                       // 本插件 apply 时刻(≈客户端模块装载完成度)
+                  out.domNodes = document.getElementsByTagName('*').length      // 页面 DOM 规模(长会话渲染成本的代理指标)
+                } catch (_) { /* 性能面不可用:保持 0 */ }
                 try { out.apiExposed = !!(window.__metaLoopUi && typeof window.__metaLoopUi.toggle === 'function') } catch (_) { out.apiExposed = false }
                 out.pillAttached = !!(b && b.closest('.dsh-td-switch'))
                 out.standalonePill = !!(b && b.closest('.dsh-ml-switch'))
@@ -385,12 +430,13 @@ window.__ModuleLoader__.load({
                   try { out.btnPosition = String((window.getComputedStyle ? window.getComputedStyle(b) : {}).position ?? '') } catch (_) { out.btnPosition = '?' }
                   out.btnInlineLeft = String(b.style?.left ?? '')
                 }
-                const pillEl = document.querySelector(PILL_SELECTOR)
-                if (pillEl) {
-                  const pr = pillEl.getBoundingClientRect()
+                const anchor = external || own
+                const pillShow = (anchor && anchor.closest && anchor.closest(PILL_SELECTOR)) || document.querySelector(PILL_SELECTOR)
+                if (pillShow) {
+                  const pr = pillShow.getBoundingClientRect()
                   out.pillHeight = Math.round(pr.height); out.pillBottom = Math.round(pr.bottom)
                   out.pillTop = Math.round(pr.top); out.pillLeft = Math.round(pr.left)
-                  out.pillComfortable = comfortablyVisible(pillEl); out.pillVisible = actuallyVisible(pillEl)
+                  out.pillComfortable = comfortablyVisible(pillShow); out.pillVisible = actuallyVisible(pillShow)
                 }
                 const menu = menuRect()
                 if (menu) { out.menuTop = Math.round(menu.top); out.menuRight = Math.round(menu.right); out.menuHeight = Math.round(menu.height) }
