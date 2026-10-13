@@ -72,7 +72,8 @@ main{padding:14px 16px;max-width:1100px;margin:0 auto}
 </main>
 <script>
 const $ = (s, el=document) => el.querySelector(s)
-function esc(x){ return String(x).replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c])) }
+/* 转义表用运行时拼接实体(源码里不写真体,防止被编辑器/工具解码成恒等映射——2026-10-13 事故) */
+function esc(x){ return String(x).replace(/[&<>"']/g, c => ({ '&': '&' + 'amp;', '<': '&' + 'lt;', '>': '&' + 'gt;', '"': '&' + 'quot;', "'": '&#' + '39;' }[c])) }
 
 const STAGE_CN = { feedback:'反馈', analysis:'分析·1115', planning:'策划·六类', decision:'决策·APX', implementation:'实施', retro:'总体检视' }
 const STAGES = ['feedback','analysis','planning','decision','implementation','retro']
@@ -98,13 +99,28 @@ function renderLoop(id, data) {
   const stages = cur?.stages ?? {}
   const stageRow = STAGES.map(stn => stageBadge(cur||{stage:'feedback', stages:{}}, stn)).join('')
   const agg = s._agg ?? {}
-  const entries = cur?.stages?.feedback?.entries ?? []
-  const bp = (cur?.stages?.analysis?.breakpoints ?? []).map(b => `<li>${b.open?'🔴':'🟢'} ${esc(b.id??'')} ${esc(b.desc??'')}</li>`).join('') || '<i>无</i>'
-  const fq = cur?.stages?.analysis?.five_questions ?? {}
-  const acts = (cur?.stages?.planning?.actions ?? []).map(a => `<li><span class="badge2">${esc(a.type??'')}</span> ${esc(a.target_breakpoint??'')} → ${esc(a.point??'')}</li>`).join('') || '<i>无</i>'
-  const rulings = (cur?.stages?.decision?.rulings ?? []).map(r => `<span class="badge2 ${esc(r.verdict)}">${esc(r.candidate??'')}·${esc(r.verdict)}</span>`).join(' ') || '<i>无</i>'
-  const margins = (cur?.stages?.decision?.margins ?? []).map(m => `<span class="badge2 ${esc(m.estimate)}">${esc(m.object??'')}: ${esc(m.estimate)}</span>`).join(' ') || '<i>无</i>'
-  const cl = (cur?.stages?.implementation?.checklist ?? []).map(c => `<li>${c.checked?'☑':'☐'} ${esc(c.text??'')}${c.checked&&c.evidence?` <span class="trig">(evidence)</span>`:''}</li>`).join('') || '<i>无</i>'
+  /* 各阶段取「最近有内容的一轮」:当前轮常在 feedback(空壳),若只看当前轮会把上轮裁决/裕度/清单全藏掉 */
+  const stageHasData = (o) => o && Object.entries(o).some(([k, v]) => k !== 'gate' && v !== undefined
+    && !(Array.isArray(v) && v.length === 0) && !(v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0)
+    && !(typeof v === 'string' && v === ''))
+  const pick = (st) => {
+    const a = cur?.stages?.[st]
+    if (stageHasData(a)) return { src: a, round: cur.round }
+    const b = lastClosed?.stages?.[st]
+    return { src: b ?? {}, round: b ? lastClosed.round : null }
+  }
+  const tag = (p) => (p.round !== null && p.round !== cur?.round ? ` <span class="trig">(R${p.round})</span>` : '')
+  const entries = pick('feedback').src.entries ?? []
+  const aA = pick('analysis')
+  const bp = (aA.src.breakpoints ?? []).map(b => `<li>${b.open?'🔴':'🟢'} ${esc(b.id??'')} ${esc(b.desc??'')}</li>`).join('') || '<i>无</i>'
+  const fq = aA.src.five_questions ?? {}
+  const aP = pick('planning')
+  const acts = (aP.src.actions ?? []).map(a => `<li><span class="badge2">${esc(a.type??'')}</span> ${esc(a.target_breakpoint??'')} → ${esc(a.point??'')}</li>`).join('') || '<i>无</i>'
+  const aD = pick('decision')
+  const rulings = (aD.src.rulings ?? []).map(r => `<span class="badge2 ${esc(r.verdict)}">${esc(r.candidate??'')}·${esc(r.verdict)}</span>`).join(' ') || '<i>无</i>'
+  const margins = (aD.src.margins ?? []).map(m => `<span class="badge2 ${esc(m.estimate)}">${esc(m.object??'')}: ${esc(m.estimate)}</span>`).join(' ') || '<i>无</i>'
+  const aI = pick('implementation')
+  const cl = (aI.src.checklist ?? []).map(c => `<li>${c.checked?'☑':'☐'} ${esc(c.text??'')}${c.checked&&c.evidence?` <span class="trig">(evidence)</span>`:''}</li>`).join('') || '<i>无</i>'
   const te = (lastClosed?.stages?.retro?.trigger_evaluation ?? []).map(t => `<li class="trig">${t.fires?'🔥':'·'} ${esc(t.trigger)} — ${esc(t.note??'')}</li>`).join('') || '<i>无</i>'
   const rounds = (s.rounds ?? []).map(r => `<span class="rrow"><span class="rdot ${r.verdict==='green'?'g':(r.verdict?'r':'')}"></span>R${r.round} ${r.verdict??'进行中'}</span>`).join(' ')
   const trigSig = (cur?.trigger_signals ?? []).map(t => `<span class="badge">${esc(t.source)}: ${esc((t.note??'').slice(0,60))}</span>`).join(' ')
@@ -113,13 +129,13 @@ function renderLoop(id, data) {
     <summary><span class="tname">${esc(id)}</span> <span class="badge">R${s.current_round} · ${STAGE_CN[cur?.stage] ?? cur?.stage ?? '?'}</span> ${stable} ${lastClosed?verdictBadge(lastClosed):''}${aggText(agg)}</summary>
     <div class="details">
       <div class="card"><h3>六阶段（当前 ${STAGE_CN[cur?.stage] ?? '?'}）</h3><div class="stages">${stageBadge(cur||{stage:'feedback',stages:{}},'feedback')}${stageBadge(cur||{stage:'feedback',stages:{}},'analysis')}${stageBadge(cur||{stage:'feedback',stages:{}},'planning')}${stageBadge(cur||{stage:'feedback',stages:{}},'decision')}${stageBadge(cur||{stage:'feedback',stages:{}},'implementation')}${stageBadge(cur||{stage:'feedback',stages:{}},'retro')}</div>
-        <div>开轮触发：${trig||'<i>无</i>'}</div></div>
+        <div>开轮触发：${trigSig||'<i>无</i>'}</div></div>
       <div class="card"><h3>树执行聚合（只读引擎状态）</h3><div class="agg"><span>leaves <b>${agg.leaves??'-'}</b></span><span>succeeded <b>${agg.runtime_succeeded??0}</b></span><span>fail/t/o <b>${(agg.runtime_failed??0)+(agg.runtime_timeout??0)+(agg.runtime_frozen??0)}</b></span><span>verify-FAIL <b>${agg.verify_fail??0}</b></span><span>high-drift <b>${agg.drift_high_severity??0}</b></span><span>未终态 <b>${Math.round((agg.active_ratio??0)*100)}%</b></span></div></div>
-      <div class="card"><h3>反馈账本（G1 证据）</h3><ul class="mini">${entries.map(e => `<li>${esc(e.source==='external'?'🌐':'・')} ${esc(e.event??'')} → ${esc(e.reaction??'')} <span class="trig">〔${esc(e.evidence??'')}〕</span></li>`).join('')}</ul></div>
-      <div class="card"><h3>1115 · 断点（一链）</h3><ul class="mini">${bp}</ul><div>五问 Q4: ${esc(fq.q4??'-')} · Q5: ${esc(fq.q5??'-')}</div></div>
-      <div class="card"><h3>策划（六类覆盖）</h3><ul class="mini">${acts}</ul></div>
-      <div class="card"><h3>决策（APX 裁决 / 裕度）</h3><div>${rulings}</div><div>${margins}</div></div>
-      <div class="card"><h3>实施清单</h3><ul class="mini">${cl}</ul></div>
+      <div class="card"><h3>反馈账本（G1 证据）${tag(pick('feedback'))}</h3><ul class="mini">${entries.map(e => `<li>${esc(e.source==='external'?'🌐':'・')} ${esc(e.event??'')} → ${esc(e.reaction??'')} <span class="trig">〔${esc(e.evidence??'')}〕</span></li>`).join('')}</ul></div>
+      <div class="card"><h3>1115 · 断点（一链）${tag(aA)}</h3><ul class="mini">${bp}</ul><div>五问 Q4: ${esc(fq.q4??'-')} · Q5: ${esc(fq.q5??'-')}</div></div>
+      <div class="card"><h3>策划（六类覆盖）${tag(aP)}</h3><ul class="mini">${acts}</ul></div>
+      <div class="card"><h3>决策（APX 裁决 / 裕度）${tag(aD)}</h3><div>${rulings}</div><div>${margins}</div></div>
+      <div class="card"><h3>实施清单${tag(aI)}</h3><ul class="mini">${cl}</ul></div>
       <div class="card"><h3>M4 触发判定（上轮检视）</h3><ul class="mini">${te}</ul></div>
     </div></details>`
 }
