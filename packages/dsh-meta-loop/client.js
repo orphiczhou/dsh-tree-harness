@@ -14,7 +14,7 @@ window.__ModuleLoader__.load({
 
     const PILL_SELECTOR = '.dsh-td-switch'
     const LABEL = '元方法'
-    const CLIENT_REV = '2026-10-13w'   // 客户端半:入口固定在「窗体菜单同一行·菜单右侧」;胶囊也在该行时才装进胶囊
+    const CLIENT_REV = '2026-10-13x'   // 面板与开关归 meta-loop;入口按钮归胶囊插件(td-tweak),检测到即不自建
     /** 单实例仲裁:客户端半热更会残留上一实例的定时器(旧策略会把按钮抢回贴边胶囊)——
      *  以加载时刻为 rev,只有最新实例可以操作入口;旧实例的 reconcile/看门狗自动退场。 */
     const INSTANCE_TOKEN = `${CLIENT_REV}#${Date.now()}`
@@ -141,14 +141,26 @@ window.__ModuleLoader__.load({
       const setBtns = (active) => {
         document.querySelectorAll('.dsh-ml-btn').forEach((b) => { b.classList.toggle('active', active); b.setAttribute('aria-pressed', String(active)) })
       }
+      /** 开合状态广播:胶囊里的按钮(td-tweak 持有)据此同步 active 样式。 */
+      function announce(openState) {
+        try { window.dispatchEvent(new CustomEvent('meta-loop:state', { detail: { open: !!openState } })) } catch (_) {}
+      }
       function open() {
         ensureOverlay()
         loadPanel()
         overlay.hidden = false
         setBtns(true)
+        announce(true)
       }
-      function close() { if (overlay) overlay.hidden = true; setBtns(false) }
+      function close() { if (overlay) overlay.hidden = true; setBtns(false); announce(false) }
       function toggle() { if (overlay && !overlay.hidden) close(); else open() }
+
+      /* 对外开关 API:胶囊插件(td-tweak)用 window.__metaLoopUi.toggle() 打开面板——
+         入口按钮归胶囊插件所有,本插件只提供面板与开关(职责分离,彼此可独立禁用)。 */
+      ui.open = open; ui.close = close; ui.toggle = toggle
+      ui.isOpen = () => !!(overlay && !overlay.hidden)
+      try { if (typeof window !== 'undefined') window.__metaLoopUi = ui } catch (_) {}
+      try { window.addEventListener('meta-loop:toggle', () => toggle()) } catch (_) {}
 
       function makeButton() {
         const b = document.createElement('button')
@@ -163,7 +175,11 @@ window.__ModuleLoader__.load({
       /* 入口落位策略(2026-10-13 实证:thoughtdag 胶囊被 td-tweak 锚到视口底边 y≈1009~1032,只露 23px):
          仅当胶囊「舒适可见」(整体在视口内留边距)才并入;否则用自立胶囊(左侧栏底部上方,必可见)。
          每 3s 复检,布局/视图切换后自动迁移。 */
+      /* 入口按钮:若胶囊里已有 td-tweak 提供的「元方法」按钮(.dsh-td-meta),本插件不再自建按钮,
+         只负责面板;只有胶囊插件缺席时才用自带按钮兜底。 */
+      const externalEntry = () => document.querySelector('.dsh-td-meta')
       const ensureButton = () => {
+        if (externalEntry()) { if (btn) { try { btn.remove() } catch (_) {} ; btn = null; ui.btn = null } ; return null }
         if (!btn || !btn.isConnected) { btn = document.querySelector('.dsh-ml-btn') ?? makeButton(); ui.btn = btn }
         return btn
       }
@@ -229,33 +245,32 @@ window.__ModuleLoader__.load({
         try { for (const [k, v] of Object.entries(cands[0])) pill.style[k] = v } catch (_) {}
         return false
       }
-      /** 无胶囊环境(未装/未启用 thoughtdag)才用的兜底:按钮直接挂 body + 内联固定位。 */
+      /** 无胶囊环境(未装/未启用 thoughtdag 与 td-tweak)才用的兜底:按钮直接挂 body + 菜单行固定位。 */
       const toBodyFallback = () => {
-        ensureButton()
+        if (!ensureButton()) return          // td-tweak 已提供入口 → 本插件不插手位置
         applyFixed(btn)
         if (btn.parentNode !== document.body) { try { document.body.append(btn) } catch (_) {} }
       }
-      /** 装进原胶囊:仅当胶囊本身位于「菜单行右侧」且按钮可点时才留在胶囊内;
-       *  否则先尝试把胶囊扶到菜单行,再测;都不行则退回菜单行位置的独立入口(视觉位置一致)。 */
+      /** 兜底按钮装进胶囊(仅在 td-tweak 缺席时发生):装进去点不到就把胶囊扶到菜单行,再不行留在菜单行兜底位。 */
       const toPill = () => {
         const pill = document.querySelector(PILL_SELECTOR)
         if (!pill) return false
-        ensureButton()
+        if (!ensureButton()) return false    // 入口归 td-tweak
         clearFixed(btn)
         if (!pill.contains(btn)) pill.append(btn)
         if (comfortablyVisible(pill) && actuallyVisible(btn) && atMenuRow(pill)) return true
         rescuePill(pill)
-        if (comfortablyVisible(pill) && actuallyVisible(btn) && atMenuRow(pill)) return true
-        return false
+        return comfortablyVisible(pill) && actuallyVisible(btn) && atMenuRow(pill)
       }
       const reconcile = () => {
         try {
           if (!isOwner()) return
           cleanupLegacyContainers()
+          if (externalEntry()) return         // 胶囊插件已承载入口 → 本插件只管面板,不碰胶囊
           const pill = document.querySelector(PILL_SELECTOR)
           if (!pill) { toBodyFallback(); return }
           if (toPill()) { if (!atMenuRow(btn)) toBodyFallback(); return }
-          toBodyFallback()                    // 胶囊不在菜单行/装进去点不到 → 保持菜单行位置的独立入口
+          toBodyFallback()
         } catch (e) { try { console.error('[meta-loop] reconcile failed', e) } catch (_) {} }
       }
       claimOwnership()
@@ -309,6 +324,8 @@ window.__ModuleLoader__.load({
                     loopCards: { type: 'number' },
                     panelText: { type: 'string' },
                     entryMode: { type: 'string' },
+                    entryOwner: { type: 'string' },
+                    apiExposed: { type: 'boolean' },
                     buttonVisible: { type: 'boolean' },
                     buttonX: { type: 'number' },
                     buttonY: { type: 'number' },
@@ -333,7 +350,7 @@ window.__ModuleLoader__.load({
                     viewportHeight: { type: 'number' },
                     checkedAt: { type: 'string' },
                   },
-                  required: ['clientRev', 'pillAttached', 'standalonePill', 'overlayOpen', 'iframeSrc', 'panelLoaded', 'panelError', 'loopCards', 'panelText', 'entryMode', 'buttonVisible', 'buttonX', 'buttonY', 'pillHeight', 'pillBottom', 'pillComfortable', 'pillVisible', 'pillTop', 'pillLeft', 'menuTop', 'menuRight', 'menuHeight', 'tweakLeftVar', 'styleTagPresent', 'ownCount', 'ownPosition', 'ownX', 'ownY', 'btnPosition', 'btnInlineLeft', 'viewportWidth', 'viewportHeight', 'checkedAt'],
+                  required: ['clientRev', 'pillAttached', 'standalonePill', 'overlayOpen', 'iframeSrc', 'panelLoaded', 'panelError', 'loopCards', 'panelText', 'entryMode', 'entryOwner', 'apiExposed', 'buttonVisible', 'buttonX', 'buttonY', 'pillHeight', 'pillBottom', 'pillComfortable', 'pillVisible', 'pillTop', 'pillLeft', 'menuTop', 'menuRight', 'menuHeight', 'tweakLeftVar', 'styleTagPresent', 'ownCount', 'ownPosition', 'ownX', 'ownY', 'btnPosition', 'btnInlineLeft', 'viewportWidth', 'viewportHeight', 'checkedAt'],
                   additionalProperties: false,
                 },
               }],
@@ -344,7 +361,7 @@ window.__ModuleLoader__.load({
                 clientRev: CLIENT_REV,
                 pillAttached: false, standalonePill: false, overlayOpen: false, iframeSrc: '',
                 panelLoaded: false, panelError: '', loopCards: 0, panelText: '',
-                entryMode: '', buttonVisible: false, buttonX: 0, buttonY: 0,
+                entryMode: '', entryOwner: '', apiExposed: false, buttonVisible: false, buttonX: 0, buttonY: 0,
                 pillHeight: 0, pillBottom: 0, pillComfortable: false, pillVisible: false,
                 pillTop: 0, pillLeft: 0, menuTop: 0, menuRight: 0, menuHeight: 0, tweakLeftVar: '',
                 styleTagPresent: false, ownCount: 0, ownPosition: '', ownX: 0, ownY: 0, btnPosition: '', btnInlineLeft: '',
@@ -352,10 +369,14 @@ window.__ModuleLoader__.load({
                 checkedAt: new Date().toISOString(),
               }
               try {
-                const b = document.querySelector('.dsh-ml-btn')
+                const external = document.querySelector('.dsh-td-meta')      // td-tweak 承载的入口
+                const own = document.querySelector('.dsh-ml-btn')            // 本插件兜底入口
+                const b = external ?? own
+                out.entryOwner = external ? 'td-tweak' : own ? 'meta-loop' : 'none'
+                try { out.apiExposed = !!(window.__metaLoopUi && typeof window.__metaLoopUi.toggle === 'function') } catch (_) { out.apiExposed = false }
                 out.pillAttached = !!(b && b.closest('.dsh-td-switch'))
                 out.standalonePill = !!(b && b.closest('.dsh-ml-switch'))
-                out.entryMode = out.pillAttached ? 'pill' : out.standalonePill ? 'standalone' : 'missing'
+                out.entryMode = out.pillAttached ? (external ? 'pill(td-tweak)' : 'pill(meta-loop)') : out.standalonePill ? 'standalone' : (b ? 'floating' : 'missing')
                 out.viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0
                 out.viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0
                 if (b) {
