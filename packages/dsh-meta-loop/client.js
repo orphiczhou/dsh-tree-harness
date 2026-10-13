@@ -14,36 +14,108 @@ window.__ModuleLoader__.load({
 
     const PILL_SELECTOR = '.dsh-td-switch'
     const LABEL = '元方法'
-    const CLIENT_REV = '2026-10-13c'   // 客户端半版本:CSS/自愈/看门狗变更时递增,便于经 inspect 判定活体版本
+    const CLIENT_REV = '2026-10-13t'   // 客户端半:入口装进原胶囊;胶囊不可用时候选位逐个探测扶正
+    /** 单实例仲裁:客户端半热更会残留上一实例的定时器(旧策略会把按钮抢回贴边胶囊)——
+     *  以加载时刻为 rev,只有最新实例可以操作入口;旧实例的 reconcile/看门狗自动退场。 */
+    const INSTANCE_TOKEN = `${CLIENT_REV}#${Date.now()}`
+    const ctlOf = () => (typeof window !== 'undefined' ? window.__metaLoopCtl ?? null : null)
+    function claimOwnership() {
+      try {
+        if (typeof window === 'undefined') return
+        const cur = window.__metaLoopCtl
+        if (!cur || String(cur.token) < INSTANCE_TOKEN) window.__metaLoopCtl = { token: INSTANCE_TOKEN, rev: CLIENT_REV }
+      } catch (_) {}
+    }
+    const isOwner = () => { const c = ctlOf(); return !c || c.token === INSTANCE_TOKEN }
+
+    /** 单例 UI 注册表(跨热更实例复用同一批 DOM):
+     *  2026-10-13 实证——每个新实例都自建按钮/自立胶囊,13 次热更后 DOM 里躺了 13 个胶囊且新旧实例互抢,
+     *  按钮在「贴边胶囊 ↔ 自立胶囊」间来回跳。注册表 + 清理历史遗留,保证全局只有一套入口。 */
+    function uiRegistry() {
+      if (typeof window === 'undefined') return null
+      if (!window.__metaLoopUi) window.__metaLoopUi = { btn: null, ownPill: null, overlay: null, frame: null }
+      return window.__metaLoopUi
+    }
+
+    /** 真可见性(effect 与 inspect 共用;此前误放在 apply 内 → provider 读到 undefined,2026-10-13f 修):
+     *  必须在视口内且 elementFromPoint 命中自己(未被别的层盖住)。 */
+    function actuallyVisible(el) {
+      try {
+        const r = el.getBoundingClientRect()
+        const vw = (typeof window !== 'undefined' && (window.innerWidth || document.documentElement.clientWidth)) || 0
+        const vh = (typeof window !== 'undefined' && (window.innerHeight || document.documentElement.clientHeight)) || 0
+        if (r.width < 8 || r.height < 8) return false
+        if (r.right < 4 || r.bottom < 4 || r.left > vw - 4 || r.top > vh - 4) return false
+        const cx = Math.min(Math.max(r.left + r.width / 2, 1), vw - 1)
+        const cy = Math.min(Math.max(r.top + r.height / 2, 1), vh - 1)
+        const hit = document.elementFromPoint(cx, cy)
+        return !!(hit && (hit === el || el.contains(hit) || hit.contains(el)))
+      } catch (_) { return false }
+    }
+    /** 「舒适可见」:整体留在视口内并留 8px 边距——贴边/半藏(实测 y=1009/视口 1032)不算,宁可用自立胶囊。 */
+    function comfortablyVisible(el) {
+      try {
+        const r = el.getBoundingClientRect()
+        const vw = (typeof window !== 'undefined' && (window.innerWidth || document.documentElement.clientWidth)) || 0
+        const vh = (typeof window !== 'undefined' && (window.innerHeight || document.documentElement.clientHeight)) || 0
+        return r.width >= 8 && r.height >= 8 && r.left >= 8 && r.top >= 8 && r.right <= vw - 8 && r.bottom <= vh - 8
+      } catch (_) { return false }
+    }
     /* 无硬依赖:cordis 上下文服务全部按需取用(inject 缺省 = 全量 ctx)。 */
     exports.inject = []
     exports.apply = (ctx) => {
       if (typeof document === 'undefined' || !document.head || !document.body) return
-      let overlay = null
-      let frame = null
-
-      const css = document.createElement('style')
-      css.setAttribute('data-plugin-css', 'meta-loop')
-      css.textContent = `
+      const ui = uiRegistry()
+      /* 样式表:已在 head 就不重复插(历史实例可能已插) */
+      if (!document.querySelector('style[data-plugin-css="meta-loop"]')) {
+        const css = document.createElement('style')
+        css.setAttribute('data-plugin-css', 'meta-loop')
+        css.textContent = `
 .dsh-ml-btn{height:28px;border:0;border-radius:999px;background:transparent;padding:0 11px;color:#6b7280;font:600 12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
 .dsh-ml-btn:hover{background:#f3f4f6;color:#111827}
 .dsh-ml-btn.active{background:#111827;color:#fff}
 .dsh-ml-mark{display:inline-block;width:7px;height:7px;border-radius:50%;background:#16a34a;margin:0 6px 0 9px;flex:none}
-.dsh-ml-switch{position:fixed;z-index:120;top:12px;left:calc(60% + 150px);display:flex;align-items:center;gap:2px;transform:translateX(-50%);-webkit-app-region:no-drag;border:1px solid #d1d5db;border-radius:999px;background:rgba(255,255,255,.96);padding:3px;backdrop-filter:blur(10px)}
+.dsh-ml-switch{position:fixed;z-index:120;left:12px;bottom:56px;display:flex;align-items:center;gap:2px;-webkit-app-region:no-drag;border:1px solid #d1d5db;border-radius:999px;background:rgba(255,255,255,.96);padding:3px;backdrop-filter:blur(10px);box-shadow:0 2px 8px rgba(0,0,0,.10)}
+/* 自立模式:按钮自带固定位——无论被哪个容器(含热更残留实例的旧胶囊)append,DOM 挪动都不改变视觉位置 */
+.dsh-ml-btn.dsh-ml-btn--fixed{position:fixed;z-index:130;left:12px;bottom:56px;height:28px;border:1px solid #d1d5db;border-radius:999px;background:rgba(255,255,255,.96);box-shadow:0 2px 8px rgba(0,0,0,.10);-webkit-app-region:no-drag}
 .dsh-ml-overlay{position:fixed;z-index:100;inset:var(--dsh-frame-top-clearance,0px) 0 0 0;background:#faf9f7}
 .dsh-ml-overlay[hidden]{display:none}
 .dsh-ml-overlay iframe{display:block;width:100%;height:100%;border:0}
 `
-      document.head.append(css)
+        document.head.append(css)
+      }
+
+      /* 复用注册表中的既有 DOM(跨热更实例单例);入口只装在原胶囊里,不再自建容器 */
+      let overlay = ui.overlay ?? document.querySelector('.dsh-ml-overlay')
+      let frame = overlay ? overlay.querySelector('iframe') : null
+      let btn = ui.btn ?? document.querySelector('.dsh-ml-btn') ?? null
+      ui.overlay = overlay; ui.frame = frame; ui.btn = btn
+      /** 历史版本遗留的自立容器(.dsh-ml-switch 是我自己的类)。旧实例的定时器会持续把按钮 append 进它们的容器,
+       *  删容器只会触发「删了又建」的循环——改为就地扶正:把这些容器锚到可见位,并清掉 backdrop-filter
+       *  (它会成为 fixed 子元素的包含块,导致按钮坐标错乱)。这样无论按钮被谁搬来搬去,视觉上都在可见处。 */
+      const STRAY_STYLE = {
+        position: 'fixed', left: '12px', bottom: '56px', top: 'auto', right: 'auto', transform: 'none', zIndex: '129',
+        display: 'flex', alignItems: 'center',
+        border: '1px solid #d1d5db', borderRadius: '999px', background: 'rgba(255,255,255,.96)', padding: '3px',
+        backdropFilter: 'none', WebkitBackdropFilter: 'none',
+      }
+      const cleanupLegacyContainers = () => {
+        const strays = Array.from(document.querySelectorAll('.dsh-ml-switch'))
+        strays.forEach((el, i) => {
+          if (i === 0) { for (const [k, v] of Object.entries(STRAY_STYLE)) { try { el.style[k] = v } catch (_) {} } ; return }
+          try { if (btn && el.contains(btn)) document.body.append(btn); el.remove() } catch (_) {}
+        })
+      }
 
       function ensureOverlay() {
-        if (overlay) return
+        if (overlay && overlay.isConnected) return
         overlay = document.createElement('section')
         overlay.className = 'dsh-ml-overlay'
         overlay.hidden = true
         overlay.innerHTML = '<iframe title="Meta Loop" data-src="/metaloop/"></iframe>'
         document.body.append(overlay)
         frame = overlay.querySelector('iframe')
+        ui.overlay = overlay; ui.frame = frame
       }
 
       /* 每次打开都带 cache-bust 重载:面板是纯读视图(无本地状态),重载保证拿到最新代码/数据,
@@ -75,41 +147,83 @@ window.__ModuleLoader__.load({
         return b
       }
 
-      // ① 优先并入 thoughtdag 胶囊;② 观察期 60s(其客户端惰性加载,可能晚到):晚到的胶囊出现即迁移并入并销毁自立胶囊;
-      //    ③ 观察期结束仍未出现 → 兜底自立独立胶囊(位置右移,避免与迟到的 thoughtdag 胶囊同点重叠)
-      let ownPill = null
-      const attachIntoPill = () => {
+      /* 入口落位策略(2026-10-13 实证:thoughtdag 胶囊被 td-tweak 锚到视口底边 y≈1009~1032,只露 23px):
+         仅当胶囊「舒适可见」(整体在视口内留边距)才并入;否则用自立胶囊(左侧栏底部上方,必可见)。
+         每 3s 复检,布局/视图切换后自动迁移。 */
+      const ensureButton = () => {
+        if (!btn || !btn.isConnected) { btn = document.querySelector('.dsh-ml-btn') ?? makeButton(); ui.btn = btn }
+        return btn
+      }
+      const FIXED_STYLE = { position: 'fixed', left: '12px', bottom: '56px', top: 'auto', zIndex: '130', height: '28px', border: '1px solid #d1d5db', borderRadius: '999px', background: 'rgba(255,255,255,.96)', boxShadow: '0 2px 8px rgba(0,0,0,.10)' }
+      const applyFixed = (el) => { try { for (const [k, v] of Object.entries(FIXED_STYLE)) el.style[k] = v } catch (_) {} }
+      const clearFixed = (el) => { try { for (const k of Object.keys(FIXED_STYLE)) el.style[k] = '' } catch (_) {} }
+
+      /* 入口装进原胶囊(用户 2026-10-13 要求:不要自建替代品、别动原插件的东西)。
+         但实测原胶囊被摆在左下角 y≈1009,压在侧栏页脚底下——连它自己的「对话/思维图」都不可见。
+         td-tweak 的设计意图是「贴菜单左侧、top:7px」,故这里只做一件最小的事:
+         胶囊整体不可见时,用内联样式把它扶回设计位置(fixed; top:7px; left:110px),让三个按钮一起可见。
+         不删除、不替换原插件任何节点;若胶囊已在舒适位置则完全不动它。 */
+      const PILL_RESCUE = { position: 'fixed', top: '48px', left: '110px', right: 'auto', transform: 'none', zIndex: '125' }
+      /* 扶正候选位:逐个做「几何+命中」测试,选第一个真正可用者——标题栏/头部各层在不同窗口尺寸下覆盖不同,
+         与其猜,不如让代码自己试(2026-10-13 实证:top:48 被会话头部盖住 → 命中测试不过)。 */
+      const PILL_CANDIDATES = [
+        { top: '48px', left: '110px' },
+        { top: '104px', left: '110px' },
+        { top: '48px', left: '640px' },
+        { top: '104px', left: '640px' },
+        { top: 'auto', bottom: '120px', left: '12px' },
+      ].map((c) => ({ position: 'fixed', right: 'auto', transform: 'none', zIndex: '125', ...c }))
+      const rescuePill = (pill) => {
+        if (comfortablyVisible(pill) && actuallyVisible(pill)) return true
+        for (const cand of PILL_CANDIDATES) {
+          try { for (const [k, v] of Object.entries(cand)) pill.style[k] = v } catch (_) {}
+          if (comfortablyVisible(pill) && actuallyVisible(pill)) return true
+        }
+        // 都不行:保留第一个候选(至少在视口内),交调用方决定是否退兜底
+        try { for (const [k, v] of Object.entries(PILL_CANDIDATES[0])) pill.style[k] = v } catch (_) {}
+        return false
+      }
+      /** 无胶囊环境(未装/未启用 thoughtdag)才用的兜底:按钮直接挂 body + 内联固定位。 */
+      const toBodyFallback = () => {
+        ensureButton()
+        applyFixed(btn)
+        if (btn.parentNode !== document.body) { try { document.body.append(btn) } catch (_) {} }
+      }
+      /** 装进原胶囊:先放入;若胶囊几何不舒适(贴边/半藏)或按钮点不到(被标题栏等盖住),
+       *  就地把胶囊扶到可用高度再测;都不行才退回兜底入口。 */
+      const toPill = () => {
         const pill = document.querySelector(PILL_SELECTOR)
-        if (!pill || pill.querySelector('.dsh-ml-btn')) return false
-        const btn = document.querySelector('.dsh-ml-btn') ?? makeButton()
-        pill.append(btn)                       // 迁移:已存在的按钮直接搬进真胶囊
-        if (ownPill) { ownPill.remove(); ownPill = null }
-        return true
+        if (!pill) return false
+        ensureButton()
+        clearFixed(btn)
+        if (!pill.contains(btn)) pill.append(btn)
+        if (comfortablyVisible(pill) && actuallyVisible(btn)) return true
+        rescuePill(pill)
+        return actuallyVisible(btn)
       }
-      if (!attachIntoPill()) {
-        const btn = makeButton()
-        const mo = new MutationObserver(() => { if (attachIntoPill()) mo.disconnect() })
-        mo.observe(document.body, { childList: true, subtree: true })
-        setTimeout(() => {
-          mo.disconnect()
-          if (document.querySelector(PILL_SELECTOR)) { attachIntoPill(); return }   // 最后一搏
-          if (document.querySelector('.dsh-ml-btn')) return
-          ownPill = document.createElement('div')
-          ownPill.className = 'dsh-ml-switch'
-          ownPill.setAttribute('role', 'group')
-          ownPill.append(btn)
-          document.body.append(ownPill)
-        }, 60_000)
+      const reconcile = () => {
+        try {
+          if (!isOwner()) return
+          cleanupLegacyContainers()
+          const pill = document.querySelector(PILL_SELECTOR)
+          if (!pill) { toBodyFallback(); return }
+          if (toPill()) return
+          toBodyFallback()                    // 胶囊实在救不回来 → 兜底入口(不影响原胶囊内容)
+        } catch (e) { try { console.error('[meta-loop] reconcile failed', e) } catch (_) {} }
       }
+      claimOwnership()
+      ensureButton()
+      reconcile()
+      setInterval(reconcile, 3_000)
 
       registerInspect(ctx)
 
-      /* 面板自愈看门狗:同源 iframe 里的旧文档若停在「加载失败」,每 15s 最多重载一次(带 cache-bust),
-         让已上线的修复自动生效,不必等人手动刷新 iframe。 */
+      /* 面板自愈看门狗:同源 iframe 里的旧文档若停在「加载失败」,每 15s 最多重载一次(带 cache-bust)。
+         不依赖面板是否打开——滞留的隐藏 iframe 也要修好,这样下次点开即见正确内容。 */
       let lastHeal = 0
       setInterval(() => {
         try {
-          if (!frame || !overlay || overlay.hidden) return
+          if (!isOwner() || !frame) return
           const doc = frame.contentDocument
           if (!doc) return
           const app = doc.querySelector('#app')
@@ -147,9 +261,26 @@ window.__ModuleLoader__.load({
                     panelError: { type: 'string' },
                     loopCards: { type: 'number' },
                     panelText: { type: 'string' },
+                    entryMode: { type: 'string' },
+                    buttonVisible: { type: 'boolean' },
+                    buttonX: { type: 'number' },
+                    buttonY: { type: 'number' },
+                    pillHeight: { type: 'number' },
+                    pillBottom: { type: 'number' },
+                    pillComfortable: { type: 'boolean' },
+                    pillVisible: { type: 'boolean' },
+                    styleTagPresent: { type: 'boolean' },
+                    ownCount: { type: 'number' },
+                    ownPosition: { type: 'string' },
+                    ownX: { type: 'number' },
+                    ownY: { type: 'number' },
+                    btnPosition: { type: 'string' },
+                    btnInlineLeft: { type: 'string' },
+                    viewportWidth: { type: 'number' },
+                    viewportHeight: { type: 'number' },
                     checkedAt: { type: 'string' },
                   },
-                  required: ['clientRev', 'pillAttached', 'standalonePill', 'overlayOpen', 'iframeSrc', 'panelLoaded', 'panelError', 'loopCards', 'panelText', 'checkedAt'],
+                  required: ['clientRev', 'pillAttached', 'standalonePill', 'overlayOpen', 'iframeSrc', 'panelLoaded', 'panelError', 'loopCards', 'panelText', 'entryMode', 'buttonVisible', 'buttonX', 'buttonY', 'pillHeight', 'pillBottom', 'pillComfortable', 'pillVisible', 'styleTagPresent', 'ownCount', 'ownPosition', 'ownX', 'ownY', 'btnPosition', 'btnInlineLeft', 'viewportWidth', 'viewportHeight', 'checkedAt'],
                   additionalProperties: false,
                 },
               }],
@@ -159,12 +290,37 @@ window.__ModuleLoader__.load({
               const out = {
                 clientRev: CLIENT_REV,
                 pillAttached: false, standalonePill: false, overlayOpen: false, iframeSrc: '',
-                panelLoaded: false, panelError: '', loopCards: 0, panelText: '', checkedAt: new Date().toISOString(),
+                panelLoaded: false, panelError: '', loopCards: 0, panelText: '',
+                entryMode: '', buttonVisible: false, buttonX: 0, buttonY: 0,
+                pillHeight: 0, pillBottom: 0, pillComfortable: false, pillVisible: false,
+                styleTagPresent: false, ownCount: 0, ownPosition: '', ownX: 0, ownY: 0, btnPosition: '', btnInlineLeft: '',
+                viewportWidth: 0, viewportHeight: 0,
+                checkedAt: new Date().toISOString(),
               }
               try {
-                const btn = document.querySelector('.dsh-ml-btn')
-                out.pillAttached = !!(btn && btn.closest('.dsh-td-switch'))
-                out.standalonePill = !!(btn && btn.closest('.dsh-ml-switch'))
+                const b = document.querySelector('.dsh-ml-btn')
+                out.pillAttached = !!(b && b.closest('.dsh-td-switch'))
+                out.standalonePill = !!(b && b.closest('.dsh-ml-switch'))
+                out.entryMode = out.pillAttached ? 'pill' : out.standalonePill ? 'standalone' : 'missing'
+                out.viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0
+                out.viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0
+                if (b) {
+                  const r = b.getBoundingClientRect()
+                  out.buttonX = Math.round(r.left); out.buttonY = Math.round(r.top); out.buttonVisible = actuallyVisible(b)
+                  try { out.btnPosition = String((window.getComputedStyle ? window.getComputedStyle(b) : {}).position ?? '') } catch (_) { out.btnPosition = '?' }
+                  out.btnInlineLeft = String(b.style?.left ?? '')
+                }
+                const pillEl = document.querySelector(PILL_SELECTOR)
+                if (pillEl) { const pr = pillEl.getBoundingClientRect(); out.pillHeight = Math.round(pr.height); out.pillBottom = Math.round(pr.bottom); out.pillComfortable = comfortablyVisible(pillEl); out.pillVisible = actuallyVisible(pillEl) }
+                out.styleTagPresent = !!document.querySelector('style[data-plugin-css="meta-loop"]')
+                const owns = document.querySelectorAll('.dsh-ml-switch')
+                out.ownCount = owns.length
+                const own0 = owns[0] ?? null
+                if (own0) {
+                  const or = own0.getBoundingClientRect()
+                  out.ownX = Math.round(or.left); out.ownY = Math.round(or.top)
+                  try { out.ownPosition = String((window.getComputedStyle ? window.getComputedStyle(own0) : {}).position ?? '') } catch (_) { out.ownPosition = '?' }
+                }
                 const ov = document.querySelector('.dsh-ml-overlay')
                 out.overlayOpen = !!(ov && !ov.hidden)
                 const frame = document.querySelector('.dsh-ml-overlay iframe')
