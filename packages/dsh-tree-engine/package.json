@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "private": true,
   "type": "module",
-  "description": "Tree task decomposition & execution engine for DSH: plan 鈫?dispatch 鈫?bamboo-joint relay 鈫?harvest 鈫?verify. S1 v0.1: engine core + tree_plan/tree_node/tree_report/tree_status host tools.",
+  "description": "Tree task decomposition & execution engine for DSH: plan → dispatch → bamboo-joint relay → harvest → verify. S1 v0.1: engine core + tree_plan/tree_node/tree_report/tree_status host tools.",
   "exports": {
     ".": "./index.js",
     "./engine": "./src/engine.js",
