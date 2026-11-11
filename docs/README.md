@@ -2,7 +2,7 @@
 
 > 本目录是 `dsh-tree-harness`（DSH 会话树体系）的**全部开发文档**。本文件是文档的**单一索引**，并规定新增/迁移/归档规则。
 > 改完文档必须跑：`node scripts/check-doc-links.mjs` 与 `node scripts/check-md-tables.mjs`。
-> 当前快照：2026-11-12 · tree-engine **v0.7.0**（9 工具 / 112-112 测试）· session-tree **v1.3.6**（公开镜像 tag `v1.3.6` = `298298d`）。
+> 当前快照：2026-11-12 · tree-engine **v0.7.0**（9 工具 / 112-112 测试）· session-tree **v1.3.7**（公开镜像 tag `v1.3.7` = `91c177e`）。
 
 ## 0. 不同读者的入口
 

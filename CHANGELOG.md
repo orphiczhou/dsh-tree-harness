@@ -2,6 +2,19 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [1.3.7] — 2026-11-12 · provider-conformance rc.2 fixture 解析（session-tree）
+
+### 变更
+
+- 版本：`packages/dsh-session-tree` 由 `1.3.6` → **`1.3.7`**（公开镜像仓同步发布；**运行时/客户端代码无行为变化**）。
+- **W2.2**：`test/provider-conformance.cjs` 改为显式 fixture 解析（CLI 参数 → `DSH_RC2_FIXTURE_DIR` → `%TEMP%\dsh-asar-inspect\out-rc2-compat` → `out`）；缺 fixture / 非 rc.2 布局时**以 exit 2 + 可操作报错退出**（此前为崩溃堆栈），正常路径 29/29；断言数量与语义未改。
+- 包内 README（中/英）与 `AGENT-INSTALL.md` 版本引用同步到 `v1.3.7`（快照行、pin 示例）。
+
+### 验证
+
+- `node test/provider-conformance.cjs` → **29/29 PASS, exit 0**（fixture 来源与 SHA-256 见 [docs/reports/conformance-rc2-2026-11-12.md](docs/reports/conformance-rc2-2026-11-12.md)）；handoff **41/41**、skills **3/3**、render 全绿、style-guard 22/22、verify-bundle 0 fail。
+- 发布：`release-plugin.mjs` 同步公开镜像仓（`files=19 match=19`），tag **v1.3.7 = `91c177e`**（main+tag=本地；`ls-remote` 核对通过）。
+
 ## [1.3.6] — 2026-11-12 · 文档归档 + 人类/Agent 安装指南（session-tree）
 
 ### 变更
@@ -46,8 +59,8 @@
 
 **未发布说明**
 
-- `packages/dsh-session-tree` **v1.3.6 未变**（公开镜像 tag `v1.3.6` = `298298d`，19/19 SHA）；包内测试入口不变（handoff 41/41、skills 3/3、render 133+9+11、style-guard 22/22、verify-bundle 0 fail）。
-- **本轮无 npm 动作**（D3 冻结）；镜像仓与「本仓提交/推送」均**未执行**——`release-all.mjs` 只做过 dry-run 演练，真推由 Lead 发布时执行；`run-release-e2e.mjs` 的真机三断言本体同样待发布前人工触发。
+- `packages/dsh-session-tree` **1.3.6 → 1.3.7**（W2.2 测试适配；公开镜像 tag `v1.3.7` = `91c177e`，19/19 SHA）；运行时行为不变，包内测试入口全绿（handoff 41/41、skills 3/3、render 133+9+11、style-guard 22/22、verify-bundle 0 fail、provider-conformance 29/29）。
+- **本轮无 npm 动作**（D3 冻结）；**已执行**：本仓 `master` 推送（Wave-2 三笔提交 + 本发布记录提交）+ 公开镜像 **v1.3.7** 发布（`release-plugin` 19/19 SHA、tag `91c177e`、`ls-remote` 远端=本地）。`release-all.mjs` 本轮以 dry-run/沙箱演练验证（真推走既有手工流程）；`run-release-e2e.mjs` 的真机三断言本体待发布前人工触发。
 
 ### 变更
 

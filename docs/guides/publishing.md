@@ -10,7 +10,7 @@
 | 渠道 | 对象 | 状态 | 证据 / 说明 |
 |---|---|---|---|
 | GitHub | `orphiczhou/dsh-tree-harness`（本仓） | 🚀 **public** | 发布前检查清单见 §6；收尾核对远端 HEAD = 本地 HEAD |
-| GitHub | [`orphiczhou/dsh-session-tree`](https://github.com/orphiczhou/dsh-session-tree)（会话树插件） | ✅ 公开，**v1.3.6**，MIT，13 commits | 与仓内 `packages/dsh-session-tree/` 逐字节一致（release-plugin **18/18** SHA）；main + tag `v1.3.6` = **`298298d`**（远端=本地） |
+| GitHub | [`orphiczhou/dsh-session-tree`](https://github.com/orphiczhou/dsh-session-tree)（会话树插件） | ✅ 公开，**v1.3.7**，MIT，14 commits | 与仓内 `packages/dsh-session-tree/` 逐字节一致（release-plugin **19/19** SHA）；main + tag `v1.3.7` = **`91c177e`**（远端=本地） |
 | GitHub | [`orphiczhou/dsh-region-probe`](https://github.com/orphiczhou/dsh-region-probe)（区域观测插件） | ✅ 公开 | 独立插件仓，与本仓无源码依赖 |
 | 社区市场 | awesome-dsh-plugin **PR #6334**（会话树） | ✅ 已合并（2026-10-14） | 市场按 GitHub topic + PR listing 收录；条目为 browse-only，按 `package.json.version` 判断更新 |
 | 社区市场 | awesome-dsh-plugin **PR #6435**（region-probe） | ✅ 已合并（2026-10-15） | 同上 |
@@ -30,11 +30,11 @@
 
 ```
 dsh-tree-harness/                     ← 唯一源码事实源（public）
-  packages\dsh-session-tree\          ← 会话树单包源码（v1.3.6：tree_send + session_handoff + 随包 session-handoff Skill + 语言跟随 + 干跑不拦阈值）
+  packages\dsh-session-tree\          ← 会话树单包源码（v1.3.7：tree_send + session_handoff + 随包 session-handoff Skill + 语言跟随 + 干跑不拦阈值）
         │
         │  scripts/release-plugin.mjs（逐文件 SHA 校验，不自动 push）
         ▼
-github.com/orphiczhou/dsh-session-tree   ← 发布镜像仓（公开、tag v1.3.6、市场 listing 指向它）
+github.com/orphiczhou/dsh-session-tree   ← 发布镜像仓（公开、tag v1.3.7、市场 listing 指向它）
         │
         ▼
 awesome-dsh-plugin / imsai-sh 市场条目（browse-only，按版本判断更新）
@@ -121,6 +121,7 @@ v1.3.0 实测（SKILL 工程化）：同一 clone 流程 → **`files=18 match=1
 v1.3.1 实测（接替提示语跟随界面语言）：同一 clone 流程 → **`files=18 match=18 mismatch=0 missing=0 extra=0`**；真实变更 6 文件（README×2 / index.js / package.json / skills/session-handoff/SKILL.md / test/handoff.test.js）；commit `c257d61` + tag `v1.3.1` 推送后 `ls-remote` 核对 main 与 tag 均等于本地 HEAD。
 
 v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 / v1.3.6 实测（文档补全 + spawn:false 干跑修正 + 洁净室收口）：同一 clone 流程均 **`files=18 match=18`**；commit + tag `v1.3.2`（`c1541e5`）/ `v1.3.3`（`cce2975`）/ `v1.3.4`（`f784c6e`）/ `v1.3.5`（`1fb9193`）/ `v1.3.6`（`298298d`，19/19），推送后 `ls-remote` 核对 main 与 tag 均等于本地 HEAD。
+> 2026-11-12 W2.2 发布实测（v1.3.7）：`release-plugin` **`files=19 match=19`**，tag `v1.3.7` = `91c177e`（main+tag=本地，`ls-remote` 核对通过）；本仓 `master` 同批推送。
 
 标准发布流程：
 
@@ -250,4 +251,5 @@ node scripts/release-all.mjs --push --mirror-dir <镜像 checkout> --skip-tests 
 - 2026-11-11（v1.3.4，第八轮）：R1-B/R2-B 文档债清扫（语言验收表述、set-session 主体、英文触发词、版本矩阵）→ **18/18 SHA**，tag `v1.3.4` = **`f784c6e`**。
 - 2026-11-11（v1.3.5，第九轮）：第三轮洁净室 PASS 后的收尾（SKILL 的 `spawn:false` 例外说明 + root→grandchild 措辞）→ **18/18 SHA**，tag `v1.3.5` = **`1fb9193`**。
 - 2026-11-12（v1.3.6，第十轮）：文档按目录归档 + 新增人类/Agent 安装指南（`AGENT-INSTALL.md`）→ **19/19 SHA**，tag `v1.3.6` = **`298298d`**。
+- 2026-11-12（v1.3.7，Wave-2 W2.2）：`test/provider-conformance.cjs` rc.2 fixture 显式解析（缺 fixture exit 2，29/29）→ **19/19 SHA**，tag `v1.3.7` = **`91c177e`**（运行时/客户端行为不变）。
 - 2026-11-12（W2.7）：新增 `scripts/release-all.mjs` 一条命令发布（预检 → `release-plugin` 同步/SHA 对账 → 本仓 commit → 镜像 commit/tag → `ls-remote` 核对；默认 dry-run、`--push` 才真推、失败即停并给回滚提示）；本文件新增 §5.1，§6 清单接入版本一致性、发布 E2E 两条固定命令。演练证据见 [release-automation-2026-11-12.md](../reports/release-automation-2026-11-12.md)。

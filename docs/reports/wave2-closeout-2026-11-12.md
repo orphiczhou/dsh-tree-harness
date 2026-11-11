@@ -13,7 +13,7 @@
 |---|---|
 | Wave-2 八项 | **W2.1–W2.8 全部完成**（W2.5 真机三断言本体、W2.7 真实推送为已知边界，见 §7） |
 | tree-engine | **v0.6.0 → v0.7.0**；9 个 `tree_*` 工具不变；**112/112** 测试（14 个 `.test.js`）；活体已重载 |
-| session-tree | **v1.3.6 不变**（运行时文件未改）；`test/provider-conformance.cjs` 有 rc.2 fixture 适配（属 `release-plugin` 同步范围）；公开镜像 `main` + tag `v1.3.6` = `298298d`（19/19 SHA） |
+| session-tree | **v1.3.6 → v1.3.7 已发布**（`test/provider-conformance.cjs` rc.2 fixture 适配在 `release-plugin` 同步范围内，按 D6 bump）；运行时/客户端代码未改；公开镜像 `main` + tag `v1.3.7` = `91c177e`（19/19 SHA，`ls-remote` 远端=本地） |
 | 工具链 | 新增 `check-version-consistency.mjs`（23 checks）/ `release-all.mjs`（默认 dry-run）/ `e2e/run-release-e2e.mjs`（三条断言编排） |
 | 新增测试 | 84 → **112**（+28：compat 11 + identity 10 + budget 7），原 84 项**零回归** |
 | 发布状态 | **未提交、未推送**；`release-all.mjs` 仅在隔离沙箱完成全链路演练 |
@@ -68,7 +68,7 @@
 | 文件 | 变更 |
 |---|---|
 | `test/provider-conformance.cjs` | W2.2：fixture 显式解析、rc.2 布局判定、缺 fixture exit 2 + 可操作报错（断言数量与语义未改） |
-| `package.json` / `index.js` / `client.js` / `skills/` | **未改**（v1.3.6；镜像发布物不变） |
+| `package.json` / `index.js` / `client.js` / `skills/` | 运行时/客户端**未改**；`package.json` 随 D6 bump 到 **1.3.7**（镜像发布物仅 `test/provider-conformance.cjs` 适配 + 版本引用更新） |
 
 ### 3.3 工具链脚本（本仓 `scripts/`）
 
@@ -218,3 +218,12 @@ cd ..\..; & $node scripts/check-version-consistency.mjs          # 23 checks
 - 本报告记录的是 **2026-11-12 工作树快照**：Wave-2 改动**未提交、未推送**；提交后的 SHA/数字以 `git log` 与包 `package.json` 为准。
 - 「完成」不等于「发布」：W2.5 真机、W2.7 真推是发布动作，必须由 Lead 在最终检查后执行；本报告不构成发布证明。
 - 后续若修改本轮文件，请开**新报告**（reports 是一次性证据，不回写本文件）。
+
+## 8. 收口后发布记录（2026-11-12）
+
+Wave 2 收口提交后执行（Lead）：
+
+- **本仓 `master`**：Wave-2 三笔提交 + 文档收口（远端 `orphiczhou/dsh-tree-harness` 已推送；`git ls-remote` 核对）。
+- **公开镜像 `orphiczhou/dsh-session-tree`**：`release-plugin.mjs` 同步 **`files=19 match=19`**；commit + tag **`v1.3.7`**（`91c177e`）；push `main` + tag；`ls-remote` 核对远端 = 本地（`main` 与 tag 同 SHA）。
+- **版本纪律**：`packages/dsh-session-tree` `1.3.6 → 1.3.7`（D6；内容变化 = W2.2 `test/provider-conformance.cjs`，运行时/客户端代码未变）。
+- **未执行**：`release-all.mjs --push` 真推（本轮以 dry-run/沙箱演练验证自动化，真推走既有手工流程）；真机 E2E 三断言本体（发布前由人工触发）。
