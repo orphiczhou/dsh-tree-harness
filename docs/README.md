@@ -25,6 +25,7 @@
 | [segment-handoff.md](architecture/segment-handoff.md) | 竹节生长机制设计（pct≥42 同一 leaf 换会话、owner 重绑、链长 5） | 现行 |
 | [features-2026-11-11-spec.md](architecture/features-2026-11-11-spec.md) | 功能规格：会话自交接（A 节）+ 会话树 UI 工作区归档/隐藏/检索（B 节） | 已实现（UI 部分持续迭代） |
 | [session-handoff-2026-11-11.md](architecture/session-handoff-2026-11-11.md) | 会话自交接设计与交付记录（v0.1.0 → v1.2.0 并入 → v1.3.5） | 现行·详细 |
+| [session-tree-ui.md](architecture/session-tree-ui.md) | **会话树 UI 设计与迭代规范**：client.js 代码地图、改哪里的速查、GUI 迭代 7 步流程、UI 变更记录 | 现行（GUI 迭代单一方案） |
 | [merge-session-tree-2026-11-11.md](architecture/merge-session-tree-2026-11-11.md) | 双包 → 单包合并记录（方案 B⁺）、host/client 契约 | 历史性架构记录 |
 | [s0-decisions.md](architecture/s0-decisions.md) | S0 规范冻结的裁决记录 | 历史性架构记录 |
 
@@ -36,6 +37,7 @@
 | [guides/skills-usage.md](guides/skills-usage.md) | 三个随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）：发现、触发、参数、验收、42% vs 50%、升级、排障 | 随 Skill 改动更新 |
 | [guides/publishing.md](guides/publishing.md) | 发布流程与规则：唯一源码事实源、镜像仓同步、`release-plugin.mjs`、版本纪律 D6、市场/npm 现状 | 每次发版追加记录 |
 | [operations/handoff-2026-11-11.md](operations/handoff-2026-11-11.md) | **当前交接/运维手册**：架构、关键路径、测试与验活命令、发布现状、已知边界、下一轮议程 | 每轮收口刷新；旧版进 archive |
+| [operations/wave2-plan-2026-11-12.md](operations/wave2-plan-2026-11-12.md) | **Wave 2 开发计划**：项目地图 §9 建议与波次 + Wave-1 剩余项 + 新发现（root id 兼容、GUI 规范），含 DoD/风险/执行方式 | 下一轮执行依据；随完成情况更新 |
 
 ## 3. 一次性报告（reports/）
 

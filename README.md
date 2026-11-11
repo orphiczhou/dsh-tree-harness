@@ -191,7 +191,9 @@ scripts/                 asar-tool / release-plugin（发布同步校验）
 | [docs/guides/install-guide.md](docs/guides/install-guide.md) | **人类安装指南**：三条安装路线（Git 镜像仓 / 本地 monorepo 全栈 / 市场）、组件矩阵、验收、升级卸载 |
 | [packages/dsh-session-tree/AGENT-INSTALL.md](packages/dsh-session-tree/AGENT-INSTALL.md) | **AI Agent 安装指南**（随包发布到公开镜像仓）：预检、装/重载/验收/排障矩阵、回滚与回报模板 |
 | [docs/project-map-2026-11-11.html](docs/project-map-2026-11-11.html) | **项目全景地图（单文件 HTML）**：图文混合讲清组件/架构/真机流程/机制/边界，并分析下一步功能（离线可看，内联 SVG；[在线版](https://orphiczhou.github.io/dsh-tree-harness/project-map-2026-11-11.html)） |
-| [docs/operations/handoff-2026-11-11.md](docs/operations/handoff-2026-11-11.md) | **当前交接**：决策 D1–D7、关键路径、测试/验活命令、发布流程、风险与回滚、下一轮议程 |
+| [docs/operations/handoff-2026-11-11.md](docs/operations/handoff-2026-11-11.md) | **当前交接**：决策、关键路径、测试/验活命令、发布流程、风险与回滚、下一轮议程 |
+| [docs/operations/wave2-plan-2026-11-12.md](docs/operations/wave2-plan-2026-11-12.md) | **Wave 2 开发计划**：项目地图 §9 的下一步建议/波次安排 + Wave-1 剩余项 + 新发现，逐项给 DoD 与风险 |
+| [docs/architecture/session-tree-ui.md](docs/architecture/session-tree-ui.md) | **会话树 UI 设计与迭代规范**：client.js 代码地图、改哪里速查、GUI 迭代 7 步流程、变更记录 |
 | [docs/guides/skills-usage.md](docs/guides/skills-usage.md) | **随包 Skill 完整使用指南**：三个 Skill 的安装/发现/最小提示词/三层任务树/50% 交接/语言/排障/索引（GitHub 用户入口） |
 | [docs/architecture/session-handoff-2026-11-11.md](docs/architecture/session-handoff-2026-11-11.md) | 会话自交接：v0.1.0 设计 + **v1.2.0 并入会话树/继承修复 + v1.3.0 随包 Skill + v1.3.1 语言跟随 + v1.3.5 洁净室收口** |
 | [docs/reports/e2e-handoff-2026-11-11.md](docs/reports/e2e-handoff-2026-11-11.md) | 交接真机 E2E 取证：修复前 root FAIL 5/12 基线 → 修复后 root PASS 14/14 / sibling PASS 12/12 |
