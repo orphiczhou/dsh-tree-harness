@@ -85,7 +85,7 @@ plugin_manager({ action: "install_bundle", target: "D:/Codes/dsh-tree-harness/pa
 
 ```powershell
 cd packages/dsh-tree-engine
-node --test tests/*.test.js     # tests 66 / pass 66 / fail 0（62 引擎 + 4 技能打包 + 1 B1 回归）
+node --test tests/*.test.js     # tests 67 / pass 67 / fail 0（62 引擎 + 4 技能打包 + 1 B1 回归）
 
 cd ../dsh-meta-loop
 node --test tests/*.test.js     # tests 13 / pass 13 / fail 0

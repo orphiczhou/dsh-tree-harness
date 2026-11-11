@@ -6,9 +6,9 @@
 
 ### 新增
 
-- 包内 SKILL 单源：`packages/dsh-session-tree/skills/session-handoff/SKILL.md`（15495 B）、`packages/dsh-tree-engine/skills/tree-commander/SKILL.md`（21878 B）、`packages/dsh-tree-engine/skills/tree-worker/SKILL.md`（13449 B），三份技能文档随所属包发布，不再从仓库根加载。
+- 包内 SKILL 单源：`packages/dsh-session-tree/skills/session-handoff/SKILL.md`（15495 B）、`packages/dsh-tree-engine/skills/tree-commander/SKILL.md`（22040 B）、`packages/dsh-tree-engine/skills/tree-worker/SKILL.md`（13449 B），三份技能文档随所属包发布，不再从仓库根加载。
 - 两包 `cordis.patch.yml` 各新增一条 `@deepseek-ai/dsh-skill-filesystem` 装配：`providerName` 分别为 `session-tree` / `tree-engine`，`includeDefaultRoots: false`、`watch: false`，`bundledSkillDir` 指向包内 skills 目录，使技能随插件活体加载、进入会话可用技能目录。
-- `packages/dsh-tree-engine/package.json` 新增 `files` 清单（含 skills；该字段在 HEAD 中不存在）；`packages/dsh-session-tree/package.json` 的 `files` 数组新增 skills 项，两包均确保技能目录进入发布物。
+- `packages/dsh-tree-engine/package.json` 新增 `files` 清单（含 skills；该字段在本轮改动前的 HEAD（`0cbc31e`）中不存在）；`packages/dsh-session-tree/package.json` 的 `files` 数组新增 skills 项，两包均确保技能目录进入发布物。
 - 新增技能打包回归测试：`packages/dsh-tree-engine/tests/skills.test.js`（4 用例：两份 SKILL frontmatter 合法、仓根旧副本已消失、bundle patch 挂载 filesystem provider）、`packages/dsh-session-tree/test/skills.test.cjs`（3 用例：SKILL frontmatter 合法、`files` 含 skills、bundle patch 挂载 provider）。
 - 技能 E2E 工具链 `scripts/skill-e2e/`：`collect-skills.mjs`（判定技能是否出现在会话目录）、`dump-events.mjs`、`summarize-run.mjs`、`lib.mjs`、`_probe.mjs`；`scripts/skill-e2e/artifacts/` 存基线、A/B/C 分组 progress 与 skills-at-spawn/postfix 对照快照。
 
@@ -21,7 +21,7 @@
 
 ### 移除
 
-- 仓库根的两份技能副本（tree-commander、tree-worker）移除：技能文档单源迁入所属包，避免仓根与包内副本漂移（HEAD 中仍被跟踪，工作区已删除）。
+- 仓库根的两份技能副本（tree-commander、tree-worker）移除：技能文档单源迁入所属包，避免仓根与包内副本漂移（相对 `0cbc31e` 为删除，本轮提交中移除）。
 - 移除 `sweep:degraded:no-timer` 降级路径及 `tree_status` 旧描述中「降级模式依赖显式 harvest」「显式收割是唯一手段」的说法。
 - `tree_verify` 不再声称「verify 通过」是 `succeeded` 的前置条件：`FAIL` 只回 `result.pass=false`，不抛错也不阻断运行时状态，需由 commander 读取判定。
 
@@ -41,7 +41,7 @@
 ### 验证（本轮收口）
 
 - **Skill 活体链路**：新会话 `<available_skills>` 可见 `session-handoff` / `tree-commander` / `tree-worker`（3/3）；基线（重载前）为 0/3（`docs/skill-e2e-2026-11-11.md` §3）。
-- **A 组（三层分解）**：提示词「把『增补一段 CHANGELOG』拆成三层并派人做完，验证通过再收口」→ 建 `chglog` 树，root→commander→worker 三层；中间层会话自行 `tree_node add` 并派发 3 个 worker（B4 修复生效），facts/writer/fix 均 `tree_verify PASS(artifact)`；真实产出 `CHANGELOG.md`。收口最后一步未在快照窗口内完成（快照判定，不虚报）。
+- **A 组（三层分解）**：提示词「把『增补一段 CHANGELOG』拆成三层并派人做完，验证通过再收口」→ 建 `chglog` 树，root→commander→worker 三层；中间层会话自行 `tree_node add` 并派发 6 个 worker（B4 修复生效），全部 `tree_verify PASS`；**全树收口 PASS**（7 个非 root 节点 runtime 全 succeeded、verification 全 true，`tree_status {action:"validate"}` 0 issues，root done 已登记）；期间出现真实 **FAIL→PASS** 闭环（独立验收首轮因 HEAD 断言在提交后失真判 FAIL，修复后 reverify PASS）；中间层 attempt1 超时后由 attempt2 续跑收口（B1 相关路径真机可用）；真实产出 `CHANGELOG.md`。
 - **B 组（继续干活 + 交接）**：`session_handoff status` 两次正确判读（7.2%/9.8% < 50% → 继续）；`force:true`（模拟阈值）触发 sibling 接替 `bea2eff2…`，`verify-handoff` **12/12 PASS**（同工作区/预设/权限/模型/工具数/首轮读 HANDOFF）。
 - **C 组（三层干活 + 中间层交接）**：tree 解释（`c3demo`，10/10 checks，三层产物 `demo/c3layer/`）与会话链解释（三层真实计算 21→42→43）分别 PASS；两例中间层交接 successor `d703b780…` / `ac7c53bf…`，`verify-handoff` 均 **12/12 PASS**。
 - **未达成/限制**（如实披露）：真实 50% 阈值未跑到——三次交接均为 `force:true` 模拟（上下文实际 6–10%）；提示词 C 存在「会话链 vs tree 任务树」层级歧义；B/C 子会话读到共享工作区 E2E 文档存在观察者偏差；A-修正前/C-修正前曾被宿主 429 配额中断（环境原因）。详见 `docs/skill-e2e-2026-11-11.md` §5。
