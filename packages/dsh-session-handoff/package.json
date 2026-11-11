@@ -1,0 +1,25 @@
+{
+  "name": "@local/dsh-session-handoff",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Host-only session self-handoff for DeepSeek Harness: the session_handoff tool reports context pressure, writes a HANDOFF-*.md recap into the session workspace, and starts a same-level successor session (root→root, child→sibling under the same live parent) inheriting provider/model/reasoning effort and cwd.",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "icon.svg",
+    "locale"
+  ],
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "icon": "./icon.svg"
+}

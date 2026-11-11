@@ -46,6 +46,15 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 - `packages/` 位于 profile 的 `hmr.root`（`D:/Codes/dsh-tree-harness/packages`）→ 宿主代码改动约 25s 热更；客户端半改动需刷新页面。
 - git push 需要凭据：token 从 **User 环境变量 `GH_TOKEN`** 在内存中取用（`http.extraheader`），**禁止打印、禁止落盘、禁止写进 remote URL**；GitHub 访问需按 handoff 用 `-c http.proxy=` 等逐命令覆盖失效代理。
 
+## 0.3 会话交接纪律（上下文接近 50% 时必做）
+
+本机 profile 已装 `@local/dsh-session-handoff`（工具 `session_handoff`，详见 [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md)）：
+
+1. **接近 50% 上下文**（或明显感觉接近上限）时，先调 `session_handoff {action:"status"}` 读真实占用；
+2. `context_pct ≥ 50` 时执行 `session_handoff {action:"handoff", summary, next_steps, files, open_questions}` —— 它会写 `HANDOFF-*.md` 到当前工作区，并启动**同层级**（同模型/同思考强度/同工作区）接替会话继续推进；
+3. 子会话会自动走「兄弟」接替（同父层级）；根会话走根级接替；父不活时降级并在返回里显式 `degraded`；
+4. 交接文件属运行时产物（`.gitignore` 已忽略 `HANDOFF-*.md`），需要长期留存的结论请整理进 `docs/` 或 `agent.md`。
+
 ---
 
 ## 1. 决策日志（Decision Log）
@@ -60,6 +69,8 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 | **D6** | 2026-11-11 | 发布节奏 | market 按 `package.json.version` 判断更新 → 改代码必须 bump version；单包迁移**不 bump**（保持 v1.0.4 与公开插件仓一致），内容不变不制造假更新 |
 | **D7** | 2026-11-11 | 公开前**安全排除清单**（覆盖 D2 的"全部资料公开"） | 公开仓与其 **git 历史**一并清除：① **隐私**：`demo/screen-2026-10-13.png`（桌面/私有会话标题/股票软件/内网 NAS 地址）；② **第三方源码再分发风险**：6 个从 DSH app.asar 摘出的全文副本（`demo/agspec/_subagent-index.js`、`_tool-subagent.js`、`_tool-subagent.md`、`_driver.js`、`_fork.js`、`_spawn.js`）。原件已移出仓库保存在 `default-workspace/backups/public-release-privacy-2026-11-11/`（SHA 校验 + 重写前完整 bundle）。其余资料照 D2 全部公开 |
 | **D8** | 2026-11-11 | **项目代理手册文件名 = `agent.md`** | 用户明确指定；原 `agenda.md` 已 `git mv` 更名，全仓引用同步更新。本文件即代理手册 |
+| **D9** | 2026-11-11 | **新功能：会话自交接（context handoff）** | 用户需求：会话接近 **50%** 上下文时自己写交接文件，并启动**同层级**新会话（同模型/同思考强度/同工作区）接替。架构规格冻结于 [docs/features-2026-11-11-spec.md](docs/features-2026-11-11-spec.md) A 节；实现 = host-only 插件 `packages/dsh-session-handoff/`，工具 `session_handoff`（status/handoff）；根会话走 `agents.create`+`followup`，子会话走 `subagents.startActivation`（活父 → 兄弟） |
+| **D10** | 2026-11-11 | **新功能：会话树工作区归档/隐藏 + 最近活动排序** | 用户需求：工作区越积越多；工作区可隐藏/归档、按最新会话倒序；「…」菜单可操作已归档会话与已归档工作区；归档后可看/查/召回。规格 = spec B 节；实现 = `packages/dsh-session-tree/client.js` v1.0.4→**1.1.0**，工作区隐藏为**纯客户端 localStorage 状态**（Host 无工作区归档 API） |
 
 ---
 
@@ -84,6 +95,8 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 | **R4** | 文档对齐（README / handoff / publishing） | ✅ 已完成 | README/License/handoff-2026-11-11/publishing/merge 记录/验证报告 v1.2 全部落盘 |
 | **R5** | npm 发布 | ⏸ 冻结（D3） | 无需动作；解冻需用户批准 |
 | **R6** | meta-loop 装配 / timer 降级 / RC2 单测补强 / provider-conformance 布局适配 | 📋 待排期 | 下一轮候选；均非阻塞 |
+| **R7** | 会话自交接（D9） | ✅ 已完成 | host-only 插件 `packages/dsh-session-handoff/`（`session_handoff` status/handoff，24/24 测试）；已装 profile 并活体验证：本会话 status=**57.7%**/model=deepseek-official/deepseek-flash/**effort=max**；子会话 E2E 成功启动**兄弟**接替（successor 68d075bd…，读交接文件后回报 READY） |
+| **R8** | 会话树工作区归档/隐藏 + 最近活动排序（D10） | ✅ 已完成 | `packages/dsh-session-tree` **v1.1.0**：工作区按最近活动排序（可切 Host 顺序）、工作区隐藏/恢复（localStorage 持久化）、已隐藏工作区三分区态、搜索召回、`…` 菜单整合；`render.test.cjs` **153 PASS / 0 FAIL**（133 gating 全保留 + 26 新增）、style-guard 22/22、verify-bundle OK；**需刷新页面生效**（客户端半） |
 
 ## 4. 本轮团队与任务板（已收口）
 
@@ -117,3 +130,4 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 - 2026-11-11：建立本文件（初名 `agenda.md`）；记录 D1–D6；启动团队任务 T1–T5。
 - 2026-11-11（收口）：D7 扩展为 **7 文件** + 2 个瘦身路径；T1–T4 完成；4 个逻辑 commit + **历史重写**（9 路径从全部历史清除，`.git` 3.80MB→0.64MB）；独立验证 **A1–A9 全绿（PASS WITH RISKS）**；**公开仓 `orphiczhou/dsh-tree-harness` 创建并推送（远端 HEAD == 本地）**；npm 维持冻结。
 - 2026-11-11（更名）：用户更正文件名 → **本文件 `git mv agenda.md agent.md`**（D8）；全仓引用同步更新；状态快照与任务板按收口实测刷新。
+- 2026-11-11（功能轮）：实现并验收两个新功能（D9/D10）：**会话自交接**（新插件 `dsh-session-handoff`，文档 [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md)，规格 [docs/features-2026-11-11-spec.md](docs/features-2026-11-11-spec.md)）+ **会话树 v1.1.0**（工作区排序/隐藏/召回）。验收：handoff 24/24；会话树 153 PASS/0 FAIL、style-guard 22/22；tree-engine 62/62、meta-loop 13/13；真机 E2E 兄弟接替成功。`.gitignore` 增 `HANDOFF-*.md`（运行时交接产物不入库）。

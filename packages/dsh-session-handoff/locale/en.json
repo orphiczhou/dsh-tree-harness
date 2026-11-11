@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Session handoff",
+    "description": "Lets a session hand itself off: reads context pressure, writes a HANDOFF-*.md recap into the workspace, and starts a same-level successor session with the same model, effort and working directory."
+  }
+}
