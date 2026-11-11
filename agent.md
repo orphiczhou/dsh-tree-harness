@@ -31,7 +31,7 @@
 # 测试（bundled node；勿用目录形参 node --test tests —— Node 24 会报 test at tests:1:1 假失败）
 node --test tests/*.test.js            # packages/dsh-tree-engine → 67/67（62 引擎 + 4 技能打包 + 1 B1 回归）
 node --test tests/*.test.js            # packages/dsh-meta-loop  → 13/13
-node test/handoff.test.js              # packages/dsh-session-tree → 40/40（宿主半 session_handoff）
+node test/handoff.test.js              # packages/dsh-session-tree → 41/41（宿主半 session_handoff）
 node test/render.test.cjs              # packages/dsh-session-tree → 全绿（参考 133 + 自检 9 + 实时 11）
 node test/style-guard.cjs              # packages/dsh-session-tree → 22/22
 node scripts/verify-bundle.mjs         # packages/dsh-session-tree → 0 fail
@@ -98,7 +98,7 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 - **本仓**：public `master`，第五轮提交见 `git log -1`；工作树 clean；remote = `https://github.com/orphiczhou/dsh-tree-harness.git`
 - **公开面**：仓库 https://github.com/orphiczhou/dsh-tree-harness（public / master / MIT / 7 topics）；插件仓 `orphiczhou/dsh-session-tree` **v1.3.1**（交接提示语跟随界面语言 + 随包 Skill；main+tag = `c257d61`，18/18 SHA）、`orphiczhou/dsh-region-probe`；**npm 冻结（D3）**
 - **组件**：`dsh-tree-engine` **v0.5.1**（8 工具 + 随包 tree-commander/tree-worker Skill）、`dsh-meta-loop` v0.2.0（未装配）、`dsh-agent-introspect` v0.1.0、`dsh-session-tree` **v1.3.2**（`tree_send` + `session_handoff` + 随包 `session-handoff` Skill + 语言跟随）
-- **测试**：tree-engine **67/67**、meta-loop **13/13**；session-tree handoff **40/40**、skills **3/3**、render 全绿、style-guard **22/22**、verify-bundle **0 fail**；新增 `scripts/e2e/verify-kickoff-language.mjs`（接替首条语种断言）
+- **测试**：tree-engine **67/67**、meta-loop **13/13**；session-tree handoff **41/41**、skills **3/3**、render 全绿、style-guard **22/22**、verify-bundle **0 fail**；新增 `scripts/e2e/verify-kickoff-language.mjs`（接替首条语种断言）
 - **会话树 / 技能活体**：`include:session-tree` / `include:tree-engine` 已重载；新会话 Skill 目录含 3 个 Skill；**接替提示语跟随界面语言**（本机 `locale.preference: zh` → `lang=zh`，接替首条中文，真机 PASS）；E2E 见 [docs/skill-e2e-2026-11-11.md](docs/skill-e2e-2026-11-11.md) 与 [docs/e2e-kickoff-language-2026-11-11.md](docs/e2e-kickoff-language-2026-11-11.md)
 - **用户文档**：新增 [docs/skills-usage.md](docs/skills-usage.md)（安装/发现/最小提示词/三层树/50% 交接/语言/排障）
 - **未装配**：`@local/dsh-meta-loop`；**降级项**：无（tree-engine `sweepMode=timer`）

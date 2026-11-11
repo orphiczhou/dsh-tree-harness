@@ -2,6 +2,20 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [1.3.3] — 2026-11-11 · `spawn:false` 干跑不被阈值闸拦 + 洁净室二轮修订（session-tree）
+
+### 变更
+
+- 版本：`packages/dsh-session-tree` 由 `1.3.2` → **`1.3.3`**（公开插件仓同步发布）。
+- **行为修正**：`session_handoff {action:"handoff", spawn:false}` 现在**不受 below-threshold 阈值闸拦截**——它是只写交接文件的干跑，低于 50% 也应能产出预览 recap；防重复闸（5 分钟）仍生效。此前阈值闸先于 `spawn:false` 分支，导致新会话按文档单发 `spawn:false` 会被误拒（洁净室二轮 N1，中等严重度）。`force:true` 语义不变（既绕阈值闸，也会真正启动接替会话）。
+- 测试：handoff 由 40 → **41** 用例（新增「spawn=false 在阈值以下也能只写文件」）。
+- **洁净室二轮其余修订**（N2–N7）：README 中英例题改为中性路径（不再出现 monorepo `packages/`/`docs/`）、去掉与「无插件市场」自相矛盾的 marketplace 问题；SKILL 的 status/handoff 渲染样例补 `lang=zh` 段、去掉过期测试数字；`package.json.files` 补 `README.zh.md`（npm 分发时中文版不丢失）；tree_send 示例路径中性化。
+
+### 验证
+
+- `test/handoff.test.js` **41/41**；skills 3/3、render/style-guard/verify-bundle 全绿。
+- 洁净室二轮（v1.3.2 基线）：公开插件仓 12/12 项修复 ✅、无新增死链；本版修掉其 N1–N7 后进入第三轮独立复核。
+
 ## [1.3.2] — 2026-11-11 · Skill 使用文档补全（session-tree，洁净室评审修订）
 
 ### 变更

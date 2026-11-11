@@ -19,7 +19,7 @@
 | [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.5.1 | 执行层：8 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain`），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准；**随包 tree-commander/tree-worker Skill** | **67/67** | ✅ 运行中（本机 desktop profile 已装载） |
 | [`packages/dsh-meta-loop`](packages/dsh-meta-loop/) | 0.2.0 | 治理层：六阶段方法轮 + **G1–G11** 机械门禁 + `/metaloop/` Web 面板 + M4 递归触发表 | **13/13** | ⏸ 未装配（不在 profile bundles，按需装载） |
 | [`packages/dsh-agent-introspect`](packages/dsh-agent-introspect/) | 0.1.0 | 自省层：`self_spec` 工具，投影当前会话的 model / permissions / sandbox / cwd / token 用量 | —（无单测） | ✅ 运行中 |
-| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.3.2** | 会话树单包：左栏嵌套会话树 + `tree_send` 跨层级消息工具 + **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回 | 包内 5 份测试（handoff **40/40**、render 全绿、style-guard 22/22、verify-bundle 0 fail） | 🌐 GitHub 公开（**v1.3.2**）、社区市场已收录；**npm 未发布** |
+| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.3.3** | 会话树单包：左栏嵌套会话树 + `tree_send` 跨层级消息工具 + **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回 | 包内 5 份测试（handoff **41/41**、render 全绿、style-guard 22/22、verify-bundle 0 fail） | 🌐 GitHub 公开（**v1.3.3**）、社区市场已收录；**npm 未发布** |
 
 状态口径：
 
@@ -99,7 +99,7 @@ node --test tests/*.test.js     # tests 13 / pass 13 / fail 0
 
 ```powershell
 cd packages/dsh-session-tree
-node test/handoff.test.js      # 宿主半 session_handoff：40/40（交接层级矩阵/继承/工作区归属/闸门/失败可追溯）
+node test/handoff.test.js      # 宿主半 session_handoff：41/41（交接层级矩阵/继承/工作区归属/闸门/失败可追溯）
 node test/skills.test.cjs      # 随包 Skill 打包回归：3/3（frontmatter/files/patch 行）
 node test/render.test.cjs      # 确定性夹具渲染检查（133/133 + 夹具自检 9/9 + 实时附加 11/11）
 node test/style-guard.cjs      # 样式注入 / SSR 边界检查：22/22
@@ -136,7 +136,7 @@ node test/provider-conformance.cjs [asar 解包目录]
 - 所有 DOM 副作用放在 `apply(ctx)` 里；
 - 客户端半热更会**残留旧实例**：用单例注册表 + 令牌仲裁压制，彻底干净仍需刷新一次页面。
 
-### 随包 Skill（SKILL 工程化，v0.5.1 / v1.3.2）
+### 随包 Skill（SKILL 工程化，v0.5.1 / v1.3.3）
 
 Skill 是插件工程的一部分，与工具同包、同版本、同发布：
 

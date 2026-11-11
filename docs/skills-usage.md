@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.5.1**、`packages/dsh-session-tree` **v1.3.2** 及以上（公开插件仓同步 tag `v1.3.2`）。
+> 适用版本：`packages/dsh-tree-engine` **v0.5.1**、`packages/dsh-session-tree` **v1.3.3** 及以上（公开插件仓同步 tag `v1.3.3`）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -115,7 +115,7 @@ pnpm install
 1. 装 bundle → 确认 Plugins 行已启用；
 2. **新开**一个会话，问「你看到的 Skill 有哪些」→ 应看到 `session-handoff`（若同时装了 tree-engine，还有 `tree-commander`/`tree-worker`）；
 3. 说「交接一下，先看 status」→ agent 调 `session_handoff {action:"status"}`，渲染行应含 `context=…% (threshold 50%) … lang=zh|en`；
-4. 说「写个交接文件，先别开新会话」→ agent 用 `spawn:false`，你得到一个 `HANDOFF-*.md`（这一步不触发阈值/防重复问题）；
+4. 说「写个交接文件，先别开新会话」→ agent 用 `spawn:false`，你得到一个 `HANDOFF-*.md`（**干跑不被阈值闸拦**，50% 以下也能写；5 分钟内第二次仍会被防重复闸拒）；
 5. 想看完整接替：说「force 交接一次」→ 返回 `successor <id> kind=…`；5 分钟内再交接会被 `recent-handoff` 拒绝，**这是防重复闸，不是故障**；新会话在 50% 以下被 `below-threshold` 拒绝同样是预期。
 
 ---
@@ -243,7 +243,7 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.5.1 / `dsh-session-tree` 1.3.2（公开插件仓 tag `v1.3.2`；Skill 自 1.3.0 起，接替提示语语言跟随自 1.3.1 起）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.5.1 / `dsh-session-tree` 1.3.3（公开插件仓 tag `v1.3.3`；Skill 自 1.3.0 起，接替提示语语言跟随自 1.3.1 起）。
 - 升级包后：宿主半/patch 有变化 → disable→enable；只改 Skill 正文 → 新会话直接读到。
 - 会话树公开插件仓：`orphiczhou/dsh-session-tree`（tag = 版本号）；本仓 `packages/dsh-session-tree` 是唯一源码事实源。
 
