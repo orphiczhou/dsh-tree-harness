@@ -69,7 +69,7 @@ foreach ($p in @('dsh-tree-engine','dsh-meta-loop','dsh-agent-introspect','dsh-s
 | `f7048a8` = **v1.1.0** | ✅ 核实。`git show --stat f7048a8`：5 文件，`package.json` 2 行改动；`f7048a8~1` → 1.0.4，`f7048a8` → **1.1.0** |
 | `67fa541` = **v1.2.0**（并入 session_handoff） | ✅ 核实。`git show --stat 67fa541`：11 文件，`packages/dsh-session-tree/package.json` 4 行改动；删除 `packages/dsh-session-handoff/*`（7 文件，含 `index.js` 761 行）；`git show 67fa541:…package.json` → **1.2.0** |
 | `0cbc31e` = **v1.2.0 文档** | ✅ 核实。`git show --stat 0cbc31e`：13 文件，全为 `README.md` / `agent.md` / `docs/*` / `scripts/e2e/*`，**无 package.json** → 纯文档提交，非版本节点 |
-| `4089a65` = tree-engine RC2 API 兼容修复 | ✅ 核实为修复提交。`git show --stat 4089a65`：2 文件（`packages/dsh-tree-engine/index.js`、`docs/defect-2026-10-17-subagents-rc2-api-drift.md`），**未改 package.json** → 不是版本节点（tree-engine 版本仍为当时值） |
+| `4089a65` = tree-engine RC2 API 兼容修复 | ✅ 核实为修复提交。`git show --stat 4089a65`：2 文件（`packages/dsh-tree-engine/index.js`、`docs/reports/defect-2026-10-17-subagents-rc2-api-drift.md`），**未改 package.json** → 不是版本节点（tree-engine 版本仍为当时值） |
 | `3c1e89d` = meta-loop 面板 | ✅ 核实为功能提交。`git show --stat 3c1e89d`：1 文件（`packages/dsh-meta-loop/panel/index.html`，+275/−24），**未改 package.json** → 不是版本节点（meta-loop 保持 0.2.0） |
 
 补充：tree-engine 的 0.4.0 由更早提交 `5db7b28`（2026-10-14，`tree-engine package.json 版本对齐 0.4.0`）设定；0.5.0 只存在于工作区（未提交）。
@@ -82,7 +82,7 @@ git tag                                              # 无输出
 git describe --tags                                  # fatal: No names found, cannot describe anything.
 ```
 
-**本仓无 tag**（符合预期）。注意：`docs/publishing.md` 中的 tag `v1.2.0` 指**公开插件仓** `orphiczhou/dsh-session-tree`，不是本仓。
+**本仓无 tag**（符合预期）。注意：`docs/guides/publishing.md` 中的 tag `v1.2.0` 指**公开插件仓** `orphiczhou/dsh-session-tree`，不是本仓。
 
 ---
 
@@ -208,25 +208,25 @@ Pop-Location
 
 | 结论 | 出处 | 原文要点 |
 |---|---|---|
-| **npm 未发布（D3 冻结）** | `docs/publishing.md:18` | npm 行：`⏸ **冻结**（D3），registry 均 404`；只走 Git / `link:` 安装 |
-| npm 冻结依据 | `docs/publishing.md:64-66`（§4） | 4 个 `@orphiczhou/*` 候选包名 npm registry 均 **404**（2026-11-11 直查） |
+| **npm 未发布（D3 冻结）** | `docs/guides/publishing.md:18` | npm 行：`⏸ **冻结**（D3），registry 均 404`；只走 Git / `link:` 安装 |
+| npm 冻结依据 | `docs/guides/publishing.md:64-66`（§4） | 4 个 `@orphiczhou/*` 候选包名 npm registry 均 **404**（2026-11-11 直查） |
 | npm 未发布的产品口径 | `README.md:22`、`README.md:28` | 会话树行「**npm 未发布**」；状态口径「`npm 未发布` = 刻意的安装策略…决策 D3」 |
-| **GitHub 公开仓 v1.2.0 已发布** | `docs/publishing.md:13`（§1 表） | `orphiczhou/dsh-session-tree` ✅ 公开，**v1.2.0**，MIT，7 commits；main + tag `v1.2.0` = **`597ca31`**（远端=本地） |
-| v1.2.0 发布细节（16/16 SHA） | `docs/publishing.md:52`（§3）、`:117`（§5）、`:174`（§7） | 同步 **16/16 SHA 一致**、推送 main + tag `v1.2.0`（`597ca31`）；`files=16 match=16 mismatch=0 missing=0 extra=0`，`RESULT: OK — 16/16 files byte-identical (SHA-256)` |
-| **市场（marketplace）已收录** | `docs/publishing.md:15` | awesome-dsh-plugin **PR #6334**（会话树）✅ **已合并（2026-10-14）**；browse-only，按 `package.json.version` 判断更新 |
-| 市场另有两条（旁证同机制） | `docs/publishing.md:16-17` | PR #6435（region-probe，2026-10-15）、imsai-sh PR #554，均 ✅ 已合并 |
+| **GitHub 公开仓 v1.2.0 已发布** | `docs/guides/publishing.md:13`（§1 表） | `orphiczhou/dsh-session-tree` ✅ 公开，**v1.2.0**，MIT，7 commits；main + tag `v1.2.0` = **`597ca31`**（远端=本地） |
+| v1.2.0 发布细节（16/16 SHA） | `docs/guides/publishing.md:52`（§3）、`:117`（§5）、`:174`（§7） | 同步 **16/16 SHA 一致**、推送 main + tag `v1.2.0`（`597ca31`）；`files=16 match=16 mismatch=0 missing=0 extra=0`，`RESULT: OK — 16/16 files byte-identical (SHA-256)` |
+| **市场（marketplace）已收录** | `docs/guides/publishing.md:15` | awesome-dsh-plugin **PR #6334**（会话树）✅ **已合并（2026-10-14）**；browse-only，按 `package.json.version` 判断更新 |
+| 市场另有两条（旁证同机制） | `docs/guides/publishing.md:16-17` | PR #6435（region-probe，2026-10-15）、imsai-sh PR #554，均 ✅ 已合并 |
 | README 组件表口径 | `README.md:19-22` | tree-engine 0.5.0 / **66/66**；meta-loop 0.2.0 / **13/13**；agent-introspect 0.1.0 / 无单测；session-tree **1.3.0** / 包内测试 |
 | README 会话树发布口径 | `README.md:22` | 🌐 GitHub 公开（**v1.3.0**）、社区市场已收录；**npm 未发布** |
-| 本仓自身公开 | `docs/publishing.md:12` | `orphiczhou/dsh-tree-harness`（本仓）🚀 **public** |
-| 另三包随仓公开、未单独发仓 | `docs/publishing.md:22`、`:60` | `dsh-tree-engine` / `dsh-meta-loop` / `dsh-agent-introspect` 随本仓公开，未单独建仓、安装走 `link:` |
-| §6 测试清单（书面数字） | `docs/publishing.md:152-154` | tree-engine **66/66（62 引擎 + 4 技能打包）**；meta-loop **13/13**；session-tree `handoff 34/34`、`skills.test.cjs 3/3`、`style-guard 22/22` |
-| 极简提示词 E2E 报告 | `docs/skill-e2e-2026-11-11.md:5`、`:145`、`:150` | 状态「**阶段 2 进行中（初稿）**」；`atCreation` 3/3 skill 可见；B 组记 tree-engine `66/66 PASS`、session-tree `skills.test 3/3` + `handoff 34/34` |
+| 本仓自身公开 | `docs/guides/publishing.md:12` | `orphiczhou/dsh-tree-harness`（本仓）🚀 **public** |
+| 另三包随仓公开、未单独发仓 | `docs/guides/publishing.md:22`、`:60` | `dsh-tree-engine` / `dsh-meta-loop` / `dsh-agent-introspect` 随本仓公开，未单独建仓、安装走 `link:` |
+| §6 测试清单（书面数字） | `docs/guides/publishing.md:152-154` | tree-engine **66/66（62 引擎 + 4 技能打包）**；meta-loop **13/13**；session-tree `handoff 34/34`、`skills.test.cjs 3/3`、`style-guard 22/22` |
+| 极简提示词 E2E 报告 | `docs/reports/skill-e2e-2026-11-11.md:5`、`:145`、`:150` | 状态「**阶段 2 进行中（初稿）**」；`atCreation` 3/3 skill 可见；B 组记 tree-engine `66/66 PASS`、session-tree `skills.test 3/3` + `handoff 34/34` |
 
 ---
 
 ## 5. 未能核实 / 存在冲突
 
-1. **GitHub 已发布版本冲突（v1.2.0 ↔ v1.3.0）**：`docs/publishing.md:13/52/174` 三处一致写 **v1.2.0**（tag `v1.2.0` = `597ca31`），而 `README.md:22`、`agent.md:95/96/135` 写 **v1.3.0 已发布**。`publishing.md` §7 变更记录（`:172-174`）**没有 v1.3.0 条目**，§1/§3 也未更新 → **v1.3.0 是否已在公开插件仓发布，仓内书面证据无法确认**（本轮未联网核对远端）。
+1. **GitHub 已发布版本冲突（v1.2.0 ↔ v1.3.0）**：`docs/guides/publishing.md:13/52/174` 三处一致写 **v1.2.0**（tag `v1.2.0` = `597ca31`），而 `README.md:22`、`agent.md:95/96/135` 写 **v1.3.0 已发布**。`publishing.md` §7 变更记录（`:172-174`）**没有 v1.3.0 条目**，§1/§3 也未更新 → **v1.3.0 是否已在公开插件仓发布，仓内书面证据无法确认**（本轮未联网核对远端）。
 2. **本仓无 tag**：`git tag` 为空、`(git tag | Measure-Object -Line).Lines` = 0、`git describe --tags` 报 `fatal: No names found` → 本仓无 tag（预期行为）；publishing.md 中的 tag 属于公开插件仓，不能当作本仓 tag。
 3. **工作区版本高于 HEAD（未提交 bump）**：session-tree 1.3.0（HEAD 1.2.0）、tree-engine 0.5.0（HEAD 0.4.0），`git diff -- packages/dsh-session-tree/package.json` 证实 `- "version": "1.2.0"` / `+ "version": "1.3.0"`。HEAD 最近提交仍是 v1.2.0 轮 → 写变更记录时须注明这两个版本号**尚未入库**，否则 git 历史与磁盘对不上。
 4. **README 内部数字自相矛盾**：`README.md:22` 写「包内 **4 份**测试（handoff/render/style-guard/verify-bundle）」，`README.md:96` 写「自带 **5 份**测试」并列出 handoff / skills / render / style-guard / verify-bundle。实测 `test/skills.test.cjs` 存在且 3/3 → **5 份为准**，`:22` 的「4 份」是漏列 skills 的陈旧表述。

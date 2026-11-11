@@ -4,7 +4,7 @@
 
 - **w1** = `demo/agspec/w1-evidence.md`(子会话内实测:env/文件/工具面三渠道取证)
 - **w2** = `demo/agspec/w2-source.md`(宿主 app.asar 源码盘点,含 `SubagentStartRequest`/`AgentOptions`/`ContinuableStartSpec` 原始摘录)
-- **engine** = `packages/dsh-tree-engine/src/engine.js`;**spec** = `docs/engine-spec.md`
+- **engine** = `packages/dsh-tree-engine/src/engine.js`;**spec** = `docs/architecture/engine-spec.md`
 
 ---
 

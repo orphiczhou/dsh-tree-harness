@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.6.0**、`packages/dsh-session-tree` **v1.3.5** 及以上（公开插件仓同步 tag `v1.3.5`）。
+> 适用版本：`packages/dsh-tree-engine` **v0.6.0**、`packages/dsh-session-tree` **v1.3.6** 及以上（公开插件仓同步 tag `v1.3.6`）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -256,7 +256,7 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.6.0 / `dsh-session-tree` 1.3.5（公开插件仓 tag `v1.3.5`）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.6.0 / `dsh-session-tree` 1.3.6（公开插件仓 tag `v1.3.6`）。
 - **tree-engine 0.6.0**：新增第 9 个工具 **`tree_doctor`**（只读自检，7 检查项）+ leaf 写面护栏（`LEAF_WRITE_MATRIX`）；Skill 正文未变，测试数 67→**84/84**。安装/重载后推荐先跑一次自检（见 §3）。
 - **版本差异速查**：
   - **1.3.0**：随包 `session-handoff` Skill + skill provider patch 行（此前无 Skill）；
@@ -264,7 +264,8 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
   - **1.3.2**：Skill 使用文档补全（样例/参数表/冒烟/排障/英文触发词）；
   - **1.3.3**：`spawn:false` 干跑不再被阈值闸拦；文档路径与样例修正；
   - **1.3.4**：洁净室文档债清扫（语言验收表述、set-session 主体、英文触发词、版本矩阵）；
-  - **1.3.5**：SKILL 补 `spawn:false` 例外说明；README root→grandchild 措辞修正（当前版本）。
+  - **1.3.5**：SKILL 补 `spawn:false` 例外说明；README root→grandchild 措辞修正；
+  - **1.3.6**：文档按目录归档（`docs/README.md` 索引）+ 新增人类安装指南 / Agent 安装指南（`AGENT-INSTALL.md`）；无代码行为变化（当前版本）。
 - 升级包后：宿主半/patch 有变化 → disable→enable；只改 Skill 正文 → 新会话直接读到。
 - 会话树公开插件仓：`orphiczhou/dsh-session-tree`（tag = 版本号）；本仓 `packages/dsh-session-tree` 是唯一源码事实源。
 
@@ -286,7 +287,7 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 ## 11. 索引
 
 - 技能正文：`packages/dsh-tree-engine/skills/tree-commander/SKILL.md`、`…/tree-worker/SKILL.md`、`packages/dsh-session-tree/skills/session-handoff/SKILL.md`
-- 设计/实现：`docs/session-handoff-2026-11-11.md`、`docs/e2e-handoff-2026-11-11.md`、`docs/e2e-kickoff-language-2026-11-11.md`
-- 一致性与 E2E：`docs/audit-tree-system-2026-11-11.md`、`docs/skill-e2e-2026-11-11.md`
+- 设计/实现：`docs/architecture/session-handoff-2026-11-11.md`、`docs/reports/e2e-handoff-2026-11-11.md`、`docs/reports/e2e-kickoff-language-2026-11-11.md`
+- 一致性与 E2E：`docs/reports/audit-tree-system-2026-11-11.md`、`docs/reports/skill-e2e-2026-11-11.md`
 - 脚本：`scripts/skill-e2e/collect-skills.mjs`、`scripts/skill-e2e/summarize-run.mjs`、`scripts/e2e/verify-handoff.mjs`、`scripts/e2e/verify-kickoff-language.mjs`
-- 命令速查与热更纪律：`agent.md` §0.2 / D12；版本与发布：`docs/publishing.md`
+- 命令速查与热更纪律：`agent.md` §0.2 / D12；版本与发布：`docs/guides/publishing.md`

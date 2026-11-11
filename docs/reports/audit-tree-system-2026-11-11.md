@@ -22,7 +22,7 @@
 | # | 结论 | 主要证据 |
 |---|---|---|
 | B1 | **竹节接力后 leaf owner 不迁移 → 接力会话写 `done` 被 `E_BORROWED_IDENTITY` 拒，leaf 只能等 30 分钟 timeout**；两份 SKILL 把它描述成正常换棒、并称 done→succeeded | `src/engine.js:417`（首次派发绑定 owner）vs `src/engine.js:492-500`（接力只改 `runtime`，不改 `leaf.session_id`）；`src/engine.js:260-263`；复现输出（§9.3） |
-| B2 | **热更新说明自相矛盾且与实测相反**：包 README（中英）称"停用/启用也拿不到新代码"，与 agent.md D12/根 README 的"disable→enable 实测有效（发布流程要求）"直接冲突 | `packages/dsh-session-tree/README.md:248`、`README.zh.md:248` vs `agent.md:86`（D12）、`agent.md:141`、`README.md:143`；`docs/session-handoff-2026-11-11.md:43` |
+| B2 | **热更新说明自相矛盾且与实测相反**：包 README（中英）称"停用/启用也拿不到新代码"，与 agent.md D12/根 README 的"disable→enable 实测有效（发布流程要求）"直接冲突 | `packages/dsh-session-tree/README.md:248`、`README.zh.md:248` vs `agent.md:86`（D12）、`agent.md:141`、`README.md:143`；`docs/architecture/session-handoff-2026-11-11.md:43` |
 | B3 | **T4 两份新 SKILL 宣称"本机无 timer 服务 / 没有后台自动收割，必须显式 harvest"——与代码和活体日志相反**：`systemClock()` 永远带 `scheduleInterval`，生产路径 `sweepMode` 恒为 `timer`（进程内 setInterval 每 60s 自动 sweep） | `index.js:774-781`（只打 degrade 日志，clock 仍用 `systemClock()`）、`src/clock.js:14-22`、`src/engine.js:573-578`；`apply.log`："timer resolve failed … engine ready (sweepMode=timer)"；本地复现 §9.4 |
 | B4 | **tree-commander v2 没有"被派发的 commander 不要 tree_plan"分支**：三层分解 E2E 中第二层 commander 照 SKILL 先 `tree_plan create` → 同 tree_id `E_DUPLICATE_LEAF`，换 tree_id 则把子节点建到另一棵树（静默分裂） | `packages/dsh-tree-engine/skills/tree-commander/SKILL.md:7,50-63,241`；`src/engine.js:54`（duplicate 拒绝）；T6 三层场景（task-6） |
 
@@ -142,7 +142,7 @@ done by OLD session  -> ok=true
 - 工具面**没有任何 milestone 写入 action**（`tree_node` add/get/list/list-all/set-status/set-session，`index.js:489`；`leaf:add` 还把 `milestones` 覆盖成 `[]`，`src/engine.js:146-150`）。测试自己承认需"store 直改注入"（`tests/engine.test.js:243` 注释）。
 - 结论：`tree_node {action:"set-status", status:"done"}` 在工具面**永远 E_SCHEMA_INVALID**（milestones 空）；`tree-engine README:17` 的"done 三重闸/闭集状态机全量继承"对工具面不成立。
 - 建议：工具描述/README 标注"里程碑面无写入命令；收口以 `runtime.state=succeeded` + verify 为准"（T4 已在 `tree-commander:138` 写明，工具描述仍需改）；或补 `milestone-add` action。
-- 附带：`src/engine.js` 实际只有 **2 道闸**（done event + milestones），`docs/engine-spec.md:40` 与旧 SKILL 宣称的第三道"树结构 validate"未实现。
+- 附带：`src/engine.js` 实际只有 **2 道闸**（done event + milestones），`docs/architecture/engine-spec.md:40` 与旧 SKILL 宣称的第三道"树结构 validate"未实现。
 
 ### P1-03 `tree_dispatch` 三个参数/描述与实际行为不符
 
@@ -191,14 +191,14 @@ done by OLD session  -> ok=true
 | `README.md:150` | tree-engine `tests/` "（**8 个 .test.js** + 偏差登记）" | 现有 **9 个**（新增 `skills.test.js`） |
 | `README.md:155` | 目录树列 "demo/ logs/ **skills/**" | 仓根 `skills/` 已删除（git status `D skills/...`） |
 
-### P1-09 `docs/tools-mapping.md` 的 action 表与已实现 8 工具 schema 不匹配（README 仍把它当工具面真源）
+### P1-09 `docs/architecture/tools-mapping.md` 的 action 表与已实现 8 工具 schema 不匹配（README 仍把它当工具面真源）
 
-- `packages/dsh-tree-engine/README.md:3`："工具面：[docs/tools-mapping.md]"。
-- `docs/tools-mapping.md:12-19`（S0 设计表）宣称的 action：`tree_plan create/import/configure`、`tree_node …milestone-add/milestone-update/milestone-set-result`、`tree_dispatch start/cancel/retry/handoff`、`tree_report event/drift/heartbeat/nudge/context/last-event/communication`、`tree_verify gate/append/policy-verdict`、`tree_status overview/subtree/node/stats/validate/sessions`、`tree_maintain backup/restore/migrate/register-session/nudge-reset/archive/gc`。
+- `packages/dsh-tree-engine/README.md:3`："工具面：[docs/architecture/tools-mapping.md]"。
+- `docs/architecture/tools-mapping.md:12-19`（S0 设计表）宣称的 action：`tree_plan create/import/configure`、`tree_node …milestone-add/milestone-update/milestone-set-result`、`tree_dispatch start/cancel/retry/handoff`、`tree_report event/drift/heartbeat/nudge/context/last-event/communication`、`tree_verify gate/append/policy-verdict`、`tree_status overview/subtree/node/stats/validate/sessions`、`tree_maintain backup/restore/migrate/register-session/nudge-reset/archive/gc`。
 - 实际 schema（`index.js:464,489,533,561,583,610,708,736`）：`tree_plan [create]`、`tree_node [add,get,list,list-all,set-status,set-session]`、`tree_dispatch [start,cancel]`、`tree_report [context,event]`、`tree_status [overview,validate,sessions,harvest]`、`tree_verify [run,dod,adversarial]`、`tree_log [events,drift,heartbeat,communication]`、`tree_maintain [backup,restore,nudge-reset,register-session]`。
 - 影响：任何人/模型照 tools-mapping 调 `tree_report {action:"drift"}` 等会报 unknown action；README 又把它标为工具面。建议：加"v0.4.0 已实现子集"列或改为"设计目标 vs 已实现"两表，README 链接改标"（S0 设计；实际 schema 以 index.js 为准）"。
 
-### P1-10 `docs/session-handoff-2026-11-11.md` 的操作性章节过时（独立包已删）
+### P1-10 `docs/architecture/session-handoff-2026-11-11.md` 的操作性章节过时（独立包已删）
 
 - 文档头部/§0.4 仍以 v1.2.0 为"当前状态"（`:1,6,18,47-50`），而工作树 package 已 1.3.0（随包 Skill）；建议加"→ v1.3.0 随包 Skill"一行。
 - **§8 回滚指令指向已删除的包**：`:322` `plugin_manager({action:"remove_bundle", target:"@local/dsh-session-handoff"})`；该包已删除、profile bundle 已移除——照做会得到 "not found"。应改为 `@orphiczhou/dsh-session-tree` / `include:session-tree` 的 disable。
@@ -241,9 +241,9 @@ done by OLD session  -> ok=true
 | P2-04 | `tree-maintain` 的 `nudge-reset` 依赖的 `nudge:append` 无工具；在 nudge 工具补齐前，SKILL 不应把 nudge 作为可等待信号 | `index.js:736,748`、`src/engine.js:316-330` |
 | P2-05 | `tree-engine` 节序错乱（v0.5.0 → v0.3 → v0.3.1 → v0.3.2 → v0.4.0 → v0.3.9 → v0.3.8）；建议按版本重排或顶部加"最新在 v0.5.0 / 历史章节降序" | `README.md:5,13,37,47,58` |
 | P2-06 | `tree-engine README` 的 v0.3/v0.2/v0.1"边界"段落已被后续版本解决（如"tree_verify 未注册"），建议加"历史边界，已解决"标注避免误读 | `README.md:66-72,81-87,95-100` |
-| P2-07 | `docs/engine-spec.md` 与实现差异需登记：事件"11 类"（实际 12，缺 `child_done`，:49 vs `src/state.js:27`）、done 三重闸第三项"树结构校验"未实现（:40）、leaf"5 件套"中 `report_protocol/autonomy/self_audit` 无实现字段（:25）、`audit_gate/audit_append` 命令未实现（:48,52） | 同左 |
+| P2-07 | `docs/architecture/engine-spec.md` 与实现差异需登记：事件"11 类"（实际 12，缺 `child_done`，:49 vs `src/state.js:27`）、done 三重闸第三项"树结构校验"未实现（:40）、leaf"5 件套"中 `report_protocol/autonomy/self_audit` 无实现字段（:25）、`audit_gate/audit_append` 命令未实现（:48,52） | 同左 |
 | P2-08 | `packages/dsh-session-tree/README.md:118` 称 tree_send "delivers … that is **not** your direct parent or direct child"，但同文 :152 又示例"Parent → child"；工具描述（`index.js:193-197`）是"including a sibling"（正确）。建议 README 改为"包括兄弟；直接父/子也可（但内置 send_message 已覆盖）" | 同左 |
-| P2-09 | `docs/session-handoff-2026-11-11.md` §2.6 说"交接文件写成功后记录"防重复表；§3 顺序是先写文件再 spawn——因此 **spawn_error 之后重试会被 recent-handoff 拒**。建议在 `session-handoff` SKILL 的 `spawn_error` 行补"需 `force:true` 或等 5 分钟" | `index.js:1183-1184,1221-1225` |
+| P2-09 | `docs/architecture/session-handoff-2026-11-11.md` §2.6 说"交接文件写成功后记录"防重复表；§3 顺序是先写文件再 spawn——因此 **spawn_error 之后重试会被 recent-handoff 拒**。建议在 `session-handoff` SKILL 的 `spawn_error` 行补"需 `force:true` 或等 5 分钟" | `index.js:1183-1184,1221-1225` |
 | P2-10 | `session-handoff` SKILL §5 列了 `maxTokens` 为继承事实，但 `status` 返回不含 maxTokens（只在 handoff 的 `successor.max_tokens`）；建议在验收清单注明去哪看 | `index.js:826-840,669-704` |
 | P2-11 | `session-handoff` SKILL §2 的"本机实测样例"建议标注"样例随宿主版本可能变"，避免读者把行格式当契约；工具 `render` 是 400 字符截断的单行（`index.js:939`） | 已验证 render 输出与样例一致（§9.5） |
 | P2-12 | `tree-engine README:54` 说 worker SKILL 重写"用 **drift 申报**替代 autonomy_override"，但工具面无 drift 写入（见 P1-05/P2-04）；应改为"用 `tree_report {action:'event', type:'progress', meta:{drift:{...}}}` 申报（工具面无 drift 写入命令）" | `index.js:702-727`（tree_log 只有 list） |
@@ -316,8 +316,8 @@ done by OLD session  -> ok=true
 | 历史测试数 | v0.4.0 节 "61 项全绿"（`:45`） | v0.4.0 时代人工计数为 62；当前引擎测试 62 | ⚠️ off-by-one（P1-12） |
 | 运行命令 | 硬编码 `C:\Users\sir_c\...\node.exe`（`:105`） | 本机存在但不可移植；应写 `node --test tests/*.test.js` + 可选 bundled 说明 | ⚠️ P1-12/P2 |
 | 版本日志 | — | `index.js:807` console 仍打印 `v0.3.3`；`diag` 打印 v0.4.0（`:762`）；package 0.5.0 | ⚠️ P1-12 |
-| 行为基准链接 | `docs/engine-spec.md`（`:3`） | 该文档为 S0 冻结/上游行为，已与实现有差异（P2-07） | ⚠️ 建议加差异声明 |
-| 工具面链接 | `docs/tools-mapping.md`（`:3`） | action 表大量未实现（P1-09） | ⚠️ P1 |
+| 行为基准链接 | `docs/architecture/engine-spec.md`（`:3`） | 该文档为 S0 冻结/上游行为，已与实现有差异（P2-07） | ⚠️ 建议加差异声明 |
+| 工具面链接 | `docs/architecture/tools-mapping.md`（`:3`） | action 表大量未实现（P1-09） | ⚠️ P1 |
 | 边界章节 | v0.3 边界"tree_verify 未注册/验证层第二批未实现"（`:66-72`） | 已有 v0.3.9/v0.4.0/v0.5.0 实现 | ⚠️ 建议标"历史"（P2-06） |
 | 节序 | v0.4.0 在 v0.3.2 与 v0.3.9 之间（`:37→:47`） | 非时间序 | ⚠️ P2-05 |
 
@@ -328,18 +328,18 @@ T4 已删除仓根 `skills/`（git status `D skills/tree-commander/SKILL.md`、`
 | 文件:行 | 现引用 | 处置建议 |
 |---|---|---|
 | `README.md:155` | 目录树 "demo/ logs/ **skills/**" | 删除 `skills/` 或改为"（skills 已随包：`packages/*/skills/`）" |
-| `docs/flaudit-report.md:18` | "协议 \| skills/tree-commander/SKILL.md、skills/tree-worker/SKILL.md" | 历史审计：加注"（旧路径；已迁入 packages/dsh-tree-engine/skills/）" |
-| `docs/handoff-2026-10-04.md:80` | "已闭合（v0.3.9）：skills/tree-worker/SKILL.md…" | 历史交接：加路径注记即可（勿改历史结论） |
-| `docs/proposals-from-agent-notes.md:35` | "改动面：纯文档(skills/tree-commander/SKILL.md)" | 历史提案：加注 |
-| `docs/segment-handoff.md:23` | "skills/tree-worker/SKILL.md:50、:70、:686–688、:728" | 行号来自旧 54KB SKILL，当前 SKILL 仅 154 行——历史设计文档；建议加"行号为上游旧版"或改指新路径 |
+| `docs/archive/flaudit-report.md:18` | "协议 \| skills/tree-commander/SKILL.md、skills/tree-worker/SKILL.md" | 历史审计：加注"（旧路径；已迁入 packages/dsh-tree-engine/skills/）" |
+| `docs/archive/handoff-2026-10-04.md:80` | "已闭合（v0.3.9）：skills/tree-worker/SKILL.md…" | 历史交接：加路径注记即可（勿改历史结论） |
+| `docs/archive/proposals-from-agent-notes.md:35` | "改动面：纯文档(skills/tree-commander/SKILL.md)" | 历史提案：加注 |
+| `docs/architecture/segment-handoff.md:23` | "skills/tree-worker/SKILL.md:50、:70、:686–688、:728" | 行号来自旧 54KB SKILL，当前 SKILL 仅 154 行——历史设计文档；建议加"行号为上游旧版"或改指新路径 |
 | `demo/flaudit/w4-skillops.md:3,10,19,27,35` | 旧路径 + 旧行号（`:30/:41/:49/:38`） | 历史 demo 产物，可保留；若作为公开资料建议加注 |
-| `docs/frozen-parent-plan/PLAN-v1.7.md:51,115,253` | `default-skills/tree-worker/SKILL.md`（上游 Proma-Easy 资产） | **不需改**（非本仓路径），但建议注明"上游资产" |
+| `docs/archive/frozen-parent-plan/PLAN-v1.7.md:51,115,253` | `default-skills/tree-worker/SKILL.md`（上游 Proma-Easy 资产） | **不需改**（非本仓路径），但建议注明"上游资产" |
 | `agent.md:76` | D2 "包含 docs/logs/**skills**/demo/packages" | 改为"docs/logs/demo/packages（skills 随包）" |
 | `agent.md:87,132` | 已写"迁入包内/仓根移除" | ✅ 无需改 |
 | `packages/dsh-tree-engine/README.md:7` | "`skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md`"（相对包内省略前缀） | 建议改 "本包 `skills/...`" 避免与仓根混淆 |
 | `packages/dsh-tree-engine/README.md:54` | 已注明 "v0.5.0 起位于本包 `packages/dsh-tree-engine/skills/tree-worker/SKILL.md`" | ✅ 但同句"drift 申报"需改（P2-12） |
 | `packages/dsh-session-tree/README.md:34,205,270` / `README.zh.md:34,205,270` | 新路径 `skills/session-handoff/SKILL.md` | ✅ 正确（包内相对路径） |
-| `docs/skill-e2e-2026-11-11.md:15-16` | 新路径 | ✅（T6 新文档） |
+| `docs/reports/skill-e2e-2026-11-11.md:15-16` | 新路径 | ✅（T6 新文档） |
 
 ### 6.3 测试/打包一致性
 
@@ -391,7 +391,7 @@ T4 已删除仓根 `skills/`（git status `D skills/tree-commander/SKILL.md`、`
 - README 其余热更说明正确：客户端半只需刷新页面（`:242-246`）、Loader 按包名缓存（`:248` 前半段结论正确，只是 remediation 写错）。
 - `docs/session-handoff:299` 的"热更重复注册、未显式 dispose"风险与代码一致（`apply` 直接 `tools.register`，`index.js:1255,1259` 无 dispose）。
 
-### 7.5 `docs/e2e-handoff-2026-11-11.md` 与测试计数
+### 7.5 `docs/reports/e2e-handoff-2026-11-11.md` 与测试计数
 
 - `docs/session-handoff:48` 的 handoff 34/34、render 全绿、style-guard 22/22、verify-bundle 0 fail —— 本次复跑全部成立（§9）。
 - 真机 E2E 数字（root 14/14、sibling 12/12）无法在审计环境复跑，按文档采信（标注"未复核"）。
@@ -508,7 +508,7 @@ FILEONLY:  session_handoff: wrote C:/w/HANDOFF-x.md (no successor spawned)
 ## 10. 边界与未覆盖
 
 1. **未改任何代码/配置/SKILL/文档（除本审计报告）**；未 git 提交。
-2. 真机 E2E 数字（handoff root 14/14、sibling 12/12）未复跑，采信 `docs/e2e-handoff-2026-11-11.md`。
+2. 真机 E2E 数字（handoff root 14/14、sibling 12/12）未复跑，采信 `docs/reports/e2e-handoff-2026-11-11.md`。
 3. 活体 tree-engine 数据（`floweng/prj_mw4k` tree-state）仅用于旁证，未作为语义依据；`apply.log` 最后 apply 时间为 2026-11-10，当前活体模块代际可能早于工作树代码（D12 缓存），故"活体行为"结论以源码 + 本地引擎复现为准。
 4. 并发快照：T4 在 15:21–15:25 写入三份 SKILL，Lead 同步改 README/版本；本报告对 SKILL 行号的引用基于该快照；若 T4 继续调整，需复核 §8。
 5. `provider-conformance.cjs` 失败是已知环境 fixture 问题，不计入本次 gap。

@@ -2,7 +2,7 @@
 
 - 日期:2026-10-04(深夜)
 - 执行者:只读审计 worker(flaudit-W5-boundary)
-- 输入:docs/handoff-2026-10-04.md §6、docs/e2e3l-audit-2026-10-04.md、docs/segment-handoff.md、docs/proposals-from-agent-notes.md + 通读 packages/dsh-tree-engine/src/(engine.js 748 行、verify.js、guards.js、state.js、store.js、queue.js、config.js、clock.js 全量)
+- 输入:docs/archive/handoff-2026-10-04.md §6、docs/archive/e2e3l-audit-2026-10-04.md、docs/architecture/segment-handoff.md、docs/archive/proposals-from-agent-notes.md + 通读 packages/dsh-tree-engine/src/(engine.js 748 行、verify.js、guards.js、state.js、store.js、queue.js、config.js、clock.js 全量)
 - 纪律:除本文件外未改动任何文件。
 
 ## ① 已知问题/边界精确清单(编号 | 位置 | 一句话)

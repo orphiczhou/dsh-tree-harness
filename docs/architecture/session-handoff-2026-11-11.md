@@ -1,9 +1,9 @@
-# 会话自交接 — 设计与交付记录（v0.1.0 独立插件 → v1.2.0 并入会话树 → v1.3.5 随包 Skill + 语言跟随）
+# 会话自交接 — 设计与交付记录（v0.1.0 独立插件 → v1.2.0 并入会话树 → v1.3.6 随包 Skill + 语言跟随）
 
-- **日期**：2026-11-11（初版 v0.1.0）+ 第二轮并入会话树 v1.2.0 + 第三/四轮继承修复与随包 Skill（v1.3.0）+ 第五轮语言跟随（v1.3.1）+ 洁净室文档轮（v1.3.2–v1.3.5）
+- **日期**：2026-11-11（初版 v0.1.0）+ 第二轮并入会话树 v1.2.0 + 第三/四轮继承修复与随包 Skill（v1.3.0）+ 第五轮语言跟随（v1.3.1）+ 洁净室文档轮（v1.3.2–v1.3.6）
 - **角色**：handoff-engineer（T-F1 / task-6，v0.1.0）；Lead（第二轮合并与继承修复、后续迭代）
-- **规格来源**：[docs/features-2026-11-11-spec.md](features-2026-11-11-spec.md) **A 节**（Lead 已冻结；本实现照做，未改规格）
-- **状态**：**已并入 `packages/dsh-session-tree` v1.3.5（工具名保持 `session_handoff`）；v1.3.0 起随包提供 `session-handoff` Skill**（Skill 目录可发现，见 [skill-e2e-2026-11-11.md](skill-e2e-2026-11-11.md)）；v1.3.1 起接替提示语跟随 DSH 界面语言；v1.3.3 起 `spawn:false` 干跑不受阈值闸限制。独立包 `packages/dsh-session-handoff` 已删除，本机 profile bundle 已移除；离线测试 41/41、真机 E2E 见 [docs/e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md) 与 [docs/e2e-kickoff-language-2026-11-11.md](e2e-kickoff-language-2026-11-11.md)
+- **规格来源**：[docs/architecture/features-2026-11-11-spec.md](features-2026-11-11-spec.md) **A 节**（Lead 已冻结；本实现照做，未改规格）
+- **状态**：**已并入 `packages/dsh-session-tree` v1.3.6（工具名保持 `session_handoff`）；v1.3.0 起随包提供 `session-handoff` Skill**（Skill 目录可发现，见 [skill-e2e-2026-11-11.md](../reports/skill-e2e-2026-11-11.md)）；v1.3.1 起接替提示语跟随 DSH 界面语言；v1.3.3 起 `spawn:false` 干跑不受阈值闸限制。独立包 `packages/dsh-session-handoff` 已删除，本机 profile bundle 已移除；离线测试 41/41、真机 E2E 见 [docs/reports/e2e-handoff-2026-11-11.md](../reports/e2e-handoff-2026-11-11.md) 与 [docs/reports/e2e-kickoff-language-2026-11-11.md](../reports/e2e-kickoff-language-2026-11-11.md)
 - **写作用域（v0.1.0 轮）**：仅 `packages/dsh-session-handoff/` 与本文档；未执行任何 git 写命令、未安装 bundle、未修改 profile / `agent.md` / 既有 packages
 
 ---
@@ -46,8 +46,8 @@
 
 - 代码：`packages/dsh-session-tree/index.js`（合并 + 继承修复）、`package.json` v1.2.0；独立包 `packages/dsh-session-handoff/` 删除。
 - 测试：`packages/dsh-session-tree/test/handoff.test.js` **34/34**（24 条从 v0.1.0 移植 + 10 条新增：工作区三态、预设挂载、四类继承事件、失败可追溯、兄弟不回归）；`render.test.cjs` 全绿、`style-guard.cjs` 22/22、`verify-bundle.mjs` 0 fail。
-- 真机 E2E：root + sibling 双路径、同工作区归属、四类继承逐项断言，见 [docs/e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md)。
-- 发布：会话树单包 v1.2.0（`597ca31`）与 **v1.3.0（随包 Skill，`1086e9e`，18/18 SHA）** 均已同步公开插件仓 `orphiczhou/dsh-session-tree` 并推送（main+tag，远端=本地）；monorepo 哈希见 [agent.md](../agent.md) 与 [docs/publishing.md](publishing.md)。
+- 真机 E2E：root + sibling 双路径、同工作区归属、四类继承逐项断言，见 [docs/reports/e2e-handoff-2026-11-11.md](../reports/e2e-handoff-2026-11-11.md)。
+- 发布：会话树单包 v1.2.0（`597ca31`）与 **v1.3.0（随包 Skill，`1086e9e`，18/18 SHA）** 均已同步公开插件仓 `orphiczhou/dsh-session-tree` 并推送（main+tag，远端=本地）；monorepo 哈希见 [agent.md](../../agent.md) 与 [docs/guides/publishing.md](../guides/publishing.md)。
 
 > 以下 §1–§9 是 **v0.1.0 独立插件**的原始设计与交付记录，保留作为 provenance；其中「独立包 / 单独 bundle」的描述已被本轮合并取代，继承细节以本节为准。
 
@@ -64,7 +64,7 @@
 | `packages/dsh-session-handoff/locale/en.json` | Plugin Manager / Settings 的 `meta.title` / `meta.description`（英文） | `336011abc98e2a40f60481476f9caf22d2642fa9eb69efd5a569528bb41decef` |
 | `packages/dsh-session-handoff/locale/zh.json` | 同上（中文） | `fbe1e46457fd8e8266c099cabd1dcb3666ed4178af020a2628c69c9a3283d5b0` |
 | `packages/dsh-session-handoff/tests/handoff.test.js` | `node:test` 离线测试 24 例（mock 四类服务） | `442c6894ed391e9d49e06e8c7b84c31c2ea3d2b6ec2f0451d0b80e2fb23defe5` |
-| `docs/session-handoff-2026-11-11.md` | 本文档 | — |
+| `docs/architecture/session-handoff-2026-11-11.md` | 本文档 | — |
 
 未新增 README（bundle 展示元数据由 `locale/*.json` 提供，符合当前插件规范；如需公开仓 README 由 Lead 决定）。
 
@@ -207,7 +207,7 @@
   "action": "handoff",
   "summary": "实现会话自交接插件；index.js/测试已完成，待 Lead 安装验证。",
   "next_steps": ["Lead 安装 bundle", "真机验证 status/handoff", "更新 agent.md §0.2 纪律"],
-  "files": ["packages/dsh-session-handoff/index.js", "docs/session-handoff-2026-11-11.md"],
+  "files": ["packages/dsh-session-handoff/index.js", "docs/architecture/session-handoff-2026-11-11.md"],
   "open_questions": ["新根会话是否出现在侧栏工作区？"],
   "note": "接替会话刻意与旧 turn 解绑（detached signal）。"
 }
@@ -309,8 +309,8 @@ cd D:\Codes\dsh-tree-harness\packages\dsh-session-handoff
 > ⚠️ 独立插件 `packages/dsh-session-handoff/` 已删除，以下旧步骤仅作 provenance（历史），不要照做。当前操作面是**会话树单包** `@orphiczhou/dsh-session-tree`（v1.3.0，含 `tree_send` + `session_handoff` + 随包 `session-handoff` Skill）：
 >
 > - 活体确认：任意会话（或 spawn 子会话）调用 `session_handoff {action:"status"}`，返回行应含 `preset=` / `permission=`（v1.2.0+ 实现指纹）。
-> - 真机 E2E 断言：`node scripts/e2e/verify-handoff.mjs --source <id> --successor <id> --expect-kind root|sibling`（见 [e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md)）。
-> - Skill 目录：新会话 `<available_skills>` 应含 `session-handoff` / `tree-commander` / `tree-worker`（v1.3.0 随包 Skill；见 [skill-e2e-2026-11-11.md](skill-e2e-2026-11-11.md)）。
+> - 真机 E2E 断言：`node scripts/e2e/verify-handoff.mjs --source <id> --successor <id> --expect-kind root|sibling`（见 [e2e-handoff-2026-11-11.md](../reports/e2e-handoff-2026-11-11.md)）。
+> - Skill 目录：新会话 `<available_skills>` 应含 `session-handoff` / `tree-commander` / `tree-worker`（v1.3.0 随包 Skill；见 [skill-e2e-2026-11-11.md](../reports/skill-e2e-2026-11-11.md)）。
 > - 重载/回滚：宿主半或 patch 改动对 `include:session-tree` / `include:tree-engine` 做一次 disable→enable（agent.md D12）；停用/卸载会话树会**同时**失去 `tree_send` 与 `session_handoff`。
 >
 > 以下旧安装/验证步骤保留作历史记录：
@@ -336,7 +336,7 @@ cd D:\Codes\dsh-tree-harness\packages\dsh-session-handoff
 
 ## 9. 边界声明（本 agent 本轮）
 
-- 只写 `packages/dsh-session-handoff/` 与本文档；未改 `packages/dsh-session-tree`、profile、`agent.md`、`README`、`scripts/`、`docs/features-2026-11-11-spec.md`。
+- 只写 `packages/dsh-session-handoff/` 与本文档；未改 `packages/dsh-session-tree`、profile、`agent.md`、`README`、`scripts/`、`docs/architecture/features-2026-11-11-spec.md`。
 - **未执行任何 git 写命令**（无 add/commit/push/branch）；未安装 bundle；未重启宿主。
 - 未碰密钥/凭据；未引入 npm 依赖；未 import 任何 `@deepseek-ai/*`。
 

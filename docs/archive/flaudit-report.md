@@ -11,9 +11,9 @@
 
 | 层 | 素材 |
 |---|---|
-| 规约 | docs/engine-spec.md(S0 冻结版)、PLAN.md(§5 验证策略层/§7 Config) |
-| 交接文档 | docs/handoff-2026-10-04.md(§6 已知边界 B1–B16)、docs/segment-handoff.md、docs/proposals-from-agent-notes.md |
-| 既有审计 | docs/e2e3l-audit-2026-10-04.md(异常#1–#5,artifact 错位等——本报告去重不重复) |
+| 规约 | docs/architecture/engine-spec.md(S0 冻结版)、PLAN.md(§5 验证策略层/§7 Config) |
+| 交接文档 | docs/archive/handoff-2026-10-04.md(§6 已知边界 B1–B16)、docs/architecture/segment-handoff.md、docs/archive/proposals-from-agent-notes.md |
+| 既有审计 | docs/archive/e2e3l-audit-2026-10-04.md(异常#1–#5,artifact 错位等——本报告去重不重复) |
 | 实现 | packages/dsh-tree-engine/src/{engine,state,queue,guards,verify,store,config,clock}.js + 包根 index.js(注:src/index.js 不存在,入口装配在包根) |
 | 协议 | skills/tree-commander/SKILL.md、skills/tree-worker/SKILL.md |
 

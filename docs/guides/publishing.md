@@ -1,7 +1,7 @@
 # 发布状态与流程
 
 > 快照：**2026-11-11 15:00 +08:00**（GitHub / npm / 市场均为当场直查；此后变化以远端与 `git log` 为准）。
-> 相关决策：**D2**（仓库内资料公开）、**D3**（npm 冻结）、**D5**（公开范围=本仓内容）、**D6**（版本纪律）、**D7**（公开前排除隐私与第三方源码）——单一事实源：[../agent.md](../agent.md)。
+> 相关决策：**D2**（仓库内资料公开）、**D3**（npm 冻结）、**D5**（公开范围=本仓内容）、**D6**（版本纪律）、**D7**（公开前排除隐私与第三方源码）——单一事实源：[../agent.md](../../agent.md)。
 
 ---
 
@@ -10,7 +10,7 @@
 | 渠道 | 对象 | 状态 | 证据 / 说明 |
 |---|---|---|---|
 | GitHub | `orphiczhou/dsh-tree-harness`（本仓） | 🚀 **public** | 发布前检查清单见 §6；收尾核对远端 HEAD = 本地 HEAD |
-| GitHub | [`orphiczhou/dsh-session-tree`](https://github.com/orphiczhou/dsh-session-tree)（会话树插件） | ✅ 公开，**v1.3.5**，MIT，12 commits | 与仓内 `packages/dsh-session-tree/` 逐字节一致（release-plugin **18/18** SHA）；main + tag `v1.3.5` = **`1fb9193`**（远端=本地） |
+| GitHub | [`orphiczhou/dsh-session-tree`](https://github.com/orphiczhou/dsh-session-tree)（会话树插件） | ✅ 公开，**v1.3.6**，MIT，13 commits | 与仓内 `packages/dsh-session-tree/` 逐字节一致（release-plugin **18/18** SHA）；main + tag `v1.3.6` = **`298298d`**（远端=本地） |
 | GitHub | [`orphiczhou/dsh-region-probe`](https://github.com/orphiczhou/dsh-region-probe)（区域观测插件） | ✅ 公开 | 独立插件仓，与本仓无源码依赖 |
 | 社区市场 | awesome-dsh-plugin **PR #6334**（会话树） | ✅ 已合并（2026-10-14） | 市场按 GitHub topic + PR listing 收录；条目为 browse-only，按 `package.json.version` 判断更新 |
 | 社区市场 | awesome-dsh-plugin **PR #6435**（region-probe） | ✅ 已合并（2026-10-15） | 同上 |
@@ -30,11 +30,11 @@
 
 ```
 dsh-tree-harness/                     ← 唯一源码事实源（public）
-  packages\dsh-session-tree\          ← 会话树单包源码（v1.3.5：tree_send + session_handoff + 随包 session-handoff Skill + 语言跟随 + 干跑不拦阈值）
+  packages\dsh-session-tree\          ← 会话树单包源码（v1.3.6：tree_send + session_handoff + 随包 session-handoff Skill + 语言跟随 + 干跑不拦阈值）
         │
         │  scripts/release-plugin.mjs（逐文件 SHA 校验，不自动 push）
         ▼
-github.com/orphiczhou/dsh-session-tree   ← 发布镜像仓（公开、tag v1.3.5、市场 listing 指向它）
+github.com/orphiczhou/dsh-session-tree   ← 发布镜像仓（公开、tag v1.3.6、市场 listing 指向它）
         │
         ▼
 awesome-dsh-plugin / imsai-sh 市场条目（browse-only，按版本判断更新）
@@ -49,7 +49,7 @@ awesome-dsh-plugin / imsai-sh 市场条目（browse-only，按版本判断更新
 
 1. **改代码必须 bump version**：market 按 `package.json.version` 判断条目是否更新，不 bump = 市场不刷新，等于发了假更新。
 2. **无内容变化不 bump**：会话树单包迁入本仓（D1）时内容逐字节不变，因此当时**保持 v1.0.4**，不制造假版本。
-3. **有内容变化必须 bump**：2026-11-11 功能轮给会话树加入工作区排序/隐藏/召回 → bump **v1.1.0**，经 `release-plugin.mjs` 同步到公开插件仓并推送（`dcf3519`，远端=本地）。同日晚第三轮把会话自交接并入会话树（新增 `session_handoff` + 工作区/权限/预设继承修复）→ bump **v1.2.0**，同步 **16/16 SHA 一致**、推送 main + tag `v1.2.0`（`597ca31`，远端=本地）；原独立插件 `@local/dsh-session-handoff` v0.1.0 从本仓与 profile 删除，从未单独发布。第四轮 SKILL 工程化（随包 `session-handoff` Skill + skill provider patch 行）→ bump **v1.3.0**，同步 **18/18 SHA 一致**、推送 main + tag `v1.3.0`（`1086e9e`，远端=本地）。第五轮「接替提示语跟随 DSH 界面语言」→ bump **v1.3.1**，同步 **18/18 SHA 一致**、推送 main + tag `v1.3.1`（`c257d61`，远端=本地）。同日第六轮按洁净室评审补全 Skill 使用文档 → bump **v1.3.2**（`c1541e5`，18/18 SHA）；第七轮修 `spawn:false` 干跑阈值闸 + 二轮 N1–N7 → bump **v1.3.3**（`cce2975`，18/18 SHA）；第八轮做洁净室文档债最终清扫 → bump **v1.3.4**（`f784c6e`，18/18 SHA）；第三轮复核 PASS 后补 SKILL 例外说明与措辞 → bump **v1.3.5**（`1fb9193`，18/18 SHA）。
+3. **有内容变化必须 bump**：2026-11-11 功能轮给会话树加入工作区排序/隐藏/召回 → bump **v1.1.0**，经 `release-plugin.mjs` 同步到公开插件仓并推送（`dcf3519`，远端=本地）。同日晚第三轮把会话自交接并入会话树（新增 `session_handoff` + 工作区/权限/预设继承修复）→ bump **v1.2.0**，同步 **16/16 SHA 一致**、推送 main + tag `v1.2.0`（`597ca31`，远端=本地）；原独立插件 `@local/dsh-session-handoff` v0.1.0 从本仓与 profile 删除，从未单独发布。第四轮 SKILL 工程化（随包 `session-handoff` Skill + skill provider patch 行）→ bump **v1.3.0**，同步 **18/18 SHA 一致**、推送 main + tag `v1.3.0`（`1086e9e`，远端=本地）。第五轮「接替提示语跟随 DSH 界面语言」→ bump **v1.3.1**，同步 **18/18 SHA 一致**、推送 main + tag `v1.3.1`（`c257d61`，远端=本地）。同日第六轮按洁净室评审补全 Skill 使用文档 → bump **v1.3.2**（`c1541e5`，18/18 SHA）；第七轮修 `spawn:false` 干跑阈值闸 + 二轮 N1–N7 → bump **v1.3.3**（`cce2975`，18/18 SHA）；第八轮做洁净室文档债最终清扫 → bump **v1.3.4**（`f784c6e`，18/18 SHA）；第三轮复核 PASS 后补 SKILL 例外说明与措辞 → bump **v1.3.5**（`1fb9193`，18/18 SHA）；第九轮文档归档 + 安装指南 → bump **v1.3.6**（`298298d`，19/19 SHA）。
 3. **版本号 = 公开仓 tag = package.json.version** 三者一致；建议 SemVer：修 bug → patch，新增行为 → minor，破坏兼容 → major。
 4. 发布前在包目录自查版本：
 
@@ -112,7 +112,7 @@ node scripts/release-plugin.mjs --help
 - **安全护栏**：拒绝 source=target、拒绝同步进源的子目录/父目录；目标 `package.json` 包名与源不一致时拒绝（除非 `--force`）；跳过 `node_modules` / `.git` / `.DS_Store` / `Thumbs.db`；
 - **退出码**：`0` = 全部一致（或校验通过）；`1` = 用法错误 / 目标被拒 / 任一文件缺失或不一致。
 
-实测证据（2026-11-11）：`--check` 对**仓外历史发布副本**（D5 降级为参考的 `publish/dsh-session-tree/`）→ `files=15 match=15 mismatch=0 missing=0 extra=0`，`RESULT: OK — 15/15 files byte-identical (SHA-256)`，退出码 0。同期脚本在系统临时目录完成 12/12 项自测（含幂等、`--prune`、篡改检测、错仓护栏、父目录护栏；未污染仓库），见 [merge-session-tree-2026-11-11.md](merge-session-tree-2026-11-11.md) §6。
+实测证据（2026-11-11）：`--check` 对**仓外历史发布副本**（D5 降级为参考的 `publish/dsh-session-tree/`）→ `files=15 match=15 mismatch=0 missing=0 extra=0`，`RESULT: OK — 15/15 files byte-identical (SHA-256)`，退出码 0。同期脚本在系统临时目录完成 12/12 项自测（含幂等、`--prune`、篡改检测、错仓护栏、父目录护栏；未污染仓库），见 [merge-session-tree-2026-11-11.md](../architecture/merge-session-tree-2026-11-11.md) §6。
 
 v1.2.0 实测：先把公开插件仓 clone 到系统临时目录，`node scripts/release-plugin.mjs --target <clone> --prune` → **`files=16 match=16 mismatch=0 missing=0 extra=0`，`RESULT: OK — 16/16 files byte-identical (SHA-256)`**；`git add -A` 后真实变更 5 文件（index.js / package.json / README×2 / 新增 test/handoff.test.js），其余文件仅 CRLF stat 噪声、未入库；commit `597ca31` + tag `v1.2.0` 推送后 `ls-remote` 核对 main 与 tag 均等于本地 HEAD。
 
@@ -120,7 +120,7 @@ v1.3.0 实测（SKILL 工程化）：同一 clone 流程 → **`files=18 match=1
 
 v1.3.1 实测（接替提示语跟随界面语言）：同一 clone 流程 → **`files=18 match=18 mismatch=0 missing=0 extra=0`**；真实变更 6 文件（README×2 / index.js / package.json / skills/session-handoff/SKILL.md / test/handoff.test.js）；commit `c257d61` + tag `v1.3.1` 推送后 `ls-remote` 核对 main 与 tag 均等于本地 HEAD。
 
-v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 实测（文档补全 + spawn:false 干跑修正 + 洁净室收口）：同一 clone 流程均 **`files=18 match=18`**；commit + tag `v1.3.2`（`c1541e5`）/ `v1.3.3`（`cce2975`）/ `v1.3.4`（`f784c6e`）/ `v1.3.5`（`1fb9193`），推送后 `ls-remote` 核对 main 与 tag 均等于本地 HEAD。
+v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 / v1.3.6 实测（文档补全 + spawn:false 干跑修正 + 洁净室收口）：同一 clone 流程均 **`files=18 match=18`**；commit + tag `v1.3.2`（`c1541e5`）/ `v1.3.3`（`cce2975`）/ `v1.3.4`（`f784c6e`）/ `v1.3.5`（`1fb9193`）/ `v1.3.6`（`298298d`，19/19），推送后 `ls-remote` 核对 main 与 tag 均等于本地 HEAD。
 
 标准发布流程：
 
@@ -143,7 +143,7 @@ v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 实测（文档补全 + spawn:false 干跑修�
 - [ ] **密钥扫描（工作树）**：全受跟踪文件匹配 `ghp_` / `github_pat_` / `sk-` / `AKIA` / `PRIVATE KEY` / `(password|secret|api_key|token)=` 等模式 → **0 命中**；
 - [ ] **密钥扫描（git 全历史）**：`git log -p --all` 或逐 commit 扫描同样模式；可疑文件名（`.env` / `*.pem` / `id_rsa` / `credentials` / `*.key` / `*.pfx`）无入库记录；
 - [ ] **隐私**：`demo/` 截图不含可识别的私人会话标题 / 聊天内容 / 账号信息 / 内网地址；
-- [ ] **D7 排除项**：隐私截图与从 DSH `app.asar` 摘出的第三方源码/文档**共 7 个文件已排除**（1 + 6）——不在提交中、不在 git 历史中；文档不引用/不链接这些文件。历史中若曾入库，必须先 `git filter-repo` / `filter-branch` 重写历史并复扫确认（本轮 QA 报告 [verification-2026-11-11.md](verification-2026-11-11.md) §0.3–§0.4 记录了历史位置与解除条件）；
+- [ ] **D7 排除项**：隐私截图与从 DSH `app.asar` 摘出的第三方源码/文档**共 7 个文件已排除**（1 + 6）——不在提交中、不在 git 历史中；文档不引用/不链接这些文件。历史中若曾入库，必须先 `git filter-repo` / `filter-branch` 重写历史并复扫确认（本轮 QA 报告 [verification-2026-11-11.md](../reports/verification-2026-11-11.md) §0.3–§0.4 记录了历史位置与解除条件）；
 - [ ] `.gitignore` 覆盖 `node_modules/`、`*.log`、`.env`、运行时数据等本地机密与产物。
 
 ### 仓库健康
@@ -156,9 +156,9 @@ v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 实测（文档补全 + spawn:false 干跑修�
 ### 测试与一致性
 
 - [ ] `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **67/67**（62 引擎 + 4 技能打包 + 1 B1 回归），退出码 0；
-- [ ] `packages/dsh-session-tree`：`node test/handoff.test.js`（**41/41**）、`node test/skills.test.cjs`（**3/3**，随包 Skill 打包回归）、`node test/render.test.cjs`、`node test/style-guard.cjs`（**22/22**）、`node scripts/verify-bundle.mjs`（0 fail）、`node test/provider-conformance.cjs [asar 解包目录]`（后者需 rc.2 兼容 asar fixture，见 [merge-session-tree-2026-11-11.md](merge-session-tree-2026-11-11.md) §5）；
+- [ ] `packages/dsh-session-tree`：`node test/handoff.test.js`（**41/41**）、`node test/skills.test.cjs`（**3/3**，随包 Skill 打包回归）、`node test/render.test.cjs`、`node test/style-guard.cjs`（**22/22**）、`node scripts/verify-bundle.mjs`（0 fail）、`node test/provider-conformance.cjs [asar 解包目录]`（后者需 rc.2 兼容 asar fixture，见 [merge-session-tree-2026-11-11.md](../architecture/merge-session-tree-2026-11-11.md) §5）；
 - [ ] `packages/dsh-session-tree` 与公开插件仓逐文件 SHA 一致（`release-plugin.mjs`）；
-- [ ] 真机 E2E：`scripts/e2e/verify-handoff.mjs` 对 root/sibling 接替会话断言全 PASS（报告 [e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md)）；
+- [ ] 真机 E2E：`scripts/e2e/verify-handoff.mjs` 对 root/sibling 接替会话断言全 PASS（报告 [e2e-handoff-2026-11-11.md](../reports/e2e-handoff-2026-11-11.md)）；
 - [ ] README / handoff / publishing 中的路径、数字、状态与实际一致（版本号、测试数、装配状态、npm 404 结论）。
 
 ### 发布后核对
@@ -168,7 +168,7 @@ v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 实测（文档补全 + spawn:false 干跑修�
 - [ ] GitHub 页面可正常渲染 README、LICENSE、文档内相对链接无 404；
 - [ ] 市场 listing 指向公开仓主分支（非 fork / 临时分支）。
 
-> 本轮的独立验证证据见 [verification-2026-11-11.md](verification-2026-11-11.md)（QA 产出；发布门禁以该报告结论为准）。
+> 本轮的独立验证证据见 [verification-2026-11-11.md](../reports/verification-2026-11-11.md)（QA 产出；发布门禁以该报告结论为准）。
 
 ---
 
@@ -183,3 +183,4 @@ v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 实测（文档补全 + spawn:false 干跑修�
 - 2026-11-11（v1.3.3，第七轮）：`spawn:false` 干跑不再被阈值闸拦 + 洁净室二轮 N1–N7 修订 → **18/18 SHA**，tag `v1.3.3` = **`cce2975`**。
 - 2026-11-11（v1.3.4，第八轮）：R1-B/R2-B 文档债清扫（语言验收表述、set-session 主体、英文触发词、版本矩阵）→ **18/18 SHA**，tag `v1.3.4` = **`f784c6e`**。
 - 2026-11-11（v1.3.5，第九轮）：第三轮洁净室 PASS 后的收尾（SKILL 的 `spawn:false` 例外说明 + root→grandchild 措辞）→ **18/18 SHA**，tag `v1.3.5` = **`1fb9193`**。
+- 2026-11-12（v1.3.6，第十轮）：文档按目录归档 + 新增人类/Agent 安装指南（`AGENT-INSTALL.md`）→ **19/19 SHA**，tag `v1.3.6` = **`298298d`**。

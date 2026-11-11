@@ -16,7 +16,7 @@
 
 - 复扫期间 Lead **冻结 git 历史**（新 HEAD 固定为 `40629745f1df16d67706223bb73ce67d1e67055c`，30 commits，工作树 clean），本报告所有复扫结论均针对该 HEAD。
 - 残留风险均为**已披露/已接受**项（见 §8）：R1 本机路径/用户名（D2 显式接受）、R2 推送前无远端备份（push 后消失）、R4 建议开启 GitHub secret scanning。**不再存在 BLOCK 级问题。**
-- 条件：推送前需把本报告 v1.2 的更新（仅 `docs/verification-2026-11-11.md` 一个文件）提交为一个普通 docs commit；该变更不含密钥、不新增/删除任何文件路径，故**不影响 A1–A5/A9 的结构性结论**（见附录 A 说明）。
+- 条件：推送前需把本报告 v1.2 的更新（仅 `docs/reports/verification-2026-11-11.md` 一个文件）提交为一个普通 docs commit；该变更不含密钥、不新增/删除任何文件路径，故**不影响 A1–A5/A9 的结构性结论**（见附录 A 说明）。
 - 历史沿革：v1.0 发现 BLOCK-1（隐私截图）；D7 复核扩大后 v1.1 增补 BLOCK-2 至 6 文件 + 2 个瘦身路径；本 v1.2 记录清除后复扫 → 升级为 PASS WITH RISKS。
 
 > **🔒 公开推送结论：可 push。** 前置动作只有一条——先把本报告 v1.2 更新 commit 进 master（普通 commit，非历史重写），然后即可 push。详细证据见**附录 A**。
@@ -96,7 +96,7 @@ git status --porcelain=v1 -b; git rev-list --all --count; git rev-parse HEAD; gi
 - 分支 `master`；**无 git remote**（`git remote -v` 空）
 - commit 数 **26**（`git rev-list --all --count`）
 - HEAD `2cb2d17af13ab995c5260cb694e99d391d52b78e`
-- 工作树状态：已修改 `.gitignore`、`README.md`、`packages/dsh-tree-engine/index.js`；未跟踪 `agent.md`、`docs/defect-2026-10-17-subagents-rc2-api-drift.md`、`docs/project-restart-brief-2026-11-11.html` 以及 T1/T4 产出（验证过程中陆续落盘，见 1.3）
+- 工作树状态：已修改 `.gitignore`、`README.md`、`packages/dsh-tree-engine/index.js`；未跟踪 `agent.md`、`docs/reports/defect-2026-10-17-subagents-rc2-api-drift.md`、`docs/archive/project-restart-brief-2026-11-11.html` 以及 T1/T4 产出（验证过程中陆续落盘，见 1.3）
 
 ### 1.2 验证环境
 
@@ -119,7 +119,7 @@ node --version   # bundled node
 | 工作树扫描 #1 | 12:36:13 | 96 | 18 | 114 |
 | 工作树扫描 #2（终轮） | 12:38:30 | 96 | 21 | 117 |
 
-- 未跟踪文件在验证期间持续增加：T1 `packages/dsh-session-tree/`（15 文件）、T4 `LICENSE`/`docs/handoff-2026-11-11.md`、T1 `scripts/release-plugin.mjs`、`agent.md`、2 份 docs —— **均已纳入扫描**。
+- 未跟踪文件在验证期间持续增加：T1 `packages/dsh-session-tree/`（15 文件）、T4 `LICENSE`/`docs/operations/handoff-2026-11-11.md`、T1 `scripts/release-plugin.mjs`、`agent.md`、2 份 docs —— **均已纳入扫描**。
 - 文本文件按 UTF-8 逐行扫描；3 个受跟踪 PNG 单独做**字节级**扫描（见 2.2）；受跟踪文件中**无 UTF-16 BOM 文件**（实测 0）。
 - 被 git 忽略的文件实际存在数：**0**（`git status --ignored --porcelain` 无 `!!` 条目）。
 - 未纳入：本报告自身（写入时不存在；按设计不含密钥/隐私值）；验证之后新产生的改动（以附录 A 复扫为准）。
@@ -229,7 +229,7 @@ git --no-pager log --all --name-only --format=''   # 历史出现过的全部路
 - 本机用户名（`sir_c`）：**17 行 / 7 个文件**
 - `D:\Codes\…` 本地项目路径：**21 行 / 11 个文件**
 - email：**0**；私网 IPv4：**0**
-- **最终 HEAD 复扫（2026-11-11 12:45:35，113 个 tracked 文件）**：`C:\Users\<user>\` **26 行/9 文件**、用户名 **27 行/9 文件**、`D:\Codes\` **30 行/14 文件**（增量主要来自新增 `docs/merge-session-tree-2026-11-11.md` 与本报告自身）；email **0**、私网 IPv4 **0**。
+- **最终 HEAD 复扫（2026-11-11 12:45:35，113 个 tracked 文件）**：`C:\Users\<user>\` **26 行/9 文件**、用户名 **27 行/9 文件**、`D:\Codes\` **30 行/14 文件**（增量主要来自新增 `docs/architecture/merge-session-tree-2026-11-11.md` 与本报告自身）；email **0**、私网 IPv4 **0**。
 - 判读：属「本机环境路径/用户名披露」，**经 D2「全部资料公开」决策显式接受**，列为 RISK-LOW（§8 R1），非 BLOCK。
 
 ---
@@ -246,14 +246,14 @@ git count-objects -vH; git rev-list --all --count
 输出摘要（12:35:56 / 12:37:05 / 12:39:07+08:00）：
 
 - 受跟踪文件 **96** 个；跟踪文件总大小 **3.01 MB**
-- **>2 MB 的受跟踪文件：0 个**；最大为 `demo/screen-2026-10-13.png` 1,903.4 KB（= BLOCK-1 移除项），其后 `demo/agspec/_subagent-index.js` 132.1 KB（= BLOCK-2 移除项），再后 `docs/frozen-parent-plan/PLAN-v1.7.md` 85.6 KB
+- **>2 MB 的受跟踪文件：0 个**；最大为 `demo/screen-2026-10-13.png` 1,903.4 KB（= BLOCK-1 移除项），其后 `demo/agspec/_subagent-index.js` 132.1 KB（= BLOCK-2 移除项），再后 `docs/archive/frozen-parent-plan/PLAN-v1.7.md` 85.6 KB
 - **无 node_modules / 构建产物**：`git ls-files` 中匹配 `node_modules|dist|build|out|coverage|target|vendor/` 及 `*.tgz|zip|exe|dll|map|woff|ttf` 等 → **NONE**
 - `.git` 目录总大小 **3.80 MB**；`count-objects -vH`：**317 objects / 3.74 MiB**，0 pack（全 loose）；commit **26**
 - 结论：仓库体积健康、无构建产物污染。**无 remote**（零备份）记入 RISK（§8 R2）。
 
 **历史清除后最终状态复扫（2026-11-11 12:45:31，HEAD `4062974`）**：
 
-- 受跟踪文件 **113** 个；跟踪文件总大小 **1,411,789 B ≈ 1.35 MB**；最大单文件 **85.6 KB**（`docs/frozen-parent-plan/PLAN-v1.7.md`）；**>2 MB 文件 0 个**；`demo/agspec/` 下仅剩 6 个保留文件（`_extract.cjs` + w1–w4），7 个 D7 文件均不在树中。
+- 受跟踪文件 **113** 个；跟踪文件总大小 **1,411,789 B ≈ 1.35 MB**；最大单文件 **85.6 KB**（`docs/archive/frozen-parent-plan/PLAN-v1.7.md`）；**>2 MB 文件 0 个**；`demo/agspec/` 下仅剩 6 个保留文件（`_extract.cjs` + w1–w4），7 个 D7 文件均不在树中。
 - `.git` 目录 **0.64 MB（652.49 KiB）**；`count-objects -vH`：**360 objects / 1 pack / size-pack 609.35 KiB**；commit **30**（原 26 + 4 个本轮 commit）；`git fsck --full --no-reflogs` **0 行输出（干净）**；`unreachable/dangling` **0**；reflog **0 条**；无 alternates。
 - 最大 blob **87,653 B**，`blobs_over_1MB = 0` → 历史 6.9MB 垃圾 blob 已回收；`.git` 体积 3.80 MB → **0.64 MB**（-83%）。
 
@@ -410,7 +410,7 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 **结论：A1–A9（含补充 A3b/A3c/A10）全部通过 → §0.1 升级为 PASS WITH RISKS，可 push。**
 
 **说明（独立判读）**：
-① **A3 的语义口径**：`git log -p` 正文出现文件名字符串 ≠ 文件存在。实测**文件头命中 0**（7 个文件从未作为 diff 的 a/b 路径出现）、**对象路径命中 0**、**逐路径提交 0**，证明旧文件内容已不在历史；42 条正文命中全部是**文档对「已移除文件」的名称说明**（`agent.md` D7、`demo/agspec/w2-source.md` 移除说明、本报告 §0.2/§0.3、`docs/handoff-2026-10-14.md` 对 asar 文件的说明，以及 `.gitignore` 新增行的 commit 上下文），**非内容泄漏**（R9）。
+① **A3 的语义口径**：`git log -p` 正文出现文件名字符串 ≠ 文件存在。实测**文件头命中 0**（7 个文件从未作为 diff 的 a/b 路径出现）、**对象路径命中 0**、**逐路径提交 0**，证明旧文件内容已不在历史；42 条正文命中全部是**文档对「已移除文件」的名称说明**（`agent.md` D7、`demo/agspec/w2-source.md` 移除说明、本报告 §0.2/§0.3、`docs/archive/handoff-2026-10-14.md` 对 asar 文件的说明，以及 `.gitignore` 新增行的 commit 上下文），**非内容泄漏**（R9）。
 ② **保留的分析笔记**：`demo/agspec/w2-source.md` 仍含对这些第三方源码的**分析笔记**（D2 公开范围）；源码全文文件已不在树/历史。该笔记是否保留由 Lead 决定，不属本门禁。
 ③ **残留装饰**：`.git/refs/original/` 为空目录（0 refs、无对象），不构成泄漏（R8）。
 ④ **本报告更新不影响结论**：v1.2 修改仅新增文字（把附录 A 从 PENDING 填为 PASS），**不新增/删除任何文件路径**；本报告内容已做同套密钥自扫（0 命中）。因此 A1–A5/A9 的结构性结论对「提交本报告后的新 HEAD」同样成立；唯一变化是 HEAD 会因该 docs-only commit 再前进一格。

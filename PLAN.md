@@ -19,7 +19,7 @@
 - 南大 Nanju（双脑协作：向导 Agent + 4 角色编排 + 项目/骨架/快照）**架构在本 harness 之上**，作为下游消费者后置立项；
 - 本仓为唯一开发工作区（新会话以本目录为工作区）。
 
-与上游冻结方案的关系：状态机闭集迁移表、验收断言清单、Config 总表等已规约化语义**直接继承**（本文档只列继承点与差异，全量表见 `docs/frozen-parent-plan/PLAN-v1.7.md` §4.1/§4.3/§4.7/§8——该文件经过 57 条攻击七轮闭环，是本项目的规约基线）。**冲突时以冻结版为准，本文档只做裁剪与增量。**
+与上游冻结方案的关系：状态机闭集迁移表、验收断言清单、Config 总表等已规约化语义**直接继承**（本文档只列继承点与差异，全量表见 `docs/archive/frozen-parent-plan/PLAN-v1.7.md` §4.1/§4.3/§4.7/§8——该文件经过 57 条攻击七轮闭环，是本项目的规约基线）。**冲突时以冻结版为准，本文档只做裁剪与增量。**
 
 ## 2. 架构边界与依赖方向
 
@@ -53,7 +53,7 @@
 ## 3. 范围
 
 ### 3.1 MVP（本仓第一批交付）
-- **S0 规约冻结**（0.5–1d）：**33 工具清单提取**（v1.7 所记 29 为 v0.20 时代计数，权威表 = 源仓 `buildTreeTable`，见 docs/engine-spec.md §1）、引擎行为规约、工具面整合定稿（docs/tools-mapping.md）、storageDomain API 验证、验证策略 schema（§5）定稿、竹节机制并入（§5.5）；
+- **S0 规约冻结**（0.5–1d）：**33 工具清单提取**（v1.7 所记 29 为 v0.20 时代计数，权威表 = 源仓 `buildTreeTable`，见 docs/architecture/engine-spec.md §1）、引擎行为规约、工具面整合定稿（docs/architecture/tools-mapping.md）、storageDomain API 验证、验证策略 schema（§5）定稿、竹节机制并入（§5.5）；
 - **S1 引擎宿主包**（3–5d + 验证层 1.5–2.5d）：引擎重写（TS ESM，纯逻辑不 import DSH API）+ ≤8 复合工具 + per-tree 串行队列 + 节点状态回流 + 定时 sweep 硬截止 + 验证策略层；
 - **视图**：**复用现役 `@local/dsh-session-tree` 插件作为树视图**（节点↔子会话 id 双向记录后自动可视化为嵌套子会话），本仓**不新建面板包**；专用的 `dsh-tree-panel`（展示引擎侧计划树而非会话树）列为 S2 后置项。
 
@@ -138,7 +138,7 @@
 
 ### 5.5 竹节生长（上下文接力，S0 并入 2026-10-04）
 
-长任务子会话在**上下文窗口达 42%（缺省）时自动换棒**：引擎 sweep 测量水位（宿主 `tokenMeter` 估算为主 ∨ 执行者自报 `tree_report {context}` 为辅，先到者生效）→ 经 `subagents.prompt` 令旧会话输出**交接简报（K1–K5 骨架）** → **先 interrupt 旧会话释放并发名额、后 `startContinuable` 新会话**（防瞬时双占用击穿 maxActiveSubagents:20）→ 新会话提示词 = 角色预设 + 任务书 + 简报全文 + 同一 DoD → `dispatchedAt/lastOutputAt` 按新会话重置 → 节点保持 `running`、`attempt` 不变、`segment.chain` 追加（全树会话 id 唯一）。竞争语义：简报宽限期内未出 → 照常接手并标注 `no-handoff-summary`；超时硬截止/cancel 先到者生效；链长上限超限 → `frozen`。完整设计唯一真源：[docs/segment-handoff.md](docs/segment-handoff.md)（含源引擎竹节证据与 DSH 化差异）。
+长任务子会话在**上下文窗口达 42%（缺省）时自动换棒**：引擎 sweep 测量水位（宿主 `tokenMeter` 估算为主 ∨ 执行者自报 `tree_report {context}` 为辅，先到者生效）→ 经 `subagents.prompt` 令旧会话输出**交接简报（K1–K5 骨架）** → **先 interrupt 旧会话释放并发名额、后 `startContinuable` 新会话**（防瞬时双占用击穿 maxActiveSubagents:20）→ 新会话提示词 = 角色预设 + 任务书 + 简报全文 + 同一 DoD → `dispatchedAt/lastOutputAt` 按新会话重置 → 节点保持 `running`、`attempt` 不变、`segment.chain` 追加（全树会话 id 唯一）。竞争语义：简报宽限期内未出 → 照常接手并标注 `no-handoff-summary`；超时硬截止/cancel 先到者生效；链长上限超限 → `frozen`。完整设计唯一真源：[docs/architecture/segment-handoff.md](docs/architecture/segment-handoff.md)（含源引擎竹节证据与 DSH 化差异）。
 
 ## 6. 继承自上游冻结版的规约（不重抄，只列索引）
 
@@ -199,8 +199,8 @@
 
 ## 11. 新会话工作指引（本目录为工作区时读我）
 
-1. 先读 `docs/frozen-parent-plan/PLAN-v1.7.md` 的 §4.1（引擎语义）、§4.7（Config 方法论）、§8（断言清单）、§9（差分判据）——本方案的全部基线语义在那里，经 57 条攻击七轮闭环；
-2. S0 第一步：从 `D:\Codes\tree-harness` 提取工具清单——**权威源 = `proma-dev-patches.cjs` buildTreeTable（L384–541），33 工具含 zod schema 与命令映射**（已完成 → `docs/engine-spec.md`；v1.7 所记 29 为 v0.20 计数，Sprint 5/P1-2 增 4）；
+1. 先读 `docs/archive/frozen-parent-plan/PLAN-v1.7.md` 的 §4.1（引擎语义）、§4.7（Config 方法论）、§8（断言清单）、§9（差分判据）——本方案的全部基线语义在那里，经 57 条攻击七轮闭环；
+2. S0 第一步：从 `D:\Codes\tree-harness` 提取工具清单——**权威源 = `proma-dev-patches.cjs` buildTreeTable（L384–541），33 工具含 zod schema 与命令映射**（已完成 → `docs/architecture/engine-spec.md`；v1.7 所记 29 为 v0.20 计数，Sprint 5/P1-2 增 4）；
 3. 插件工程范式照抄 `logs/ref-dsh-session-tree-README.md`（inject 纪律/Loader 缓存/headless 测试）；
 4. 宿主服务 API 以 `logs/dsh-host-services.txt` 实测导出为准，勿凭记忆；
 5. 完成定义：MVP = 本方案 §8 全部断言绿 + 实机（用户刷新页面）确认。

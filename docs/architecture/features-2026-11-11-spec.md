@@ -2,7 +2,7 @@
 
 > Lead 架构规格（实现前冻结）。两个功能的 API 证据、设计决策、验收标准、写作用域。
 > 状态：**已实现**（T-F1 handoff、T-F2 会话树 v1.1.0）。
-> **A 节（交接）已在同日第三轮被修订实现取代**：交接并入 `packages/dsh-session-tree` **v1.2.0**（独立插件删除），并补齐两条真机缺陷修复——① root 接替会话挂到同一侧栏工作区（`workspaceRegistry.resolveByPath` + `Workspace.attachSession`）；② 继承 Agent 预设（`meta.agentPreset` + 发布前 `setup` 内 `agentPresets.mount`）与权限模式（`permission/preset` / `sandbox/mode` / `approval/policy`，`source:'delegation'`）。最新事实以 [session-handoff-2026-11-11.md](session-handoff-2026-11-11.md) §0 与 [e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md) 为准；A.3「新增 host-only 插件」的部署形态描述已过时。
+> **A 节（交接）已在同日第三轮被修订实现取代**：交接并入 `packages/dsh-session-tree` **v1.2.0**（独立插件删除），并补齐两条真机缺陷修复——① root 接替会话挂到同一侧栏工作区（`workspaceRegistry.resolveByPath` + `Workspace.attachSession`）；② 继承 Agent 预设（`meta.agentPreset` + 发布前 `setup` 内 `agentPresets.mount`）与权限模式（`permission/preset` / `sandbox/mode` / `approval/policy`，`source:'delegation'`）。最新事实以 [session-handoff-2026-11-11.md](session-handoff-2026-11-11.md) §0 与 [e2e-handoff-2026-11-11.md](../reports/e2e-handoff-2026-11-11.md) 为准；A.3「新增 host-only 插件」的部署形态描述已过时。
 
 ---
 

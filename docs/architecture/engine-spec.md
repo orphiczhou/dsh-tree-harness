@@ -74,7 +74,7 @@ STATUS_ENUM = [active, done, pruned, archived, segment_pending, pending_brief]
 
 ## 7. 竹节（segment）语义
 
-源语义 + 本仓 DSH 化设计见 **[docs/segment-handoff.md](segment-handoff.md)**（唯一真源；阈值 42、先 interrupt 后 start、链长上限 5、K1–K5 简报）。源侧要点：set-context 自动触发（85→42 纠偏）、segment append 全树唯一校验、segment_pending 状态位、SKILL 简报规约（≤2K tokens：进度+关键发现+未完成 milestones）。
+源语义 + 本仓 DSH 化设计见 **[docs/architecture/segment-handoff.md](segment-handoff.md)**（唯一真源；阈值 42、先 interrupt 后 start、链长上限 5、K1–K5 简报）。源侧要点：set-context 自动触发（85→42 纠偏）、segment append 全树唯一校验、segment_pending 状态位、SKILL 简报规约（≤2K tokens：进度+关键发现+未完成 milestones）。
 
 ## 8. S0 API 实测记录（2026-10-04；下午补源码级验证）
 

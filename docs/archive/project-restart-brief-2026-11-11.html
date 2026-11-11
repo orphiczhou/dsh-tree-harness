@@ -845,7 +845,7 @@ const CHECKS = [
   { id: 'c1', t: '提交 RC2 兼容层 + 补单测', d: '把 tree-engine/index.js 的兼容层与 defect 文档做成一个 commit；补 fake subagents 覆盖 startActivation / interrupt authority / sendMessage 回退。', why: '不提交 = 换机器/重装即失；且当前宿主已无 startContinuable。' },
   { id: 'c2', t: '给本仓配 remote 并推第一版', d: '先建私有仓（或决定公开范围）→ git remote add → 推送 master + 未提交改动。', why: 'GitHub 是唯一能承载传播的渠道；本仓目前零备份。' },
   { id: 'c3', t: '决定合并方案（推荐 B⁺）', d: '单包迁入 packages/dsh-session-tree 吃 HMR；profile 停用两个 @local/* 包、改装单包；发布由 git push 到公开仓。', why: '把「开发双包」与「发布单包」两态收敛成一态，消除同步漂移。' },
-  { id: 'c4', t: '统一文档入口', d: 'README 还停留在「下一步 S0 规约冻结」；真正最新的状态散在 docs/handoff-2026-10-14.md 与 default-workspace 的 5 份 HANDOFF*.md。', why: '重启项目时，入口文档错了比没有更贵。' },
+  { id: 'c4', t: '统一文档入口', d: 'README 还停留在「下一步 S0 规约冻结」；真正最新的状态散在 docs/archive/handoff-2026-10-14.md 与 default-workspace 的 5 份 HANDOFF*.md。', why: '重启项目时，入口文档错了比没有更贵。' },
   { id: 'c5', t: '处理 timer 的「半死」状态', d: 'tree-engine 的 sweep 因宿主无 timer 进入 degraded-lazy（进程内 60s 兜底）。', why: '写着「能用」，实际是降级；要么接受兜底，要么补测 timer 托管路径。' },
   { id: 'c6', t: '决定 npm 发布策略', d: '当前 3 个包名全部 404，README 明确只走 Git 安装。上 npm 可让市场条目变一键安装，需要 npm token。', why: '传播效率 vs 发布流程成本的取舍，属于你的决策。' },
   { id: 'c7', t: '确立版本纪律', d: '市场按 package.json 的 version 判断更新 → 改代码必须 bump version；发布清单用 publish/verify-bundle.mjs 自检。', why: '不 bump = 市场永远显示旧版本。' }

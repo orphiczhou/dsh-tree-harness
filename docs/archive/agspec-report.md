@@ -1,7 +1,7 @@
 # agspec 报告:子会话配置的可观测性(A)与可控性(B)
 
 > 树:agspec(root=本指挥官会话 52e0d1c8)· 4 工作叶全部 succeeded+verify PASS
-> 证据链:[w1-evidence.md](../demo/agspec/w1-evidence.md)(实测)→ [w2-source.md](../demo/agspec/w2-source.md)(宿主源码)→ [w3-design.md](../demo/agspec/w3-design.md)(分层设计)→ [w4-changes.md](../demo/agspec/w4-changes.md)(落地改动点)
+> 证据链:[w1-evidence.md](../../demo/agspec/w1-evidence.md)(实测)→ [w2-source.md](../../demo/agspec/w2-source.md)(宿主源码)→ [w3-design.md](../../demo/agspec/w3-design.md)(分层设计)→ [w4-changes.md](../../demo/agspec/w4-changes.md)(落地改动点)
 
 ## 0. 需求原文
 
@@ -39,10 +39,10 @@
 ### ① 插件层(树 harness)立即可做
 | 改动 | 位置 |
 |---|---|
-| C1 dispatch 持久化完整 `leaf.assignee{provider,model,effort,preset}`(消除 `"model":"unknown"`) | [engine.js:405](../packages/dsh-tree-engine/src/engine.js#L405)-410 / 417-423 落账段,经 store.write 原子落 tree-state.json |
-| C2 修竹节接力丢路由:`assignee: leaf.assignee ?? (leaf.model && leaf.model!=='unknown' ? {model: leaf.model} : undefined)` | [engine.js:468](../packages/dsh-tree-engine/src/engine.js#L468);**双重缺陷**:不只丢 provider/effort,`leaf.model` 恒 unknown 导致旧三元永远走 undefined——竹节接力当前完全没有路由保持 |
-| C3 派发 prompt 末尾渲染 `<session-config-declared>` 自描述块(assignee/parent/cwd/权限继承事实 + "声明≠生效"免责) | [index.js:71](../packages/dsh-tree-engine/index.js#L71)-104 promptText 组装处 |
-| C4 TREE_DISPATCH schema 描述补 `effort`(description :459 只写 `{provider,model}`,误导) | [index.js:456](../packages/dsh-tree-engine/index.js#L456)-483 |
+| C1 dispatch 持久化完整 `leaf.assignee{provider,model,effort,preset}`(消除 `"model":"unknown"`) | [engine.js:405](../../packages/dsh-tree-engine/src/engine.js#L405)-410 / 417-423 落账段,经 store.write 原子落 tree-state.json |
+| C2 修竹节接力丢路由:`assignee: leaf.assignee ?? (leaf.model && leaf.model!=='unknown' ? {model: leaf.model} : undefined)` | [engine.js:468](../../packages/dsh-tree-engine/src/engine.js#L468);**双重缺陷**:不只丢 provider/effort,`leaf.model` 恒 unknown 导致旧三元永远走 undefined——竹节接力当前完全没有路由保持 |
+| C3 派发 prompt 末尾渲染 `<session-config-declared>` 自描述块(assignee/parent/cwd/权限继承事实 + "声明≠生效"免责) | [index.js:71](../../packages/dsh-tree-engine/index.js#L71)-104 promptText 组装处 |
+| C4 TREE_DISPATCH schema 描述补 `effort`(description :459 只写 `{provider,model}`,误导) | [index.js:456](../../packages/dsh-tree-engine/index.js#L456)-483 |
 | C5 projcache 读取型 `session-config` inspect 查询(覆盖模型 lastUsed/权限/作用域) | 新增 provider,W1 实验 3 字段级证实有源 |
 
 ### ② 需 DSH 宿主配合
@@ -72,5 +72,5 @@
 ## 7. 过程记录(verify 与偏差披露)
 
 - W1/W2/W3:taskType=research → self-report 策略,均一次 PASS。
-- W4:taskType=code-change → command 策略固定跑 `pnpm test`,而本执行环境 PATH 无 pnpm(直跑 `node --test "tests/*.test.js"` 61/61 全过),command 路由**物理无法通过**,属环境工件而非产物缺陷;W4 自带 [w4-verify.cjs](../demo/agspec/w4-verify.cjs) 38/38 ALL GREEN(逐行号锚点核验)。据此以显式 policy_id=doc(artifact)裁决 PASS——这是对"不传 policy_id"约束的一处已披露偏离,理由如上。
+- W4:taskType=code-change → command 策略固定跑 `pnpm test`,而本执行环境 PATH 无 pnpm(直跑 `node --test "tests/*.test.js"` 61/61 全过),command 路由**物理无法通过**,属环境工件而非产物缺陷;W4 自带 [w4-verify.cjs](../../demo/agspec/w4-verify.cjs) 38/38 ALL GREEN(逐行号锚点核验)。据此以显式 policy_id=doc(artifact)裁决 PASS——这是对"不传 policy_id"约束的一处已披露偏离,理由如上。
 - W4 第一次自报 done 时产物未落盘、第二次自检脚本 32 FAIL,经打回修正后全绿:说明 **self-report 策略可被不实自报穿透,command/artifact 有真实锚点核验的价值**——这与本树主题(可观测性)互为印证:没有可验证的观测通道,"自述"不可信。

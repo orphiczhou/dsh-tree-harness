@@ -2,7 +2,7 @@
 
 - 审计人：只读审计 worker（flaudit-W1-spec）
 - 日期：2026-10-04
-- 对照物：`docs/engine-spec.md`（S0 冻结版）+ `PLAN.md`（v1.0，含 §5 验证策略层 / §7 Config 增量）⇄ `packages/dsh-tree-engine/src/{engine,state,queue,guards,verify,store,config,clock}.js` 与包根 `index.js`
+- 对照物：`docs/architecture/engine-spec.md`（S0 冻结版）+ `PLAN.md`（v1.0，含 §5 验证策略层 / §7 Config 增量）⇄ `packages/dsh-tree-engine/src/{engine,state,queue,guards,verify,store,config,clock}.js` 与包根 `index.js`
 - 严重度定义：**P0** 破坏规约核心保证（并发安全/信任锚/数据完整性）；**P1** 规约承诺缺失或语义偏差，影响行为保真；**P2** 文档/命名/可观测性层面偏差。
 - 备注：任务指定路径 `src/index.js` 不存在；入口装配文件实际位于包根 `packages/dsh-tree-engine/index.js`（已纳入审计）。
 

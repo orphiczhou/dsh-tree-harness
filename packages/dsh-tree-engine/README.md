@@ -1,6 +1,6 @@
 # @local/dsh-tree-engine
 
-树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/engine-spec.md](../../docs/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 9 个工具 schema 为准（[docs/tools-mapping.md](../../docs/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
+树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/architecture/engine-spec.md](../../docs/architecture/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 9 个工具 schema 为准（[docs/architecture/tools-mapping.md](../../docs/architecture/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
 
 ## v0.6.0 增量：只读自检工具 `tree_doctor`（第 9 个工具）
 
@@ -63,7 +63,7 @@
 2. **callerOf** → `exec.agent?.session`（dsh-tools 实证）；
 3. **timer** → `ctx.timer` 直用（cordis-plugin-timer `ctx.mixin("timer")` 实证；保留 ctx.get 兜底）。
 
-证据落盘：[docs/engine-spec.md §8](../../docs/engine-spec.md)；smoke 清单收窄至 5 项装载实测。
+证据落盘：[docs/architecture/engine-spec.md §8](../../docs/architecture/engine-spec.md)；smoke 清单收窄至 5 项装载实测。
 
 ## v0.4.0 增量：对抗式验证(异族攻击-防御-审计迭代,≤3 轮)
 

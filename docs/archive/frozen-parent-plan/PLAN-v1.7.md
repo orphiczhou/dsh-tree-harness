@@ -112,7 +112,7 @@ D:\Codes\proma-easy-dsh\
 **引擎移植策略**（用户已确认）：
 - 以 `D:\Codes\tree-harness\tree-engine.cjs` 为源，**先反推规约再重写**：
   - S0 阶段从 `tree-mcp-tools.ts` + `proma-mcp-server.cjs` 提取 29 工具完整清单（名称/参数 schema/语义）；
-  - 结合 `tree-worker/SKILL.md`（54KB 工作流规约）与 tree-harness 的 `01_PRD`、`03_ARCHITECTURE`、加固 PR 记录，产出《引擎行为规约》（docs/engine-spec.md）；
+  - 结合 `tree-worker/SKILL.md`（54KB 工作流规约）与 tree-harness 的 `01_PRD`、`03_ARCHITECTURE`、加固 PR 记录，产出《引擎行为规约》（docs/architecture/engine-spec.md）；
   - 重写为 TypeScript ESM（宿主半为 ESM），保留纯逻辑可测试性（引擎核心不 import DSH API）。
 
 **工具面整合**（关键设计决策）：
@@ -306,7 +306,7 @@ D:\Codes\proma-easy-dsh\
 
 | 阶段 | 内容 | 产出 | 工作量 |
 |---|---|---|---|
-| S0 规约冻结 | 29 工具清单提取、引擎行为规约、整合工具面定稿、storageDomain API 验证、`approval` 服务读取面验证（`overrideOf`，§8 审批断言载体）、`timer` 服务注入面验证（`ctx.timer.interval`，§4.1 定时 sweep 载体；不可用时按 §4.1 回退语义登记 §4.6）、**棒侧 sweep 跨包载体裁决**（§4.1 跨包收割接口形态）、**Config schema 装载期校验实现**（§4.7 总表）、序列 schema 校验实现（`acceptanceRole` 末位约束）、协作工具重叠度分析、remote-session/事件推送裁决 | docs/engine-spec.md、tools-mapping.md、裁决记录 | 0.5–1 d |
+| S0 规约冻结 | 29 工具清单提取、引擎行为规约、整合工具面定稿、storageDomain API 验证、`approval` 服务读取面验证（`overrideOf`，§8 审批断言载体）、`timer` 服务注入面验证（`ctx.timer.interval`，§4.1 定时 sweep 载体；不可用时按 §4.1 回退语义登记 §4.6）、**棒侧 sweep 跨包载体裁决**（§4.1 跨包收割接口形态）、**Config schema 装载期校验实现**（§4.7 总表）、序列 schema 校验实现（`acceptanceRole` 末位约束）、协作工具重叠度分析、remote-session/事件推送裁决 | docs/architecture/engine-spec.md、tools-mapping.md、裁决记录 | 0.5–1 d |
 | S1 引擎宿主包 | 引擎重写 + ≤8 工具 + 并发队列 + 节点状态回流 + **定时 sweep（`ctx.timer.interval` 硬截止兜底，§4.1 收割触发④）** + 单测（移植 tree-harness tests） | @local/dsh-tree-engine | 3–5 d |
 | S2 树面板 | client 包 + 面板（拉取+手动刷新基线）+ headless 渲染测试 | @local/dsh-tree-panel | 2–3 d |
 | S3 Nanju 核心 | 预设/编排（含角色闭环、棒级超时/收割/`cancelled` 语义、跨包收割接口消费方）/项目/骨架/快照（含回滚回流）+ 工具 + 命令 | @local/dsh-nanju-core | 3–4 d |

@@ -10,7 +10,7 @@
 > - `tree_log [events, drift, heartbeat, communication]`
 > - `tree_maintain [backup, restore, nudge-reset, register-session]`
 >
-> 本表里其余 action（如 `tree_report {action:"drift"}`、`tree_node milestone-*`、`tree_maintain gc`）是设计稿未实现项，照表调用会返回 unknown action。差异由 [audit-tree-system-2026-11-11.md](audit-tree-system-2026-11-11.md) P1-09 记录。
+> 本表里其余 action（如 `tree_report {action:"drift"}`、`tree_node milestone-*`、`tree_maintain gc`）是设计稿未实现项，照表调用会返回 unknown action。差异由 [audit-tree-system-2026-11-11.md](../reports/audit-tree-system-2026-11-11.md) P1-09 记录。
 （tools-mapping）— S0 定稿
 
 | 项 | 值 |

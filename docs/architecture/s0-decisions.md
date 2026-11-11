@@ -3,7 +3,7 @@
 | 项 | 值 |
 |---|---|
 | 日期 | 2026-10-04 |
-| 输入 | PLAN.md（含 §5.5 并入）、docs/engine-spec.md、docs/tools-mapping.md、docs/segment-handoff.md |
+| 输入 | PLAN.md（含 §5.5 并入）、docs/architecture/engine-spec.md、docs/architecture/tools-mapping.md、docs/architecture/segment-handoff.md |
 | 效力 | S1 实现的直接依据；与冻结版 v1.7 冲突处以本记录 + 本仓 PLAN 为准（裁剪与增量授权见 PLAN §1） |
 
 ## 裁决清单
@@ -28,8 +28,8 @@
 
 | 交付物 | 状态 |
 |---|---|
-| 33 工具清单 + 引擎行为规约 | ✅ docs/engine-spec.md（A 断点权威闭合） |
-| 整合工具面定稿 | ✅ docs/tools-mapping.md（8 工具，计数核对 33） |
+| 33 工具清单 + 引擎行为规约 | ✅ docs/architecture/engine-spec.md（A 断点权威闭合） |
+| 整合工具面定稿 | ✅ docs/architecture/tools-mapping.md（8 工具，计数核对 33） |
 | 验证策略 schema | ✅ PLAN §5.3（jsonc 模板）+ §7 键表（含竹节 4 键） |
 | 竹节机制并入 | ✅ PLAN §5.5 + segment-handoff.md |
 | API 验证 | ✅ 记录于 engine-spec §8（5 项实测 + 通道降级登记 + S1 smoke 清单 5 项） |

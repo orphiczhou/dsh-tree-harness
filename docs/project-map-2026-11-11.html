@@ -354,7 +354,7 @@ table.compact thead th,table.compact tbody td{padding:8px 10px}
       <a href="#appendix">附录</a>
     </nav>
     <div class="snap" aria-label="版本快照">
-      <b>v1.3.5</b><i>1fb9193</i>
+      <b>v1.3.6</b><i>298298d</i>
     </div>
   </div>
 </header>
@@ -371,7 +371,7 @@ table.compact thead th,table.compact tbody td{padding:8px 10px}
         外加自省层 <b>introspect</b>，以及 3 份随包 Skill。
       </p>
       <div class="meta-row">
-        <span>会话树 <b>v1.3.5</b> · 公开仓 <b>1fb9193</b> · 18/18 SHA</span>
+        <span>会话树 <b>v1.3.6</b> · 公开仓 <b>298298d</b> · 19/19 SHA</span>
         <span>tree-engine <b>v0.6.0</b> · 9 工具 · <b>84/84</b></span>
         <span>本仓 master <b>ebeeaea</b></span>
         <span>MIT · npm 冻结（D3）</span>
@@ -449,13 +449,13 @@ table.compact thead th,table.compact tbody td{padding:8px 10px}
             <div class="kicker">02 · 解决什么</div>
             <h3>长任务装不下、子会话看不见、分层后收不了口</h3>
             <p>单会话上下文有限；DSH 默认侧栏把 <code>origin:'subagent'</code> 的行藏起来，跨层/兄弟会话也没有内置通信路径；任务拆下去后，若没有账本、所有权与验收，就会「派了但不知道干到哪」。</p>
-            <p class="src"><b>事实</b>：<code>docs/session-handoff-2026-11-11.md</code> §0.1；<code>packages/dsh-session-tree/README.zh.md</code>「为什么」。</p>
+            <p class="src"><b>事实</b>：<code>docs/architecture/session-handoff-2026-11-11.md</code> §0.1；<code>packages/dsh-session-tree/README.zh.md</code>「为什么」。</p>
           </article>
           <article class="card tint-violet">
             <div class="kicker">03 · 怎么用</div>
             <h3>装两个 bundle → 新会话 → 一句话拆树</h3>
             <p>profile 里 <code>link:</code> 两个包并 <code>pnpm install</code>，对 bundle 做一次 disable→enable；<b>新开</b>会话即可看到 3 个 Skill。然后说「把这个任务拆成三层并派人做，验证通过再收口」，模型按 Skill 调工具。</p>
-            <p class="src"><b>事实</b>：<code>docs/skills-usage.md</code> §2–§4；D12 热更纪律。</p>
+            <p class="src"><b>事实</b>：<code>docs/guides/skills-usage.md</code> §2–§4；D12 热更纪律。</p>
           </article>
         </div>
 
@@ -481,7 +481,7 @@ table.compact thead th,table.compact tbody td{padding:8px 10px}
                 <thead><tr><th>包</th><th>版本</th><th>状态</th><th>一句话</th></tr></thead>
                 <tbody>
                   <tr><td><code>dsh-tree-engine</code></td><td class="num">0.6.0</td><td><span class="pill fact">运行中</span></td><td>9 个 tree 工具（含自检）+ 竹节 + 护栏 + 验证</td></tr>
-                  <tr><td><code>dsh-session-tree</code></td><td class="num">1.3.5</td><td><span class="pill fact">公开镜像</span></td><td>侧栏树 + tree_send + handoff + Skill</td></tr>
+                  <tr><td><code>dsh-session-tree</code></td><td class="num">1.3.6</td><td><span class="pill fact">公开镜像</span></td><td>侧栏树 + tree_send + handoff + Skill</td></tr>
                   <tr><td><code>dsh-agent-introspect</code></td><td class="num">0.1.0</td><td><span class="pill fact">运行中</span></td><td><code>self_spec</code> 自省</td></tr>
                 </tbody>
               </table>
@@ -605,7 +605,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             </tbody>
           </table>
         </div>
-        <p class="src"><b>事实来源</b>：<code>README.md</code> §快速开始/验证运行；<code>docs/skills-usage.md</code> §2–§3；<code>agent.md</code> D12；<code>packages/dsh-session-tree/README.zh.md</code>「确认装好了」。</p>
+        <p class="src"><b>事实来源</b>：<code>README.md</code> §快速开始/验证运行；<code>docs/guides/skills-usage.md</code> §2–§3；<code>agent.md</code> D12；<code>packages/dsh-session-tree/README.zh.md</code>「确认装好了」。</p>
 
         <div class="callout warn">
           <span class="label">第一次用最容易误判的三件事</span>
@@ -705,7 +705,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             </tbody>
           </table>
         </div>
-        <p class="src"><b>事实来源</b>：<code>packages/dsh-session-tree/README.zh.md</code>「功能」；<code>packages/dsh-tree-engine/index.js</code> 工具 schema（9 个）；<code>src/verify.js</code>；<code>src/guards.js</code>（<code>LEAF_WRITE_MATRIX</code>）；<code>src/doctor.js</code>（7 检查项）；<code>docs/skills-usage.md</code> §8。</p>
+        <p class="src"><b>事实来源</b>：<code>packages/dsh-session-tree/README.zh.md</code>「功能」；<code>packages/dsh-tree-engine/index.js</code> 工具 schema（9 个）；<code>src/verify.js</code>；<code>src/guards.js</code>（<code>LEAF_WRITE_MATRIX</code>）；<code>src/doctor.js</code>（7 检查项）；<code>docs/guides/skills-usage.md</code> §8。</p>
 
         <figure class="fig" id="fig-tools">
           <div class="figtop">
@@ -794,7 +794,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
 
             <!-- right panel -->
             <rect class="s-layer" x="792" y="54" width="304" height="588" rx="12"/>
-            <text class="s-on-amber" x="812" y="80" font-size="13">session-tree v1.3.5</text>
+            <text class="s-on-amber" x="812" y="80" font-size="13">session-tree v1.3.6</text>
             <text class="s-t3" x="812" y="98" font-size="11.5">会话层 · 树视图 + 通信 + 交接</text>
 
             <rect class="s-card-amber" x="808" y="112" width="272" height="126" rx="10"/>
@@ -830,7 +830,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
 
             <text class="s-t3" x="32" y="674" font-size="11.5">另：<tspan class="s-mono">self_spec</tspan>（agent-introspect，v0.1.0，运行中）——不计入 11 个。</text>
           </svg>
-          <figcaption><b>图 2 · 工具面地图</b>。<span class="how">怎么读：</span>左边 9 个是「任务树账本」（第 9 个 <code>tree_doctor</code> 只读自检），右边 2 个是「会话层能力」，第 5 行右半是<b>写面护栏</b>（能力不是工具：<code>LEAF_WRITE_MATRIX</code> 决定「谁能写这个 leaf」）；每张卡第二行是该工具<b>真正支持</b>的 action——不在卡片里的 action 会返回 unknown action，<code>docs/tools-mapping.md</code> 里的 <code>drift</code> / <code>milestone-*</code> / <code>gc</code> 等仍在设计稿里。</figcaption>
+          <figcaption><b>图 2 · 工具面地图</b>。<span class="how">怎么读：</span>左边 9 个是「任务树账本」（第 9 个 <code>tree_doctor</code> 只读自检），右边 2 个是「会话层能力」，第 5 行右半是<b>写面护栏</b>（能力不是工具：<code>LEAF_WRITE_MATRIX</code> 决定「谁能写这个 leaf」）；每张卡第二行是该工具<b>真正支持</b>的 action——不在卡片里的 action 会返回 unknown action，<code>docs/architecture/tools-mapping.md</code> 里的 <code>drift</code> / <code>milestone-*</code> / <code>gc</code> 等仍在设计稿里。</figcaption>
         </figure>
 
         <figure class="fig" id="fig-tree">
@@ -938,8 +938,8 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <article class="card">
             <h3>能力不是「越多越好」</h3>
             <p>tree-engine 的 <code>tree_*</code> 只负责<b>任务账本与执行编排</b>；会话生命周期（创建/fork/列表）仍走 DSH 原生 <code>subagents</code>，跨会话消息也可用内置 <code>send_message</code>（但只覆盖直接父子）。</p>
-            <p>发布面只有会话树是「公开镜像包」；tree-engine 与 introspect 随本仓公开、未单独发仓（见 <code>docs/publishing.md</code> §1）。</p>
-            <p class="src"><b>事实</b>：<code>docs/publishing.md</code> §1；<code>docs/tools-mapping.md</code> §4。</p>
+            <p>发布面只有会话树是「公开镜像包」；tree-engine 与 introspect 随本仓公开、未单独发仓（见 <code>docs/guides/publishing.md</code> §1）。</p>
+            <p class="src"><b>事实</b>：<code>docs/guides/publishing.md</code> §1；<code>docs/architecture/tools-mapping.md</code> §4。</p>
           </article>
         </div>
 
@@ -1030,7 +1030,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-t3" x="300" y="292" font-size="10.5">只做「翻译 + 注册 + 端口注入」，不把业务逻辑写进 DSH API</text>
 
             <rect class="s-card-teal" x="40" y="302" width="310" height="106" rx="10"/>
-            <text class="s-on-teal" x="56" y="324" font-size="10">session-tree v1.3.5</text>
+            <text class="s-on-teal" x="56" y="324" font-size="10">session-tree v1.3.6</text>
             <text class="s-hero-sm" x="56" y="346" font-size="13.5">tree_send · session_handoff</text>
             <text class="s-t3" x="56" y="365" font-size="10.2">client.js：侧栏树 / 工作区分组 / 搜索</text>
             <text class="s-t3" x="56" y="382" font-size="10.2">locale：zh / en 界面语言</text>
@@ -1109,7 +1109,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
                 </tbody>
               </table>
             </div>
-            <p class="src"><b>事实</b>：根 <code>README.md</code> §宿主半/客户端半；<code>docs/handoff-2026-10-14.md</code> §5 客户端契约。</p>
+            <p class="src"><b>事实</b>：根 <code>README.md</code> §宿主半/客户端半；<code>docs/archive/handoff-2026-10-14.md</code> §5 客户端契约。</p>
           </article>
 
           <article class="card">
@@ -1127,7 +1127,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
         watch: false
         bundledSkillDir: !!js process.getBuiltinModule('node:path')
           .join(/* 经 require.resolve(package.json) 定位 */, 'skills')</code></pre></div>
-            <p class="src"><b>事实</b>：<code>packages/dsh-tree-engine/cordis.patch.yml</code>；<code>docs/skills-usage.md</code> §1。</p>
+            <p class="src"><b>事实</b>：<code>packages/dsh-tree-engine/cordis.patch.yml</code>；<code>docs/guides/skills-usage.md</code> §1。</p>
           </article>
         </div>
 
@@ -1308,7 +1308,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             </tbody>
           </table>
         </div>
-        <p class="src"><b>事实来源</b>：<code>docs/skill-e2e-2026-11-11.md</code> §4 A 组（修正后 <code>chglog</code>：root + commander + 6 worker，maxDepth=2，7 个非 root 节点 succeeded，validate 0 issues，真实 FAIL→PASS）；<code>docs/skills-usage.md</code> §5；<code>packages/dsh-tree-engine/index.js</code> 工具描述。<b>示意</b>：命令参数与单行返回为可读化重排，ID/摘要做了简化。</p>
+        <p class="src"><b>事实来源</b>：<code>docs/reports/skill-e2e-2026-11-11.md</code> §4 A 组（修正后 <code>chglog</code>：root + commander + 6 worker，maxDepth=2，7 个非 root 节点 succeeded，validate 0 issues，真实 FAIL→PASS）；<code>docs/guides/skills-usage.md</code> §5；<code>packages/dsh-tree-engine/index.js</code> 工具描述。<b>示意</b>：命令参数与单行返回为可读化重排，ID/摘要做了简化。</p>
 
         <div class="grid2">
           <article class="card tint-amber">
@@ -1378,7 +1378,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             </tbody>
           </table>
         </div>
-        <p class="src"><b>事实来源</b>：<code>docs/session-handoff-2026-11-11.md</code> §0.2–§0.3；<code>packages/dsh-session-tree/index.js</code> 的 <code>spawnSuccessor</code>。真机验证：root <b>14/14</b>、sibling <b>12/12</b>（<code>docs/e2e-handoff-2026-11-11.md</code>）；B/C 组 <code>verify-handoff</code> 各 <b>12/12</b>。</p>
+        <p class="src"><b>事实来源</b>：<code>docs/architecture/session-handoff-2026-11-11.md</code> §0.2–§0.3；<code>packages/dsh-session-tree/index.js</code> 的 <code>spawnSuccessor</code>。真机验证：root <b>14/14</b>、sibling <b>12/12</b>（<code>docs/reports/e2e-handoff-2026-11-11.md</code>）；B/C 组 <code>verify-handoff</code> 各 <b>12/12</b>。</p>
 
         <h3 style="margin-top:30px">6.2 两套接力：42% 与 50% 不是一回事</h3>
 
@@ -1520,7 +1520,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             </tbody>
           </table>
         </div>
-        <p class="src"><b>事实来源</b>：<code>docs/segment-handoff.md</code> §4；<code>packages/dsh-tree-engine/src/engine.js</code> <code>set-context</code>/<code>bambooRelay</code>；<code>packages/dsh-session-tree/index.js</code> 阈值与防重复；<code>docs/skills-usage.md</code> §8。</p>
+        <p class="src"><b>事实来源</b>：<code>docs/architecture/segment-handoff.md</code> §4；<code>packages/dsh-tree-engine/src/engine.js</code> <code>set-context</code>/<code>bambooRelay</code>；<code>packages/dsh-session-tree/index.js</code> 阈值与防重复；<code>docs/guides/skills-usage.md</code> §8。</p>
 
         <h3 style="margin-top:30px">6.3 所有权：谁能写 done，谁不能</h3>
         <div class="grid2">
@@ -1567,7 +1567,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <li><h4>profile 配置文件</h4><p><code>cordis.patch.yml</code> / <code>cordis.yml</code> 中 <code>locale</code> 条目的 <code>preference</code>；优先 <code>DSH_PROFILE_DIR</code>，宿主未导出该变量时用 <code>process.cwd()</code>（实测宿主 cwd 就是 profile 目录）。</p></li>
           <li><h4>英文回退</h4><p><code>zh*</code> → <code>zh</code>；<code>en*</code> → <code>en</code>；其它已存语言（ja/es/fr/de/ru/pt…）与无偏好 → <code>en</code>。每次 <code>status</code>/<code>handoff</code> 重新解析，不缓存。</p></li>
         </ol>
-        <p class="src"><b>事实来源</b>：<code>docs/e2e-kickoff-language-2026-11-11.md</code> §1–§3；<code>CHANGELOG.md</code> 1.3.1 的「已知边界」。真机：修复前 <code>lang=en</code> → 修复后 <code>lang=zh</code> 且接替首条中文 PASS。</p>
+        <p class="src"><b>事实来源</b>：<code>docs/reports/e2e-kickoff-language-2026-11-11.md</code> §1–§3；<code>CHANGELOG.md</code> 1.3.1 的「已知边界」。真机：修复前 <code>lang=en</code> → 修复后 <code>lang=zh</code> 且接替首条中文 PASS。</p>
 
         <h3 style="margin-top:30px">6.6 热更与 Skill 注入：什么时候必须重载/新开会话</h3>
         <div class="tablewrap">
@@ -1719,7 +1719,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <div class="metric teal"><div class="v">84/84</div><div class="l">tree-engine</div><div class="n">62 引擎 + 4 技能打包 + 1 B1 + 9 doctor + 8 护栏</div></div>
           <div class="metric amber"><div class="v">41/41</div><div class="l">session-tree handoff</div><div class="n">继承/工作区/闸门/语言/干跑</div></div>
           <div class="metric violet"><div class="v">3/3</div><div class="l">随包 Skill 打包</div><div class="n">frontmatter / files / patch 行</div></div>
-          <div class="metric rose"><div class="v">18/18</div><div class="l">发布 SHA</div><div class="n">v1.3.5 = 1fb9193（main + tag）</div></div>
+          <div class="metric rose"><div class="v">19/19</div><div class="l">发布 SHA</div><div class="n">v1.3.6 = 298298d（main + tag）</div></div>
         </div>
 
         <h3>7.1 测试矩阵：哪些是「全绿」，哪些是「有环境依赖」</h3>
@@ -1789,7 +1789,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-mono" x="586" y="92" font-size="9.5">STAGE 4</text>
             <text class="s-hero-sm" x="586" y="114" font-size="13.5">公开仓发布</text>
             <text class="s-t3" x="586" y="134" font-size="9.8">main + tag</text>
-            <text class="s-t3" x="586" y="150" font-size="9.8">v1.3.5 = 1fb9193</text>
+            <text class="s-t3" x="586" y="150" font-size="9.8">v1.3.6 = 298298d</text>
             <text class="s-t3" x="586" y="166" font-size="9.8">远端 HEAD = 本地</text>
             <text class="s-t3" x="586" y="182" font-size="9.8">npm 仍冻结</text>
             <rect class="s-badge-teal" x="586" y="204" width="76" height="20" rx="10"/>
@@ -1852,11 +1852,12 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
               <tr><td>session-tree 1.3.2</td><td>2026-11-11</td><td>Skill 使用文档补全（洁净室一轮）</td><td class="num">c1541e5</td><td class="num">18/18</td><td>G1–G12 修订</td></tr>
               <tr><td>session-tree 1.3.3</td><td>2026-11-11</td><td><code>spawn:false</code> 干跑绕过阈值闸 + N1–N7</td><td class="num">cce2975</td><td class="num">18/18</td><td>handoff 41/41</td></tr>
               <tr><td>session-tree 1.3.4</td><td>2026-11-11</td><td>R1-B/R2-B 文档债清扫</td><td class="num">f784c6e</td><td class="num">18/18</td><td>无代码行为变化</td></tr>
-              <tr><td><b>session-tree 1.3.5</b></td><td>2026-11-11</td><td>第三轮洁净室 PASS 收尾</td><td class="num"><b>1fb9193</b></td><td class="num">18/18</td><td>当前公开镜像；main + tag</td></tr>
+              <tr><td><b>session-tree 1.3.6</b></td><td>2026-11-12</td><td>文档归档 + 人类/Agent 安装指南</td><td class="num"><b>298298d</b></td><td class="num">19/19</td><td>当前公开镜像；main + tag</td></tr>
+              <tr><td><b>session-tree 1.3.5</b></td><td>2026-11-11</td><td>第三轮洁净室 PASS 收尾</td><td class="num"><b>1fb9193</b></td><td class="num">18/18</td><td>上一版公开镜像</td></tr>
             </tbody>
           </table>
         </div>
-        <p class="src"><b>事实来源</b>：<code>docs/publishing.md</code> §3/§5；<code>docs/skill-cleanroom-2026-11-11.md</code>；<code>CHANGELOG.md</code>。本仓 master 最新为 <code>ebeeaea</code>（docs: cleanroom round-3 PASS + final v1.3.5 publish record）。</p>
+        <p class="src"><b>事实来源</b>：<code>docs/guides/publishing.md</code> §3/§5；<code>docs/reports/skill-cleanroom-2026-11-11.md</code>；<code>CHANGELOG.md</code>。本仓 master 最新以 <code>git log</code> 为准（2026-11-12：Wave-1 tree-engine v0.6.0 + docs 归档 + v1.3.6 发布）。</p>
 
         <div class="grid2">
           <article class="card tint-teal">
@@ -1902,10 +1903,10 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <table>
             <thead><tr><th style="width:5%" class="num">#</th><th style="width:24%">边界 / 坑</th><th style="width:37%">实际影响</th><th style="width:34%">当前处理 / 绕法</th></tr></thead>
             <tbody>
-              <tr><td class="num">1</td><td><b>npm 冻结（D3）</b></td><td>不能 <code>npm install</code>；三个候选名 registry 404；市场条目是 browse-only，按 Git 安装</td><td>用 Git URL 或 <code>link:</code>；解冻需所有者显式批准（条件见 <code>docs/publishing.md</code> §4）</td></tr>
+              <tr><td class="num">1</td><td><b>npm 冻结（D3）</b></td><td>不能 <code>npm install</code>；三个候选名 registry 404；市场条目是 browse-only，按 Git 安装</td><td>用 Git URL 或 <code>link:</code>；解冻需所有者显式批准（条件见 <code>docs/guides/publishing.md</code> §4）</td></tr>
               <tr><td class="num">2</td><td><b>sweep 依赖宿主 timer</b></td><td>宿主 timer 可用时用其 interval；不可用时靠进程内 60s 兜底（<code>sweepMode=timer</code>），自动收割可能慢一轮</td><td>不要假设「必须显式 harvest」；<code>tree_status harvest</code> 只是立即触发一轮</td></tr>
               <tr><td class="num">3</td><td><b>provider-conformance 依赖 asar fixture</b></td><td>默认目录不存在 → ENOENT；DSH 0.2.2-rc.1 把 schema 引擎拆到 shared chunk，旧启发式拿不到 29/29</td><td>需要 rc.2 兼容的解包 fixture（逐字节 shipped chunk）；这是测试环境依赖，不是包内容缺陷</td></tr>
-              <tr><td class="num">4</td><td><b><code>docs/tools-mapping.md</code> 是设计稿</b></td><td>表里的 <code>tree_report drift</code>、<code>tree_node milestone-*</code>、<code>tree_maintain gc</code> 等<b>未实现</b>；照表调会 unknown action</td><td>以 <code>index.js</code> schema 为准；本页图 2 只列已实现 action</td></tr>
+              <tr><td class="num">4</td><td><b><code>docs/architecture/tools-mapping.md</code> 是设计稿</b></td><td>表里的 <code>tree_report drift</code>、<code>tree_node milestone-*</code>、<code>tree_maintain gc</code> 等<b>未实现</b>；照表调会 unknown action</td><td>以 <code>index.js</code> schema 为准；本页图 2 只列已实现 action</td></tr>
               <tr><td class="num">5</td><td><b>市场只认 version</b></td><td>改了代码但不 bump，market 不刷新，等于发假更新；无内容变化乱 bump 又制造假版本</td><td>D6：有内容变化必须 bump；<code>version = GitHub tag = package.json.version</code></td></tr>
               <tr><td class="num">6</td><td><b>宿主半按包名缓存</b></td><td>改 <code>index.js</code> / patch 行后，活体仍是旧实现；<code>hmr.root</code> 不保证宿主半重载</td><td>对相应 entry disable→enable，或重启 DSH；客户端半只刷新页面</td></tr>
               <tr><td class="num">7</td><td><b>Skill 目录在会话启动时注入</b></td><td>改完 patch 行后，旧会话看不到新 Skill；只改 <code>SKILL.md</code> 正文也可能要新会话才读</td><td><b>新开会话</b>验收；目录项应各出现一次（重复挂载会重复）</td></tr>
@@ -1923,24 +1924,24 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             </tbody>
           </table>
         </div>
-        <p class="src"><b>事实来源</b>：<code>README.md</code> §已知边界；<code>docs/handoff-2026-11-11.md</code> §7；<code>docs/audit-tree-system-2026-11-11.md</code> §3–§4；<code>docs/merge-session-tree-2026-11-11.md</code> §5；<code>docs/skill-e2e-2026-11-11.md</code> §5。</p>
+        <p class="src"><b>事实来源</b>：<code>README.md</code> §已知边界；<code>docs/operations/handoff-2026-11-11.md</code> §7；<code>docs/reports/audit-tree-system-2026-11-11.md</code> §3–§4；<code>docs/architecture/merge-session-tree-2026-11-11.md</code> §5；<code>docs/reports/skill-e2e-2026-11-11.md</code> §5。</p>
 
         <h3 style="margin-top:30px">8.1 制作本图时发现的文档不一致</h3>
-        <p>以下均为<b>只读核对</b>发现，本图未修改仓库任何文件；建议后续做一次「版本数字清扫」。</p>
+        <p>以下为<b>地图生成时（2026-11-11）快照</b>；其中第 1、2、4、5、7、9 项已在 v1.3.4–v1.3.6 修复（保留作历史记录），引用时以仓库当前文件为准。</p>
         <div class="tablewrap">
           <table>
             <thead><tr><th style="width:26%">位置</th><th style="width:34%">文中写法</th><th style="width:40%">当前事实 / 建议</th></tr></thead>
             <tbody>
               <tr><td><code>README.md</code> 包表（session-tree 行）</td><td>「GitHub 公开（<b>v1.3.3</b>）」</td><td>当前公开镜像 <b>v1.3.5 = 1fb9193</b>；该单元格是旧数字，应改 v1.3.5（同表其他位置已是 v1.3.5）</td></tr>
-              <tr><td><code>docs/handoff-2026-11-11.md</code> §9 交接提示词</td><td>「会话树单包 … <b>v1.3.3</b>」</td><td>同文件 §1 已写 v1.3.5；提示词是旧版本，照抄会误判</td></tr>
-              <tr><td><code>docs/handoff-2026-11-11.md</code> §1 vs <code>agent.md</code> §2</td><td>宿主 loader 账本 <b>245</b> 条 vs <b>244</b> 条</td><td>两份快照相差 1；属时序差异，引用时标注「当时快照」或省略该数字</td></tr>
-              <tr><td><code>docs/session-handoff-2026-11-11.md</code> 标题/状态</td><td>「v1.3.3」为主</td><td>当前包是 v1.3.5；该文是设计/交付记录，建议标题加「历史快照」或补 1.3.4/1.3.5</td></tr>
-              <tr><td><code>docs/skills-usage.md</code> §9 版本差异速查</td><td>只列到 <b>1.3.3</b></td><td>文档头写「v1.3.5 及以上」，版本矩阵缺 1.3.4/1.3.5（两版均无行为变化，可一句带过）</td></tr>
-              <tr><td><code>docs/audit-tree-system-2026-11-11.md</code> §1</td><td>tree-engine <b>66/66</b>、v0.5.0 基线</td><td>当前 v0.5.1 / <b>67/67</b>；审计结论仍有效，但测试数字是历史快照</td></tr>
-              <tr><td><code>docs/engine-spec.md</code> §1/§3</td><td>「33 工具」「源缺省 85」「16 文件」</td><td>这是<b>上游源引擎</b>的 S0 规约，不是本仓 8 工具/42% 的现状；两套数字不要混用</td></tr>
+              <tr><td><code>docs/operations/handoff-2026-11-11.md</code> §9 交接提示词</td><td>「会话树单包 … <b>v1.3.3</b>」</td><td>同文件 §1 已写 v1.3.5；提示词是旧版本，照抄会误判</td></tr>
+              <tr><td><code>docs/operations/handoff-2026-11-11.md</code> §1 vs <code>agent.md</code> §2</td><td>宿主 loader 账本 <b>245</b> 条 vs <b>244</b> 条</td><td>两份快照相差 1；属时序差异，引用时标注「当时快照」或省略该数字</td></tr>
+              <tr><td><code>docs/architecture/session-handoff-2026-11-11.md</code> 标题/状态</td><td>「v1.3.3」为主</td><td>当前包是 v1.3.5；该文是设计/交付记录，建议标题加「历史快照」或补 1.3.4/1.3.5</td></tr>
+              <tr><td><code>docs/guides/skills-usage.md</code> §9 版本差异速查</td><td>只列到 <b>1.3.3</b></td><td>文档头写「v1.3.5 及以上」，版本矩阵缺 1.3.4/1.3.5（两版均无行为变化，可一句带过）</td></tr>
+              <tr><td><code>docs/reports/audit-tree-system-2026-11-11.md</code> §1</td><td>tree-engine <b>66/66</b>、v0.5.0 基线</td><td>当前 v0.5.1 / <b>67/67</b>；审计结论仍有效，但测试数字是历史快照</td></tr>
+              <tr><td><code>docs/architecture/engine-spec.md</code> §1/§3</td><td>「33 工具」「源缺省 85」「16 文件」</td><td>这是<b>上游源引擎</b>的 S0 规约，不是本仓 8 工具/42% 的现状；两套数字不要混用</td></tr>
               <tr><td><code>packages/dsh-tree-engine/README.md</code> v0.3 节</td><td>「register-session（旁路登记幂等）」</td><td>代码对重复登记直接 <code>E_SCHEMA_INVALID</code>（注释口径是「幂等拒绝重复计」）；工具描述仍写 idempotent（审计 P1-07）</td></tr>
               <tr><td><code>README.md</code> 包表 vs §跑测试</td><td>「包内 5 份测试」vs「6 个测试入口」</td><td>实际 <code>test/</code> 下 5 个测试文件 + <code>scripts/verify-bundle.mjs</code> 1 个入口；两种说法指代不同，建议统一为「5 个测试文件 + 1 个清单自检」</td></tr>
-              <tr><td><code>README.md</code> 文档索引 vs <code>docs/handoff-2026-11-11.md</code></td><td>仍标「当前交接」</td><td>该文正文混有 v1.3.2/v1.3.3 残留；建议标注「历史交接，版本数字以包 package.json 为准」</td></tr>
+              <tr><td><code>README.md</code> 文档索引 vs <code>docs/operations/handoff-2026-11-11.md</code></td><td>仍标「当前交接」</td><td>该文正文混有 v1.3.2/v1.3.3 残留；建议标注「历史交接，版本数字以包 package.json 为准」</td></tr>
             </tbody>
           </table>
         </div>
@@ -2092,7 +2093,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <div class="kicker">推荐 C · P1 · 1 天</div>
           <h3>真机 E2E 常态化：把三条一次性取证变成发布前必跑</h3>
           <p><b>目标</b>：交接（root/sibling）、接替提示语语言、Skill 目录可见性这三条真机断言不再只在报告里跑过一次，而是每次发布前都跑并留证。</p>
-          <p><b>方案</b>：复用现有 <code>scripts/e2e/verify-handoff.mjs</code>、<code>scripts/e2e/verify-kickoff-language.mjs</code>、<code>scripts/skill-e2e/collect-skills.mjs</code>，合成一个 runbook（或薄包装脚本）：起真实子会话 → 逐条断言 → artifacts 落到 <code>scripts/skill-e2e/artifacts/</code> → 在 <code>docs/publishing.md</code> §6 检查清单加一项「真机 E2E 三断言」。失败时保留会话 id 与解码结果，便于复跑。</p>
+          <p><b>方案</b>：复用现有 <code>scripts/e2e/verify-handoff.mjs</code>、<code>scripts/e2e/verify-kickoff-language.mjs</code>、<code>scripts/skill-e2e/collect-skills.mjs</code>，合成一个 runbook（或薄包装脚本）：起真实子会话 → 逐条断言 → artifacts 落到 <code>scripts/skill-e2e/artifacts/</code> → 在 <code>docs/guides/publishing.md</code> §6 检查清单加一项「真机 E2E 三断言」。失败时保留会话 id 与解码结果，便于复跑。</p>
           <p><b>风险/依赖</b>：需要真实会话与配额（曾遇到 429）；无 GUI 的 CI 不能跑，只能发布前由人触发；会话日志格式可能随 DSH 版本漂移（断言器要能明确报「格式变了」而不是静默 PASS）。</p>
           <p><b>验收</b>：发布前一次运行三条断言全 PASS 且 artifacts 落盘；故障注入（改坏一条断言）能 FAIL；runbook 步骤可被另一个会话照做。</p>
         </article>
@@ -2122,7 +2123,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
                 </tbody>
               </table>
             </div>
-            <p class="src"><b>建议依据</b>：<code>docs/audit-tree-system-2026-11-11.md</code> P1-05/P1-06/P1-07；<code>README.md</code> 已知边界；<code>docs/skill-e2e-2026-11-11.md</code> §5；<code>docs/publishing.md</code> §4。</p>
+            <p class="src"><b>建议依据</b>：<code>docs/reports/audit-tree-system-2026-11-11.md</code> P1-05/P1-06/P1-07；<code>README.md</code> 已知边界；<code>docs/reports/skill-e2e-2026-11-11.md</code> §5；<code>docs/guides/publishing.md</code> §4。</p>
           </article>
         </div>
       </div>
@@ -2174,12 +2175,12 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           </div>
           <svg viewBox="0 0 1120 430" role="img" aria-labelledby="fig-timeline-title">
             <title id="fig-timeline-title">session-tree 与 tree-engine 的版本演进</title>
-            <desc>上轨为 session-tree 从 1.0.4 到 1.3.5 的功能演进；下轨为 tree-engine 从 0.4.0 到 0.5.1，以及 introspect 的版本。</desc>
+            <desc>上轨为 session-tree 从 1.0.4 到 1.3.6 的功能演进；下轨为 tree-engine 从 0.4.0 到 0.5.1，以及 introspect 的版本。</desc>
             <defs>
               <marker id="f7-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
             </defs>
             <rect class="s-bg" x="0" y="0" width="1120" height="430" rx="14"/>
-            <text class="s-hero" x="32" y="36" font-size="19">版本演进：一天之内从 1.0.4 到 1.3.5</text>
+            <text class="s-hero" x="32" y="36" font-size="19">版本演进：一天之内从 1.0.4 到 1.3.6</text>
             <text class="s-t3" x="470" y="36" font-size="11.5">1.3.2 / 1.3.4 为文档版，无代码行为变化</text>
 
             <!-- lane 1 -->
@@ -2247,7 +2248,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-t3" x="912" y="289" font-size="9.2">运行中</text>
 
             <text class="s-t3" x="42" y="330" font-size="10.2">注：session-tree 的版本号同时是公开插件仓的 tag；tree-engine 未单独发仓，版本只在本仓 <tspan class="s-mono">package.json</tspan> 维护。</text>
-            <text class="s-t3" x="42" y="347" font-size="10.2">所有日期均为 2026-11-11（北京时间）；更早的 1.0.x 历史见公开插件仓 tags 与本仓 <tspan class="s-mono">docs/publishing.md</tspan>。</text>
+            <text class="s-t3" x="42" y="347" font-size="10.2">所有日期均为 2026-11-11（北京时间）；更早的 1.0.x 历史见公开插件仓 tags 与本仓 <tspan class="s-mono">docs/guides/publishing.md</tspan>。</text>
 
             <text class="s-t3" x="32" y="402" font-size="10.5">读法：先看 session-tree 上轨的「能力拐点」（1.2.0 合并、1.3.0 Skill、1.3.1 语言、1.3.3 干跑），再看 tree-engine 下轨的两次修复（0.5.0 B1、0.5.1 勘误）。</text>
           </svg>
@@ -2259,7 +2260,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <thead><tr><th>包</th><th>当前版本</th><th>状态</th><th>公开位置</th><th>测试</th></tr></thead>
             <tbody>
               <tr><td><code>dsh-tree-engine</code></td><td class="num">0.5.1</td><td><span class="pill fact">运行中</span></td><td>随本仓公开（未单独发仓）</td><td><b>67/67</b></td></tr>
-              <tr><td><code>dsh-session-tree</code></td><td class="num">1.3.5</td><td><span class="pill fact">公开镜像</span></td><td><code>orphiczhou/dsh-session-tree</code> · tag <code>v1.3.5</code> · <code>1fb9193</code></td><td>41/41 + 3/3 + 22/22 + 0 fail</td></tr>
+              <tr><td><code>dsh-session-tree</code></td><td class="num">1.3.6</td><td><span class="pill fact">公开镜像</span></td><td><code>orphiczhou/dsh-session-tree</code> · tag <code>v1.3.5</code> · <code>1fb9193</code></td><td>41/41 + 3/3 + 22/22 + 0 fail</td></tr>
               <tr><td><code>dsh-agent-introspect</code></td><td class="num">0.1.0</td><td><span class="pill fact">运行中</span></td><td>随本仓公开</td><td>无单测</td></tr>
             </tbody>
           </table>
@@ -2273,19 +2274,19 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <tbody>
               <tr><td><code>README.md</code></td><td>包表、快速开始、随包 Skill、已知边界、文档索引</td><td>2026-11-11；个别旧数字见 §8.1</td></tr>
               <tr><td><code>agent.md</code></td><td>角色、D1–D15、R1–R12、状态快照、任务板、发布门禁</td><td>最后更新 2026-11-11（第七轮）</td></tr>
-              <tr><td><code>docs/skills-usage.md</code></td><td>三个 Skill 的触发、参数、样例、42% vs 50%、排障</td><td>适用 v1.3.5 / v0.5.1</td></tr>
-              <tr><td><code>docs/handoff-2026-11-11.md</code></td><td>当前交接、关键路径、测试/验活、风险与下一轮议程</td><td>快照 15:00；§9 有旧版本号</td></tr>
-              <tr><td><code>docs/session-handoff-2026-11-11.md</code></td><td>交接设计、继承矩阵、闸门顺序、语言解析、防重复</td><td>设计/交付记录，含 v0.1.0 历史</td></tr>
-              <tr><td><code>docs/engine-spec.md</code></td><td><b>上游源引擎</b>的 S0 行为规约（33 工具、85 阈值）</td><td>不是本仓 8 工具/42% 的现状</td></tr>
-              <tr><td><code>docs/tools-mapping.md</code></td><td>8 工具与 33 源工具的映射、设计 action 集</td><td><b>设计稿</b>，含未实现 action</td></tr>
-              <tr><td><code>docs/segment-handoff.md</code></td><td>竹节阈值 42、链长 5、先 interrupt 后 start、K1–K5</td><td>2026-10-04 设计备忘</td></tr>
-              <tr><td><code>docs/audit-tree-system-2026-11-11.md</code></td><td>4 BLOCK / 12 需修 / 15 建议；P1-05/06/07 等</td><td>v0.5.0 基线（66/66）</td></tr>
-              <tr><td><code>docs/skill-e2e-2026-11-11.md</code></td><td>A/B/C 真机证据、7 节点 succeeded、FAIL→PASS、12/12 继承断言</td><td>2026-11-11；含 429 限制</td></tr>
-              <tr><td><code>docs/e2e-handoff-2026-11-11.md</code></td><td>root 14/14、sibling 12/12；工作区/预设/权限继承</td><td>2026-11-11</td></tr>
-              <tr><td><code>docs/e2e-kickoff-language-2026-11-11.md</code></td><td>语言解析优先级；修复前 en → 修复后 zh PASS</td><td>2026-11-11</td></tr>
-              <tr><td><code>docs/publishing.md</code></td><td>GitHub 两仓、市场、npm 冻结、版本纪律、发布脚本护栏</td><td>快照 15:00；tag 链</td></tr>
-              <tr><td><code>docs/skill-cleanroom-2026-11-11.md</code></td><td>三轮洁净室：G1–G12、N1–N7、第三轮 PASS</td><td>2026-11-11</td></tr>
-              <tr><td><code>docs/merge-session-tree-2026-11-11.md</code></td><td>§5 provider-conformance 的 rc.2 fixture 限制</td><td>2026-11-11</td></tr>
+              <tr><td><code>docs/guides/skills-usage.md</code></td><td>三个 Skill 的触发、参数、样例、42% vs 50%、排障</td><td>适用 v1.3.5 / v0.5.1</td></tr>
+              <tr><td><code>docs/operations/handoff-2026-11-11.md</code></td><td>当前交接、关键路径、测试/验活、风险与下一轮议程</td><td>快照 15:00；§9 有旧版本号</td></tr>
+              <tr><td><code>docs/architecture/session-handoff-2026-11-11.md</code></td><td>交接设计、继承矩阵、闸门顺序、语言解析、防重复</td><td>设计/交付记录，含 v0.1.0 历史</td></tr>
+              <tr><td><code>docs/architecture/engine-spec.md</code></td><td><b>上游源引擎</b>的 S0 行为规约（33 工具、85 阈值）</td><td>不是本仓 8 工具/42% 的现状</td></tr>
+              <tr><td><code>docs/architecture/tools-mapping.md</code></td><td>8 工具与 33 源工具的映射、设计 action 集</td><td><b>设计稿</b>，含未实现 action</td></tr>
+              <tr><td><code>docs/architecture/segment-handoff.md</code></td><td>竹节阈值 42、链长 5、先 interrupt 后 start、K1–K5</td><td>2026-10-04 设计备忘</td></tr>
+              <tr><td><code>docs/reports/audit-tree-system-2026-11-11.md</code></td><td>4 BLOCK / 12 需修 / 15 建议；P1-05/06/07 等</td><td>v0.5.0 基线（66/66）</td></tr>
+              <tr><td><code>docs/reports/skill-e2e-2026-11-11.md</code></td><td>A/B/C 真机证据、7 节点 succeeded、FAIL→PASS、12/12 继承断言</td><td>2026-11-11；含 429 限制</td></tr>
+              <tr><td><code>docs/reports/e2e-handoff-2026-11-11.md</code></td><td>root 14/14、sibling 12/12；工作区/预设/权限继承</td><td>2026-11-11</td></tr>
+              <tr><td><code>docs/reports/e2e-kickoff-language-2026-11-11.md</code></td><td>语言解析优先级；修复前 en → 修复后 zh PASS</td><td>2026-11-11</td></tr>
+              <tr><td><code>docs/guides/publishing.md</code></td><td>GitHub 两仓、市场、npm 冻结、版本纪律、发布脚本护栏</td><td>快照 15:00；tag 链</td></tr>
+              <tr><td><code>docs/reports/skill-cleanroom-2026-11-11.md</code></td><td>三轮洁净室：G1–G12、N1–N7、第三轮 PASS</td><td>2026-11-11</td></tr>
+              <tr><td><code>docs/architecture/merge-session-tree-2026-11-11.md</code></td><td>§5 provider-conformance 的 rc.2 fixture 限制</td><td>2026-11-11</td></tr>
               <tr><td><code>CHANGELOG.md</code></td><td>1.3.1–1.3.5 的变更与验证；1.3.0 的 Unreleased 段</td><td>2026-11-11</td></tr>
               <tr><td><code>packages/*/package.json</code></td><td>版本、<code>files</code>、<code>exports</code>、<code>dsh.bundle/client</code></td><td>当前工作树</td></tr>
               <tr><td><code>packages/dsh-tree-engine/index.js</code></td><td>8 工具 schema、action 闭集、工具描述</td><td>v0.5.1</td></tr>
@@ -2324,7 +2325,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
       <p class="mono fine">github.com/orphiczhou/dsh-tree-harness</p>
       <p class="mono fine">github.com/orphiczhou/dsh-session-tree（tag v1.3.5 = 1fb9193）</p>
       <h4 style="margin-top:14px">快照</h4>
-      <p class="fine">session-tree v1.3.5 · 1fb9193 · 18/18 SHA<br>tree-engine v0.5.1 · introspect v0.1.0<br>本仓 master ebeeaea · MIT · npm 冻结（D3）</p>
+      <p class="fine">session-tree v1.3.6 · 1fb9193 · 18/18 SHA<br>tree-engine v0.5.1 · introspect v0.1.0<br>本仓 master ebeeaea · MIT · npm 冻结（D3）</p>
     </div>
   </div>
 </footer>

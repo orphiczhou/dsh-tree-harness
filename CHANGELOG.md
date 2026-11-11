@@ -2,21 +2,38 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [1.3.6] — 2026-11-12 · 文档归档 + 人类/Agent 安装指南（session-tree）
+
+### 变更
+
+- 版本：`packages/dsh-session-tree` 由 `1.3.5` → **`1.3.6`**（公开插件仓同步发布；代码无行为变化）。
+- **文档按目录归档**：`docs/` 重构为 `architecture/`（架构/规格）、`guides/`（安装/使用/发布）、`operations/`（当前交接/运维）、`reports/`（一次性报告，`<类型>-<主题>-YYYY-MM-DD.md`）、`archive/`（冻结历史）；新增 [docs/README.md](docs/README.md) 作为**单一索引 + 归档规范**；项目地图 HTML 保留在 `docs/` 根保证 GitHub Pages URL 稳定。
+- **新增人类安装指南** [docs/guides/install-guide.md](docs/guides/install-guide.md)：三条安装路线（Git 镜像仓 / 本地 monorepo 全栈 / 市场）、组件矩阵、重载语义、验收与升级卸载。
+- **新增 AI Agent 安装指南** `packages/dsh-session-tree/AGENT-INSTALL.md`（随包发布到镜像仓）：决策树、两条安装路线、profile 安全规则、重载语义表、7 项验收清单、升级/卸载/回滚、排障矩阵、回报模板。
+- README（根 / 包内中英）补「安装路线选择」与 Agent 指南入口；`package.json.files` 纳入 `AGENT-INSTALL.md`（镜像仓文件数 18 → **19**）。
+- 文档内所有相对链接随迁移重写（新增 `scripts/check-doc-links.mjs` 做常驻校验）。
+
+### 验证
+
+- `node scripts/check-doc-links.mjs`（LINK CHECK OK）、`node scripts/check-md-tables.mjs`（TABLE CHECK OK）。
+- session-tree 测试入口保持全绿：handoff **41/41**、skills **3/3**、render 全绿、style-guard 22/22、verify-bundle 0 fail；tree-engine **84/84**。
+- 发布：`release-plugin.mjs` 同步公开镜像仓（`files=19 match=19`），tag **v1.3.6 = `298298d`**（main+tag=本地）。
+
 ## [Unreleased]
 
 ### 变更
 
-- **移除已废止的 meta-loop 插件及其资料（与本项目无关）**：删除 `packages/dsh-meta-loop/`、`demo/metalp/`、`docs/meta-loop-design.md`、`docs/meta-system-argument.md`；并从 `README.md`、`agent.md`、`docs/publishing.md`、项目地图等当前材料中清除该插件信息。本项目组件口径 = `dsh-tree-engine` + `dsh-session-tree` + `dsh-agent-introspect` 三个包。
+- **移除已废止的 meta-loop 插件及其资料（与本项目无关）**：删除 `packages/dsh-meta-loop/`、`demo/metalp/`、`docs/meta-loop-design.md`、`docs/meta-system-argument.md`；并从 `README.md`、`agent.md`、`docs/guides/publishing.md`、项目地图等当前材料中清除该插件信息。本项目组件口径 = `dsh-tree-engine` + `dsh-session-tree` + `dsh-agent-introspect` 三个包。
 - 项目全景地图（`docs/project-map-2026-11-11.html`）提升为 GitHub 项目介绍入口：README 标题区新增入口段，`agent.md` 开工顺序新增同一链接。
 - **tree-engine `0.5.1` → `0.6.0`：新增只读自检工具 `tree_doctor`（第 9 个工具）**。`src/doctor.js` 纯逻辑 + `index.js` 注册；7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`），每项 `{id, status: PASS|WARN|FAIL, detail, hint?}`；返回 `summary{pass,warn,fail}` + 一行 `hint`，传 `tree_id` 时额外校验树并统计停滞节点。**只读零写副作用**（不写树状态/日志），**FAIL 不 throw**（诊断器不是门禁；只有非法 `action` 抛错）。治「工具或 Skill 为什么没出现」只能靠猜。`tests/doctor.test.js` 9 例。
 - **leaf 写面护栏统一（P1-05）**：`src/guards.js` 新增 `LEAF_WRITE_MATRIX` + `assertLeafWriter(caller, leaf, kind)`，并接入 `set-context` / `set-verification` / 非 done `event` / `dispatch:cancel` / `status` / `set-session` 六类写操作；非授权统一 `E_BORROWED_IDENTITY`（未知 kind fail-closed；缺失 caller 不再放行）。矩阵：context=owner/root、verification=creator/root、event(done)=owner only、event(其它)=owner/creator、cancel=owner/creator/root、status=owner/creator/root、set-session=creator only。`tests/write-guards.test.js` 8 例负例/回归；`index.js` 同步补 `tree_verify` 落账的真实 caller 接线。
-- **口径刷新（文档与项目地图）**：根 `README.md`、`agent.md`、`docs/skills-usage.md`、本 CHANGELOG 与 `docs/project-map-2026-11-11.html` 统一到 **tree-engine v0.6.0 / 9 个 `tree_*` 工具 / 84-84 测试**；HTML 的工具面图新增 `tree_doctor` 卡片、写面护栏由「缺口」改为「已实现」、§9 把 doctor 与护栏标记为 **Wave 1 已完成**，并保持单文件离线（0 `<script>` / 0 `<link>` / 无 http 资源）。
+- **口径刷新（文档与项目地图）**：根 `README.md`、`agent.md`、`docs/guides/skills-usage.md`、本 CHANGELOG 与 `docs/project-map-2026-11-11.html` 统一到 **tree-engine v0.6.0 / 9 个 `tree_*` 工具 / 84-84 测试**；HTML 的工具面图新增 `tree_doctor` 卡片、写面护栏由「缺口」改为「已实现」、§9 把 doctor 与护栏标记为 **Wave 1 已完成**，并保持单文件离线（0 `<script>` / 0 `<link>` / 无 http 资源）。
 
 ### 验证
 
 - `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **84/84**（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 `tree_doctor` + 8 写面护栏）。
 - `packages/dsh-session-tree`：handoff **41/41**、skills **3/3**、render 全绿（133/133 + 9/9 + 11/11）、style-guard **22/22**、verify-bundle **0 fail**。
-- 文档表格门禁：`node scripts/check-md-tables.mjs README.md agent.md CHANGELOG.md docs/skills-usage.md docs/handoff-2026-11-11.md docs/project-map-2026-11-11.html` → Tables OK。
+- 文档表格门禁：`node scripts/check-md-tables.mjs README.md agent.md CHANGELOG.md docs/guides/skills-usage.md docs/operations/handoff-2026-11-11.md docs/project-map-2026-11-11.html` → Tables OK。
 - 版本与测试数字为 2026-11-11 工作树实测；本次改动**未提交 git**。
 
 ## [1.3.5] — 2026-11-11 · 第三轮洁净室收尾（session-tree）
@@ -30,7 +47,7 @@
 ### 验证
 
 - handoff **41/41**、skills **3/3**；其余测试无改动。
-- 洁净室第三轮：**PASS**（N1–N7 全部确认修复、G1–G12 无回归、5 分钟路径 5/5），见 [docs/skill-cleanroom-2026-11-11.md](docs/skill-cleanroom-2026-11-11.md)。
+- 洁净室第三轮：**PASS**（N1–N7 全部确认修复、G1–G12 无回归、5 分钟路径 5/5），见 [docs/reports/skill-cleanroom-2026-11-11.md](docs/reports/skill-cleanroom-2026-11-11.md)。
 
 ## [1.3.4] — 2026-11-11 · 洁净室最终文档清扫（session-tree）
 
@@ -40,15 +57,15 @@
 - **R1-B / R2-B 文档债清扫**：
   - README（中英）语言验收表述修正：`status`/`handoff` 的 `lang=` 与 `interface_language` 可直接断言；独立 `verify-kickoff-language.mjs` 会**解码接替会话首条消息**（此前误写为「无需解码」）。
   - `session-handoff` SKILL：`set-session` 重绑主体改为「leaf 的 creator/上级（通常是父 commander）」——交接者无权重绑自己的 leaf。
-  - `docs/skills-usage.md`：新增 profile 修改备份警示；`tree_plan` 样例补 `session_id` 并对齐 `root_dod` 字段；worker 验收改为「commander 跑 verify」；竹节等待原因改为「链满 frozen / 简报回收失败 / 已非 running owner」；补版本差异速查（1.3.0→1.3.3）；`collect-skills.mjs` 自检命令补 `--expect`；patch YAML 改为真实行并注明「无需手抄」。
+  - `docs/guides/skills-usage.md`：新增 profile 修改备份警示；`tree_plan` 样例补 `session_id` 并对齐 `root_dod` 字段；worker 验收改为「commander 跑 verify」；竹节等待原因改为「链满 frozen / 简报回收失败 / 已非 running owner」；补版本差异速查（1.3.0→1.3.3）；`collect-skills.mjs` 自检命令补 `--expect`；patch YAML 改为真实行并注明「无需手抄」。
   - `tree-commander` / `tree-worker` SKILL：补英文触发词；版本头 `v0.5.1`；旧 `sweep:degraded:no-timer` 日志串改为中性描述。
-  - 根 README / `docs/handoff-2026-11-11.md` / `docs/publishing.md` / `docs/session-handoff-2026-11-11.md` / `agent.md`：版本矩阵清扫到 v1.3.4/cce2975 链、测试入口 6 个、历史 `v1.0.4`/`3 份 cjs` 残留修正。
+  - 根 README / `docs/operations/handoff-2026-11-11.md` / `docs/guides/publishing.md` / `docs/architecture/session-handoff-2026-11-11.md` / `agent.md`：版本矩阵清扫到 v1.3.4/cce2975 链、测试入口 6 个、历史 `v1.0.4`/`3 份 cjs` 残留修正。
 - `packages/dsh-tree-engine` 仍为 **0.5.1**（SKILL 勘误，含英文触发词；代码无变化）。
 
 ### 验证
 
 - handoff **41/41**、skills **3/3**、render/style-guard/verify-bundle 全绿；tree-engine **67/67**。
-- 洁净室第三轮独立复核见 [docs/skill-cleanroom-2026-11-11.md](docs/skill-cleanroom-2026-11-11.md)。
+- 洁净室第三轮独立复核见 [docs/reports/skill-cleanroom-2026-11-11.md](docs/reports/skill-cleanroom-2026-11-11.md)。
 
 ## [1.3.3] — 2026-11-11 · `spawn:false` 干跑不被阈值闸拦 + 洁净室二轮修订（session-tree）
 
@@ -70,21 +87,21 @@
 
 - 版本：`packages/dsh-session-tree` 由 `1.3.1` → **`1.3.2`**（公开插件仓同步发布；代码无行为变化，内容 = README/SKILL 文档与打包回归）；`packages/dsh-tree-engine` **0.5.0 → 0.5.1**（SKILL 勘误，代码无变化，未单独发布）。
 - **洁净室第二轮前修订（tree-engine SKILL 勘误，v0.5.1）**：`tree-commander` §3.1 与 `tree-worker` §1/§4.3 的竹节 owner 说法统一为「v0.5.0 起自动重绑给接手会话」（与实现及 §1.3/§3.3 一致）；交接样例路径通用化（不再引用 monorepo 内部路径）；`session-handoff` SKILL 的跨包引用标注归属。
-- **根 README / handoff 文档勘误**：`已知边界` 的 sweep 降级说法改为「进程内 60s 兜底、sweepMode=timer」；`docs/handoff-2026-11-11.md` 的版本/测试数/热更口径刷新到 v1.3.2 + 67/67，补第四/五轮摘要；`docs/skills-usage.md` 补 tree-engine 可复制安装命令（clone + hmr.root + link + pnpm + reload）。
+- **根 README / handoff 文档勘误**：`已知边界` 的 sweep 降级说法改为「进程内 60s 兜底、sweepMode=timer」；`docs/operations/handoff-2026-11-11.md` 的版本/测试数/热更口径刷新到 v1.3.2 + 67/67，补第四/五轮摘要；`docs/guides/skills-usage.md` 补 tree-engine 可复制安装命令（clone + hmr.root + link + pnpm + reload）。
 - **公开插件仓 README（中英）补全「使用随包 Skill」要素**（洁净室第一轮评审缺口 G1–G12）：
   - 新增 handoff **调用样例 + 参数表**（`summary` 必填；`next_steps` / `files` / `open_questions` / `note` / `kind` / `spawn` / `threshold_pct` / `force`）与一行预期返回；
   - 新增**冒烟测试**说明（新会话 `below-threshold`、`force` / `spawn:false`、5 分钟 `recent-handoff` 都是预期而非故障）；
   - 明确 `@deepseek-ai/dsh-skill-filesystem` **随桌面版内置**、Skill 目录在**会话启动时注入**（需新开会话）；
   - 从 <1.2.0 升级：先停用独立 `@local/dsh-session-handoff` bundle，避免同名工具/Skill 遮蔽；
-  - 指向源码仓的脚本改为**绝对链接**（`collect-skills.mjs`、`verify-kickoff-language.mjs`、`docs/skills-usage.md`），不再声称脚本在本插件仓内；
+  - 指向源码仓的脚本改为**绝对链接**（`collect-skills.mjs`、`verify-kickoff-language.mjs`、`docs/guides/skills-usage.md`），不再声称脚本在本插件仓内；
   - 顶部加版本与特性时间线（v1.3.0 Skill / v1.3.1 语言 / v1.3.2 文档）；功能表 `lang=zh\|en` 管道转义修复；SKILL.md 改为直链；Dev 文件树补 `test/skills.test.cjs`；疑难排查补充「Skill 在目录但不用它」「升级后行为仍旧」两条。
 - **`session-handoff` SKILL.md**：frontmatter 补英文触发词（continue / running out of context / hand off to a fresh session / around 50 percent / handoff）；§3 样例路径改为通用示例（不再引用 monorepo 内部路径）；§8 注明 `tree-commander` / `tree-worker` 由 `@local/dsh-tree-engine` 提供、不在本包。
-- **`docs/skills-usage.md`**：适用版本升到 1.3.2；新增「§3.1 五分钟冒烟」；修正 `dsh-session-tree` 名称与升级建议。
+- **`docs/guides/skills-usage.md`**：适用版本升到 1.3.2；新增「§3.1 五分钟冒烟」；修正 `dsh-session-tree` 名称与升级建议。
 
 ### 验证
 
 - `packages/dsh-session-tree/test/handoff.test.js` **40/40**、`test/skills.test.cjs` **3/3**、render/style-guard/verify-bundle 全绿（文档变更后复跑）。
-- 洁净室评审：两个独立子会话（无本会话上下文）分别评审公开插件仓与本仓文档；本版按第一轮缺口修订，第二轮由**新的**独立子会话复核（结果见发布记录与 `docs/skill-cleanroom-2026-11-11.md`）。
+- 洁净室评审：两个独立子会话（无本会话上下文）分别评审公开插件仓与本仓文档；本版按第一轮缺口修订，第二轮由**新的**独立子会话复核（结果见发布记录与 `docs/reports/skill-cleanroom-2026-11-11.md`）。
 
 ## [1.3.1] — 2026-11-11 · 交接提示语跟随 DSH 界面语言（session-tree）
 
@@ -95,14 +112,14 @@
   - 语言归一化：`zh*` → 中文提示语；`en*` → 英文；其它已存语言与无偏好 → 英文（与 DSH 自身 fallback 一致）。
 - `status` / `handoff` 返回对象新增 `interface_language`，渲染行尾新增 `lang=zh|en`；交接文件 `## Successor instructions` 块与提示语同语言（正文其余章节保持英文规范格式）。
 - 新增验收脚本 `scripts/e2e/verify-kickoff-language.mjs`：解码接替会话日志首条 `user/message`，判定语种并断言（`--expect zh|en`）。
-- 新增真机证据报告 [docs/e2e-kickoff-language-2026-11-11.md](docs/e2e-kickoff-language-2026-11-11.md)（修复前 `lang=en` 基线 → 修复后 `lang=zh` + 接替首条中文 PASS）。
-- 新增用户向完整指南 [docs/skills-usage.md](docs/skills-usage.md)：三个随包 Skill 的安装、发现、最小提示词、三层任务树、50% 交接、语言与排障。
+- 新增真机证据报告 [docs/reports/e2e-kickoff-language-2026-11-11.md](docs/reports/e2e-kickoff-language-2026-11-11.md)（修复前 `lang=en` 基线 → 修复后 `lang=zh` + 接替首条中文 PASS）。
+- 新增用户向完整指南 [docs/guides/skills-usage.md](docs/guides/skills-usage.md)：三个随包 Skill 的安装、发现、最小提示词、三层任务树、50% 交接、语言与排障。
 
 ### 变更
 
 - 版本：`packages/dsh-session-tree` 由 `1.3.0` → **`1.3.1`**（公开插件仓同步发布）。
 - 测试：`packages/dsh-session-tree/test/handoff.test.js` 由 34 → **40** 用例（新增：Loader 偏好 zh-CN、volatile 引用、ja 回退、无偏好英文、`DSH_PROFILE_DIR` profile 文件、`process.cwd()` profile 文件）；测试在模块加载时清除并恢复 `DSH_PROFILE_DIR`，避免开发者本机 profile 污染「无偏好」用例。
-- 文档：两包 README 增补「接替提示语语言」与随包 Skill 使用步骤；`skills/session-handoff/SKILL.md` 增补首条消息语言说明与验收口径；`docs/session-handoff-2026-11-11.md` §5.1 增补 `interface_language`/语言解析说明。
+- 文档：两包 README 增补「接替提示语语言」与随包 Skill 使用步骤；`skills/session-handoff/SKILL.md` 增补首条消息语言说明与验收口径；`docs/architecture/session-handoff-2026-11-11.md` §5.1 增补 `interface_language`/语言解析说明。
 
 ### 验证（真机）
 
@@ -148,17 +165,17 @@
 
 ### 文档
 
-- 新增 `docs/audit-tree-system-2026-11-11.md`（56431 B）：tree 体系一致性审计（代码 ↔ SKILL ↔ 文档），基线 `HEAD=0cbc31e`，结论为 BLOCK 4 / 需修 12 / 建议 15；其中 B1（接力后 owner 不迁移）、B3（sweep 说法与代码相反）、B4（被派发的 commander 不应再 `tree_plan`）已在本轮修复，其余条目状态见报告。
-- 新增 `docs/skill-e2e-2026-11-11.md`（35712 B）：极简提示词驱动下的分层执行与 50% 交接 E2E，含 §1.6 总览、§4 A/B/C 双轮（修正前/后）、§5 限制、§6 结论、§7 证据索引与复现命令。
-- 同步更新 `README.md`、`agent.md`、`docs/publishing.md`、`docs/tools-mapping.md`、`docs/handoff-2026-11-11.md`、`docs/session-handoff-2026-11-11.md` 及两包 `README.md`（含 `packages/dsh-session-tree/README.zh.md`），补充技能装配、继承语义与工具映射。
+- 新增 `docs/reports/audit-tree-system-2026-11-11.md`（56431 B）：tree 体系一致性审计（代码 ↔ SKILL ↔ 文档），基线 `HEAD=0cbc31e`，结论为 BLOCK 4 / 需修 12 / 建议 15；其中 B1（接力后 owner 不迁移）、B3（sweep 说法与代码相反）、B4（被派发的 commander 不应再 `tree_plan`）已在本轮修复，其余条目状态见报告。
+- 新增 `docs/reports/skill-e2e-2026-11-11.md`（35712 B）：极简提示词驱动下的分层执行与 50% 交接 E2E，含 §1.6 总览、§4 A/B/C 双轮（修正前/后）、§5 限制、§6 结论、§7 证据索引与复现命令。
+- 同步更新 `README.md`、`agent.md`、`docs/guides/publishing.md`、`docs/architecture/tools-mapping.md`、`docs/operations/handoff-2026-11-11.md`、`docs/architecture/session-handoff-2026-11-11.md` 及两包 `README.md`（含 `packages/dsh-session-tree/README.zh.md`），补充技能装配、继承语义与工具映射。
 
 ### 验证（本轮收口）
 
-- **Skill 活体链路**：新会话 `<available_skills>` 可见 `session-handoff` / `tree-commander` / `tree-worker`（3/3）；基线（重载前）为 0/3（`docs/skill-e2e-2026-11-11.md` §3）。
+- **Skill 活体链路**：新会话 `<available_skills>` 可见 `session-handoff` / `tree-commander` / `tree-worker`（3/3）；基线（重载前）为 0/3（`docs/reports/skill-e2e-2026-11-11.md` §3）。
 - **A 组（三层分解）**：提示词「把『增补一段 CHANGELOG』拆成三层并派人做完，验证通过再收口」→ 建 `chglog` 树，root→commander→worker 三层；中间层会话自行 `tree_node add` 并派发 6 个 worker（B4 修复生效），全部 `tree_verify PASS`；**全树收口 PASS**（7 个非 root 节点 runtime 全 succeeded、verification 全 true，`tree_status {action:"validate"}` 0 issues，root done 已登记）；期间出现真实 **FAIL→PASS** 闭环（独立验收首轮因 HEAD 断言在提交后失真判 FAIL，修复后 reverify PASS）；中间层 attempt1 超时后由 attempt2 续跑收口（B1 相关路径真机可用）；真实产出 `CHANGELOG.md`。
 - **B 组（继续干活 + 交接）**：`session_handoff status` 两次正确判读（7.2%/9.8% < 50% → 继续）；`force:true`（模拟阈值）触发 sibling 接替 `bea2eff2…`，`verify-handoff` **12/12 PASS**（同工作区/预设/权限/模型/工具数/首轮读 HANDOFF）。
 - **C 组（三层干活 + 中间层交接）**：tree 解释（`c3demo`，10/10 checks，三层产物 `demo/c3layer/`）与会话链解释（三层真实计算 21→42→43）分别 PASS；两例中间层交接 successor `d703b780…` / `ac7c53bf…`，`verify-handoff` 均 **12/12 PASS**。
-- **未达成/限制**（如实披露）：真实 50% 阈值未跑到——三次交接均为 `force:true` 模拟（上下文实际 6–10%）；提示词 C 存在「会话链 vs tree 任务树」层级歧义；B/C 子会话读到共享工作区 E2E 文档存在观察者偏差；A-修正前/C-修正前曾被宿主 429 配额中断（环境原因）。详见 `docs/skill-e2e-2026-11-11.md` §5。
+- **未达成/限制**（如实披露）：真实 50% 阈值未跑到——三次交接均为 `force:true` 模拟（上下文实际 6–10%）；提示词 C 存在「会话链 vs tree 任务树」层级歧义；B/C 子会话读到共享工作区 E2E 文档存在观察者偏差；A-修正前/C-修正前曾被宿主 429 配额中断（环境原因）。详见 `docs/reports/skill-e2e-2026-11-11.md` §5。
 
 ### 版本与发布说明
 

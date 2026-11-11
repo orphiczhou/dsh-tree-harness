@@ -81,5 +81,5 @@
 
 1. PLAN.md：§5 后新增「§5.5 竹节生长（上下文接力）」；§7 增上表 4 键；§9 增第 6 节断言；§8 S0 交付物增本文件第 7 节验证项；
 2. README.md 文档表增本文件行；
-3. `docs/engine-spec.md` 起草时按本文件口径包含 segment 语义（29→8 工具整合表中 `segment append` / `set-context` 归入 `tree_dispatch` / `tree_status` 的 action）；
+3. `docs/architecture/engine-spec.md` 起草时按本文件口径包含 segment 语义（29→8 工具整合表中 `segment append` / `set-context` 归入 `tree_dispatch` / `tree_status` 的 action）；
 4. 冻结版 §4.1 不改动（竹节为引擎内 `running` 子机制，节点状态机闭集不变）。
