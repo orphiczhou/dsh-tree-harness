@@ -104,6 +104,8 @@
 
 > **v1.2.0+ 追加字段**（本节其余部分为 v0.1.0 样例，字段以当前代码为准）：`agent_preset`（Agent 预设/工作模式）、`permission`（`{preset,sandbox,approval}` 或 `'unavailable'`）、`workspace`（`{workspace_id,path}`，由 cwd 只读解析）。handoff 成功返回的 `successor` 还含 `agent_preset` / `permission` / `workspace{attached,workspace_id,path}` / `max_tokens` / `inherited_by`，以及失败可追溯字段 `preset_error` / `permission_error` / `working_directory_error`。工具对模型的面是 `render` 单行文本（≤400 字符），完整对象在工具返回值里。
 
+> **v1.3.1 追加字段与行为：接替提示语跟随 DSH 界面语言。** `status` 与 `handoff` 的返回对象新增 `interface_language: 'zh' | 'en'`，渲染行尾新增 `lang=zh|en`。语言来源优先级：① 活体 Loader 的 `locale` 条目（`options.config.preference`，volatile 引用经 `get()` 展开；按包名 `@deepseek-ai/dsh-client-locale` 兜底查找嵌套条目）；② profile 的 `cordis.patch.yml` / `cordis.yml`（宿主进程以 profile 目录为 cwd；`DSH_PROFILE_DIR` 存在时优先用它）；③ 英文。`zh*` 归一化为 `zh`，`en*` 为 `en`，其它已存语言与无偏好均回退 `en`。接替会话首条消息与交接文件「Successor instructions」块使用该语言；交接文件其余章节保持英文规范格式。验收脚本：`node scripts/e2e/verify-kickoff-language.mjs --session <successorId> --expect zh|en`（解码会话日志首条 `user/message` 判定语种）。
+
 **action=`handoff`** 入参：`{kind:"root"|"sibling"|"auto"(缺省), summary(必填), next_steps[], files[], open_questions[], note?, spawn:true(缺省), threshold_pct=50, force=false}`。
 
 执行顺序（规格 A.3 冻结顺序）：

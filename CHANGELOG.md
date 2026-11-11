@@ -2,6 +2,36 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [1.3.1] — 2026-11-11 · 交接提示语跟随 DSH 界面语言（session-tree）
+
+### 新增
+
+- **接替提示语本地化**：`session-handoff` 生成的接替会话首条消息不再固定英文，改为读取 DSH 界面语言（Settings → General → Language，即 profile 中 `locale` 条目的 `locale.preference`）。
+  - 来源优先级：① 活体 Loader 的 `locale` 条目（`options.config.preference`；volatile 引用经 `get()` 展开；按包名 `@deepseek-ai/dsh-client-locale` 兜底查嵌套条目）→ ② profile `cordis.patch.yml` / `cordis.yml`（`DSH_PROFILE_DIR` 优先，否则用宿主进程 cwd——实测宿主 cwd 即 profile 目录）→ ③ 英文回退。
+  - 语言归一化：`zh*` → 中文提示语；`en*` → 英文；其它已存语言与无偏好 → 英文（与 DSH 自身 fallback 一致）。
+- `status` / `handoff` 返回对象新增 `interface_language`，渲染行尾新增 `lang=zh|en`；交接文件 `## Successor instructions` 块与提示语同语言（正文其余章节保持英文规范格式）。
+- 新增验收脚本 `scripts/e2e/verify-kickoff-language.mjs`：解码接替会话日志首条 `user/message`，判定语种并断言（`--expect zh|en`）。
+- 新增真机证据报告 [docs/e2e-kickoff-language-2026-11-11.md](docs/e2e-kickoff-language-2026-11-11.md)（修复前 `lang=en` 基线 → 修复后 `lang=zh` + 接替首条中文 PASS）。
+- 新增用户向完整指南 [docs/skills-usage.md](docs/skills-usage.md)：三个随包 Skill 的安装、发现、最小提示词、三层任务树、50% 交接、语言与排障。
+
+### 变更
+
+- 版本：`packages/dsh-session-tree` 由 `1.3.0` → **`1.3.1`**（公开插件仓同步发布）。
+- 测试：`packages/dsh-session-tree/test/handoff.test.js` 由 34 → **40** 用例（新增：Loader 偏好 zh-CN、volatile 引用、ja 回退、无偏好英文、`DSH_PROFILE_DIR` profile 文件、`process.cwd()` profile 文件）；测试在模块加载时清除并恢复 `DSH_PROFILE_DIR`，避免开发者本机 profile 污染「无偏好」用例。
+- 文档：两包 README 增补「接替提示语语言」与随包 Skill 使用步骤；`skills/session-handoff/SKILL.md` 增补首条消息语言说明与验收口径；`docs/session-handoff-2026-11-11.md` §5.1 增补 `interface_language`/语言解析说明。
+
+### 验证（真机）
+
+- 修复前（旧实现，2026-11-11 17:36）：验证子会话 `9cb372fb…` 的 status/handoff 渲染行均 `lang=en`；接替 `f5aa22f7…` 首条消息英文 → `verify-kickoff-language --expect zh` **FAIL**（基线）。
+- 修复后（17:38 起）：同一流程 status/handoff 均 `lang=zh`；接替 `ca7e834f…` 首条消息中文（含交接文件绝对路径）→ `verify-kickoff-language --expect zh` **PASS**；交接文件 `## Successor instructions` 为合法 UTF-8 中文。
+- 离线：handoff **40/40**；真机独立复核（由接替会话 `f5aa22f7…` 自行读取日志复算）确认两轮结论与上述一致。
+
+### 已知边界
+
+- 仅提供 `zh` / `en` 两套提示语文案；DSH 内置的 ja/es/fr/de/ru/pt 已存语言回退英文。
+- 中文提示语之后仍可能跟一段英文的框架后缀（`Your parent agent id is …`，由 `@deepseek-ai/dsh-subagent` 的 continuable 子会话装饰生成，非本插件内容）；语种判定按正文，不影响「首条提示跟随界面语言」。
+- HMR 重载瞬间可能出现一次 `unknown tool session_handoff`（注册空窗），重试即恢复；非本版本回归。
+
 ## [Unreleased] — 2026-11-11 · SKILL 工程化（session-tree 1.3.0 / tree-engine 0.5.0）
 
 ### 新增
