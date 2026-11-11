@@ -1,10 +1,10 @@
 # 公开前独立验证报告（T3 / 决策 D2）
 
 > **验证者**：qa-verifier（独立验证角色：只读仓库与运行环境，仅写本文件）
-> **仓库**：`D:\Codes\dsh-tree-harness`，当前分支 `master`，HEAD `2cb2d17af13ab995c5260cb694e99d391d52b78e`（**历史重写前快照**）
-> **验证时间窗口**：2026-11-11 12:35:32 — 12:40（+08:00）
-> **报告版本**：v1.1（2026-11-11 12:42+08:00；依 Lead 通知将 D7 清单由 4 个文件扩大为 **7 个**，并追加 2 个历史瘦身路径，附录 A 复扫清单同步更新）；**附录 A（推送前硬门禁）为 PENDING，待 Lead 完成历史清除后由验证者复扫填写**
-> **结论等级**：**BLOCK（暂缓公开推送）**
+> **仓库**：`D:\Codes\dsh-tree-harness`，当前分支 `master`，**复扫后 HEAD `40629745f1df16d67706223bb73ce67d1e67055c`（30 commits，工作树 clean）**；历史重写前 HEAD 为 `2cb2d17…`（26 commits，仅作前后对照）
+> **验证时间窗口**：2026-11-11 12:35:32 — 12:46（+08:00）；其中**推送前复扫（A1–A9）为 12:44:59 — 12:45:36**
+> **报告版本**：**v1.2**（2026-11-11 12:47+08:00；v1.1 为 D7 扩大更新；v1.2 为**历史清除后复扫结果回填**——附录 A 已全部填实测，结论升级）
+> **结论等级**：**PASS WITH RISKS（可公开推送）** —— 历史清除已完成并复扫通过（附录 A）
 
 ---
 
@@ -12,20 +12,23 @@
 
 ### 0.1 结论等级
 
-**BLOCK**：**当前状态不能公开推送**。
+**PASS WITH RISKS（可公开推送）**：**附录 A 的 A1–A9 已于 2026-11-11 12:44:59 — 12:45:36 在冻结 HEAD `4062974` 上全部实测通过**，D7 的 7 个文件与 2 个瘦身路径已从**工作树 + 全部 git 历史**清除，`HEAD`/`objects`/`fsck` 均干净。
 
-发现 **2 项 BLOCK 级问题**，均已移交 Lead 处置（`agenda.md` 决策 **D7**，2026-11-11）。在 D7 全部执行完成（工作树排除 + **git 历史清除**）并通过**附录 A 复扫**之前，本报告不判定 PASS。
+- 复扫期间 Lead **冻结 git 历史**（新 HEAD 固定为 `40629745f1df16d67706223bb73ce67d1e67055c`，30 commits，工作树 clean），本报告所有复扫结论均针对该 HEAD。
+- 残留风险均为**已披露/已接受**项（见 §8）：R1 本机路径/用户名（D2 显式接受）、R2 推送前无远端备份（push 后消失）、R4 建议开启 GitHub secret scanning。**不再存在 BLOCK 级问题。**
+- 条件：推送前需把本报告 v1.2 的更新（仅 `docs/verification-2026-11-11.md` 一个文件）提交为一个普通 docs commit；该变更不含密钥、不新增/删除任何文件路径，故**不影响 A1–A5/A9 的结构性结论**（见附录 A 说明）。
+- 历史沿革：v1.0 发现 BLOCK-1（隐私截图）；D7 复核扩大后 v1.1 增补 BLOCK-2 至 6 文件 + 2 个瘦身路径；本 v1.2 记录清除后复扫 → 升级为 PASS WITH RISKS。
 
-> ⚠️ **公开推送前必须确认历史清除完成。** 本次 BLOCK 文件均存在于 git 历史（见 0.3）；仅从工作树删除不够——`git log -p` 仍可检出，一旦 push 即永久公开、不可撤回。
->
-> **注**：本报告交付完成（T3 任务完成）**不等于**发布放行；放行判定以 **附录 A 全部通过**为准（复扫完成前，本报告结论维持 BLOCK）。
+> **🔒 公开推送结论：可 push。** 前置动作只有一条——先把本报告 v1.2 更新 commit 进 master（普通 commit，非历史重写），然后即可 push。详细证据见**附录 A**。
 
 ### 0.2 BLOCK 级问题清单（醒目）
 
 | ID | 类型 | 对象 | 处置状态 |
 |---|---|---|---|
-| **BLOCK-1** | **隐私** | `demo/screen-2026-10-13.png` | **已移交 Lead 处置（D7）**：工作树移除 + 历史清除；原件已移出仓库备份（SHA 已校验） |
-| **BLOCK-2** | **第三方源码再分发风险** | `demo/agspec/` 下 6 个文件：`_subagent-index.js`、`_tool-subagent.js`、`_tool-subagent.md`、`_driver.js`、`_fork.js`、`_spawn.js` | **已移交 Lead 处置（D7）**：同上（本项由 Lead 判定并两轮复核：初判 3 个，2026-11-11 复核后扩大为 6 个；本报告提供其存在、SHA 与历史位置证据） |
+| **BLOCK-1** | **隐私** | `demo/screen-2026-10-13.png` | **✅ 已处置完成**（Lead/D7，2026-11-11 12:44 复核）：工作树移除 + 历史重写清除；原件已移出仓库备份（SHA 已校验） |
+| **BLOCK-2** | **第三方源码再分发风险** | `demo/agspec/` 下 6 个文件：`_subagent-index.js`、`_tool-subagent.js`、`_tool-subagent.md`、`_driver.js`、`_fork.js`、`_spawn.js` | **✅ 已处置完成**（Lead/D7，同上）：本项由 Lead 判定并两轮复核（初判 3 个 → 复核扩为 6 个）；本报告提供其存在、SHA 与历史位置证据，复扫确认已全部清除 |
+
+- **处置实测结果（2026-11-11 12:44:59 起，见附录 A）**：7 个文件工作树全部不存在（A2 全 False）、`git ls-files` 0 命中（A1）、**全历史 diff 的文件头 0 命中**（A3 file-header）、`git rev-list --objects --all` 0 命中（A5）、逐路径 `git log` 0 提交（A3b）；重写前提交 `2cb2d17…`/`6de30d1`/`439976f`/`82f7b82`/`dc7c27d` 在新对象库中**均不存在**（`git cat-file --batch-all-objects` 前缀扫描 0；`git fsck` 无 unreachable/dangling）。
 
 - **BLOCK-1 详情**（脱敏描述，不复制画面内容）：该截图（1,903.4 KB，2886×2004；SHA-256 `f7af16c8d75fa6430bb767897d5c42fc61e779be89e12413c791e3b237ee6db3`）含：① 左侧会话列表约 20 条**私有会话标题**（个人项目/研究主题，含 GitHub URL 片段与内网 NAS IPv4 片段）；② Windows 桌面真实文件与图标（个人文件夹、个人证券交易软件图标、系统资源悬浮窗）；③ 应用窗口标题。聊天区与右侧文档面板为本项目技术内容（该部分本身可公开）。
 - **BLOCK-2 详情**：6 个文件为从 DSH `app.asar` 摘出的第三方源码/文档全文（`demo/agspec/w2-source.md` 自述「= `@deepseek-ai/...` 全文/README」；新扩大的 `_driver.js`/`_fork.js`/`_spawn.js` 头部均带 `@deepseek-ai/...` import 与 `@module @deepseek-ai/...` 标记，2026-11-11 12:40 复核确认），再分发许可未经核实 → 随公开仓发布存在风险（许可判断属 Lead 决策，本报告不替代法律判断）。
@@ -50,7 +53,9 @@ git --no-pager log --all --oneline --follow -- <file>   # 逐文件
 Get-FileHash -LiteralPath <file> -Algorithm SHA256      # 逐文件
 ```
 
-输出摘要：7 个文件**全部**存在于当前 HEAD 可达历史（`screen-*`→`6de30d1`，6 个第三方源码→`439976f`），且当前均受 git 跟踪（`git ls-files` 可见）。历史重写后全部 commit SHA 都会变化，本报告其它 SHA 均为**重写前**快照。
+输出摘要（**历史重写前**快照）：7 个文件曾全部存在于旧 HEAD 可达历史（`screen-*`→`6de30d1`，6 个第三方源码→`439976f`），当时均受 git 跟踪；以下 SHA/commit 均为重写前坐标。
+
+**清除后复扫（2026-11-11 12:44:59+08:00 起，新 HEAD `4062974`，详见附录 A）**：上述 7 个路径 + 2 个瘦身路径——`git ls-files`、`git log --all --diff-filter=A --name-only`、`git rev-list --objects --all` **三处均 0 命中**；`git log -p --all` 中**文件头 0 命中**（42 条正文命中全部来自文档/commit message 对「已移除文件」的名称说明，见附录 A 说明②）、逐路径 `git log` 均 0 提交；旧提交对象全部不可达（`2cb2d17`/`6de30d1`/`439976f`/`82f7b82`/`dc7c27d` 前缀在对象库中 0 个）。**即：历史中不再存在这些文件的任何内容对象。**
 
 **历史瘦身项（非安全，Lead 追加，随历史重写一并清除）**
 
@@ -63,15 +68,18 @@ Get-FileHash -LiteralPath <file> -Algorithm SHA256      # 逐文件
 git --no-pager rev-list --objects --all | Where-Object { $_ -match 'scripts/asar-(out|err)\.txt$' }  # 再 git cat-file -s <blob>
 ```
 
-输出摘要（2026-11-11T12:41:30+08:00）：如上两行；6.9MB 大 blob 仅存于历史、工作树已无（`.gitignore` L17-18 有对应条目）。
+输出摘要（2026-11-11T12:41:30+08:00，重写前）：如上两行；6.9MB 大 blob 仅存于历史、工作树已无（`.gitignore` L17-18 有对应条目）。
+**清除后复扫**：对象库最大 blob **87,653 B**，`blobs_over_1MB = 0` → 6.9MB 大 blob 已彻底回收（A9）。
 
-### 0.4 解除条件
+### 0.4 解除条件（✅ 均已满足，2026-11-11 12:45）
 
-1. D7 清单 **7 个文件**从**工作树**移除（并做等价备份，Lead 已执行，SHA 见 §0.2/§0.3）。
-2. D7 清单 **7 个文件**从**全部 git 历史**清除（filter-repo/filter-branch 类重写；本仓无 remote，重写安全）。
-3. **历史瘦身**：`scripts/asar-out.txt`、`scripts/asar-err.txt` 两个历史 blob（含 6,902,314 B 大文件）随历史重写一并回收（非安全项）。
-4. 本报告**附录 A** 复扫通过（7 个文件名在历史与工作树 **0 命中** + 2 个瘦身路径对象 **0 命中** + 全量密钥复扫 0 真实命中）。
-5. 复扫通过后，结论降级为 **PASS WITH RISKS**（RISK 清单见 §8），方可 push。
+| # | 条件 | 状态 |
+|---|---|---|
+| 1 | D7 的 **7 个文件**从**工作树**移除（等价备份在仓外，SHA 见 §0.3） | ✅ A2 全部 False |
+| 2 | D7 的 **7 个文件**从**全部 git 历史**清除 | ✅ A3 文件头 0 / A4 0 / A5 0 / 逐路径 log 0 / 旧对象前缀 0 |
+| 3 | **历史瘦身**：2 个 asar blob（含 6,902,314 B）回收 | ✅ A9：max blob 87,653 B，无 >1MB blob |
+| 4 | **附录 A** 复扫通过（路径 0 命中 + 全量密钥复扫 0 真实命中） | ✅ A1–A9 全绿（12:44:59 — 12:45:36） |
+| 5 | 结论降级 **PASS WITH RISKS** → 可 push | ✅ 本版本已升级（RISK 见 §8） |
 
 ---
 
@@ -185,6 +193,8 @@ git --no-pager log --all --name-only --format=''   # 历史出现过的全部路
 
 **0 个真实密钥命中**（工作树两轮 + 全历史 + 二进制 + 本地文件/忽略区 + 可疑文件名）。唯一命中为良性运行时实例 token。**密钥维度无 BLOCK。**
 
+> **历史重写后最终状态复扫**（2026-11-11 12:45，见附录 A6）：工作树 **113** 文件 + 全历史 **30** commits / 23,724 diff 行——仍为 **0 真实密钥**，命中仍只有同一条良性运行时 token（`packages/dsh-meta-loop/client.js:28`）。
+
 ---
 
 ## 3. 隐私扫描
@@ -219,6 +229,7 @@ git --no-pager log --all --name-only --format=''   # 历史出现过的全部路
 - 本机用户名（`sir_c`）：**17 行 / 7 个文件**
 - `D:\Codes\…` 本地项目路径：**21 行 / 11 个文件**
 - email：**0**；私网 IPv4：**0**
+- **最终 HEAD 复扫（2026-11-11 12:45:35，113 个 tracked 文件）**：`C:\Users\<user>\` **26 行/9 文件**、用户名 **27 行/9 文件**、`D:\Codes\` **30 行/14 文件**（增量主要来自新增 `docs/merge-session-tree-2026-11-11.md` 与本报告自身）；email **0**、私网 IPv4 **0**。
 - 判读：属「本机环境路径/用户名披露」，**经 D2「全部资料公开」决策显式接受**，列为 RISK-LOW（§8 R1），非 BLOCK。
 
 ---
@@ -239,6 +250,12 @@ git count-objects -vH; git rev-list --all --count
 - **无 node_modules / 构建产物**：`git ls-files` 中匹配 `node_modules|dist|build|out|coverage|target|vendor/` 及 `*.tgz|zip|exe|dll|map|woff|ttf` 等 → **NONE**
 - `.git` 目录总大小 **3.80 MB**；`count-objects -vH`：**317 objects / 3.74 MiB**，0 pack（全 loose）；commit **26**
 - 结论：仓库体积健康、无构建产物污染。**无 remote**（零备份）记入 RISK（§8 R2）。
+
+**历史清除后最终状态复扫（2026-11-11 12:45:31，HEAD `4062974`）**：
+
+- 受跟踪文件 **113** 个；跟踪文件总大小 **1,411,789 B ≈ 1.35 MB**；最大单文件 **85.6 KB**（`docs/frozen-parent-plan/PLAN-v1.7.md`）；**>2 MB 文件 0 个**；`demo/agspec/` 下仅剩 6 个保留文件（`_extract.cjs` + w1–w4），7 个 D7 文件均不在树中。
+- `.git` 目录 **0.64 MB（652.49 KiB）**；`count-objects -vH`：**360 objects / 1 pack / size-pack 609.35 KiB**；commit **30**（原 26 + 4 个本轮 commit）；`git fsck --full --no-reflogs` **0 行输出（干净）**；`unreachable/dangling` **0**；reflog **0 条**；无 alternates。
+- 最大 blob **87,653 B**，`blobs_over_1MB = 0` → 历史 6.9MB 垃圾 blob 已回收；`.git` 体积 3.80 MB → **0.64 MB**（-83%）。
 
 ---
 
@@ -264,6 +281,7 @@ $node = "$env:USERPROFILE\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\nod
 - node：`v24.21.0`
 - 运行对象是**当前工作树（含未提交改动）**，与 `agenda.md` §2 的「62/62、13/13」一致。
 - 结论：**测试基线通过**（无 fail / 无 cancelled / 无 skipped）。
+- **最终 HEAD 复扫（2026-11-11 12:45:32，HEAD `4062974`，工作树 clean）**：tree-engine **62/62 exit 0**、meta-loop **13/13 exit 0**——与重写前一致，代码改动已随 4 个 commit 入库后仍全绿。
 
 ---
 
@@ -308,6 +326,8 @@ git hash-object -- <src>/<rel>; git hash-object -- <dst>/<rel>
 ---
 
 ## 7. 活体快照（运行环境）
+
+> 本节为 **2026-11-11 12:37 的活体快照**（T2 profile 迁移动作之前）。profile 迁移属本机装配状态，不影响公开仓内容的验证结论；迁移后活体复核由 merge-engineer 的 T2 任务负责。
 
 ### 7.1 `cordis_inspect_list`（客户端/宿主 Inspect Provider）
 
@@ -359,43 +379,52 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 | ID | 等级 | 风险 | 证据 / 建议 |
 |---|---|---|---|
 | R1 | LOW | 本机路径/用户名披露：`C:\Users\<user>\` 16 行/7 文件、`sir_c` 17 行/7 文件、`D:\Codes\` 21 行/11 文件 | 经 **D2「全部资料公开」** 显式接受；如需降噪可后续替换为占位路径（非阻塞，勿在推送前改动已锁定内容） |
-| R2 | MED | **无 git remote = 零备份**；历史重写期间若误操作无远端可恢复 | 推送前先在本地保留完整备份（Lead 侧操作）；推送后立即确认 remote/分支保护 |
-| R3 | LOW | 历史重写导致**全部 commit SHA 变化**；本报告 HEAD/commit 数/文件数为 pre-rewrite 快照 | 发布核对以重写后新 HEAD 为准；`packages/dsh-session-tree` v1.0.4 不 bump（D6），market 判定不受影响 |
+| R2 | MED | **推送前无 git remote = 零备份** | 历史重写前已做仓外 `git bundle` 备份（Lead 侧，3.58MB，不在仓内）；**push 后立即核对远端 HEAD 并配置分支保护**；本项随推送完成即消除 |
+| R3 | LOW | **历史重写已完成**：全部 commit SHA 已变化（新 HEAD `4062974`，30 commits）；本报告 §0.3/§2.3 中 `2cb2d17`/`6de30d1`/`439976f`/`82f7b82` 等均为 **pre-rewrite 坐标** | 发布核对以新 HEAD 为准；`packages/dsh-session-tree` v1.0.4 不 bump（D6），market 判定不受影响 |
 | R4 | LOW | 密钥防护仅依赖 `.gitignore` + 人工扫描，无 CI 侧 secret scanning | 建议 push 后开启 GitHub secret scanning / push protection 作为纵深（非阻塞） |
 | R5 | ~~LOW~~ **已关闭** | 移除 BLOCK-2 后 `demo/agspec/w2-source.md` 的摘录清单可能留下指向已删文件的悬空引用 | **2026-11-11 12:41 复查：已解决**——该文件已更新（工作区 M），新增「公开仓说明（D7）」块覆盖全部 6 个第三方文件并注明「已移除」+ 备份位置，且明确 `_extract.cjs` 保留 |
 | R6 | INFO | `meta-loop-ui` client provider 未装配（agenda 已记录） | 属装配状态而非发布缺陷；本报告仅记录活体事实 |
-| R7 | — | **历史清除尚未执行**（BLOCK 解除条件） | 见 **附录 A**（PENDING）；清除完成后由验证者复扫 |
+| R7 | — | ~~历史清除尚未执行~~ **已关闭（2026-11-11 12:44 完成）** | 附录 A 全绿；旧 HEAD/对象/refs 全部不可达 |
+| R8 | INFO | `.git/refs/original/` 为 filter-branch 留下的**空目录**（0 条 refs；`for-each-ref` 只有 `refs/heads/master`；无对象泄漏） | 纯装饰性残留，不影响 push（push 只传对象与 refs）；可选 `Remove-Item .git/refs/original` 清理 |
+| R9 | INFO | `git log -p` 正文出现已删除文件名（附录 A3 的 42 条正文命中） | 全部来自 `agenda.md` D7 说明、`demo/agspec/w2-source.md` 移除说明、本报告与 commit message——**属 D7 透明记录，不是内容泄漏**；文件内容/对象均为 0 |
 
 ---
 
-## 附录 A：推送前硬门禁（复扫记录）— **PENDING**
+## 附录 A：推送前硬门禁（复扫记录）— **✅ PASS（2026-11-11 12:44:59 — 12:45:36）**
 
-> **触发条件**：Lead 完成「D7 **7 个文件**工作树移除 + 全部改动提交 + git 历史清除（含 2 个瘦身路径）」后，通知 qa-verifier 执行本附录。
-> **A1–A9 全部通过前，本报告结论维持 BLOCK，禁止 push。**
-> 复扫正则（统一使用，覆盖 7 个剔除路径 + 2 个瘦身路径）：
-> `'screen-2026|_subagent-index|_tool-subagent|_driver\.js|_fork\.js|_spawn\.js|asar-(out|err)\.txt'`
+> 执行前提：Lead 完成「D7 的 7 个文件工作树移除 + 全部改动提交 + git 历史清除（含 2 个瘦身路径）」并通知；复扫时 **HEAD `40629745f1df16d67706223bb73ce67d1e67055c`、30 commits、工作树 clean**，Lead 承诺复扫期间冻结历史。
+> 复扫正则（覆盖 7 个剔除路径 + 2 个瘦身路径）：`'screen-2026|_subagent-index|_tool-subagent|_driver\.js|_fork\.js|_spawn\.js|asar-(out|err)\.txt'`
 
-| 项 | 检查 | 通过标准 | 状态 / 结果 |
+| 项 | 检查 | 实测结果（2026-11-11 +08:00） | 结论 |
 |---|---|---|---|
-| A1 | `git ls-files \| Select-String <复扫正则>`（工作树跟踪清单） | 0 行 | ⏳ PENDING |
-| A2 | `Test-Path` D7 的 7 个文件（2 个瘦身路径按「不存在」计） | 全部 False | ⏳ PENDING |
-| A3 | `git --no-pager log -p master \| Select-String <复扫正则>`（**全历史逐行**） | **0 命中** | ⏳ PENDING |
-| A4 | `git --no-pager log --all --diff-filter=A --name-only \| Select-String <复扫正则>`（历史新增文件名） | 0 命中 | ⏳ PENDING |
-| A5 | `git --no-pager rev-list --objects --all \| Select-String <复扫正则>`（**历史对象路径**） | 0 命中 | ⏳ PENDING |
-| A6 | 全量密钥复扫（工作树 tracked+untracked / `git log -p master` / 二进制 PNG） | 0 真实命中（良性运行时 token 除外） | ⏳ PENDING |
-| A7 | `.gitignore` 仍含 D7 条目（`.env*`、`*.pem`、`*.p12`、`id_rsa*`） | 全部存在 | ⏳ PENDING |
-| A8 | 记录复扫时的**新 HEAD** 与时间戳（重写后 SHA 全变） | 写入本表 | ⏳ PENDING |
-| A9 | 历史瘦身效果：`git count-objects -vH` / `.git` 体积 / `git rev-list --all --count` | 无 6.9MB 大 blob；记录 `.git` 体积变化（重写前 3.80 MB / 317 objects） | ⏳ PENDING |
+| A1 | `git ls-files \| Select-String <正则>` | 12:44:59：tracked=**113**，**hits=0** | ✅ |
+| A2 | `Test-Path` 9 路径 | 7 个 D7 文件 **全部 False**；2 个瘦身路径 **False**；保留项 `_extract.cjs`/`w2-source.md`/2 张 crop = True | ✅ |
+| A3 | `git --no-pager log -p --all`：**文件头**扫描（`diff --git` / `--- a/` / `+++ b/` / rename / new / deleted） | 23,724 行 / 30 个 commit 头；**文件头命中 = 0**；正文命中 42（见说明①） | ✅ |
+| A3b | 9 路径逐路径 `git log --all --oneline -- <path>` | 每个路径 **commits = 0** | ✅ |
+| A3c | 重写前对象残留扫描 | `git cat-file --batch-all-objects` 前缀：`2cb2d17`/`6de30d1`/`439976f`/`82f7b82`/`dc7c27d` → **0 个对象**；旧 HEAD `git cat-file -e` = **False** | ✅ |
+| A4 | `git log --all --diff-filter=A --name-only \| Select-String`（历史新增文件名） | **hits = 0** | ✅ |
+| A5 | `git rev-list --objects --all \| Select-String`（历史对象路径） | **hits = 0** | ✅ |
+| A6 | 全量密钥复扫（工作树 tracked+untracked / `git log -p --all` / 二进制 PNG） | 工作树 113 文件 **1 良性命中**（`packages/dsh-meta-loop/client.js:28` 运行时 token）；历史 23,724 行 / 30 commits **1 良性命中**（`c60f8996`|client.js，同一 token）；2 个 PNG 字节级 **0**；**0 真实密钥** | ✅ |
+| A7 | `.gitignore` D7 条目 | `.env` / `.env.*` / `*.pem` / `*.p12` / `id_rsa*` 各 1 条，**全部在** | ✅ |
+| A8 | 新 HEAD / 时间戳 | HEAD `40629745f1df16d67706223bb73ce67d1e67055c`；**30 commits**；`git status` clean；refs 仅 `refs/heads/master`；packed-refs 仅 master；reflog **0 条**；`ORIG_HEAD` 不存在 | ✅ |
+| A9 | 历史瘦身效果 | `count-objects`：**360 objects / 1 pack / 609.35 KiB**；`.git` **0.64 MB（652.49 KiB）**（重写前 3.80 MB / 317 objects）；最大 blob **87,653 B**、`blobs_over_1MB = 0`；`git fsck --full --no-reflogs` **0 行**、unreachable/dangling **0** | ✅ |
+| A10 | 结构完整性补充（非原门禁项） | `demo/agspec/` 仅剩 6 个保留文件；2 张 crop SHA-256 与重写前一致（`06f20d18…` / `236413ca…`）；最终 HEAD 测试 tree-engine **62/62**、meta-loop **13/13**（exit 0） | ✅ |
 
-（复扫完成后，本节将填写「时间戳 / 新 HEAD / 每项实测输出摘要 / 最终结论」，并把 §0.1 降级为 PASS WITH RISKS。）
+**结论：A1–A9（含补充 A3b/A3c/A10）全部通过 → §0.1 升级为 PASS WITH RISKS，可 push。**
+
+**说明（独立判读）**：
+① **A3 的语义口径**：`git log -p` 正文出现文件名字符串 ≠ 文件存在。实测**文件头命中 0**（7 个文件从未作为 diff 的 a/b 路径出现）、**对象路径命中 0**、**逐路径提交 0**，证明旧文件内容已不在历史；42 条正文命中全部是**文档对「已移除文件」的名称说明**（`agenda.md` D7、`demo/agspec/w2-source.md` 移除说明、本报告 §0.2/§0.3、`docs/handoff-2026-10-14.md` 对 asar 文件的说明，以及 `.gitignore` 新增行的 commit 上下文），**非内容泄漏**（R9）。
+② **保留的分析笔记**：`demo/agspec/w2-source.md` 仍含对这些第三方源码的**分析笔记**（D2 公开范围）；源码全文文件已不在树/历史。该笔记是否保留由 Lead 决定，不属本门禁。
+③ **残留装饰**：`.git/refs/original/` 为空目录（0 refs、无对象），不构成泄漏（R8）。
+④ **本报告更新不影响结论**：v1.2 修改仅新增文字（把附录 A 从 PENDING 填为 PASS），**不新增/删除任何文件路径**；本报告内容已做同套密钥自扫（0 命中）。因此 A1–A5/A9 的结构性结论对「提交本报告后的新 HEAD」同样成立；唯一变化是 HEAD 会因该 docs-only commit 再前进一格。
 
 ---
 
 ## 附录 B：方法与局限
 
 - **只读纪律**：未执行任何 git 写命令（add/commit/push/reset/rm/filter 均无）；未修改除本报告外的任何文件；未访问外部网络；未下载/安装任何东西。
-- **扫描实现**：PowerShell 5.1 逐行正则（UTF-8，含 BOM 自动识别）；命中仅记录「模式名+文件:行」，**输出不含命中值**；git 历史用 `git log -p --all` 流式扫描（覆盖 `--all` 全部 26 commit，含删除行）。
-- **覆盖边界**：① 3 个 PNG 以字节级扫描替代文本扫描（0 命中）；② 密钥扫描是**模式匹配**，不是熵/语义全检（可能漏掉非常规格式凭据，但对常见凭据族覆盖完整）；③ 隐私目视仅覆盖 3 张 demo 图 + PII 正则，**未**对全部 docs 做人工通读（其余内容按 D2 公开）；④ 本报告写入后自身未纳入扫描（报告不含密钥/私有画面文字，按脱敏原则撰写）。
+- **扫描实现**：PowerShell 5.1 逐行正则（UTF-8，含 BOM 自动识别）；命中仅记录「模式名+文件:行」，**输出不含命中值**；git 历史用 `git log -p --all` 流式扫描（历史重写前 26 commit、重写后复扫 30 commit，含删除行）。
+- **覆盖边界**：① PNG 以字节级扫描替代文本扫描（重写前 3 张 / 复扫时 2 张，0 命中）；② 密钥扫描是**模式匹配**，不是熵/语义全检（可能漏掉非常规格式凭据，但对常见凭据族覆盖完整）；③ 隐私目视仅覆盖 3 张 demo 图 + PII 正则，**未**对全部 docs 做人工通读（其余内容按 D2 公开）；④ 复扫时已入库的 v1.1 报告已纳入工作树扫描（113 文件）；v1.2 的修改另做同套密钥自扫（0 命中），且不含私有画面文字（按脱敏原则撰写）。
 - **时间口径**：全部为本机 +08:00；「输出摘要」为命令原始输出的摘录，非二次改写。
 - **结论边界**：本报告只回答「可否公开推送」的**技术证据**问题；D7 的许可/法务判断、GitHub 侧设置、push 操作均属 Lead 职责。
 
@@ -429,6 +458,16 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 | 12:41:30 | 历史瘦身项核查：`scripts/asar-err.txt` 历史 blob 6,902,314 B、`asar-out.txt` 0 B；均已不在工作树/.gitignore 覆盖 | 记录 |
 | 12:41:50 | R5 复查：`w2-source.md` 已加 D7「已移除」说明 | R5 关闭 |
 | 12:42 | 本报告 **v1.1** 更新（BLOCK-2 6 文件 + 瘦身项 + 附录 A 7+2 路径 + A9） | BLOCK；附录 A PENDING |
+| 12:44:30 | Lead 通知历史清除完成（HEAD `4062974`、30 commits、工作树 clean）；**开始 A1–A9 复扫** | — |
+| 12:44:59 | A1/A2/A7/A8（路径、refs、gitignore） | A1 **0**；A2 9 路径全 False；A7 全在；refs 仅 master；reflog 0 |
+| 12:45:00—12:45:02 | A3/A4/A5 + 旧对象残留 | **文件头 0**；A4 **0**；A5 **0**；9 路径 log 全 0；旧 HEAD 不存在 |
+| 12:45:02—12:45:03 | A9 对象库 / fsck / 瘦身 | 360 objects / 1 pack / **609.35 KiB**；`.git` 0.64 MB；max blob 87,653 B；fsck 0 行、unreachable 0 |
+| 12:45:03—12:45:05 | A6 密钥复扫（工作树 113 文件 + 历史 23,724 行/30 commits + 2 PNG） | 各 1 条良性命中，**0 真实密钥** |
+| 12:45:31 | 最终树结构 / 保留文件 / 大文件核查 | `demo/agspec` 仅 6 个保留文件；**0 个 >2MB**；tracked 113 / 1.35 MB |
+| 12:45:32 | 最终 HEAD 测试复跑 | tree-engine **62/62**、meta-loop **13/13**，exit 0 |
+| 12:45:35 | crop SHA / PII 复扫 | crop SHA 与重写前一致；PII 用户名 27 行/9 文件、email 0、私网 IP 0 |
+| 12:46 | **复扫结论：A1–A9 全绿 → PASS WITH RISKS** | **可 push** |
+| 12:47 | 本报告 **v1.2** 写入（结论升级 + 附录 A 实测回填） | PASS WITH RISKS |
 
 ---
 
@@ -440,3 +479,4 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 |---|---|---|
 | v1.0 | 2026-11-11 12:40 | 首版：工作树/历史密钥扫描、3 图隐私判读、仓库健康、测试基线、合并包哈希、活体快照；BLOCK-1（隐私截图）、BLOCK-2（3 个第三方源码）；附录 A 初版 A1–A8 |
 | v1.1 | 2026-11-11 12:42 | 依 Lead 通知：BLOCK-2 由 3 个文件扩大为 **6 个**（新增 `_driver.js`/`_fork.js`/`_spawn.js`，附 SHA 与历史位置）；D7 追加 2 个历史瘦身路径（`scripts/asar-out.txt`/`asar-err.txt`，含 6.9MB 历史 blob）；附录 A 更新为 7+2 路径并新增 A9（瘦身效果）；R5 关闭；新增本变更记录 |
+| **v1.2** | **2026-11-11 12:47** | **历史清除后复扫回填**：A1–A9（+A3b/A3c/A10）全绿 → 结论 **BLOCK → PASS WITH RISKS（可 push）**；附录 A 填实测输出与新 HEAD `4062974`；§0.2 两项 BLOCK 标「已处置完成」、§0.4 全满足；R2/R3/R7 更新、新增 R8/R9；§4/§5/§7 补最终 HEAD 复扫数据 |
