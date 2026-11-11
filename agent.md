@@ -99,7 +99,7 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 
 - **项目全景地图**：[docs/project-map-2026-11-11.html](docs/project-map-2026-11-11.html)（单文件离线，也是 GitHub 项目介绍入口——README 顶部同链接）
 - **DSH 桌面**：`0.2.2-rc.1`；profile bundles **27** 个；loader 条目 244
-- **本仓**：public `master`，HEAD `3c36931`；**Wave-1 改动已收口并提交**（C1 清理 + C2 doctor + C3 写面护栏 + C4 文档/地图刷新；tree-engine **v0.6.0**、84/84），remote = `https://github.com/orphiczhou/dsh-tree-harness.git`
+- **本仓**：public `master`，HEAD **`14dc8c3`**（Wave-1 两提交：`8796c88` feat tree-engine v0.6.0 / `14dc8c3` docs 清理+地图+口径）；**项目地图已启用 GitHub Pages 在线版** `https://orphiczhou.github.io/dsh-tree-harness/project-map-2026-11-11.html`，仓库 About 已改为本项目介绍并指向地图；remote = `https://github.com/orphiczhou/dsh-tree-harness.git`
 - **公开面**：仓库 https://github.com/orphiczhou/dsh-tree-harness（public / master / MIT / 7 topics）；插件仓 `orphiczhou/dsh-session-tree` **v1.3.5**（交接提示语跟随界面语言 + 随包 Skill + 文档补全 + spawn:false 干跑修正；main+tag = `1fb9193`，18/18 SHA）、`orphiczhou/dsh-region-probe`；**npm 冻结（D3）**
 - **组件**：`dsh-tree-engine` **v0.6.0**（**9 工具** = 8 既有 + `tree_doctor` 只读自检；leaf 写面护栏 `LEAF_WRITE_MATRIX` + `assertLeafWriter`；随包 tree-commander/tree-worker Skill）、`dsh-agent-introspect` v0.1.0、`dsh-session-tree` **v1.3.5**（`tree_send` + `session_handoff` + 随包 `session-handoff` Skill + 语言跟随 + 干跑不拦阈值）
 - **测试**：tree-engine **84/84**（含 `tree_doctor` 9 例 + 写面护栏 8 例负例）；session-tree handoff **41/41**、skills **3/3**、render 全绿、style-guard **22/22**、verify-bundle **0 fail**

@@ -5,7 +5,7 @@
 
 本仓不是一个单一插件，而是一组围绕「树形任务执行」的包、规约与文档：任务分解 → 分层派发（子智能体嵌套）→ 执行 → 分任务类型验证 → 收割回流，外加自省层与会话树视图。
 
-> 🗺️ **项目全景地图**：一页看懂本项目的组件全景、工具面、真机流程、机制与已知边界——[docs/project-map-2026-11-11.html](docs/project-map-2026-11-11.html)（单文件 HTML，离线可读）。
+> 🗺️ **项目全景地图**：一页看懂本项目的组件全景、工具面、真机流程、机制与已知边界——[docs/project-map-2026-11-11.html](docs/project-map-2026-11-11.html)（单文件 HTML，离线可读；[在线版](https://orphiczhou.github.io/dsh-tree-harness/project-map-2026-11-11.html)）。
 > **Project map**: one page covering components, tool surface, real-machine flows and known boundaries — open [docs/project-map-2026-11-11.html](docs/project-map-2026-11-11.html).
 
 - 许可证：**MIT**（见 [LICENSE](LICENSE)）
