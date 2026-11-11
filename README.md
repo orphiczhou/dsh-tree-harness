@@ -16,7 +16,7 @@
 
 | 包 | 版本 | 能力 | 测试 | 当前状态 |
 |---|---|---|---|---|
-| [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.5.0 | 执行层：8 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain`），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准；**随包 tree-commander/tree-worker Skill** | **67/67** | ✅ 运行中（本机 desktop profile 已装载） |
+| [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.5.1 | 执行层：8 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain`），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准；**随包 tree-commander/tree-worker Skill** | **67/67** | ✅ 运行中（本机 desktop profile 已装载） |
 | [`packages/dsh-meta-loop`](packages/dsh-meta-loop/) | 0.2.0 | 治理层：六阶段方法轮 + **G1–G11** 机械门禁 + `/metaloop/` Web 面板 + M4 递归触发表 | **13/13** | ⏸ 未装配（不在 profile bundles，按需装载） |
 | [`packages/dsh-agent-introspect`](packages/dsh-agent-introspect/) | 0.1.0 | 自省层：`self_spec` 工具，投影当前会话的 model / permissions / sandbox / cwd / token 用量 | —（无单测） | ✅ 运行中 |
 | [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.3.2** | 会话树单包：左栏嵌套会话树 + `tree_send` 跨层级消息工具 + **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回 | 包内 5 份测试（handoff **40/40**、render 全绿、style-guard 22/22、verify-bundle 0 fail） | 🌐 GitHub 公开（**v1.3.2**）、社区市场已收录；**npm 未发布** |
@@ -136,13 +136,13 @@ node test/provider-conformance.cjs [asar 解包目录]
 - 所有 DOM 副作用放在 `apply(ctx)` 里；
 - 客户端半热更会**残留旧实例**：用单例注册表 + 令牌仲裁压制，彻底干净仍需刷新一次页面。
 
-### 随包 Skill（SKILL 工程化，v0.5.0 / v1.3.1）
+### 随包 Skill（SKILL 工程化，v0.5.1 / v1.3.2）
 
 Skill 是插件工程的一部分，与工具同包、同版本、同发布：
 
 | 包 | 随包 Skill | 挂载方式 |
 |---|---|---|
-| `packages/dsh-tree-engine` v0.5.0 | `skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md` | `cordis.patch.yml` 第 2 行 insert `@deepseek-ai/dsh-skill-filesystem`（`providerName: tree-engine`、`includeDefaultRoots:false`、`bundledSkillDir` 经安装包身份解析到包内 `skills/`） |
+| `packages/dsh-tree-engine` v0.5.1 | `skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md` | `cordis.patch.yml` 第 2 行 insert `@deepseek-ai/dsh-skill-filesystem`（`providerName: tree-engine`、`includeDefaultRoots:false`、`bundledSkillDir` 经安装包身份解析到包内 `skills/`） |
 | `packages/dsh-session-tree` v1.3.1 | `skills/session-handoff/SKILL.md` | 同模式，`providerName: session-tree` |
 
 - 效果：新会话的 Skill 目录直接出现 `tree-commander` / `tree-worker` / `session-handoff`，模型在**极简提示词**下即可发现「分层分解 / 逐层干活 / 上下文 50% 自主交接」的用法，不需要先把工具名喂给它；真机验证见 [docs/skill-e2e-2026-11-11.md](docs/skill-e2e-2026-11-11.md)。
@@ -202,9 +202,9 @@ scripts/                 asar-tool / release-plugin（发布同步校验）
 ## 已知边界（诚实清单）
 
 1. **meta-loop 未装配**：`/metaloop/` 面板与胶囊入口当前不可用（不在 profile bundles）。源码、测试、面板 HTML 均在仓内，装载即加载。
-2. **tree-engine sweep 降级**：当前宿主没有 `timer` 服务 → 启动日志 `sweep degraded:no-timer`，超时收割依赖显式工具调用（`tree_status` / `tree_report` / harvest），**不是后台自动扫描**。
+2. **tree-engine sweep**：宿主 `timer` 服务可用时用它的 interval；不可用时 `systemClock()` 的**进程内 60s interval 兜底**（`sweepMode` 恒为 `timer`）。`tree_status {action:"harvest"}` 仍可立即强制一轮；不要假设 harvest 是唯一收割手段。（早期版本的 `degraded:no-timer` 说明已过时。）
 3. **npm 冻结（决策 D3）**：`@orphiczhou/*` 候选包名在 npm registry 均 404；安装只走 Git / `link:`。解冻需项目所有者显式批准（条件见 [docs/publishing.md](docs/publishing.md)）。
-4. **RC2 兼容层尚未补单测**：DSH 0.2.1-rc.2 起 `subagents.startContinuable` 被移除，tree-engine 已加双形探测兼容层（`startContinuable` / `startActivation` 等）并已运行；但新增分支暂未被现有 62 项测试覆盖，补测列为后续任务。
+4. **RC2 兼容层尚未补单测**：DSH 0.2.1-rc.2 起 `subagents.startContinuable` 被移除，tree-engine 已加双形探测兼容层（`startContinuable` / `startActivation` 等）并已运行；该分支仍未被测试覆盖，补测列为后续任务（现有 67 项测试含引擎 62 + 技能打包 4 + B1 回归 1）。
 5. **provider-conformance 测试依赖 DSH asar 解包 fixture，且存在版本布局漂移**：默认 `%TEMP%\dsh-asar-inspect\out` 不存在时会 ENOENT；DSH `0.2.2-rc.1` 把 schema 引擎拆到 shared chunk，而测试的 region 提取启发式仍按旧版内联布局——需要 rc.2 兼容解包 fixture（逐字节 shipped chunk）才能得到 29/29 判定（详见 [docs/merge-session-tree-2026-11-11.md](docs/merge-session-tree-2026-11-11.md) §5）。属测试环境依赖，不是包内容缺陷；布局适配留待下次版本 bump。
 6. 更细的历史边界（`artifact` glob 取首个匹配可能命中 `node_modules`、`leaf.status` 与 runtime 终态脱节、flash 审计积压、`tree_maintain gc` 未实现等）见 [docs/handoff-2026-11-11.md](docs/handoff-2026-11-11.md) §7。
 

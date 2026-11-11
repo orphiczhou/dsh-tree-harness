@@ -2,6 +2,12 @@
 
 树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/engine-spec.md](../../docs/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 8 个工具 schema 为准（[docs/tools-mapping.md](../../docs/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
 
+## v0.5.1 增量：SKILL 勘误（owner 语义 + 通用样例）
+
+- `skills/tree-commander/SKILL.md` §3.1 与 `skills/tree-worker/SKILL.md` §1/§4.3：竹节接力后的 owner 说法统一为 **v0.5.0 起自动重绑给接手会话**（与 `src/engine.js` 实现、§1.3/§3.3 一致）；`session_handoff` 仍不迁移 owner，需 commander `set-session` 重绑。
+- 两份 SKILL 的交接样例改为通用路径（不再引用本仓内部 `packages/...`），v1 用户可照抄。
+- 无代码行为变化；`node --test tests/*.test.js` 仍 **67/67**。
+
 ## v0.5.0 增量：SKILL 工程化（包内技能 + skill provider + 50% 交接纪律）+ 审计修复
 
 - **技能迁入包内**：`skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md`（此前在仓根 `skills/`，未被任何 skill provider 加载）。现在随包发布、随包版本迭代。

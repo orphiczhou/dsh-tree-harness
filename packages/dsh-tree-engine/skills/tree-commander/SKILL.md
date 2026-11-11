@@ -170,7 +170,7 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
 
 ### 3.1 两套机制，别混
 
-- **竹节（tree-engine 主接力）**：长任务执行者用 `tree_report {action:"context", pct}` 自报水位；`pct≥42`（DSH 缺省阈值，可被 `TREE_ENGINE_CONFIG.ctx_segment_threshold` / `bambooThresholdPct` 覆盖）→（leaf 状态为 `active` 时）置 `segment_pending`，周期 sweep / `harvest` 先 interrupt 旧会话、再派新会话接手（简报 K1–K5 全文传递；leaf 不变、attempt 不变、链+1；链长 5 → `runtime.state=frozen`）。这是**同一 leaf 换会话**——但 owner 不自动迁移（见 §3.3）。
+- **竹节（tree-engine 主接力）**：长任务执行者用 `tree_report {action:"context", pct}` 自报水位；`pct≥42`（DSH 缺省阈值，可被 `TREE_ENGINE_CONFIG.ctx_segment_threshold` / `bambooThresholdPct` 覆盖）→（leaf 状态为 `active` 时）置 `segment_pending`，周期 sweep / `harvest` 先 interrupt 旧会话、再派新会话接手（简报 K1–K5 全文传递；leaf 不变、attempt 不变、链+1；链长 5 → `runtime.state=frozen`）。这是**同一 leaf 换会话**——v0.5.0 起引擎会把 owner（`leaf.session_id`）**重绑给接手会话**，接手会话可正常 `tree_report done`（旧版本/异常路径的兜底见 §1.3 与 §3.3）。
 - **会话自交接（`session_handoff`，会话层兜底）**：把你这层会话的工作写进 `HANDOFF-*.md`，启动**同层级**新会话接替（根→新根；子会话→同父兄弟；父不活→root + `degraded=parent-inactive`）。这是**换会话继续干**，不依赖 tree-engine。
 
 ### 3.2 规则（缺省 auto → 同父兄弟接替）

@@ -6,7 +6,9 @@
 
 ### 变更
 
-- 版本：`packages/dsh-session-tree` 由 `1.3.1` → **`1.3.2`**（公开插件仓同步发布；代码无行为变化，内容 = README/SKILL 文档与打包回归）。
+- 版本：`packages/dsh-session-tree` 由 `1.3.1` → **`1.3.2`**（公开插件仓同步发布；代码无行为变化，内容 = README/SKILL 文档与打包回归）；`packages/dsh-tree-engine` **0.5.0 → 0.5.1**（SKILL 勘误，代码无变化，未单独发布）。
+- **洁净室第二轮前修订（tree-engine SKILL 勘误，v0.5.1）**：`tree-commander` §3.1 与 `tree-worker` §1/§4.3 的竹节 owner 说法统一为「v0.5.0 起自动重绑给接手会话」（与实现及 §1.3/§3.3 一致）；交接样例路径通用化（不再引用 monorepo 内部路径）；`session-handoff` SKILL 的跨包引用标注归属。
+- **根 README / handoff 文档勘误**：`已知边界` 的 sweep 降级说法改为「进程内 60s 兜底、sweepMode=timer」；`docs/handoff-2026-11-11.md` 的版本/测试数/热更口径刷新到 v1.3.2 + 67/67，补第四/五轮摘要；`docs/skills-usage.md` 补 tree-engine 可复制安装命令（clone + hmr.root + link + pnpm + reload）。
 - **公开插件仓 README（中英）补全「使用随包 Skill」要素**（洁净室第一轮评审缺口 G1–G12）：
   - 新增 handoff **调用样例 + 参数表**（`summary` 必填；`next_steps` / `files` / `open_questions` / `note` / `kind` / `spawn` / `threshold_pct` / `force`）与一行预期返回；
   - 新增**冒烟测试**说明（新会话 `below-threshold`、`force` / `spawn:false`、5 分钟 `recent-handoff` 都是预期而非故障）；

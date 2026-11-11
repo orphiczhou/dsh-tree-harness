@@ -12,7 +12,7 @@ whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / Do
 ## 0. 你是谁 / 环境事实
 
 - 你的指挥官（commander）创建了 leaf 并派发任务书（prompt + DoD 验收标准 + 结算指令）。
-- 你的**会话 id** = 环境变量 `$env:DSH_SESSION_ID`（本机实测为裸 UUID v4）。**首次派发**时它已被绑定为该 leaf 的 owner（`leaf.session_id`）；若你是竹节接力产生的新会话，owner 可能仍是前一节会话（见 §4.3）。
+- 你的**会话 id** = 环境变量 `$env:DSH_SESSION_ID`（本机实测为裸 UUID v4）。**首次派发**时它已被绑定为该 leaf 的 owner（`leaf.session_id`）；若你是竹节接力产生的新会话，v0.5.0 起 owner 已重绑给你（旧版本/异常路径的兜底见 §4.3）。
 - 你的节点标识：`tree_id` 与 `leaf_id`（结算指令里给出）。
 - 你是**被派发的独立 DSH 会话**：有自己的上下文窗口；你的 leaf 初始状态可能是 `pending_brief`，这是正常的。
 - 你能用的工具（工具面）：
@@ -113,7 +113,7 @@ whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / Do
      ],
      "files": ["<已改文件>（新建/未提交）"],
      "open_questions": ["<会改变判断的未知>"],
-     "note": "leaf owner 仍是旧会话（我不会自动迁移）；新会话若直接写 done 会被 E_BORROWED_IDENTITY 拒，见 §4.3" }
+     "note": "leaf owner 仍是旧会话（session_handoff 不会自动迁移；竹节 v0.5.0 会重绑）；新会话若直接写 done 会被 E_BORROWED_IDENTITY 拒，见 §4.3" }
    ```
 3. **优先级**：竹节已经把你这条 leaf 接过去（后继会话已在同一 leaf 继续）→ 不用再会话交接；**已到 50% 仍没等到竹节**（harvest 没人跑 / 链满 frozen / 简报回收失败 / 你已不是 running 的 leaf owner）→ 立即 `session_handoff`。
 4. 交接后旧会话**停止新步骤**（不要和新会话重复干活）。

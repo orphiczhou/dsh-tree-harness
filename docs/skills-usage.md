@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.5.0**、`packages/dsh-session-tree` **v1.3.2** 及以上（公开插件仓同步 tag `v1.3.2`）。
+> 适用版本：`packages/dsh-tree-engine` **v0.5.1**、`packages/dsh-session-tree` **v1.3.2** 及以上（公开插件仓同步 tag `v1.3.2`）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -59,6 +59,36 @@ https://github.com/orphiczhou/dsh-session-tree
 ```
 
 安装后 `session_handoff` / `tree_send` 与 `session-handoff` Skill 一起生效。`tree-commander` / `tree-worker` 属于本仓 `@local/dsh-tree-engine`（未单独对外发布），从本仓安装或把 `packages/dsh-tree-engine` 作为本地路径添加。
+
+`tree-engine` 不是一个独立仓库，所以不能像 session-tree 那样在 **Add plugin** 里直接粘一个 Git URL。可复制的安装步骤（PowerShell，路径按自己的环境改）：
+
+```powershell
+# 1) 克隆本仓（只取一次；以后 git pull 即可升级）
+git clone https://github.com/orphiczhou/dsh-tree-harness.git D:\Codes\dsh-tree-harness
+
+# 2) profile 的 cordis.patch.yml：把 packages/ 加进 hmr.root（已有则跳过）
+#    - id: hmr
+#      config:
+#        root:
+#          - "D:/Codes/dsh-tree-harness/packages"
+
+# 3) profile 的 package.json：加两个 link 依赖（只装 tree-engine 的话第二行可省）
+#    { "dependencies": {
+#        "@local/dsh-tree-engine": "link:D:/Codes/dsh-tree-harness/packages/dsh-tree-engine",
+#        "@orphiczhou/dsh-session-tree": "link:D:/Codes/dsh-tree-harness/packages/dsh-session-tree"
+#    } }
+
+# 4) 在 profile 目录安装依赖
+pnpm install
+
+# 5) 让 Loader 重载（或重启 DSH）
+#    plugin_manager set_plugin include:tree-engine enabled:false → true
+#    plugin_manager set_plugin include:session-tree enabled:false → true
+
+# 6) 新开会话自检：应看到 tree-commander / tree-worker（+ session-handoff）
+```
+
+> 也可以只装 `session-tree`（§2.2 的 Git URL），这样只有 `session-handoff` 一个 Skill；`tree-commander` / `tree-worker` 需要 tree-engine 这一包。
 
 ### 2.3 改完代码/配置后的重载（重要，实测）
 
@@ -213,7 +243,7 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.5.0 / `dsh-session-tree` 1.3.2（公开插件仓 tag `v1.3.2`；Skill 自 1.3.0 起，接替提示语语言跟随自 1.3.1 起）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.5.1 / `dsh-session-tree` 1.3.2（公开插件仓 tag `v1.3.2`；Skill 自 1.3.0 起，接替提示语语言跟随自 1.3.1 起）。
 - 升级包后：宿主半/patch 有变化 → disable→enable；只改 Skill 正文 → 新会话直接读到。
 - 会话树公开插件仓：`orphiczhou/dsh-session-tree`（tag = 版本号）；本仓 `packages/dsh-session-tree` 是唯一源码事实源。
 

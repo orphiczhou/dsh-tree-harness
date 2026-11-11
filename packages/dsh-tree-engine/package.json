@@ -1,6 +1,6 @@
 {
   "name": "@local/dsh-tree-engine",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "type": "module",
   "description": "Tree task decomposition & execution engine for DSH: plan → dispatch → bamboo-joint relay → harvest → verify, with bundled tree-commander/tree-worker Skills (8 tree_* tools + 50%-context session handoff discipline).",
@@ -19,7 +19,9 @@
   ],
   "dsh": {
     "manifestVersion": 1,
-    "bundle": { "patch": "./cordis.patch.yml" }
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
   },
   "icon": "./icon.svg"
 }
