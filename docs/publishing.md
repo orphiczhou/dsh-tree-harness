@@ -10,7 +10,7 @@
 | 渠道 | 对象 | 状态 | 证据 / 说明 |
 |---|---|---|---|
 | GitHub | `orphiczhou/dsh-tree-harness`（本仓） | 🚀 **public** | 发布前检查清单见 §6；收尾核对远端 HEAD = 本地 HEAD |
-| GitHub | [`orphiczhou/dsh-session-tree`](https://github.com/orphiczhou/dsh-session-tree)（会话树插件） | ✅ 公开，**v1.3.4**，MIT，11 commits | 与仓内 `packages/dsh-session-tree/` 逐字节一致（release-plugin **18/18** SHA）；main + tag `v1.3.4` = **`f784c6e`**（远端=本地） |
+| GitHub | [`orphiczhou/dsh-session-tree`](https://github.com/orphiczhou/dsh-session-tree)（会话树插件） | ✅ 公开，**v1.3.5**，MIT，12 commits | 与仓内 `packages/dsh-session-tree/` 逐字节一致（release-plugin **18/18** SHA）；main + tag `v1.3.5` = **`1fb9193`**（远端=本地） |
 | GitHub | [`orphiczhou/dsh-region-probe`](https://github.com/orphiczhou/dsh-region-probe)（区域观测插件） | ✅ 公开 | 独立插件仓，与本仓无源码依赖 |
 | 社区市场 | awesome-dsh-plugin **PR #6334**（会话树） | ✅ 已合并（2026-10-14） | 市场按 GitHub topic + PR listing 收录；条目为 browse-only，按 `package.json.version` 判断更新 |
 | 社区市场 | awesome-dsh-plugin **PR #6435**（region-probe） | ✅ 已合并（2026-10-15） | 同上 |
@@ -30,11 +30,11 @@
 
 ```
 dsh-tree-harness/                     ← 唯一源码事实源（public）
-  packages\dsh-session-tree\          ← 会话树单包源码（v1.3.4：tree_send + session_handoff + 随包 session-handoff Skill + 语言跟随 + 干跑不拦阈值）
+  packages\dsh-session-tree\          ← 会话树单包源码（v1.3.5：tree_send + session_handoff + 随包 session-handoff Skill + 语言跟随 + 干跑不拦阈值）
         │
         │  scripts/release-plugin.mjs（逐文件 SHA 校验，不自动 push）
         ▼
-github.com/orphiczhou/dsh-session-tree   ← 发布镜像仓（公开、tag v1.3.4、市场 listing 指向它）
+github.com/orphiczhou/dsh-session-tree   ← 发布镜像仓（公开、tag v1.3.5、市场 listing 指向它）
         │
         ▼
 awesome-dsh-plugin / imsai-sh 市场条目（browse-only，按版本判断更新）
@@ -49,7 +49,7 @@ awesome-dsh-plugin / imsai-sh 市场条目（browse-only，按版本判断更新
 
 1. **改代码必须 bump version**：market 按 `package.json.version` 判断条目是否更新，不 bump = 市场不刷新，等于发了假更新。
 2. **无内容变化不 bump**：会话树单包迁入本仓（D1）时内容逐字节不变，因此当时**保持 v1.0.4**，不制造假版本。
-3. **有内容变化必须 bump**：2026-11-11 功能轮给会话树加入工作区排序/隐藏/召回 → bump **v1.1.0**，经 `release-plugin.mjs` 同步到公开插件仓并推送（`dcf3519`，远端=本地）。同日晚第三轮把会话自交接并入会话树（新增 `session_handoff` + 工作区/权限/预设继承修复）→ bump **v1.2.0**，同步 **16/16 SHA 一致**、推送 main + tag `v1.2.0`（`597ca31`，远端=本地）；原独立插件 `@local/dsh-session-handoff` v0.1.0 从本仓与 profile 删除，从未单独发布。第四轮 SKILL 工程化（随包 `session-handoff` Skill + skill provider patch 行）→ bump **v1.3.0**，同步 **18/18 SHA 一致**、推送 main + tag `v1.3.0`（`1086e9e`，远端=本地）。第五轮「接替提示语跟随 DSH 界面语言」→ bump **v1.3.1**，同步 **18/18 SHA 一致**、推送 main + tag `v1.3.1`（`c257d61`，远端=本地）。同日第六轮按洁净室评审补全 Skill 使用文档 → bump **v1.3.2**（`c1541e5`，18/18 SHA）；第七轮修 `spawn:false` 干跑阈值闸 + 二轮 N1–N7 → bump **v1.3.3**（`cce2975`，18/18 SHA）；第八轮做洁净室文档债最终清扫 → bump **v1.3.4**（`f784c6e`，18/18 SHA）。
+3. **有内容变化必须 bump**：2026-11-11 功能轮给会话树加入工作区排序/隐藏/召回 → bump **v1.1.0**，经 `release-plugin.mjs` 同步到公开插件仓并推送（`dcf3519`，远端=本地）。同日晚第三轮把会话自交接并入会话树（新增 `session_handoff` + 工作区/权限/预设继承修复）→ bump **v1.2.0**，同步 **16/16 SHA 一致**、推送 main + tag `v1.2.0`（`597ca31`，远端=本地）；原独立插件 `@local/dsh-session-handoff` v0.1.0 从本仓与 profile 删除，从未单独发布。第四轮 SKILL 工程化（随包 `session-handoff` Skill + skill provider patch 行）→ bump **v1.3.0**，同步 **18/18 SHA 一致**、推送 main + tag `v1.3.0`（`1086e9e`，远端=本地）。第五轮「接替提示语跟随 DSH 界面语言」→ bump **v1.3.1**，同步 **18/18 SHA 一致**、推送 main + tag `v1.3.1`（`c257d61`，远端=本地）。同日第六轮按洁净室评审补全 Skill 使用文档 → bump **v1.3.2**（`c1541e5`，18/18 SHA）；第七轮修 `spawn:false` 干跑阈值闸 + 二轮 N1–N7 → bump **v1.3.3**（`cce2975`，18/18 SHA）；第八轮做洁净室文档债最终清扫 → bump **v1.3.4**（`f784c6e`，18/18 SHA）；第三轮复核 PASS 后补 SKILL 例外说明与措辞 → bump **v1.3.5**（`1fb9193`，18/18 SHA）。
 3. **版本号 = 公开仓 tag = package.json.version** 三者一致；建议 SemVer：修 bug → patch，新增行为 → minor，破坏兼容 → major。
 4. 发布前在包目录自查版本：
 
@@ -120,7 +120,7 @@ v1.3.0 实测（SKILL 工程化）：同一 clone 流程 → **`files=18 match=1
 
 v1.3.1 实测（接替提示语跟随界面语言）：同一 clone 流程 → **`files=18 match=18 mismatch=0 missing=0 extra=0`**；真实变更 6 文件（README×2 / index.js / package.json / skills/session-handoff/SKILL.md / test/handoff.test.js）；commit `c257d61` + tag `v1.3.1` 推送后 `ls-remote` 核对 main 与 tag 均等于本地 HEAD。
 
-v1.3.2 / v1.3.3 实测（文档补全 + spawn:false 干跑修正）：同一 clone 流程均 **`files=18 match=18`**；commit + tag `v1.3.2`（`c1541e5`）/ `v1.3.3`（`cce2975`），推送后 `ls-remote` 核对 main 与 tag 均等于本地 HEAD。
+v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 实测（文档补全 + spawn:false 干跑修正 + 洁净室收口）：同一 clone 流程均 **`files=18 match=18`**；commit + tag `v1.3.2`（`c1541e5`）/ `v1.3.3`（`cce2975`）/ `v1.3.4`（`f784c6e`）/ `v1.3.5`（`1fb9193`），推送后 `ls-remote` 核对 main 与 tag 均等于本地 HEAD。
 
 标准发布流程：
 
@@ -183,3 +183,4 @@ v1.3.2 / v1.3.3 实测（文档补全 + spawn:false 干跑修正）：同一 clo
 - 2026-11-11（v1.3.2，第六轮）：按洁净室一轮评审补全 Skill 使用文档（调用样例/参数表/冒烟测试/升级与排障/英文触发词）→ **18/18 SHA**，tag `v1.3.2` = **`c1541e5`**。
 - 2026-11-11（v1.3.3，第七轮）：`spawn:false` 干跑不再被阈值闸拦 + 洁净室二轮 N1–N7 修订 → **18/18 SHA**，tag `v1.3.3` = **`cce2975`**。
 - 2026-11-11（v1.3.4，第八轮）：R1-B/R2-B 文档债清扫（语言验收表述、set-session 主体、英文触发词、版本矩阵）→ **18/18 SHA**，tag `v1.3.4` = **`f784c6e`**。
+- 2026-11-11（v1.3.5，第九轮）：第三轮洁净室 PASS 后的收尾（SKILL 的 `spawn:false` 例外说明 + root→grandchild 措辞）→ **18/18 SHA**，tag `v1.3.5` = **`1fb9193`**。
