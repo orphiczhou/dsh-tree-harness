@@ -1,6 +1,16 @@
 # @local/dsh-tree-engine
 
-树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/engine-spec.md](../../docs/engine-spec.md)（S0 冻结）；工具面：[docs/tools-mapping.md](../../docs/tools-mapping.md)。
+树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/engine-spec.md](../../docs/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 8 个工具 schema 为准（[docs/tools-mapping.md](../../docs/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
+
+## v0.5.0 增量：SKILL 工程化（包内技能 + skill provider + 50% 交接纪律）+ 审计修复
+
+- **技能迁入包内**：`skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md`（此前在仓根 `skills/`，未被任何 skill provider 加载）。现在随包发布、随包版本迭代。
+- **活体装载**：`cordis.patch.yml` 第二条 insert 挂载 `@deepseek-ai/dsh-skill-filesystem`（`providerName: tree-engine`、`includeDefaultRoots: false`、`bundledSkillDir` 经安装包身份解析到本包 `skills/`）——新会话的 Skill 目录里能看到 `tree-commander` / `tree-worker`，模型不必被点名工具也能按 skill 工作。
+- **会话交接纪律入 skill**：每个被派发的 leaf 是独立 DSH 会话；除引擎竹节（`tree_report {action:"context"}` 自报，pct≥42 触发接力）外，skill 要求会话在 `session_handoff {action:"status"}` 的 `context_pct ≥ 50` 时**自主交接**给同层级新会话（`session_handoff` 由会话树单包提供，缺省 auto：子会话→同父兄弟），并在 `tree_report {action:"progress"}` 里留下交接文件与新会话 id，供 commander 继续收割。
+- **B1 修复（v0.5.0，审计 BLOCK）**：竹节接力成功后把 `leaf.session_id` 重绑到接手会话——此前接力会话写 `done` 会被 `E_BORROWED_IDENTITY` 拒、leaf 只能等 `nodeTimeoutMs` timeout；现在接力会话可正常收口（回归测试见 `tests/orchestrator.test.js` "B1 回归"）。
+- **工具描述与审计对齐**：`tree_verify`（六种模式、FAIL 不抛错/不阻断 succeeded、cwd 来自 exec）、`tree_dispatch`（dod 不生效、assignee.preset 不生效、接力 owner 重绑）、`tree_node`（里程碑面无工具命令、收口以 runtime.succeeded 为准）、`tree_report`（宿主 tokenMeter 已接入）、`tree_status`（harvest 语义）与实际实现对齐；启动日志版本号与 sweep 兜底说明修正（timer 服务缺失时仍有进程内 60s 间隔，sweepMode=timer）。
+- **测试**：**67/67**（62 引擎 + 4 技能打包 `tests/skills.test.js` + 1 竹节 owner 回归）。
+- ⚠️ 宿主半/配置热更：patch 行改动需对 `include:tree-engine` 做一次 disable→enable（Loader 按包名缓存宿主模块，见仓库 [agent.md](../../agent.md) D12）。
 
 ## v0.3（S1 第三批）——**8/8 工具面齐 + 验证层第一批**
 
@@ -43,7 +53,7 @@
 - **验证层 batch-2**（任务 6）：`llm-judge`（ports.judge 异族评审，rubric 必填，fail-closed）/ `composite`（checks[] 平铺 AND 链，嵌套 composite 装载期拒）/ `human`（approval=never 降级 = frozen 待裁：pass=false+pending，人工经 policy_id 显式覆盖裁决）。
 - **Config schema 装载期校验**（任务 8，src/config.js）：TREE_ENGINE_CONFIG JSON 全键类型/范围校验，未知键拒绝；非法即装载失败（apply 终止、工具不注册），报错含键名；护栏键进 config、编排键进 orchestra 自动拆分。
 - **差分扩面**（任务 7 主体）：52 组 LCG 生成调用序列（合法+非法混合）逐调用 ok 一致 + 终态投影一致；新冻结偏差 **D-v5**（源可恢复错误自动 drift）/ **D-v6**（源 leaf add 必填 model）登记 [diff.DEVIATIONS.md](tests/diff.DEVIATIONS.md)。
-- **tree-worker SKILL 重写**（任务 3，skills/tree-worker/SKILL.md）：8 工具语法、开工四步/竹节协议/护栏表/一图流；**剔除 tree_leaf_autonomy_override 漂移引用**（用 drift 申报替代）。
+- **tree-worker SKILL 重写**（任务 3，`skills/tree-worker/SKILL.md`，v0.5.0 起位于本包 `packages/dsh-tree-engine/skills/tree-worker/SKILL.md`）：8 工具语法、开工四步/竹节协议/护栏表/一图流；**剔除 tree_leaf_autonomy_override 漂移引用**（用 drift 申报替代）。
 - **E2E**：e2ev39（依赖闸+路由+validate 全过）+ e2erly（竹节 relay 专项，简报全文回收）。
 - **测试**：**56 项全绿**（52 + 4：llm-judge 三态/human 降级+composite 展开/Config 校验）。剩余：observeSession 事件面（§7-9，宿主形状未冻结）与 llm-judge 宿主 judge 端口装配（评审会话派发）列下批。
 

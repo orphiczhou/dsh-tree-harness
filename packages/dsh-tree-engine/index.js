@@ -5,8 +5,8 @@
  *   - 持久化 = fsStore（<DSH_PROFILE_DIR>/tree-engine-data/，原子写 tmp+rename）；
  *   - 编排端口尽力装配（subagents/sessionQuery/timer 形状待 S1 smoke 冻结；任何端口失败
  *     fail-closed 返回 E_PORTS_NOT_WIRED / E_PORTS_PROTOCOL，绝不静默降级）；
- *   - sweep 随插件启动：ctx.get('timer') 可用 → timer 模式；不可用 → degraded-lazy
- *     （纯惰性收割 + tree_status 显式收割，启动日志告警，不静默）。
+ *   - sweep 随插件启动：宿主 timer 服务可用 → 用它的 interval；不可用 → systemClock 的进程内
+ *     60s interval 兜底（sweepMode 恒为 timer；tree_status {action:"harvest"} 仍可显式立即收割）。
  *
  * v0.2 边界（诚实声明）：
  *   - startContinuable / prompt / interrupt 的精确 spec 形状未 smoke（装载后用
@@ -457,7 +457,9 @@ const TREE_PLAN = {
   name: 'tree_plan',
   description:
     'Create and configure a task tree (plan → layered dispatch → bamboo relay → verify). ' +
-    'tree_id: 4-8 chars, lowercase letters/digits/underscore, no hyphen. Root leaf "<tree_id>-root" is created automatically.',
+    'tree_id: 4-8 chars, lowercase letters/digits/underscore, no hyphen. Root leaf "<tree_id>-root" is created automatically. ' +
+    'Only a top-level session that OWNS no tree yet should call create: a dispatched commander already carries a tree_id and must ' +
+    'add its nodes with tree_node instead of creating a second tree (a duplicate tree_id is rejected with E_DUPLICATE_LEAF).',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
@@ -480,9 +482,10 @@ const TREE_PLAN = {
 const TREE_NODE = {
   name: 'tree_node',
   description:
-    'Node CRUD. add: {leaf_id, session_id, parent, path, role(commander|worker|auditor), added_by, dependencies?[], taskType?}; naming <prefix>-<Role><seq>-<name>. ' +
+    'Node CRUD. add: {leaf_id, session_id, parent, path, role(commander|worker|auditor), added_by, dependencies?[], taskType?}; naming <prefix>-<Role><seq>-<name> (path segment must start uppercase). ' +
     'dependencies must be existing leaf_ids (cycle-checked; dispatch requires all deps done). taskType routes verification policy (research|question|doc|code-change|default). ' +
-    'set-status enforces the closed state machine with done gates (done event first + all milestones audit_pass).',
+    'set-status: the closed state machine requires a done event first; the milestone commands are not exposed as tool actions, so set-status done is not reachable from the tool surface — ' +
+    'settlement is the done event flowing runtime.state to succeeded plus tree_verify result (two gates, no third structure check).',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
@@ -523,18 +526,20 @@ const TREE_NODE = {
 const TREE_DISPATCH = {
   name: 'tree_dispatch',
   description:
-    'Dispatch / cancel a node execution (engine relays to continuable subagents). start: {prompt?, assignee?{provider?,model?,effort?,preset?}, dod?} — ' +
+    'Dispatch / cancel a node execution (engine relays to continuable subagents). start: {prompt?, assignee?{provider?,model?,effort?}, dod?} — ' +
     'assignee is persisted on the leaf and survives bamboo relays; a <session-config-declared> self-descriptor block is appended to the dispatch prompt. ' +
-    'node stays pending→running; bamboo-joint auto-relay runs inside running (context threshold 42%: brief → interrupt old → start successor). ' +
-    'cancel: first-wins vs timeout hard deadline.',
+    'dod is accepted for compatibility but does NOT reach the child prompt: the acceptance text comes from the leaf taskType policy ' +
+    '(leaf.dod is only used by the verifier fallback). assignee.preset is accepted by the schema but is not applied to the child session (known limitation). ' +
+    'node stays pending→running; bamboo-joint auto-relay runs inside running (context threshold 42%: brief → interrupt old → start successor; ' +
+    'v0.5.0 rebinds leaf.session_id to the successor so it can report done). cancel: first-wins vs timeout hard deadline.',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
       action: { type: 'string', enum: ['start', 'cancel'] },
       tree_id: { type: 'string' }, leaf_id: { type: 'string' },
       prompt: { type: 'string' },
-      assignee: { type: 'object', description: '{provider?, model?, effort?, preset?}' },
-      dod: { type: 'object' },
+      assignee: { type: 'object', description: '{provider?, model?, effort?} (preset is schema-accepted but not applied)' },
+      dod: { type: 'object', description: 'Accepted for compatibility; the child prompt DoD comes from the leaf taskType policy.' },
     },
     required: ['action', 'tree_id', 'leaf_id'],
   },
@@ -553,8 +558,8 @@ const TREE_DISPATCH = {
 const TREE_REPORT = {
   name: 'tree_report',
   description:
-    'Executor upward reporting. context: report context_usage_pct 0-100 (auto-triggers bamboo-joint relay at 42%; this self-report is the ' +
-    'primary usage signal until host-side measurement lands). event: append progress/blocked/plan/brief_echo/done/... (done requires owner session as caller).',
+    'Executor upward reporting. context: report context_usage_pct 0-100 (auto-triggers bamboo-joint relay at 42%; host-side tokenMeter measurement is also wired — ' +
+    'whichever signal arrives first wins). event: append brief_echo/plan/progress/blocked/done/... (12-type closed set; done requires the leaf owner as caller).',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
@@ -576,7 +581,7 @@ const TREE_REPORT = {
 
 const TREE_STATUS = {
   name: 'tree_status',
-  description: 'Query: overview (dump), validate (invariants), sessions (budget precheck), harvest (explicit sweep — degraded-lazy mode relies on this).',
+  description: 'Query: overview (dump), validate (invariants), sessions (budget precheck), harvest (immediate sweep; the engine also sweeps periodically on its timer, or on an in-process interval when no timer service is available).',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
@@ -601,8 +606,9 @@ const TREE_STATUS = {
 const TREE_VERIFY = {
   name: 'tree_verify',
   description:
-    'Run verification policies on a node (batch-1 modes: self-report | artifact | command). Policy resolution: explicit policyId → leaf.taskType map → default. ' +
-    'cwd = node workspace (from leaf.path resolved against exec cwd, or exec cwd). Verdicts recorded to leaf.verification; pass required before succeeded. ' +
+    'Run verification policies on a node (modes: self-report | artifact | command | llm-judge | composite | human). Policy resolution: explicit policyId → leaf.taskType map → default. ' +
+    'cwd defaults to the caller exec cwd (or the explicit cwd parameter); it is not derived from leaf.path. Verdicts are recorded to leaf.verification, ' +
+    'but FAIL is returned as result.pass=false — it does not throw and does not block runtime.succeeded, so the commander must read result.pass before accepting the node. ' +
     'adversarial: attack-defense-audit iteration (≤max_rounds, default 3) — structural checks + cross-family judge attack; FAIL rounds feed findings back to the executor for repair.',
   parameters: {
     type: 'object', additionalProperties: false,
@@ -759,7 +765,7 @@ export function apply(ctx) {
   /** 文件自诊断（Loader 缓存下唯一可靠观测通道）：apply 全程留痕 + 全程容错。 */
   const diagPath = path.join(dataDir, 'apply.log')
   const diag = (msg) => { try { fsp.mkdir(path.dirname(diagPath), { recursive: true }).then(() => fsp.appendFile(diagPath, `${new Date().toISOString()} ${msg}\n`)).catch(() => {}) } catch {} }
-  diag(`apply() entered (v0.4.0); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
+  diag(`apply() entered (v0.5.0); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
   try {
     ctx.inject(['tools', 'subagents', 'sessionQuery'], (scoped) => {
       try {
@@ -770,14 +776,14 @@ export function apply(ctx) {
         diag('inject callback entered')
 
         // 时钟：timer 权威结论（asar 源 cordis-plugin-timer 实证）——ctx.mixin("timer")，ctx.timer 直接可用；
-        // 兜底 ctx.get('timer')；均不可用 → degraded-lazy（显式告警，不静默）
+        // 兜底 ctx.get('timer')；服务都不可用时 systemClock() 仍提供进程内 60s 间隔兜底（sweepMode 仍为 timer，审计 B3）
         let timer = null
         try { timer = ctx.timer ?? (typeof ctx.get === 'function' ? ctx.get('timer') : null) } catch (e) { diag(`timer resolve failed: ${e?.message ?? e}`) }
         const clock = systemClock()
         if (timer && typeof timer.interval === 'function') {
           clock.scheduleInterval = (cb, ms) => timer.interval(cb, ms)
         } else {
-          log('sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}')
+          log('sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep')
         }
 
         // Config 装载期校验（§7 任务 8）：TREE_ENGINE_CONFIG JSON → 全键类型/约束校验，
@@ -804,7 +810,7 @@ export function apply(ctx) {
           try { services.tools.register(tool); okCount += 1; diag(`register OK: ${tool.name}`) }
           catch (e) { diag(`register FAILED: ${tool.name}: ${e?.message ?? e}`) }
         }
-        console.log(`[tree-engine] v0.3.3 registered ${okCount}/8 tools (fs persistence @ ${dataDir}; sweepMode=${sweepMode})`)
+        console.log(`[tree-engine] v0.5.0 registered ${okCount}/8 tools (fs persistence @ ${dataDir}; sweepMode=${sweepMode})`)
         diag(`apply complete: ${okCount}/8 registered`)
       } catch (e) {
         diag(`inject callback THREW: ${e?.stack ?? e}`)

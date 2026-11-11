@@ -1,3 +1,20 @@
+# Patch layer contributed by this bundle.
+#
+# Row 1 is the Host half (`tree_plan` / `tree_node` / `tree_dispatch` /
+# `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain`).
+#
+# Row 2 mounts the deployment's filesystem Skill provider on this package's
+# bundled `skills/` directory, so commander/worker leaf sessions can discover the
+# decomposition protocol and the 50%-context handoff discipline from the Skill
+# catalog. The directory is resolved through the installed package identity,
+# never by string-joining a path onto `baseUrl`.
 - insert:
     - id: tree-engine
       name: '@local/dsh-tree-engine'
+    - id: tree-engine-skills
+      name: '@deepseek-ai/dsh-skill-filesystem'
+      config:
+        providerName: tree-engine
+        includeDefaultRoots: false
+        watch: false
+        bundledSkillDir: !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('@local/dsh-tree-engine/package.json')), 'skills')

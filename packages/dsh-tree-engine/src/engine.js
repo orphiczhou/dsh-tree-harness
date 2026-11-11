@@ -498,6 +498,9 @@ export function createEngine(opts) {
     if (briefState === 'ok' || briefState === 'manual') rt.handoffBrief = brief
     rt.segmentChain.push(session.sessionId)
     rt.subagentSessionId = session.sessionId
+    // v0.5.0（审计 B1 修复）：竹节接力就是"同一 leaf 换会话"——done 所有权必须随之迁移到
+    // 接手会话，否则接力会话写 done 会被 E_BORROWED_IDENTITY 拒、leaf 只能等 timeout。
+    leaf.session_id = session.sessionId
     rt.lastHandoffAt = clock.now()
     leaf.context_usage_pct = 0   // E2E 终验修复：接力后水位清零（新会话全新上下文；残留会引发连环接力烧链）
     leaf.drift_history.push({ ts: nowIso(clock), leaf_id: leaf.leaf_id, kind: 'rhythm', severity: 'low', action: 'handoff', to_session: session.sessionId, reason: `bamboo relay #${rt.segmentChain.length} (${briefState})` })

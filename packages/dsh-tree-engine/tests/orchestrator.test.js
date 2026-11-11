@@ -107,8 +107,25 @@ test('竹节自动接力：usage≥42 触发；先 interrupt 后 dispatch（顺�
   assert.ok(leaf.runtime.handoffBrief.startsWith('BRIEF'))
 })
 
-test('竹节降级：简报缺失 → no-handoff-summary 照常接手，节点不 failed', async () => {
+test('v0.5.0 B1 回归：竹节接力后 owner 重绑到接手会话，接手者可写 done → runtime.succeeded', async () => {
   const clock = new VirtualClock(1000)
+  const ports = fakePorts({ usagePct: async () => 45, lastOutputAt: async () => 1000 })
+  const engine = await setup(ports, clock, { nodeTimeoutMs: 10**9, sweepIntervalMs: 60_000, bambooThresholdPct: 42 })
+  await engine.call('dispatch:start', ['bamboo', 'bamboo-C1-worker', {}])
+  const r = await engine.sweepTick()
+  const relaySession = r.swept[0].events[0].sessionId
+  assert.ok(relaySession, 'bamboo relay must report the successor session id')
+  let leaf = (await engine.call('leaf:get', ['bamboo', 'bamboo-C1-worker'])).leaf
+  assert.equal(leaf.session_id, relaySession, 'the leaf owner must follow the receiving session')
+  assert.notEqual(leaf.session_id, S1_)
+  // 接手会话写 done → 不再 E_BORROWED_IDENTITY，done 事件回流 succeeded
+  const ev = await engine.call('event:append', ['bamboo', 'bamboo-C1-worker', 'done', { summary: 'relay ok' }], relaySession)
+  assert.equal(ev.ok, true, JSON.stringify(ev.error ?? {}))
+  leaf = (await engine.call('leaf:get', ['bamboo', 'bamboo-C1-worker'])).leaf
+  assert.equal(leaf.runtime.state, 'succeeded')
+})
+
+test('竹节降级：简报缺失 → no-handoff-summary 照常接手，节点不 failed', async () => {  const clock = new VirtualClock(1000)
   const ports = fakePorts({ usagePct: async () => 50, promptHandoff: async () => null })
   const engine = await setup(ports, clock, { nodeTimeoutMs: 10**9, bambooThresholdPct: 42 })
   await engine.call('dispatch:start', ['bamboo', 'bamboo-C1-worker', {}])
