@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.5.1**、`packages/dsh-session-tree` **v1.3.3** 及以上（公开插件仓同步 tag `v1.3.3`）。
+> 适用版本：`packages/dsh-tree-engine` **v0.5.1**、`packages/dsh-session-tree` **v1.3.4** 及以上（公开插件仓同步 tag `v1.3.4`）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -16,7 +16,7 @@
 三个 Skill 都是**插件包的一部分**（`package.json.files` 含 `skills`），与工具同版本发布；由各包的 `cordis.patch.yml` 第 2 条 insert 挂载宿主机的 filesystem Skill provider：
 
 ```yaml
-# packages/dsh-tree-engine/cordis.patch.yml（节选）
+# packages/dsh-tree-engine/cordis.patch.yml（真实行，按可读性折行；实际为单行）
 - insert:
     - id: tree-engine-skills
       name: '@deepseek-ai/dsh-skill-filesystem'
@@ -24,8 +24,14 @@
         providerName: tree-engine
         includeDefaultRoots: false
         watch: false
-        bundledSkillDir: !!js process.env.__<解析自 @local/dsh-tree-engine/package.json>/skills
+        bundledSkillDir: !!js process.getBuiltinModule('node:path').join(
+          process.getBuiltinModule('node:path').dirname(
+            process.getBuiltinModule('node:module')
+              .createRequire(baseUrl).resolve('@local/dsh-tree-engine/package.json')
+          ), 'skills')
 ```
+
+> 安装时直接用包内 patch 文件即可，**不需要手抄**这一行；这里贴出来是为了说明「`bundledSkillDir` 经安装包身份解析、不是字符串拼 `baseUrl`」——这也是为什么改包名/换目录不会让 Skill 失联。
 
 （session-tree 同模式，`providerName: session-tree`，解析 `@orphiczhou/dsh-session-tree/package.json`。）
 
@@ -36,6 +42,8 @@
 ## 2. 安装（本机开发版与 Git 安装两种）
 
 ### 2.1 本机开发（profile 的 `hmr.root`）
+
+> ⚠️ 改 profile 文件前先备份（`package.json`、`cordis.patch.yml` 各复制一份 `.bak-<日期>`）；**优先用 Plugins 页面 / `plugin_manager`**，不要在 DSH 运行中盲改配置。改坏了可用备份还原后重启。
 
 1. 把仓库 `packages/` 目录加入 profile `cordis.patch.yml` 的 `hmr.root`（本机为 `D:/Codes/dsh-tree-harness/packages`）。
 2. 在 profile 的 `package.json` 增加两个依赖（`link:` 到本仓包目录）：
@@ -102,9 +110,12 @@ pnpm install
 任选一种：
 
 1. **看目录**：新开一个会话，问它「你看到的 Skill 有哪些？」——应含 `tree-commander`、`tree-worker`、`session-handoff`。会话系统提示里的 `<available_skills>` 就是权威目录。
-2. **看日志**（可脚本化）：会话日志 `~/.dsh/sessions/<workspace-encoding>/<sessionId>/session.v4.jsonl.zstd`（多帧 zstd）中，`user/message` 的 `<system-reminder><available_skills>` 块应出现上述名字。本仓脚本：
+2. **看日志**（可脚本化）：会话日志 `~/.dsh/sessions/<workspace-encoding>/<sessionId>/session.v4.jsonl.zstd`（多帧 zstd）中，`user/message` 的 `<system-reminder><available_skills>` 块应出现上述名字。先把本仓 clone 到本地，再跑（`--expect` 按实际安装的包选择；缺省脚本期望三个全在）：
    ```powershell
-   node scripts/skill-e2e/collect-skills.mjs <sessionId> --expect-at latest --json
+   # 只装了 session-tree（Git 安装）
+   node scripts/skill-e2e/collect-skills.mjs <sessionId> --expect session-handoff --expect-at latest --json
+   # 两个包都装了
+   node scripts/skill-e2e/collect-skills.mjs <sessionId> --expect tree-commander,tree-worker,session-handoff --expect-at latest --json
    ```
 3. **让 agent 加载**：直接说「用 session-handoff skill」/「用 tree-commander skill」，agent 会调用 `skill {name:"…"}` 读正文后再执行。
 
@@ -139,8 +150,8 @@ Skill 只是**纪律与范例**，工具名仍以工具面为准；模型看不�
 目标：给仓库补一段 CHANGELOG，拆三层并派人做完。
 
 ```text
-# 1) 建树（仅根会话/尚未被派发时）
-tree_plan {action:"create", tree_id:"chlog", root_brief:{goal:"补齐 CHANGELOG"}, root_dod:{accept:"tests green, CHANGELOG 有 Unreleased 段"}}
+# 1) 建树（仅根会话/尚未被派发时；强烈建议传 session_id = $env:DSH_SESSION_ID）
+tree_plan {action:"create", tree_id:"chlog", session_id:"<你的会话id（$env:DSH_SESSION_ID，裸 UUID）>", root_brief:{goal:"补齐 CHANGELOG"}, root_dod:{dod:"tests green, CHANGELOG 有 Unreleased 段"}}
 
 # 2) 建中间层 commander（path 段必须大写开头；命名 <prefix>-<Role><seq>-<name>）
 tree_node {action:"add", tree_id:"chlog", leaf:{leaf_id:"chlog-C1-commander", parent:"chlog-root", path:"C1", role:"commander", added_by:"<你的会话id>", taskType:"doc"}}
@@ -176,7 +187,7 @@ tree_report {action:"event", type:"done", tree_id:"chlog", leaf_id:"chlog-C1a1-w
 1. 读任务书，`tree_report {action:"event", type:"brief_echo"}` 回述目标与 DoD（确认理解）。
 2. `tree_report {action:"event", type:"plan"}` 给出交付路径，然后干活。
 3. 期间 `tree_report {action:"progress"}` 报关键进展；`tree_report {action:"context", pct:N}` 报上下文水位（整数 0–100）。
-4. 交付后 `tree_verify`（由 commander 跑或自己跑），再 `tree_report {action:"event", type:"done"}` 结算。
+4. 交付后由 **commander 跑 `tree_verify`**（worker 不自跑；拿到 verdicts 后按 findings 修产物），再 `tree_report {action:"event", type:"done"}` 结算。
 5. **上下文接近 50% 时**：按 `session-handoff` Skill 自主交接（见 §7），并在 `tree_report {action:"progress"}` 里写明交接文件与新会话 id，供 commander 继续收割。
 6. 卡住：`tree_report {action:"event", type:"blocked", meta:{reason}}`，等 commander 决定；不要自己改树结构。
 
@@ -237,13 +248,18 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 | 机制 | 触发 | 归属 | 关系 |
 |---|---|---|---|
 | 竹节接力（tree-engine） | worker `tree_report {action:"context", pct≥42}` | 同一 leaf 换会话继续，`leaf.session_id` 重绑给接手会话（v0.5.0） | 先按竹节：引擎自动换棒，leaf 不中断 |
-| 会话自交接（session-tree） | 任意会话 `session_handoff status` 显示 `context_pct ≥50` | 同层级新会话（root→root，子→同父兄弟） | 竹节已换棒则不用再交接；**已到 50% 仍没等到竹节**（如 commander 不 harvest）→ 立即交接，并在 `tree_report progress` 留痕 |
+| 会话自交接（session-tree） | 任意会话 `session_handoff status` 显示 `context_pct ≥50` | 同层级新会话（root→root，子→同父兄弟） | 竹节已换棒则不用再交接；**已到 50% 仍没等到竹节**（如链满 `frozen` / 简报回收失败 / 你已不是 running 的 leaf owner）→ 立即交接，并在 `tree_report progress` 留痕 |
 
 ---
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.5.1 / `dsh-session-tree` 1.3.3（公开插件仓 tag `v1.3.3`；Skill 自 1.3.0 起，接替提示语语言跟随自 1.3.1 起）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.5.1 / `dsh-session-tree` 1.3.4（公开插件仓 tag `v1.3.4`）。
+- **版本差异速查**：
+  - **1.3.0**：随包 `session-handoff` Skill + skill provider patch 行（此前无 Skill）；
+  - **1.3.1**：接替提示语跟随 DSH 界面语言（zh/en；`lang=` + `interface_language`）；
+  - **1.3.2**：Skill 使用文档补全（样例/参数表/冒烟/排障/英文触发词）；
+  - **1.3.3**：`spawn:false` 干跑不再被阈值闸拦；文档路径与样例修正。
 - 升级包后：宿主半/patch 有变化 → disable→enable；只改 Skill 正文 → 新会话直接读到。
 - 会话树公开插件仓：`orphiczhou/dsh-session-tree`（tag = 版本号）；本仓 `packages/dsh-session-tree` 是唯一源码事实源。
 

@@ -28,7 +28,23 @@
 
 ## 第 2 轮（对象：v1.3.2 已发布 GitHub 内容）
 
-（待第二轮独立评审员回报后填写：结论、剩余缺口、是否 PASS。）
+| 评审员 | 对象 | 结论 | 关键发现 |
+|---|---|---|---|
+| R2-A（公开插件仓） | v1.3.2 main（= tag v1.3.2） | **PASS_WITH_GAPS** | **G1–G12 全部确认修复（12/12）**、无新增死链、版本链与 tag 自洽；新发现 **N1（中）**：README 冒烟测试称「单发 `spawn:false` 可只写文件」不准确——阈值闸在 `spawn:false` 分支之前，pct 可测且 <50 时会被 `below-threshold` 拒；N2–N7（低）：例题含 monorepo 内部路径、marketplace 问题自相矛盾、SKILL 样例行缺 `lang=`、SKILL 保留过期 34/34、`package.json.files` 缺 `README.zh.md`、tree_send 示例内部路径 |
+| R2-B（本仓文档） | v1.3.2 本仓 | 首轮初步 P1 已在 §「第 1 轮修订」处理；完整报告见（评审会话未按期回报，按 4 条 P1 + 覆盖矩阵本地复核） | 4 P1 已修（`d7db874`） |
+
+**第 2 轮修订（v1.3.3）**：
+
+1. **N1 行为修正（不是仅改文档）**：`spawn:false` 干跑改为**不受 below-threshold 阈值闸限制**（阈值闸条件加 `!fileOnly`），新增单测「spawn=false 在阈值以下也能只写文件」→ handoff **41/41**；README 中英、`docs/skills-usage.md` 口径同步。
+2. N2/N3：README 中英例题换为中性 `src/refund/...` 示例，`open_questions` 不再提 marketplace。
+3. N4/N5：SKILL status/handoff 样例补 `lang=zh`；删掉过期 34/34。
+4. N6：`package.json.files` 补 `README.zh.md`。
+5. N7：tree_send 示例路径中性化。
+6. 发布 v1.3.3（`cce2975`，18/18 SHA，main+tag）。
+
+## 第 3 轮（对象：v1.3.3 已发布内容）
+
+（待第三轮独立评审员回报后填写：N1–N7 逐项确认与最终判定。）
 
 ## 结论
 

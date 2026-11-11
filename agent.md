@@ -3,7 +3,7 @@
 > **所有接手本项目的 AI Agent 的开工必读**，同时是项目**单一事实源**：角色授权 / 决策日志 / 路线图 / 工程约定 / 发布门禁。
 > 文件名由用户在 2026-11-11 明确指定为 **`agent.md`**（此前误建为 `agenda.md`，已 `git mv` 更名，见 §7）。
 > 由 **Lead（指挥官 + 架构师）** 维护，每轮收尾更新。
-> 最后更新：2026-11-11（第三轮：会话自交接并入会话树 v1.2.0 + 同工作区归属/权限模式/Agent 预设继承修复 + 真机 E2E）
+> 最后更新：2026-11-11（第七轮：洁净室二轮修订 + session-tree v1.3.3 / tree-engine v0.5.1：`spawn:false` 干跑修正、Skill 文档补全、语言跟随）
 
 ---
 
@@ -96,9 +96,10 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 
 - **DSH 桌面**：`0.2.2-rc.1`；profile bundles **27** 个；loader 条目 244
 - **本仓**：public `master`，第五轮提交见 `git log -1`；工作树 clean；remote = `https://github.com/orphiczhou/dsh-tree-harness.git`
-- **公开面**：仓库 https://github.com/orphiczhou/dsh-tree-harness（public / master / MIT / 7 topics）；插件仓 `orphiczhou/dsh-session-tree` **v1.3.1**（交接提示语跟随界面语言 + 随包 Skill；main+tag = `c257d61`，18/18 SHA）、`orphiczhou/dsh-region-probe`；**npm 冻结（D3）**
-- **组件**：`dsh-tree-engine` **v0.5.1**（8 工具 + 随包 tree-commander/tree-worker Skill）、`dsh-meta-loop` v0.2.0（未装配）、`dsh-agent-introspect` v0.1.0、`dsh-session-tree` **v1.3.2**（`tree_send` + `session_handoff` + 随包 `session-handoff` Skill + 语言跟随）
+- **公开面**：仓库 https://github.com/orphiczhou/dsh-tree-harness（public / master / MIT / 7 topics）；插件仓 `orphiczhou/dsh-session-tree` **v1.3.3**（交接提示语跟随界面语言 + 随包 Skill + 文档补全 + spawn:false 干跑修正；main+tag = `cce2975`，18/18 SHA）、`orphiczhou/dsh-region-probe`；**npm 冻结（D3）**
+- **组件**：`dsh-tree-engine` **v0.5.1**（8 工具 + 随包 tree-commander/tree-worker Skill）、`dsh-meta-loop` v0.2.0（未装配）、`dsh-agent-introspect` v0.1.0、`dsh-session-tree` **v1.3.3**（`tree_send` + `session_handoff` + 随包 `session-handoff` Skill + 语言跟随 + 干跑不拦阈值）
 - **测试**：tree-engine **67/67**、meta-loop **13/13**；session-tree handoff **41/41**、skills **3/3**、render 全绿、style-guard **22/22**、verify-bundle **0 fail**；新增 `scripts/e2e/verify-kickoff-language.mjs`（接替首条语种断言）
+- **洁净室评审**：独立子会话多轮（v1.3.2 一轮 12 缺口 → 修订；v1.3.3 二轮 PASS_WITH_GAPS 修 N1–N7；三轮复核）见 [docs/skill-cleanroom-2026-11-11.md](docs/skill-cleanroom-2026-11-11.md)
 - **会话树 / 技能活体**：`include:session-tree` / `include:tree-engine` 已重载；新会话 Skill 目录含 3 个 Skill；**接替提示语跟随界面语言**（本机 `locale.preference: zh` → `lang=zh`，接替首条中文，真机 PASS）；E2E 见 [docs/skill-e2e-2026-11-11.md](docs/skill-e2e-2026-11-11.md) 与 [docs/e2e-kickoff-language-2026-11-11.md](docs/e2e-kickoff-language-2026-11-11.md)
 - **用户文档**：新增 [docs/skills-usage.md](docs/skills-usage.md)（安装/发现/最小提示词/三层树/50% 交接/语言/排障）
 - **未装配**：`@local/dsh-meta-loop`；**降级项**：无（tree-engine `sweepMode=timer`）

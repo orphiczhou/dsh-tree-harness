@@ -2,6 +2,24 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [1.3.4] — 2026-11-11 · 洁净室最终文档清扫（session-tree）
+
+### 变更
+
+- 版本：`packages/dsh-session-tree` 由 `1.3.3` → **`1.3.4`**（公开插件仓同步发布；代码无行为变化，内容 = README/SKILL 文案与语言验收表述修正）。
+- **R1-B / R2-B 文档债清扫**：
+  - README（中英）语言验收表述修正：`status`/`handoff` 的 `lang=` 与 `interface_language` 可直接断言；独立 `verify-kickoff-language.mjs` 会**解码接替会话首条消息**（此前误写为「无需解码」）。
+  - `session-handoff` SKILL：`set-session` 重绑主体改为「leaf 的 creator/上级（通常是父 commander）」——交接者无权重绑自己的 leaf。
+  - `docs/skills-usage.md`：新增 profile 修改备份警示；`tree_plan` 样例补 `session_id` 并对齐 `root_dod` 字段；worker 验收改为「commander 跑 verify」；竹节等待原因改为「链满 frozen / 简报回收失败 / 已非 running owner」；补版本差异速查（1.3.0→1.3.3）；`collect-skills.mjs` 自检命令补 `--expect`；patch YAML 改为真实行并注明「无需手抄」。
+  - `tree-commander` / `tree-worker` SKILL：补英文触发词；版本头 `v0.5.1`；旧 `sweep:degraded:no-timer` 日志串改为中性描述。
+  - 根 README / `docs/handoff-2026-11-11.md` / `docs/publishing.md` / `docs/session-handoff-2026-11-11.md` / `agent.md`：版本矩阵清扫到 v1.3.4/cce2975 链、测试入口 6 个、历史 `v1.0.4`/`3 份 cjs` 残留修正。
+- `packages/dsh-tree-engine` 仍为 **0.5.1**（SKILL 勘误，含英文触发词；代码无变化）。
+
+### 验证
+
+- handoff **41/41**、skills **3/3**、render/style-guard/verify-bundle 全绿；tree-engine **67/67**。
+- 洁净室第三轮独立复核见 [docs/skill-cleanroom-2026-11-11.md](docs/skill-cleanroom-2026-11-11.md)。
+
 ## [1.3.3] — 2026-11-11 · `spawn:false` 干跑不被阈值闸拦 + 洁净室二轮修订（session-tree）
 
 ### 变更
