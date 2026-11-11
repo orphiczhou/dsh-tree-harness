@@ -88,26 +88,21 @@ function makePorts(services, log, opts = {}) {
         throw err
       }
       parents.set(key, { agent: parentAgent, sessionId: parentSessionId })
-      const start = {
-        provider: spec.assignee?.mechanism ?? DEFAULT_MECHANISM,
-        label: `tree:${spec.treeId}/${spec.leafId}${spec.segmentIndex ? `#s${spec.segmentIndex}` : ''}`,
-        signal: new AbortController().signal,   // E2E#3 实证必填（服务调 throwIfAborted）；生命周期由 interrupt 管理
-        request: {
-          prompt: [{ type: 'text', text: promptText }],
-          parent: parentAgent,
-          ...(spec.assignee?.provider || spec.assignee?.model || spec.assignee?.effort
-            ? { agentOptions: {
-                ...(spec.assignee?.provider ? { provider: spec.assignee.provider } : {}),
-                ...(spec.assignee?.model ? { model: spec.assignee.model } : {}),
-                ...(spec.assignee?.effort ? { reasoningEffort: spec.assignee.effort } : {}),
-              } }
-            : {}),
-        },
-      }
+      const agentOptions = (spec.assignee?.provider || spec.assignee?.model || spec.assignee?.effort)
+        ? {
+            ...(spec.assignee?.provider ? { provider: spec.assignee.provider } : {}),
+            ...(spec.assignee?.model ? { model: spec.assignee.model } : {}),
+            ...(spec.assignee?.effort ? { reasoningEffort: spec.assignee.effort } : {}),
+          }
+        : undefined
       try {
-        const r = await services.subagents.startContinuable(start)
-        const sessionId = r?.childId ?? r?.sessionId ?? r?.session?.id
-        if (!sessionId) throw new Error(`unrecognized startContinuable result: ${JSON.stringify(r).slice(0, 200)}`)
+        const sessionId = await startChildSession(services, {
+          provider: spec.assignee?.mechanism ?? DEFAULT_MECHANISM,
+          label: `tree:${spec.treeId}/${spec.leafId}${spec.segmentIndex ? `#s${spec.segmentIndex}` : ''}`,
+          parent: parentAgent,
+          promptText,
+          agentOptions,
+        })
         return { sessionId }
       } catch (e) {
         const err = new Error(`ports.dispatch failed: ${e?.message ?? e}`)
@@ -115,8 +110,7 @@ function makePorts(services, log, opts = {}) {
         throw err
       }
     },
-    /** 中断旧会话（竹节先 interrupt 后 start 的 ①）。权威形状（asar L852 实证）：
-     *  authority = { kind: 'parent'|'user', parentSessionId }——与子会话 header.parentSession 匹配即可，无需活 Agent。 */
+    /** 中断旧会话（竹节先 interrupt 后 start 的 ①）。兼容 rc.2 authority 形状（见 startChildSession 注）。 */
     async interrupt(sessionId, parentSessionIdHint) {
       try {
         let parentSessionId = parentSessionIdHint
@@ -125,21 +119,32 @@ function makePorts(services, log, opts = {}) {
           parentSessionId = records?.[0]?.header?.parentSession
         }
         if (!parentSessionId) throw new Error('cannot resolve parentSession for interrupt authority')
-        services.subagents.interrupt(sessionId, { kind: 'parent', parentSessionId })
+        interruptChildCompat(services, sessionId, parentSessionId)
       }
       catch (e) { log(`ports.interrupt failed for ${sessionId}: ${e?.message ?? e}`) }
     },
-    /** 交棒指令（≅ subagents.prompt，按持久化父地址授权）+ K1–K5 简报宽限回收（任务 4）。 */
+    /** 交棒指令（旧形 subagents.prompt / 现役 sendMessage 双形）+ K1–K5 简报宽限回收（任务 4）。 */
     async promptHandoff(sessionId) {
       try {
         const records = await services.sessionQuery.filterSessions([{ kind: 'id', values: [sessionId] }])
         const parent = records?.[0]?.header?.parentSession
         if (!parent) return null
-        await services.subagents.prompt({
-          requestId: `tree-engine-handoff-${Date.now().toString(36)}`,
-          parentSessionId: parent, childSessionId: sessionId, mode: 'continuable', delivery: 'queue',
-          content: [{ type: 'text', text: HANDOFF_INSTRUCTION }],
-        })
+        const content = [{ type: 'text', text: HANDOFF_INSTRUCTION }]
+        let delivered = false
+        if (typeof services.subagents?.sendMessage === 'function') {
+          const liveParent = pickLiveAncestorAgent(services, parent)
+          if (liveParent) {
+            await services.subagents.sendMessage(liveParent, sessionId, content, { signal: new AbortController().signal })
+            delivered = true
+          }
+        }
+        if (!delivered) {
+          await services.subagents.prompt({
+            requestId: `tree-engine-handoff-${Date.now().toString(36)}`,
+            parentSessionId: parent, childSessionId: sessionId, mode: 'continuable', delivery: 'queue',
+            content,
+          }, new AbortController().signal)
+        }
         // 宽限轮询：旧会话在 grace 期内产出 K1–K5 简报 → 全文回收；超时/不可提取 → null 降级
         const deadline = Date.now() + graceMs
         while (Date.now() < deadline) {
@@ -276,6 +281,69 @@ function callerOf(exec) {
  *  模型路由在 request.agentOptions {provider, model, reasoningEffort}）。 */
 const DEFAULT_MECHANISM = process.env.TREE_ENGINE_MECHANISM ?? 'spawn'
 
+/** 宿主 subagents 服务兼容层（2026-10-17 DSH 0.2.1-rc.2 升级后实测）：
+ *  - legacy 基线（引擎 v0.4.0 编写期）：startContinuable(spec) / interrupt(id,{kind:'parent',parentSessionId}) / prompt(req)
+ *  - 现役 rc.2：startActivation({provider,label,request,signal,delivery}) / interrupt(id,{kind:'ancestor'|'user',...}) / sendMessage(parentAgent,childId,content,{signal})
+ *  双形探测：legacy 优先（不改变旧宿主行为），缺席时走现役；两形都缺 → fail-closed 报协议错。
+ *  缺陷出处：树仓 handoff §7 任务 4「startContinuable/prompt/interrupt 精确形状待 smoke」——
+ *  本次 nanju live E2E 首次真机派发即暴露（rc.2 已删除 startContinuable）。 */
+function resolveAgentsService(services) {
+  try {
+    if (services && typeof services.agents?.get === 'function') return services.agents
+    const viaCtx = typeof servicesRef?.get === 'function' ? servicesRef.get('agents') : undefined
+    return viaCtx && typeof viaCtx.get === 'function' ? viaCtx : undefined
+  } catch { return undefined }
+}
+
+function pickLiveAncestorAgent(services, parentSessionId) {
+  try {
+    const agents = resolveAgentsService(services)
+    return agents?.get?.(parentSessionId)
+  } catch { return undefined }
+}
+
+async function startChildSession(services, { provider, label, parent, promptText, agentOptions }) {
+  const request = {
+    prompt: [{ type: 'text', text: promptText }],
+    parent,
+    ...(agentOptions ? { agentOptions } : {}),
+  }
+  const signal = new AbortController().signal
+  if (typeof services.subagents?.startContinuable === 'function') {
+    const r = await services.subagents.startContinuable({ provider, label, signal, request })
+    const sessionId = r?.childId ?? r?.sessionId ?? r?.session?.id
+    if (!sessionId) throw new Error(`unrecognized startContinuable result: ${JSON.stringify(r).slice(0, 200)}`)
+    return sessionId
+  }
+  if (typeof services.subagents?.startActivation === 'function') {
+    const r = await services.subagents.startActivation({ provider, label, request, signal, delivery: 'parent' })
+    const sessionId = r?.childId ?? r?.sessionId
+    if (!sessionId) throw new Error(`unrecognized startActivation result: ${JSON.stringify(r).slice(0, 200)}`)
+    return sessionId
+  }
+  throw new Error('host subagents service exposes neither startContinuable nor startActivation')
+}
+
+/** 中断会话：按现役 authority 形状逐候选尝试（ancestor 活 Agent → user 父地址 → legacy parent 形状）。 */
+function interruptChildCompat(services, sessionId, parentSessionId) {
+  if (typeof services.subagents?.interrupt !== 'function') return
+  const authorities = []
+  const liveAncestor = parentSessionId ? pickLiveAncestorAgent(services, parentSessionId) : undefined
+  if (liveAncestor) authorities.push({ kind: 'ancestor', agent: liveAncestor })
+  if (parentSessionId) {
+    authorities.push({ kind: 'user', parentSessionId })
+    authorities.push({ kind: 'parent', parentSessionId })
+  }
+  let lastError = null
+  for (const authority of authorities) {
+    try {
+      services.subagents.interrupt(sessionId, authority)
+      return
+    } catch (e) { lastError = e }
+  }
+  if (lastError) throw lastError
+}
+
 /** 攻击审计缺省路由（异族 + 最强档：随感 #33/#30——检验者不得用次级模型、不得与执行者同源；
  *  环境覆盖 TREE_ENGINE_JUDGE_ASSIGNEE='{"provider":...,"model":...}'）。 */
 function judgeAssignee() {
@@ -341,15 +409,13 @@ async function runAttackSession(services, log, { treeId, leafId, round, rubric, 
     '②在回答末尾输出同一行：ATTACK_VERDICT: {"pass":...,"findings":[...]}',
     'pass=true 仅当找不到任何实质问题；找到任一实质问题即 pass=false 并逐条列出 findings。写完文件即可结束，不要等待。',
   ].join('\n')
-  const start = {
+  const judgeId = await startChildSession(services, {
     provider: DEFAULT_MECHANISM,
     label: `tree-attack:${treeId}/${leafId}#r${round}`,
-    signal: new AbortController().signal,
-    request: { prompt: [{ type: 'text', text: prompt }], parent: parentAgent, agentOptions: assignee },
-  }
-  const r = await services.subagents.startContinuable(start)
-  const judgeId = r?.childId ?? r?.sessionId
-  if (!judgeId) throw new Error(`unrecognized startContinuable result: ${JSON.stringify(r).slice(0, 200)}`)
+    parent: parentAgent,
+    promptText: prompt,
+    agentOptions: assignee,
+  })
   const normalize = (v) => (v && typeof v.pass === 'boolean')
     ? { pass: v.pass, findings: Array.isArray(v.findings) ? v.findings.map(String) : [], detail: `judge=${assignee.provider}/${assignee.model} round=${round}` }
     : null
@@ -371,7 +437,7 @@ async function runAttackSession(services, log, { treeId, leafId, round, rubric, 
   while (Date.now() < deadline) {
     await new Promise((res) => setTimeout(res, 5_000))
     const v = await tryOnce()
-    if (v) { try { services.subagents.interrupt(judgeId, { kind: 'parent', parentSessionId: verifyExec?.agent?.session?.id }) } catch { /* 尽力而为 */ } return v }
+    if (v) { try { interruptChildCompat(services, judgeId, verifyExec?.agent?.session?.id) } catch { /* 尽力而为 */ } return v }
   }
   await new Promise((res) => setTimeout(res, 8_000))
   const final = await tryOnce()
