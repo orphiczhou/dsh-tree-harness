@@ -1,0 +1,1 @@
+verify-handoff: source session log not found for 00000000-0000-4000-8000-000000000000 under C:\Users\sir_c\.dsh\sessions

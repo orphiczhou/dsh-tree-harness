@@ -1,0 +1,117 @@
+{
+  "tool": "release-e2e",
+  "version": "1.0.0",
+  "mode": "replay",
+  "real_machine": false,
+  "timestamp": "2026-11-11T17:00:43.083Z",
+  "node": "v24.21.0",
+  "repo_root": "D:\\Codes\\dsh-tree-harness",
+  "dsh_home": "C:\\Users\\sir_c\\.dsh",
+  "disclaimer": "replay 只复核既有 JSON artifact 的存储判定与内部一致性，不读取会话日志、不产生新证据，不能替代真机三断言。",
+  "params": {
+    "replay": [
+      "scripts/e2e/artifacts/e2e-baseline-crosscheck-b9d5bacc-to-887b8cd1.json",
+      "scripts/e2e/artifacts/e2e-fixed-root-55543cfc.json"
+    ],
+    "expect_kind": "sibling",
+    "expect_lang": null,
+    "artifacts_dir": "scripts/e2e/artifacts/release-20261111T170043Z",
+    "artifacts_dir_abs": "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\artifacts\\release-20261111T170043Z",
+    "summary": "scripts/e2e/artifacts/release-20261111T170043Z.json"
+  },
+  "results": [
+    {
+      "artifact": "scripts/e2e/artifacts/e2e-baseline-crosscheck-b9d5bacc-to-887b8cd1.json",
+      "kind": "verify-handoff",
+      "pass": false,
+      "checks": [
+        {
+          "name": "summary-present",
+          "pass": true,
+          "detail": "verdict=FAIL 4/12"
+        },
+        {
+          "name": "total-consistent",
+          "pass": true,
+          "detail": "summary.total=12 assertions=12"
+        },
+        {
+          "name": "count-consistent",
+          "pass": true,
+          "detail": "stored=4/8 recomputed=4/8"
+        },
+        {
+          "name": "verdict-consistent",
+          "pass": true,
+          "detail": "stored=FAIL"
+        },
+        {
+          "name": "assertions-pass",
+          "pass": false,
+          "detail": "failed: workspace_attribution, first_frame_permission_preset, first_frame_sandbox_mode, first_frame_approval_policy, agent_preset, tools_count, handoff_prompt_names_source, handoff_file_read"
+        },
+        {
+          "name": "expect-kind-match",
+          "pass": false,
+          "detail": "artifact=root requested=sibling"
+        }
+      ]
+    },
+    {
+      "artifact": "scripts/e2e/artifacts/e2e-fixed-root-55543cfc.json",
+      "kind": "verify-handoff",
+      "pass": false,
+      "checks": [
+        {
+          "name": "summary-present",
+          "pass": true,
+          "detail": "verdict=PASS 14/14"
+        },
+        {
+          "name": "total-consistent",
+          "pass": true,
+          "detail": "summary.total=14 assertions=14"
+        },
+        {
+          "name": "count-consistent",
+          "pass": true,
+          "detail": "stored=14/0 recomputed=14/0"
+        },
+        {
+          "name": "verdict-consistent",
+          "pass": true,
+          "detail": "stored=PASS"
+        },
+        {
+          "name": "assertions-pass",
+          "pass": true,
+          "detail": "14/14"
+        },
+        {
+          "name": "expect-kind-match",
+          "pass": false,
+          "detail": "artifact=root requested=sibling"
+        }
+      ]
+    }
+  ],
+  "overall": {
+    "verdict": "FAIL",
+    "replayed": 2,
+    "passed": 0,
+    "failed": 2,
+    "exitCode": 1
+  },
+  "artifacts": {
+    "dir": "scripts/e2e/artifacts/release-20261111T170043Z",
+    "dir_abs": "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\artifacts\\release-20261111T170043Z",
+    "summary": "scripts/e2e/artifacts/release-20261111T170043Z.json",
+    "files": [
+      "scripts/e2e/artifacts/release-20261111T170043Z/replay.json"
+    ]
+  },
+  "notes": [
+    "replay 不连真机、不解码会话日志；PASS 仅表示既有证据自洽。",
+    "发布门禁仍以真机三断言全 PASS 为准。"
+  ]
+}

@@ -1,0 +1,197 @@
+{
+  "tool": "release-e2e",
+  "version": "1.0.0",
+  "mode": "live",
+  "real_machine": true,
+  "timestamp": "2026-11-11T17:00:41.183Z",
+  "node": "v24.21.0",
+  "repo_root": "D:\\Codes\\dsh-tree-harness",
+  "dsh_home": "C:\\Users\\sir_c\\.dsh",
+  "params": {
+    "source": "00000000-0000-4000-8000-000000000000",
+    "successor": "11111111-1111-4111-8111-111111111111",
+    "expect_kind": "root",
+    "expect_lang": "zh",
+    "skill_session": "11111111-1111-4111-8111-111111111111",
+    "wait_ms": 2000,
+    "timeout_ms": 180000,
+    "fail_fast": false,
+    "summarize": false,
+    "artifacts_dir": "scripts/e2e/artifacts/release-20261111T170038Z",
+    "artifacts_dir_abs": "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\artifacts\\release-20261111T170038Z",
+    "summary": "scripts/e2e/artifacts/release-20261111T170038Z.json"
+  },
+  "steps": [
+    {
+      "id": "verify-handoff",
+      "title": "接替会话继承与归属",
+      "required": true,
+      "script": "scripts/e2e/verify-handoff.mjs",
+      "argv": [
+        "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\verify-handoff.mjs",
+        "--source",
+        "00000000-0000-4000-8000-000000000000",
+        "--successor",
+        "11111111-1111-4111-8111-111111111111",
+        "--expect-kind",
+        "root",
+        "--wait",
+        "2000",
+        "--json",
+        "--out",
+        "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\artifacts\\release-20261111T170038Z\\verify-handoff.json"
+      ],
+      "exitCode": 2,
+      "pass": false,
+      "status": "UNJUDGEABLE",
+      "duration_ms": 2148,
+      "timedOut": false,
+      "artifact": "scripts/e2e/artifacts/release-20261111T170038Z/verify-handoff.json",
+      "artifactWritten": false,
+      "evidence": {
+        "missing": true,
+        "error": "artifact not produced by child script"
+      },
+      "stderr_first": "verify-handoff: source session log not found for 00000000-0000-4000-8000-000000000000 under C:\\Users\\sir_c\\.dsh\\sessions",
+      "stderr_tail": "verify-handoff: source session log not found for 00000000-0000-4000-8000-000000000000 under C:\\Users\\sir_c\\.dsh\\sessions",
+      "stdout_tail": "",
+      "spawn_error": null,
+      "raw": {
+        "stdout": "scripts/e2e/artifacts/release-20261111T170038Z/raw/verify-handoff.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261111T170038Z/raw/verify-handoff.stderr.txt"
+      }
+    },
+    {
+      "id": "verify-kickoff-language",
+      "title": "接替首条提示语种",
+      "required": true,
+      "script": "scripts/e2e/verify-kickoff-language.mjs",
+      "argv": [
+        "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\verify-kickoff-language.mjs",
+        "--session",
+        "11111111-1111-4111-8111-111111111111",
+        "--expect",
+        "zh",
+        "--json"
+      ],
+      "exitCode": 2,
+      "pass": false,
+      "status": "UNJUDGEABLE",
+      "duration_ms": 98,
+      "timedOut": false,
+      "artifact": "scripts/e2e/artifacts/release-20261111T170038Z/verify-kickoff-language.json",
+      "artifactWritten": true,
+      "evidence": {
+        "missing": true,
+        "error": "child produced no parseable JSON artifact"
+      },
+      "stderr_first": "no session log found for 11111111-1111-4111-8111-111111111111 (workspace encoding may differ)",
+      "stderr_tail": "no session log found for 11111111-1111-4111-8111-111111111111 (workspace encoding may differ)",
+      "stdout_tail": "",
+      "spawn_error": null,
+      "raw": {
+        "stdout": "scripts/e2e/artifacts/release-20261111T170038Z/raw/verify-kickoff-language.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261111T170038Z/raw/verify-kickoff-language.stderr.txt"
+      }
+    },
+    {
+      "id": "collect-skills",
+      "title": "会话可见 skill 列表",
+      "required": true,
+      "script": "scripts/skill-e2e/collect-skills.mjs",
+      "argv": [
+        "D:\\Codes\\dsh-tree-harness\\scripts\\skill-e2e\\collect-skills.mjs",
+        "--session",
+        "11111111-1111-4111-8111-111111111111",
+        "--json",
+        "--out",
+        "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\artifacts\\release-20261111T170038Z\\collect-skills.json"
+      ],
+      "exitCode": 1,
+      "pass": false,
+      "status": "FAIL",
+      "duration_ms": 104,
+      "timedOut": false,
+      "artifact": "scripts/e2e/artifacts/release-20261111T170038Z/collect-skills.json",
+      "artifactWritten": true,
+      "evidence": {
+        "verdict": "FAIL",
+        "sessionCount": 1,
+        "found": 0,
+        "missingSessions": 1,
+        "expected": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "sessions": [
+          {
+            "id": "11111111-1111-4111-8111-111111111111",
+            "ok": false,
+            "log": null,
+            "missing": [
+              "tree-commander",
+              "tree-worker",
+              "session-handoff"
+            ],
+            "atCreationCount": null,
+            "latestCount": null,
+            "skillLoads": 0
+          }
+        ]
+      },
+      "stderr_first": "",
+      "stderr_tail": "",
+      "stdout_tail": "…\": \"2026-11-11T17:00:41.169Z\",\n  \"dshHome\": \"C:\\\\Users\\\\sir_c\\\\.dsh\",\n  \"expected\": [\n    \"tree-commander\",\n    \"tree-worker\",\n    \"session-handoff\"\n  ],\n  \"expectAt\": \"latest\",\n  \"sessions\": [\n    {\n      \"id\": \"11111111-1111-4111-8111-111111111111\",\n      \"ok\": false,\n      \"error\": \"session log not found\",\n      \"log\": null,\n      \"expected\": [\n        \"tree-commander\",\n        \"tree-worker\",\n        \"session-handoff\"\n      ],\n      \"found\": false,\n      \"missing\": [\n        \"tree-commander\",\n        \"tree-worker\",\n        \"session-handoff\"\n      ],\n      \"atCreation\": null,\n      \"latest\": null,\n      \"skillLoads\": [],\n      \"evolution\": []\n    }\n  ],\n  \"summary\": {\n    \"sessions\": 1,\n    \"found\": 0,\n    \"missingSessions\": 1,\n    \"allExpectedPresent\": false,\n    \"verdict\": \"FAIL\"\n  }\n}",
+      "spawn_error": null,
+      "raw": {
+        "stdout": "scripts/e2e/artifacts/release-20261111T170038Z/raw/collect-skills.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261111T170038Z/raw/collect-skills.stderr.txt"
+      }
+    }
+  ],
+  "overall": {
+    "verdict": "FAIL",
+    "required": 3,
+    "passed": 0,
+    "failed": 3,
+    "skipped": 0,
+    "optional_failed": [],
+    "exitCode": 1
+  },
+  "artifacts": {
+    "dir": "scripts/e2e/artifacts/release-20261111T170038Z",
+    "dir_abs": "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\artifacts\\release-20261111T170038Z",
+    "summary": "scripts/e2e/artifacts/release-20261111T170038Z.json",
+    "files": [
+      "scripts/e2e/artifacts/release-20261111T170038Z/verify-kickoff-language.json",
+      "scripts/e2e/artifacts/release-20261111T170038Z/collect-skills.json"
+    ],
+    "declared": [
+      "scripts/e2e/artifacts/release-20261111T170038Z/verify-handoff.json",
+      "scripts/e2e/artifacts/release-20261111T170038Z/verify-kickoff-language.json",
+      "scripts/e2e/artifacts/release-20261111T170038Z/collect-skills.json"
+    ],
+    "raw": [
+      {
+        "stdout": "scripts/e2e/artifacts/release-20261111T170038Z/raw/verify-handoff.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261111T170038Z/raw/verify-handoff.stderr.txt"
+      },
+      {
+        "stdout": "scripts/e2e/artifacts/release-20261111T170038Z/raw/verify-kickoff-language.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261111T170038Z/raw/verify-kickoff-language.stderr.txt"
+      },
+      {
+        "stdout": "scripts/e2e/artifacts/release-20261111T170038Z/raw/collect-skills.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261111T170038Z/raw/collect-skills.stderr.txt"
+      }
+    ]
+  },
+  "notes": [
+    "runner 只编排既有脚本，不发起会话、不消耗模型配额。",
+    "真机断言依赖本机 DSH 会话日志（<DSH_HOME>/sessions/**/session.v4.jsonl.zstd），需在接替会话首轮完成后执行。",
+    "verify-handoff --wait 默认 0（快速失败）；真机发布建议 --wait 120000。",
+    "collect-skills 默认期望 tree-commander / tree-worker / session-handoff；runner 未改动其语义。",
+    "任一必需断言 FAIL/无法判定（子脚本退出码 1 或 2）→ 整体 exit 1。"
+  ]
+}
