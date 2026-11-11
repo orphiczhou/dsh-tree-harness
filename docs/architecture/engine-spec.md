@@ -65,6 +65,8 @@ STATUS_ENUM = [active, done, pruned, archived, segment_pending, pending_brief]
 | commander 嵌套深度 | ≤3 | — | leaf_add 拦（与 DSH maxDepth:3 恰好同值——嵌套语义天然对齐） |
 | backup 轮转 | 10 | — | doBackup 保留最近 10 份；restore 前自动 before-restore 备份 + tree_id 匹配校验 |
 
+> **修订（2026-11-12，tree-engine v0.7.0）**：本仓 DSH 实现（`packages/dsh-tree-engine`）对第 5 节表格的补充说明——**会话预算集合** = `leaf.session_id` ∪ `leaf.segment_chain` ∪ `leaf.runtime.segmentChain` ∪ `session_registry`（按归一化会话 id 去重；W2.1 起把竹节接力产生的会话计入，`src/guards.js` 预算口径与 `src/engine.js` `validate` 同步）；`leaf.runtime.history` 中**接力前**的旧会话暂不计入（已知边界，留待「`runtime.history` 预算口径」议题）。**会话 id 归一化**：可选 `session-` 前缀（DSH 根/主会话形态）与裸 UUID 视为同一会话，写入侧剥前缀 + 小写后存规范形，比较侧 `normalizeSessionId` / `sameSession` 归一化后再比较；**UUID v4 严格性不放宽**（归一化后非 v4 仍 `E_INVALID_UUID_STRICT`），历史带前缀旧值按归一化读取。本节以外的冻结正文不变。
+
 ## 6. 并发与入口契约
 
 - **入口 `run(cmd, args, treesRoot?)`：永不 throw**；成功 `{ok:true,...}`，失败 `{ok:false, error:{code,message,help_topic?}}`——MCP handler 与测试共用唯一 choke point；per-call treesRoot try/finally 防跨请求污染。

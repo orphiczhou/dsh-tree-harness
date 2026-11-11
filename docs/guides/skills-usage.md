@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.6.0**、`packages/dsh-session-tree` **v1.3.6** 及以上（公开插件仓同步 tag `v1.3.6`）。
+> 适用版本：`packages/dsh-tree-engine` **v0.7.0**、`packages/dsh-session-tree` **v1.3.6** 及以上（公开插件仓同步 tag `v1.3.6`）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -121,7 +121,7 @@ pnpm install
 
 排障：三条都不出现 → 检查 ① 包是否装（`plugin_manager list_plugins`）；② profile 是否同时有 `@deepseek-ai/dsh-skill-filesystem`（**随 DSH 桌面版内置，不要单独安装**）；③ 是否在改完 patch 后没做 disable→enable；④ 是否是**新开**会话（目录在会话启动时注入，旧会话不刷新）。
 
-> **安装后自检（推荐）：`tree_doctor {action:"run"}`**（tree-engine ≥ 0.6.0）。它是第 9 个 `tree_*` 工具、**只读零写副作用**：一次给出 7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`）与 `summary{pass,warn,fail}` + 一行 `hint`；传 `tree_id`（如 `tree_doctor {action:"run", tree_id:"wave1"}`）会额外校验该树并统计停滞节点。**FAIL 不 throw**——它是诊断器不是门禁，装完/重载后先跑它，比逐项猜「工具或 Skill 为什么没出现」快。
+> **安装后自检（推荐）：`tree_doctor {action:"run"}`**（tree-engine ≥ 0.7.0）。它是第 9 个 `tree_*` 工具、**只读零写副作用**：一次给出 7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`）与 `summary{pass,warn,fail}` + 一行 `hint`；传 `tree_id`（如 `tree_doctor {action:"run", tree_id:"wave1"}`）会额外校验该树并统计停滞节点。**FAIL 不 throw**——它是诊断器不是门禁，装完/重载后先跑它，比逐项猜「工具或 Skill 为什么没出现」快。
 
 ### 3.1 五分钟冒烟（第一次用就照这个顺序）
 
@@ -180,7 +180,7 @@ tree_report {action:"event", type:"done", tree_id:"chlog", leaf_id:"chlog-C1a1-w
 - **被派发的 commander 不要再 `tree_plan`**（树已存在；再 create 会 `E_DUPLICATE_LEAF` 或把节点建到另一棵树）。
 - `tree_verify` 的 FAIL **不会**阻止 `succeeded`，commander 必须自己读 `result.pass`。
 - 竹节接力：worker 用 `tree_report {action:"context", pct:N}` 自报水位，引擎在 **pct≥42** 自动换会话继续同一 leaf；接力后 owner 会重绑给接手会话（v0.5.0 起）。
-- 预算：树总会话数 ≤50（不含竹节接力会话）。
+- 预算：树总会话数 ≤50（v0.7.0 起**计入**竹节接力会话 `runtime.segmentChain`；`runtime.history` 中接力前旧会话暂不计，详见 §8.1）。
 
 ---
 
@@ -252,12 +252,19 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 | 竹节接力（tree-engine） | worker `tree_report {action:"context", pct≥42}` | 同一 leaf 换会话继续，`leaf.session_id` 重绑给接手会话（v0.5.0） | 先按竹节：引擎自动换棒，leaf 不中断 |
 | 会话自交接（session-tree） | 任意会话 `session_handoff status` 显示 `context_pct ≥50` | 同层级新会话（root→root，子→同父兄弟） | 竹节已换棒则不用再交接；**已到 50% 仍没等到竹节**（如链满 `frozen` / 简报回收失败 / 你已不是 running 的 leaf owner）→ 立即交接，并在 `tree_report progress` 留痕 |
 
+### 8.1 预算与 id 口径（v0.7.0）
+
+- **root 会话 id 带 `session-` 前缀也可用（v0.7.0 归一化）**：DSH 根/主会话的 `$env:DSH_SESSION_ID` 形如 `session-<uuid>`，被派发子会话是裸 UUID v4。tree-engine v0.7.0 起在**写入侧**归一化（剥 `session-` 前缀、小写、存裸 UUID 规范形），**比较侧**用 `normalizeSessionId` / `sameSession`——`tree_plan` 的 `session_id`、`tree_node add` 的 `added_by`、`tree_report` 的调用者身份都**原样传即可**，不要手工截/拼前缀。**UUID v4 严格性不放宽**：归一化后仍非 v4 照旧 `E_INVALID_UUID_STRICT`。
+- **`max_sessions` 计入竹节接力（v0.7.0）**：树会话上限 50 的计数集合 = `leaf.session_id` ∪ `leaf.segment_chain` ∪ `leaf.runtime.segmentChain` ∪ `session_registry`（按归一化会话 id 去重）——一次竹节接力多一个会话就多计 1，超限即 `E_MAX_SESSIONS`。**已知边界**：`leaf.runtime.history` 中接力**前**的旧会话暂不计入（下一轮「`runtime.history` 预算口径」议题）。
+
 ---
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.6.0 / `dsh-session-tree` 1.3.6（公开插件仓 tag `v1.3.6`）。
-- **tree-engine 0.6.0**：新增第 9 个工具 **`tree_doctor`**（只读自检，7 检查项）+ leaf 写面护栏（`LEAF_WRITE_MATRIX`）；Skill 正文未变，测试数 67→**84/84**。安装/重载后推荐先跑一次自检（见 §3）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.7.0 / `dsh-session-tree` 1.3.6（公开插件仓 tag `v1.3.6`）。
+- **tree-engine 0.7.0**：新增第 9 个工具（`tree_doctor`）之后的引擎收口版 —— ① W2.1 会话预算计入竹节链 `runtime.segmentChain`；② W2.3 RC2 兼容层单测 11 例；③ W2.6 root/主会话 id 归一化（可选 `session-` 前缀）；Skill 正文升到 **v2.1**；测试数 84→**112/112**。安装/重载后推荐先跑一次 `tree_doctor` 自检（见 §3）。
+- **tree-engine 0.6.0**：新增第 9 个工具 **`tree_doctor`**（只读自检，7 检查项）+ leaf 写面护栏（`LEAF_WRITE_MATRIX`），测试数 67→84。
+- **Skill 版本差（v2.1）**：`tree-commander` / `tree-worker` SKILL 正文为 **v2.1**（随 tree-engine v0.7.0 分发：工具面 9 个、`session-` 前缀归一化、`max_sessions` 计入竹节链）；`session-handoff` SKILL 随 session-tree v1.3.6，本轮无改动。
 - **版本差异速查**：
   - **1.3.0**：随包 `session-handoff` Skill + skill provider patch 行（此前无 Skill）；
   - **1.3.1**：接替提示语跟随 DSH 界面语言（zh/en；`lang=` + `interface_language`）；

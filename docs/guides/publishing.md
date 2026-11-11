@@ -134,6 +134,70 @@ v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 / v1.3.6 实测（文档补全 + spawn:false �
 
 ⚠️ **禁止手工双写**：任何「本仓改一份、公开仓再改一份」的做法都会造成发布源漂移；只用脚本同步 + SHA 校验。
 
+> 以上 1–6 步已可由 §5.1 的一条命令串起来（默认 dry-run；`--push` 才真推）。
+
+## 5.1 一条命令发布（W2.7）
+
+`scripts/release-all.mjs` 把 §5 的人工步骤串成一条命令：**预检 → 单向同步 + SHA-256 对账 → 本仓 commit（可选 push）→ 镜像仓 commit + tag（可选 push）→ `ls-remote` 核对**。任何一步失败立即非 0 退出，并打印「已完成步骤 / 下一步人工处置 / 回滚命令」；同步仍然只走 `release-plugin.mjs`，禁止手工双写。
+
+### 前置条件
+
+- 本仓在 `master` 分支，`origin` = `https://github.com/orphiczhou/dsh-tree-harness.git`（URL 不含内嵌凭据）；
+- 镜像仓本地 checkout 干净、在 `main` 分支，用 `--mirror-dir <dir>` 或环境变量 `DSH_MIRROR_DIR` 指定（脚本不硬编码开发机路径）；
+- 包内容有变化时先在 `packages/dsh-session-tree/package.json` bump version（D6）；**版本未 bump 时真实运行拒绝**，并提示「包内容无变化不需要发布」；
+- 推送需要 **User 环境变量 `GH_TOKEN`**（脚本只在 push 时读取；dry-run 完全不读）；
+- 若 `scripts/check-version-consistency.mjs`（W2.4）存在则自动调用，失败即门禁。
+
+### 用法
+
+```powershell
+# 1) 演练（默认模式；只读预检 + 打印完整步骤计划，不写文件、不读 token）
+node scripts/release-all.mjs --dry-run --mirror-dir <镜像 checkout>
+
+# 2) 本地全链路演练（会写镜像 checkout + 本仓/镜像本地 commit/tag，但不推送）
+node scripts/release-all.mjs --skip-push --mirror-dir <镜像 checkout>
+
+# 3) 正式发布（唯一会联网写远端的模式）
+node scripts/release-all.mjs --push --mirror-dir <镜像 checkout>
+
+# 补充：跳过包测试 / 自定义 commit 摘要
+node scripts/release-all.mjs --push --mirror-dir <镜像 checkout> --skip-tests --summary "会话树 v1.3.7：…"
+```
+
+| 参数 | 作用 |
+|---|---|
+| `--dry-run` | 只读演练（默认）；即使预检有 GATE 也返回 0，并打印 `BLOCKED` 原因 |
+| `--skip-push` / `--apply` | 执行本地全链路（同步 + commit + tag），**不推送**；用于离线演练/断网环境 |
+| `--push` | 执行全链路并推送本仓 + 镜像 `main`/tag（唯一会联网写远端的开关） |
+| `--mirror-dir <dir>` | 公开镜像仓本地 checkout；缺省读 `DSH_MIRROR_DIR` |
+| `--pkg <name>` | 包名或目录名，缺省 `@orphiczhou/dsh-session-tree` |
+| `--skip-tests` | 跳过包测试（仍执行 `check-version-consistency.mjs`） |
+| `--summary <text>` | 本仓发布 commit 摘要（模板 `feat/release: <pkg> vX.Y.Z — <摘要>`） |
+| `--require-clean` | 工作树必须 clean；默认把未提交改动列为 WARN（会随 `git add -A` 进入发布提交） |
+
+### 步骤、失败处理与回滚
+
+| 步骤 | 动作 | 失败时脚本给出的回滚（节选） |
+|---|---|---|
+| 0 预检 | 仓库/分支/remote、镜像分支与 tag、版本关系、`--check` 内容对账、一致性脚本、测试计划 | 未产生写入；修复 GATE 后重跑 |
+| 2 同步 | `release-plugin --check` → `--prune` → `--check`，要求 `files=N match=N`（当前 19） | `git -C <mirror> checkout -- . && git -C <mirror> clean -fd` |
+| 3 本仓 | `git add -A` + `git commit`（`feat/release: <pkg> vX.Y.Z — <摘要>`）；`--push` 时 `git push origin master` | 未推送：`git reset --soft HEAD~1`；已推送：`git revert --no-edit <sha>` + `git push origin master` |
+| 4 镜像 | `git -C <mirror> add -A` + commit + `tag vX.Y.Z`；`--push` 时 push `main` 与 tag | 未推送：`git reset --soft <sha>` / `git tag -d vX.Y.Z`；已推送：revert + 删远端 tag（确认无消费者后） |
+| 5 核对 | `git ls-remote origin refs/heads/master`、`git ls-remote <mirror> refs/heads/main refs/tags/vX.Y.Z` 必须等于本地 | 重试对应 push；tag 指向不一致时先查清再处理，不覆盖已发布 tag |
+
+退出码：`0` = 成功 / no-op / dry-run 完成；`1` = 真实运行被门禁拒绝、预检环境错误（如镜像 checkout 不存在）或任一步失败；`2` = 用法错误（未知参数、参数缺值）。
+
+### 凭据纪律（与 agent.md §0.2 / §5 一致）
+
+- token 从 `[Environment]::GetEnvironmentVariable('GH_TOKEN','User')`（或进程 env）读入**内存**，只在 push 时读取；
+- 通过子进程环境变量 `GIT_CONFIG_COUNT` / `GIT_CONFIG_KEY_0` / `GIT_CONFIG_VALUE_0` 注入 `http.extraheader`（git ≥ 2.31）：**不写 git config、不进 argv、不打印、不写 remote URL**；
+- 子进程输出统一 redact 后才打印；网络命令失败且疑似代理错误时，按 agent.md 约定用 `-c http.proxy=` 直连重试一次；
+- 脚本不修改 profile、不安装/重载插件；发布后如需回退本机插件，按 [agent.md](../../agent.md) §6.1 的 profile 回滚步骤执行。
+
+### 实测（2026-11-12）
+
+真实仓 `--dry-run`：exit 0，本仓 HEAD（`e09f39b`）与镜像 HEAD（`298298d`）均未改变，输出含完整 5 步计划与预检结果；失败路径（`--mirror-dir` 指向不存在路径）exit 1 并给出 clone 命令。隔离沙箱（`git archive HEAD` 副本）完成未 bump 拒绝（exit 1，0 写入）与 bump 后 `--skip-push` 全链路成功（同步 **19/19 SHA**、本仓 commit、镜像 commit + tag `v1.3.7`），远端 `main`/tag 未变化（证明未 push）。完整原始输出摘要见 [release-automation-2026-11-12.md](../reports/release-automation-2026-11-12.md)。
+
 ---
 
 ## 6. 公开前检查清单（本仓发布 / 插件仓发布通用）
@@ -155,9 +219,11 @@ v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 / v1.3.6 实测（文档补全 + spawn:false �
 
 ### 测试与一致性
 
-- [ ] `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **67/67**（62 引擎 + 4 技能打包 + 1 B1 回归），退出码 0；
-- [ ] `packages/dsh-session-tree`：`node test/handoff.test.js`（**41/41**）、`node test/skills.test.cjs`（**3/3**，随包 Skill 打包回归）、`node test/render.test.cjs`、`node test/style-guard.cjs`（**22/22**）、`node scripts/verify-bundle.mjs`（0 fail）、`node test/provider-conformance.cjs [asar 解包目录]`（后者需 rc.2 兼容 asar fixture，见 [merge-session-tree-2026-11-11.md](../architecture/merge-session-tree-2026-11-11.md) §5）；
+- [ ] `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **112/112**（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 11 compat + 10 identity + 7 budget），退出码 0；
+- [ ] `packages/dsh-session-tree`：`node test/handoff.test.js`（**41/41**）、`node test/skills.test.cjs`（**3/3**，随包 Skill 打包回归）、`node test/render.test.cjs`、`node test/style-guard.cjs`（**22/22**）、`node scripts/verify-bundle.mjs`（0 fail）、`node test/provider-conformance.cjs [rc.2 fixture 目录]`（fixture 解析顺序 `DSH_RC2_FIXTURE_DIR` → `%TEMP%\dsh-asar-inspect\out-rc2-compat` → `out`，缺 fixture exit 2 可操作报错；记录见 [conformance-rc2-2026-11-12.md](../reports/conformance-rc2-2026-11-12.md)）；
 - [ ] `packages/dsh-session-tree` 与公开插件仓逐文件 SHA 一致（`release-plugin.mjs`）；
+- [ ] 版本/文档一致性：`node scripts/check-version-consistency.mjs`（W2.4 产出；0 失败）；
+- [ ] 真机 E2E 三断言（W2.5）：`node scripts/e2e/run-release-e2e.mjs --source <id> --successor <id> --expect-kind root|sibling --expect-lang zh --wait 120000` → 三条断言全 PASS 且 `scripts/e2e/artifacts/release-<ts>.json` 落盘（失败注入演练证据见 [e2e-release-runner-2026-11-12.md](../reports/e2e-release-runner-2026-11-12.md)）；
 - [ ] 真机 E2E：`scripts/e2e/verify-handoff.mjs` 对 root/sibling 接替会话断言全 PASS（报告 [e2e-handoff-2026-11-11.md](../reports/e2e-handoff-2026-11-11.md)）；
 - [ ] README / handoff / publishing 中的路径、数字、状态与实际一致（版本号、测试数、装配状态、npm 404 结论）。
 
@@ -184,3 +250,4 @@ v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 / v1.3.6 实测（文档补全 + spawn:false �
 - 2026-11-11（v1.3.4，第八轮）：R1-B/R2-B 文档债清扫（语言验收表述、set-session 主体、英文触发词、版本矩阵）→ **18/18 SHA**，tag `v1.3.4` = **`f784c6e`**。
 - 2026-11-11（v1.3.5，第九轮）：第三轮洁净室 PASS 后的收尾（SKILL 的 `spawn:false` 例外说明 + root→grandchild 措辞）→ **18/18 SHA**，tag `v1.3.5` = **`1fb9193`**。
 - 2026-11-12（v1.3.6，第十轮）：文档按目录归档 + 新增人类/Agent 安装指南（`AGENT-INSTALL.md`）→ **19/19 SHA**，tag `v1.3.6` = **`298298d`**。
+- 2026-11-12（W2.7）：新增 `scripts/release-all.mjs` 一条命令发布（预检 → `release-plugin` 同步/SHA 对账 → 本仓 commit → 镜像 commit/tag → `ls-remote` 核对；默认 dry-run、`--push` 才真推、失败即停并给回滚提示）；本文件新增 §5.1，§6 清单接入版本一致性、发布 E2E 两条固定命令。演练证据见 [release-automation-2026-11-12.md](../reports/release-automation-2026-11-12.md)。

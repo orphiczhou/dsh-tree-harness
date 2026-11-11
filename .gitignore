@@ -13,6 +13,11 @@ id_rsa*
 
 # 会话交接文件（session_handoff 写到会话 cwd，属运行时产物，不入库）
 HANDOFF-*.md
+# 例外（2026-11-12，W2 doc 收口发现）：docs/ 下的「交接手册」是长期文档，必须入库。
+# 注意 Windows 上 core.ignorecase 使上面的 HANDOFF-*.md 大小写不敏感地命中 handoff-*.md，
+# 若不显式例外，新增的 docs/operations/handoff-YYYY-MM-DD.md 与归档副本会被静默忽略。
+!docs/operations/handoff-*.md
+!docs/archive/handoff-*.md
 
 # 会话遗留 / 工具临时输出（2026-10-14 小债轮清理，勿再提交）
 # 旧版测试曾用真实 fileStore 把引擎状态写进包目录（现测试全走 memoryStore/os.tmpdir）

@@ -21,6 +21,34 @@
 
 ## [Unreleased]
 
+### 2026-11-12 · Wave 2 收口（tree-engine v0.7.0 + 工具链/发布流程）
+
+**`packages/dsh-tree-engine`（`0.6.0` → `0.7.0`）**
+
+- **W2.1 会话预算计入竹节链**：`max_sessions` 计数集合补 `leaf.runtime.segmentChain`，与 `leaf.session_id` / `leaf.segment_chain` / `session_registry` 合并后按归一化会话 id 去重（`src/guards.js`）；`src/engine.js` 的 `validate` 同步纳入 `runtime.segmentChain`（跨集合重复检查）。
+- **W2.3 RC2 兼容层抽离 + 单测**：`startContinuable` / `startActivation` 双形探测的纯逻辑抽到 `src/compat.js`（`index.js` 装配）；新增 `tests/compat.test.js` **11 例**，不引入宿主依赖。
+- **W2.6 root/主会话会话 id 归一化**：DSH 根/主会话 id 带 `session-` 前缀、被派发子会话为裸 UUID v4；引擎**写入侧**归一化（剥前缀、小写、存裸 UUID 规范形），**比较侧** `normalizeSessionId` / `sameSession`（`src/guards.js`）接入 `added_by` / owner / caller 校验。`tree_plan` / `tree_node add` / `tree_report` 直接传 `$env:DSH_SESSION_ID` 即可。**UUID v4 严格性不放宽**（归一化后非 v4 仍 `E_INVALID_UUID_STRICT`）；历史带前缀旧值可读。活体：修复前 root 会话 `tree_plan` 带 `session-` 前缀 → `E_INVALID_UUID_STRICT`；修复后同一调用成功、root 存裸 UUID、`tree_node add` 混合形态 `added_by` 可用。
+- 测试：`node --test tests/*.test.js` **84 → 112/112**（14 个 `.test.js`：62 引擎 + 4 技能打包 + 1 B1 回归 + 9 `tree_doctor` + 8 写面护栏 + 11 compat + 10 identity + 7 budget；新增 `tests/budget.test.js` 7 例、`tests/identity.test.js` 10 例）。
+- 随包 SKILL 同步到 **v2.1 / 随 tree-engine v0.7.0**（9 个 `tree_*` 工具、`session-` 前缀归一化说明、`max_sessions` 计入竹节链）；`src/doctor.js` 版本提示串与 `index.js` 启动日志（v0.7.0）同步。
+
+**工具链 / 脚本**
+
+- **W2.2** `packages/dsh-session-tree/test/provider-conformance.cjs`：显式 fixture 解析（`DSH_RC2_FIXTURE_DIR` → `%TEMP%\dsh-asar-inspect\out-rc2-compat` → `out`），缺 fixture 时 **exit 2 + 可操作报错**；得到 **29/29**（session-tree 包本体 v1.3.6 不变）。
+- **W2.4** 新增 `scripts/check-version-consistency.mjs`（只读）：**23 checks**（package.json / `TOOLS` 导出与工具名 / 3 份 SKILL frontmatter / 根 README、`agent.md`、`docs/README.md`、`docs/guides/skills-usage.md` 的版本、工具数与测试数、包 README、CHANGELOG、项目地图）；支持 `--json` / `--run-tests` / `--root`；故障注入可 FAIL 自证。
+- **W2.5** 新增 `scripts/e2e/run-release-e2e.mjs`：发布前三条真机断言（`verify-handoff` / `verify-kickoff-language` / `collect-skills`）统一编排、PASS/FAIL 汇总、artifacts 落盘（`scripts/e2e/artifacts/release-<ts>/`），支持 `--replay` 离线复核既有 artifact（**不替代真机断言**）。
+- **W2.7** 新增 `scripts/release-all.mjs`：预检 → `release-plugin` 同步/SHA 对账 → 本仓 commit → 镜像 commit/tag → `ls-remote` 核对；**默认 dry-run**，`--apply` / `--skip-push` 走本地全链路，`--push` 才联网写远端；失败即停并给回滚提示。
+
+**文档 / 报告**
+
+- 新增报告：[docs/reports/conformance-rc2-2026-11-12.md](docs/reports/conformance-rc2-2026-11-12.md)、[docs/reports/e2e-release-runner-2026-11-12.md](docs/reports/e2e-release-runner-2026-11-12.md)、[docs/reports/release-automation-2026-11-12.md](docs/reports/release-automation-2026-11-12.md)；收口报告 `docs/reports/wave2-closeout-2026-11-12.md`。
+- 文档口径统一到 tree-engine **v0.7.0 / 9 工具 / 112-112**：`agent.md`（D17 / §2 快照 / §3 R13–R14 / §4.2 任务板 / §7）、`docs/README.md`（快照 + engine-spec 修订说明 + reports/archive 索引）、`docs/guides/skills-usage.md`（版本、预算与 id 口径）、`docs/operations/wave2-plan-2026-11-12.md`（执行状态表）、`docs/architecture/engine-spec.md`（§5 后**追加** v0.7.0 修订段，不重写冻结正文）。
+- W2.8 GUI 迭代规范 [docs/architecture/session-tree-ui.md](docs/architecture/session-tree-ui.md)（已在 `e09f39b` 建立）7 步流程现行；新交接 `docs/operations/handoff-2026-11-12.md`，旧 `handoff-2026-11-11.md` 归档。
+
+**未发布说明**
+
+- `packages/dsh-session-tree` **v1.3.6 未变**（公开镜像 tag `v1.3.6` = `298298d`，19/19 SHA）；包内测试入口不变（handoff 41/41、skills 3/3、render 133+9+11、style-guard 22/22、verify-bundle 0 fail）。
+- **本轮无 npm 动作**（D3 冻结）；镜像仓与「本仓提交/推送」均**未执行**——`release-all.mjs` 只做过 dry-run 演练，真推由 Lead 发布时执行；`run-release-e2e.mjs` 的真机三断言本体同样待发布前人工触发。
+
 ### 变更
 
 - **移除已废止的 meta-loop 插件及其资料（与本项目无关）**：删除 `packages/dsh-meta-loop/`、`demo/metalp/`、`docs/meta-loop-design.md`、`docs/meta-system-argument.md`；并从 `README.md`、`agent.md`、`docs/guides/publishing.md`、项目地图等当前材料中清除该插件信息。本项目组件口径 = `dsh-tree-engine` + `dsh-session-tree` + `dsh-agent-introspect` 三个包。

@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="dsh-tree-harness 项目完整地图：能力地图、分层架构、一次真实流程、机制边界与下一步功能分析（2026-11-11 快照，单文件离线）。">
+<meta name="description" content="dsh-tree-harness 项目完整地图：能力地图、分层架构、一次真实流程、机制边界与下一步功能分析（2026-11-12 快照，单文件离线）。">
 <meta name="color-scheme" content="light dark">
-<title>dsh-tree-harness 项目完整地图 · 2026-11-11 快照</title>
+<title>dsh-tree-harness 项目完整地图 · 2026-11-12 快照</title>
 <style>
 /* ============================================================
    dsh-tree-harness · 单文件项目地图
@@ -363,7 +363,7 @@ table.compact thead th,table.compact tbody td{padding:8px 10px}
   <div class="wrap">
 
     <header class="hero" id="top">
-      <div class="eyebrow">DSH 插件集合 · 单文件离线地图 · 2026-11-11 快照</div>
+      <div class="eyebrow">DSH 插件集合 · 单文件离线地图 · 2026-11-12 快照</div>
       <h1 class="title">一棵会<span class="thin">生长</span>的<em>任务树</em></h1>
       <p class="lede">
         这不是一个插件，而是围绕「<b>把长任务拆成树、让每一层都真的有人干、干完还能验收和接力</b>」的一组 DSH 包与规约：
@@ -372,8 +372,8 @@ table.compact thead th,table.compact tbody td{padding:8px 10px}
       </p>
       <div class="meta-row">
         <span>会话树 <b>v1.3.6</b> · 公开仓 <b>298298d</b> · 19/19 SHA</span>
-        <span>tree-engine <b>v0.6.0</b> · 9 工具 · <b>84/84</b></span>
-        <span>本仓 master <b>ebeeaea</b></span>
+        <span>tree-engine <b>v0.7.0</b> · 9 工具 · <b>112/112</b></span>
+        <span>本仓 master <b>e09f39b</b></span>
         <span>MIT · npm 冻结（D3）</span>
         <span>9 张手写 SVG · 0 外链</span>
       </div>
@@ -480,7 +480,7 @@ table.compact thead th,table.compact tbody td{padding:8px 10px}
               <table class="compact">
                 <thead><tr><th>包</th><th>版本</th><th>状态</th><th>一句话</th></tr></thead>
                 <tbody>
-                  <tr><td><code>dsh-tree-engine</code></td><td class="num">0.6.0</td><td><span class="pill fact">运行中</span></td><td>9 个 tree 工具（含自检）+ 竹节 + 护栏 + 验证</td></tr>
+                  <tr><td><code>dsh-tree-engine</code></td><td class="num">0.7.0</td><td><span class="pill fact">运行中</span></td><td>9 个 tree 工具（含自检）+ 竹节 + 护栏 + 验证</td></tr>
                   <tr><td><code>dsh-session-tree</code></td><td class="num">1.3.6</td><td><span class="pill fact">公开镜像</span></td><td>侧栏树 + tree_send + handoff + Skill</td></tr>
                   <tr><td><code>dsh-agent-introspect</code></td><td class="num">0.1.0</td><td><span class="pill fact">运行中</span></td><td><code>self_spec</code> 自省</td></tr>
                 </tbody>
@@ -597,7 +597,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <table>
             <thead><tr><th>检查项</th><th>期望</th><th>不满足时先查</th></tr></thead>
             <tbody>
-              <tr><td>工具面</td><td>能看到 <code>tree_send</code>、<code>session_handoff</code>、8 个 <code>tree_*</code></td><td>bundle 是否启用；<code>include:session-tree</code> / <code>include:tree-engine</code> 是否重载</td></tr>
+              <tr><td>工具面</td><td>能看到 <code>tree_send</code>、<code>session_handoff</code>、9 个 <code>tree_*</code></td><td>bundle 是否启用；<code>include:session-tree</code> / <code>include:tree-engine</code> 是否重载</td></tr>
               <tr><td>Skill 目录</td><td>3 个 Skill 各出现一次</td><td>是否<b>新开</b>会话；profile 是否有 <code>@deepseek-ai/dsh-skill-filesystem</code>（DSH 内置）</td></tr>
               <tr><td>会话树</td><td>左栏出现嵌套会话；<code>SessionTree</code> provider 在线</td><td>客户端半是否加载；刷新页面一次</td></tr>
               <tr><td>交接</td><td><code>session_handoff {action:"status"}</code> 渲染行含 <code>threshold 50%</code>、<code>preset=</code>、<code>permission=</code>、<code>lang=</code></td><td>是否旧实现遮蔽（移除旧 bundle）；是否宿主半未重载</td></tr>
@@ -725,7 +725,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-t3" x="176" y="38" font-size="12.5">宿主半注册；action 闭集以 <tspan class="s-mono">index.js</tspan> schema 为准</text>
 
             <rect class="s-layer" x="24" y="54" width="756" height="588" rx="12"/>
-            <text class="s-on-teal" x="44" y="80" font-size="13">tree-engine v0.6.0 · 9 tools</text>
+            <text class="s-on-teal" x="44" y="80" font-size="13">tree-engine v0.7.0 · 9 tools</text>
             <text class="s-t3" x="264" y="80" font-size="11.5">执行层 · 账本 + 派发 + 验证 + 竹节 + 自检</text>
 
             <!-- cards row 1 -->
@@ -785,9 +785,9 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-mono" x="60" y="542" font-size="10">09 · 自检（只读）</text>
             <text class="s-hero-sm" x="60" y="564" font-size="15">tree_doctor</text>
             <text class="s-t2" x="60" y="586" font-size="11.5">run</text>
-            <text class="s-t3" x="60" y="605" font-size="10.5">7 检查项 · FAIL 不 throw · version=0.6.0</text>
+            <text class="s-t3" x="60" y="605" font-size="10.5">7 检查项 · FAIL 不 throw · version=0.7.0</text>
             <line class="s-line" x1="390" y1="534" x2="390" y2="604"/>
-            <text class="s-mono" x="406" y="542" font-size="10">GUARD · 非工具（v0.6.0）</text>
+            <text class="s-mono" x="406" y="542" font-size="10">GUARD · 非工具（v0.7.0）</text>
             <text class="s-hero-sm" x="406" y="564" font-size="15">leaf 写面护栏</text>
             <text class="s-t2" x="406" y="586" font-size="11.5">LEAF_WRITE_MATRIX · 六类写操作</text>
             <text class="s-t3" x="406" y="605" font-size="10.5">非授权 → E_BORROWED_IDENTITY；done 仅 owner</text>
@@ -1037,7 +1037,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-t3" x="56" y="399" font-size="10.2">skills/session-handoff/SKILL.md</text>
 
             <rect class="s-card-teal" x="362" y="302" width="400" height="106" rx="10"/>
-            <text class="s-on-teal" x="378" y="324" font-size="10">tree-engine v0.6.0</text>
+            <text class="s-on-teal" x="378" y="324" font-size="10">tree-engine v0.7.0</text>
             <text class="s-hero-sm" x="378" y="346" font-size="13.5">9 个 tree_* 工具 + sweep + ports</text>
             <text class="s-t3" x="378" y="365" font-size="10.2">ports：dispatch / interrupt / readSession / glob / exec / judge</text>
             <text class="s-t3" x="378" y="382" font-size="10.2">sweep：超时、收割、竹节自动接力</text>
@@ -1090,7 +1090,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
 
             <text class="s-t3" x="32" y="676" font-size="10.8">数据流：模型调用工具 → 宿主半 → <tspan class="s-mono">engine.call()</tspan> → 原子写 → sweep/收割 → 验证落账 → 面板/E2E 读取。客户端半只读会话 store，不写树账本。</text>
           </svg>
-          <figcaption><b>图 1 · 系统全景</b>。<span class="how">怎么读：</span>从上往下看「服务 → 装配 → 工具 → 逻辑 → 落盘」；<b>纯逻辑层没有任何 DSH import</b>，所以 84 项引擎测试可以离线跑；<b>客户端半</b>只画树、不改账本，因此它坏了不会影响工具与竹节。</figcaption>
+          <figcaption><b>图 1 · 系统全景</b>。<span class="how">怎么读：</span>从上往下看「服务 → 装配 → 工具 → 逻辑 → 落盘」；<b>纯逻辑层没有任何 DSH import</b>，所以 112 项引擎测试可以离线跑；<b>客户端半</b>只画树、不改账本，因此它坏了不会影响工具与竹节。</figcaption>
         </figure>
 
         <div class="grid2">
@@ -1114,7 +1114,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
 
           <article class="card">
             <h3>「一条缝」：ports 与 skill provider</h3>
-            <p>引擎把宿主能力收束成几个端口：派发、取消、读会话、glob、执行命令、judge。生产装配接 DSH 服务，测试装配接假实现——这是它能同时做到「深逻辑」与「离线 84 项」的原因。</p>
+            <p>引擎把宿主能力收束成几个端口：派发、取消、读会话、glob、执行命令、judge。生产装配接 DSH 服务，测试装配接假实现——这是它能同时做到「深逻辑」与「离线 112 项」的原因。</p>
             <p>Skill 则走另一条装配：两个 tree 包各在自己的 patch 第 2 行 insert <code>@deepseek-ai/dsh-skill-filesystem</code>，<code>bundledSkillDir</code> 经<b>安装包身份</b>解析到包内 <code>skills/</code>，不字符串拼 <code>baseUrl</code>。</p>
             <div class="cmd"><div class="cap"><b>yaml</b> · cordis.patch.yml（节选，真实结构）</div><pre><code>- insert:
     - id: tree-engine
@@ -1716,7 +1716,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
       <div class="sec-body">
 
         <div class="metrics">
-          <div class="metric teal"><div class="v">84/84</div><div class="l">tree-engine</div><div class="n">62 引擎 + 4 技能打包 + 1 B1 + 9 doctor + 8 护栏</div></div>
+          <div class="metric teal"><div class="v">112/112</div><div class="l">tree-engine</div><div class="n">62 引擎 + 4 技能打包 + 1 B1 + 9 doctor + 8 护栏 + 11 compat + 10 identity + 7 budget</div></div>
           <div class="metric amber"><div class="v">41/41</div><div class="l">session-tree handoff</div><div class="n">继承/工作区/闸门/语言/干跑</div></div>
           <div class="metric violet"><div class="v">3/3</div><div class="l">随包 Skill 打包</div><div class="n">frontmatter / files / patch 行</div></div>
           <div class="metric rose"><div class="v">19/19</div><div class="l">发布 SHA</div><div class="n">v1.3.6 = 298298d（main + tag）</div></div>
@@ -1727,7 +1727,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <table>
             <thead><tr><th style="width:22%">对象</th><th style="width:34%">命令</th><th style="width:16%">结果</th><th style="width:28%">依赖 / 备注</th></tr></thead>
             <tbody>
-              <tr><td><code>dsh-tree-engine</code></td><td><code>node --test tests/*.test.js</code></td><td><b>84/84</b></td><td>纯逻辑 + 假时钟/假 store；含 <code>doctor</code> 9 例与写面护栏 8 例负例；<code>--test-reporter=tap</code> 要放在位置参数前</td></tr>
+              <tr><td><code>dsh-tree-engine</code></td><td><code>node --test tests/*.test.js</code></td><td><b>112/112</b></td><td>纯逻辑 + 假时钟/假 store；含 <code>doctor</code> 9 例、写面护栏 8 例负例、compat 11、identity 10、budget 7；<code>--test-reporter=tap</code> 要放在位置参数前</td></tr>
               <tr><td><code>session-tree</code> handoff</td><td><code>node test/handoff.test.js</code></td><td><b>41/41</b></td><td>mock 四类服务；含语言跟随 6 例 + <code>spawn:false</code> 干跑</td></tr>
               <tr><td><code>session-tree</code> skills</td><td><code>node test/skills.test.cjs</code></td><td><b>3/3</b></td><td>frontmatter / <code>package.json.files</code> / patch provider 行</td></tr>
               <tr><td><code>session-tree</code> render</td><td><code>node test/render.test.cjs</code></td><td><b>全绿</b><br><span class="sub">133/133 + 9/9 + 11/11</span></td><td>确定性夹具渲染；客户端半的 DOM 契约</td></tr>
@@ -1737,7 +1737,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             </tbody>
           </table>
         </div>
-        <p class="src"><b>实测</b>：2026-11-11 本会话复跑 <code>tree-engine</code> <b>84/84</b>、<code>handoff</code> <b>41/41</b>、<code>skills</code> <b>3/3</b>，退出码均为 0；其余数字采信仓库报告。<b>注意</b>：不要写 <code>node --test tests</code>——Node 24 会把目录当文件路径，报 <code>test at tests:1:1</code> 的假失败。</p>
+        <p class="src"><b>实测</b>：2026-11-12 复跑 <code>tree-engine</code> <b>112/112</b>、<code>handoff</code> <b>41/41</b>、<code>skills</code> <b>3/3</b>、<code>style-guard</code> <b>22/22</b>，退出码均为 0；<code>tree_doctor</code> 活体 7/7 PASS（version=0.7.0）。<b>注意</b>：不要写 <code>node --test tests</code>——Node 24 会把目录当文件路径，报 <code>test at tests:1:1</code> 的假失败。</p>
 
         <figure class="fig" id="fig-release">
           <div class="figtop">
@@ -1758,7 +1758,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <rect class="s-card" x="30" y="70" width="160" height="170" rx="11"/>
             <text class="s-mono" x="46" y="92" font-size="9.5">STAGE 1</text>
             <text class="s-hero-sm" x="46" y="114" font-size="13.5">测试全绿</text>
-            <text class="s-t3" x="46" y="134" font-size="9.8">67 / 41 / 3</text>
+            <text class="s-t3" x="46" y="134" font-size="9.8">112 / 41 / 3</text>
             <text class="s-t3" x="46" y="150" font-size="9.8">22 / 0 fail</text>
             <text class="s-t3" x="46" y="166" font-size="9.8">29/29 需 fixture</text>
             <text class="s-t3" x="46" y="182" font-size="9.8">命令失败即停</text>
@@ -1783,7 +1783,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-t3" x="406" y="166" font-size="9.8">逐文件 SHA-256</text>
             <text class="s-t3" x="406" y="182" font-size="9.8">禁止手工双写</text>
             <rect class="s-badge" x="406" y="204" width="92" height="20" rx="10"/>
-            <text class="s-t2" x="452" y="218" font-size="8.6" text-anchor="middle">18/18 SHA</text>
+            <text class="s-t2" x="452" y="218" font-size="8.6" text-anchor="middle">19/19 SHA</text>
 
             <rect class="s-card" x="570" y="70" width="160" height="170" rx="11"/>
             <text class="s-mono" x="586" y="92" font-size="9.5">STAGE 4</text>
@@ -1857,7 +1857,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             </tbody>
           </table>
         </div>
-        <p class="src"><b>事实来源</b>：<code>docs/guides/publishing.md</code> §3/§5；<code>docs/reports/skill-cleanroom-2026-11-11.md</code>；<code>CHANGELOG.md</code>。本仓 master 最新以 <code>git log</code> 为准（2026-11-12：Wave-1 tree-engine v0.6.0 + docs 归档 + v1.3.6 发布）。</p>
+        <p class="src"><b>事实来源</b>：<code>docs/guides/publishing.md</code> §3/§5；<code>docs/reports/skill-cleanroom-2026-11-11.md</code>；<code>CHANGELOG.md</code>。本仓 master 最新以 <code>git log</code> 为准（2026-11-12：Wave-2 tree-engine v0.7.0 + 工具链/文档收口）。</p>
 
         <div class="grid2">
           <article class="card tint-teal">
@@ -1879,7 +1879,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
 
         <div class="callout warn">
           <span class="label">测试数字也会「过期」</span>
-          <p>仓库里同时存在 66/66（审计基线 v0.5.0）、67/67（当前 v0.5.1）、34/34（v1.2.0 时代 handoff）、40/40（v1.3.1）、41/41（v1.3.3+）等口径。判断当前值要以<b>当前 <code>package.json</code> + 实测命令</b>为准；本页统一采用 2026-11-11 的 <b>67/67 / 41/41 / 3/3</b>。</p>
+          <p>仓库里同时存在 66/66（审计基线 v0.5.0）、67/67（v0.5.1）、84/84（v0.6.0）、34/34（v1.2.0 时代 handoff）、40/40（v1.3.1）、41/41（v1.3.3+）等历史口径。判断当前值要以<b>当前 <code>package.json</code> + 实测命令</b>为准；本页统一采用 2026-11-12 的 <b>112/112 / 41/41 / 3/3</b>（Wave 2 收口）。</p>
         </div>
       </div>
     </section>
@@ -1905,7 +1905,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <tbody>
               <tr><td class="num">1</td><td><b>npm 冻结（D3）</b></td><td>不能 <code>npm install</code>；三个候选名 registry 404；市场条目是 browse-only，按 Git 安装</td><td>用 Git URL 或 <code>link:</code>；解冻需所有者显式批准（条件见 <code>docs/guides/publishing.md</code> §4）</td></tr>
               <tr><td class="num">2</td><td><b>sweep 依赖宿主 timer</b></td><td>宿主 timer 可用时用其 interval；不可用时靠进程内 60s 兜底（<code>sweepMode=timer</code>），自动收割可能慢一轮</td><td>不要假设「必须显式 harvest」；<code>tree_status harvest</code> 只是立即触发一轮</td></tr>
-              <tr><td class="num">3</td><td><b>provider-conformance 依赖 asar fixture</b></td><td>默认目录不存在 → ENOENT；DSH 0.2.2-rc.1 把 schema 引擎拆到 shared chunk，旧启发式拿不到 29/29</td><td>需要 rc.2 兼容的解包 fixture（逐字节 shipped chunk）；这是测试环境依赖，不是包内容缺陷</td></tr>
+              <tr><td class="num">3</td><td><b>provider-conformance 依赖 asar fixture</b></td><td>fixture 缺失或只拿到 DSH 0.2.2-rc.1 的 shared-chunk 拆包布局时，region 启发式拿不到 29/29</td><td>fixture 解析顺序 <code>DSH_RC2_FIXTURE_DIR</code> → <code>%TEMP%\dsh-asar-inspect\out-rc2-compat</code> → <code>out</code>；rc.2 兼容 fixture → 29/29，缺 fixture / 布局不符 → exit 2 可操作报错；属测试环境依赖，不是包内容缺陷（SHA-256 见 <code>docs/reports/conformance-rc2-2026-11-12.md</code>）</td></tr>
               <tr><td class="num">4</td><td><b><code>docs/architecture/tools-mapping.md</code> 是设计稿</b></td><td>表里的 <code>tree_report drift</code>、<code>tree_node milestone-*</code>、<code>tree_maintain gc</code> 等<b>未实现</b>；照表调会 unknown action</td><td>以 <code>index.js</code> schema 为准；本页图 2 只列已实现 action</td></tr>
               <tr><td class="num">5</td><td><b>市场只认 version</b></td><td>改了代码但不 bump，market 不刷新，等于发假更新；无内容变化乱 bump 又制造假版本</td><td>D6：有内容变化必须 bump；<code>version = GitHub tag = package.json.version</code></td></tr>
               <tr><td class="num">6</td><td><b>宿主半按包名缓存</b></td><td>改 <code>index.js</code> / patch 行后，活体仍是旧实现；<code>hmr.root</code> 不保证宿主半重载</td><td>对相应 entry disable→enable，或重启 DSH；客户端半只刷新页面</td></tr>
@@ -1915,19 +1915,19 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
               <tr><td class="num">10</td><td><b>leaf.status 与 runtime 脱节</b></td><td>runtime 已 <code>succeeded</code>，status 可能仍 <code>pending_brief</code>/<code>active</code>；观察者易误读</td><td>收口看 <code>runtime.state</code>；status 只用于列表/剪枝/归档</td></tr>
               <tr><td class="num">11</td><td><b>artifact 验证取首个匹配</b></td><td><code>**/*.md</code> 按字典序取第一个，可能命中 <code>node_modules</code> 里的 md；<code>minSize</code> 比较的是字符数，不是字节</td><td>显式传产物路径/策略；或在 leaf 产物目录内验证（未修）</td></tr>
               <tr><td class="num">12</td><td><b>会话预算漏计竹节接力</b></td><td><code>max_sessions=50</code> 只统计 <code>leaf.session_id</code> + <code>leaf.segment_chain</code> + registry；竹节写的是 <code>runtime.segmentChain</code>，高频接力时上限不成立</td><td>已知实现边界（审计 P1-06）；不要把 50 当作严格上限</td></tr>
-              <tr><td class="num">13</td><td><b>caller 校验不完整</b></td><td><code>set-context</code> / <code>set-verification</code> / 非 done <code>event</code> / <code>dispatch:cancel</code> / <code>verify run</code> 无统一所有权校验，worker 可改他人水位/裁决</td><td>审计 P1-05；当前靠协议纪律，补护栏列在 §9 P1</td></tr>
+              <tr><td class="num">13</td><td><b>caller 校验覆盖范围</b></td><td>Wave-1 写面护栏已统一六类写操作（<code>set-context</code> / <code>set-verification</code> / 非 done <code>event</code> / <code>dispatch:cancel</code> / <code>status</code> / <code>set-session</code>）；<code>verify</code> 自体仍不阻断 <code>succeeded</code></td><td>非授权一律 <code>E_BORROWED_IDENTITY</code>；verify 结论由 commander 读取并裁决（协议纪律，不是引擎硬闸）</td></tr>
               <tr><td class="num">14</td><td><b>交接不迁移 leaf owner</b></td><td>接替会话写 done → <code>E_BORROWED_IDENTITY</code></td><td>由 leaf 的 creator/上级 <code>tree_node set-session</code> 重绑；或旧会话交棒前先写 done</td></tr>
               <tr><td class="num">15</td><td><b><code>tree_maintain gc</code> 未实现</b></td><td><code>tree-engine-data/</code> 下历史 smoke/e2e 树只能手工清理</td><td>用 backup 先留档，再手工删目录；或列入下一轮功能</td></tr>
               <tr><td class="num">16</td><td><b>真实 50% 阈值未跑到</b></td><td>B/C 组三次交接均 <code>force:true</code> 模拟；「机制成立、阈值真实性部分」</td><td>需要一次不 force 的自然 50% 演练；否则只能说阈值逻辑与闸门被验证，不是真实压力验证</td></tr>
               <tr><td class="num">17</td><td><b>语言只做 zh/en</b></td><td>ja/es/fr/de/ru/pt 等已存语言回退英文；中文提示后可能跟英文框架后缀</td><td>可接受的回退；要扩展需同步更新断言脚本</td></tr>
-              <tr><td class="num">18</td><td><b>RC2 兼容层缺单测</b></td><td><code>startContinuable</code> / <code>startActivation</code> 双形探测分支未被 67 项覆盖</td><td>补测列为 R6；宿主升级前先用 <code>cordis_inspect_query</code> 读方法表</td></tr>
+              <tr><td class="num">18</td><td><b>RC2 兼容层已补单测（v0.7.0）</b></td><td><code>startContinuable</code> / <code>startActivation</code> 双形探测已抽到 <code>src/compat.js</code>，<code>tests/compat.test.js</code> 11 例覆盖</td><td>宿主再升级前先用 <code>cordis_inspect_query</code> 读方法表；新形状变化需补测后再发版</td></tr>
             </tbody>
           </table>
         </div>
         <p class="src"><b>事实来源</b>：<code>README.md</code> §已知边界；<code>docs/operations/handoff-2026-11-11.md</code> §7；<code>docs/reports/audit-tree-system-2026-11-11.md</code> §3–§4；<code>docs/architecture/merge-session-tree-2026-11-11.md</code> §5；<code>docs/reports/skill-e2e-2026-11-11.md</code> §5。</p>
 
         <h3 style="margin-top:30px">8.1 制作本图时发现的文档不一致</h3>
-        <p>以下为<b>地图生成时（2026-11-11）快照</b>；其中第 1、2、4、5、7、9 项已在 v1.3.4–v1.3.6 修复（保留作历史记录），引用时以仓库当前文件为准。</p>
+        <p>以下为<b>地图生成时（2026-11-11）快照</b>；其中第 1、2、4、5、7、9 项已在 v1.3.4–v1.3.6 修复（保留作历史记录），引用时以仓库当前文件为准。<b>2026-11-12 Wave-2 文档收口后，README / agent.md / handoff / skills-usage 的版本与测试数已统一到 v0.7.0 / 112/112</b>；本表只作历史对照。</p>
         <div class="tablewrap">
           <table>
             <thead><tr><th style="width:26%">位置</th><th style="width:34%">文中写法</th><th style="width:40%">当前事实 / 建议</th></tr></thead>
@@ -1937,8 +1937,8 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
               <tr><td><code>docs/operations/handoff-2026-11-11.md</code> §1 vs <code>agent.md</code> §2</td><td>宿主 loader 账本 <b>245</b> 条 vs <b>244</b> 条</td><td>两份快照相差 1；属时序差异，引用时标注「当时快照」或省略该数字</td></tr>
               <tr><td><code>docs/architecture/session-handoff-2026-11-11.md</code> 标题/状态</td><td>「v1.3.3」为主</td><td>当前包是 v1.3.5；该文是设计/交付记录，建议标题加「历史快照」或补 1.3.4/1.3.5</td></tr>
               <tr><td><code>docs/guides/skills-usage.md</code> §9 版本差异速查</td><td>只列到 <b>1.3.3</b></td><td>文档头写「v1.3.5 及以上」，版本矩阵缺 1.3.4/1.3.5（两版均无行为变化，可一句带过）</td></tr>
-              <tr><td><code>docs/reports/audit-tree-system-2026-11-11.md</code> §1</td><td>tree-engine <b>66/66</b>、v0.5.0 基线</td><td>当前 v0.5.1 / <b>67/67</b>；审计结论仍有效，但测试数字是历史快照</td></tr>
-              <tr><td><code>docs/architecture/engine-spec.md</code> §1/§3</td><td>「33 工具」「源缺省 85」「16 文件」</td><td>这是<b>上游源引擎</b>的 S0 规约，不是本仓 8 工具/42% 的现状；两套数字不要混用</td></tr>
+              <tr><td><code>docs/reports/audit-tree-system-2026-11-11.md</code> §1</td><td>tree-engine <b>66/66</b>、v0.5.0 基线</td><td>地图生成时为 v0.5.1 / <b>67/67</b>；现为 v0.7.0 / <b>112/112</b>；审计结论仍有效，但测试数字是历史快照</td></tr>
+              <tr><td><code>docs/architecture/engine-spec.md</code> §1/§3</td><td>「33 工具」「源缺省 85」「16 文件」</td><td>这是<b>上游源引擎</b>的 S0 规约，不是本仓 9 工具/42% 的现状；两套数字不要混用</td></tr>
               <tr><td><code>packages/dsh-tree-engine/README.md</code> v0.3 节</td><td>「register-session（旁路登记幂等）」</td><td>代码对重复登记直接 <code>E_SCHEMA_INVALID</code>（注释口径是「幂等拒绝重复计」）；工具描述仍写 idempotent（审计 P1-07）</td></tr>
               <tr><td><code>README.md</code> 包表 vs §跑测试</td><td>「包内 5 份测试」vs「6 个测试入口」</td><td>实际 <code>test/</code> 下 5 个测试文件 + <code>scripts/verify-bundle.mjs</code> 1 个入口；两种说法指代不同，建议统一为「5 个测试文件 + 1 个清单自检」</td></tr>
               <tr><td><code>README.md</code> 文档索引 vs <code>docs/operations/handoff-2026-11-11.md</code></td><td>仍标「当前交接」</td><td>该文正文混有 v1.3.2/v1.3.3 残留；建议标注「历史交接，版本数字以包 package.json 为准」</td></tr>
@@ -1969,6 +1969,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
       </div>
       <div class="sec-body">
         <p>当前功能面已经够用，真正的短板在<b>三处</b>：装不上/看不见（诊断）、写面不够严（完整性）、真机验活只做过一次性取证（回归）。因此建议的顺序不是「继续加工具」，而是先把这三处补齐，再谈可视化与多语言。</p>
+        <p class="src"><b>2026-11-12 更新</b>：Wave 1（doctor / 写面护栏）与 Wave 2（W2.1–W2.8，tree-engine v0.7.0、112/112）已完成；下表保留候选与验收口径，已完成项标 <b>✅</b>，Wave 3 候选见 §9.3。Wave-2 收口证据见 <code>docs/reports/wave2-closeout-2026-11-12.md</code>。</p>
 
         <figure class="fig" id="fig-priority">
           <div class="figtop">
@@ -2051,15 +2052,15 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <table class="compact">
             <thead><tr><th style="width:4%" class="num">#</th><th style="width:17%">功能</th><th style="width:22%">解决什么问题</th><th style="width:9%">价值</th><th style="width:9%">成本</th><th style="width:22%">风险 / 依赖</th><th style="width:7%">优先级</th><th style="width:10%">验收</th></tr></thead>
             <tbody>
-              <tr><td class="num">1</td><td><b>安装/运行自检 <code>doctor</code></b></td><td>「工具没出现 / Skill 没有 / 树是旧的」只能靠人猜；D12 缓存、Skill 注入时机、provider 缺失都很难自查</td><td>高</td><td>低–中</td><td>只读；不能改 profile；要区分「未装」「未重载」「旧会话」「provider 缺失」「版本漂移」</td><td><span class="pill p0">P0</span></td><td>故障注入 4 类均给出可执行 hint；正常环境 0 fail</td></tr>
-              <tr><td class="num">2</td><td><b>写面护栏补全</b></td><td><code>set-context</code>/<code>set-verification</code>/非 done event/取消/verify 无统一 caller 校验，worker 可改他人水位或裁决</td><td>高</td><td>中</td><td>可能破坏旧 E2E 的宽松假设；竹节 owner 重绑后规则要兼容；需同步 SKILL 护栏表</td><td><span class="pill p1">P1</span></td><td>每个写操作有负例测试；67/67 与 A 组 7/7 不回归</td></tr>
-              <tr><td class="num">3</td><td><b>会话预算纳入竹节链</b></td><td><code>max_sessions=50</code> 漏计 <code>runtime.segmentChain</code>，高频接力时护栏数字失真</td><td>中</td><td>低</td><td>需同时改 <code>guards.js</code>、<code>validate</code>、文档口径；不要把「预算拒绝」误判成竹节故障</td><td><span class="pill p1">P1</span></td><td>接力 N 次后计数正确；超限拒绝；单测覆盖</td></tr>
-              <tr><td class="num">4</td><td><b>Skill 版本/文档一致性检查</b></td><td>三份 SKILL 的版本头、命令与测试数字靠人工对齐，容易和代码/README 漂移</td><td>中</td><td>低</td><td>只读脚本；要解析 frontmatter 与 README 表格；不引入外部依赖</td><td><span class="pill p1">P1</span></td><td>3 份 SKILL + README + skills-usage 断言一致；故意改错会失败</td></tr>
-              <tr><td class="num">5</td><td><b>provider-conformance rc.2 fixture</b></td><td>29/29 依赖 asar 解包布局；DSH 0.2.2-rc.1 shared chunk 让旧启发式失败</td><td>中</td><td>中</td><td>fixture 易随版本漂移；不能把 ENOENT 当代码失败；需记录 fixture 来源与校验</td><td><span class="pill p1">P1</span></td><td>按文档步骤得到 29/29；缺 fixture 时错误信息明确</td></tr>
-              <tr><td class="num">6</td><td><b>RC2 兼容层单测</b></td><td>双形探测分支（<code>startContinuable</code>/<code>startActivation</code>）未被 67 项覆盖；宿主升级时风险高</td><td>中</td><td>低</td><td>需要 mock 两种服务形状；不要为了测兼容层引入宿主依赖</td><td><span class="pill p1">P1</span></td><td>3 分支有测试；总数 67→70</td></tr>
+              <tr><td class="num">1</td><td><b>✅ 安装/运行自检 <code>doctor</code>（Wave-1 已完成）</b></td><td>「工具没出现 / Skill 没有 / 树是旧的」只能靠人猜；D12 缓存、Skill 注入时机、provider 缺失都很难自查</td><td>高</td><td>低–中</td><td>只读；不能改 profile；要区分「未装」「未重载」「旧会话」「provider 缺失」「版本漂移」</td><td><span class="pill p0">P0</span></td><td>已落地 <code>tree_doctor</code>（7 检查项；FAIL 不 throw）；活体 <b>7/7 PASS</b></td></tr>
+              <tr><td class="num">2</td><td><b>✅ 写面护栏补全（Wave-1 已完成）</b></td><td><code>set-context</code>/<code>set-verification</code>/非 done event/取消 无统一 caller 校验，worker 可改他人水位</td><td>高</td><td>中</td><td>可能破坏旧 E2E 的宽松假设；竹节 owner 重绑后规则要兼容；需同步 SKILL 护栏表</td><td><span class="pill p1">P1</span></td><td>已落地 <code>LEAF_WRITE_MATRIX</code> + <code>assertLeafWriter</code> + 8 条负例；112/112 不回归</td></tr>
+              <tr><td class="num">3</td><td><b>✅ 会话预算纳入竹节链（W2.1 已完成）</b></td><td><code>max_sessions=50</code> 漏计 <code>runtime.segmentChain</code>，高频接力时护栏数字失真</td><td>中</td><td>低</td><td>需同时改 <code>guards.js</code>、<code>validate</code>、文档口径；不要把「预算拒绝」误判成竹节故障</td><td><span class="pill p1">P1</span></td><td>已落地：归一化去重合并计数；<code>budget.test.js</code> 7 例；超限拒绝；接力前旧会话口径见 §8 #12</td></tr>
+              <tr><td class="num">4</td><td><b>✅ Skill 版本/文档一致性检查（W2.4 已完成）</b></td><td>三份 SKILL 的版本头、命令与测试数字靠人工对齐，容易和代码/README 漂移</td><td>中</td><td>低</td><td>只读脚本；要解析 frontmatter 与 README 表格；不引入外部依赖</td><td><span class="pill p1">P1</span></td><td>已落地 <code>scripts/check-version-consistency.mjs</code>：<b>23 checks</b>；故意改错能 FAIL；已接入 <code>release-all.mjs</code> 预检</td></tr>
+              <tr><td class="num">5</td><td><b>✅ provider-conformance rc.2 fixture（W2.2 已完成）</b></td><td>29/29 依赖 asar 解包布局；DSH 0.2.2-rc.1 shared chunk 让旧启发式失败</td><td>中</td><td>中</td><td>fixture 易随版本漂移；不能把缺 fixture 当代码失败；需记录 fixture 来源与校验</td><td><span class="pill p1">P1</span></td><td>已落地：fixture 解析顺序 + <b>29/29</b>；缺 fixture exit 2 可操作报错；SHA-256 留档</td></tr>
+              <tr><td class="num">6</td><td><b>✅ RC2 兼容层单测（W2.3 已完成）</b></td><td>双形探测分支（<code>startContinuable</code>/<code>startActivation</code>）未被覆盖；宿主升级时风险高</td><td>中</td><td>低</td><td>需要 mock 两种服务形状；不要为了测兼容层引入宿主依赖</td><td><span class="pill p1">P1</span></td><td>已落地：抽 <code>src/compat.js</code> + <code>compat.test.js</code> <b>11 例</b>；总数 84→<b>112</b></td></tr>
               <tr><td class="num">7</td><td><b>artifact 验证路径修复</b></td><td><code>**/*.md</code> 首个匹配可能命中 <code>node_modules</code>；<code>minSize</code> 是字符数不是字节</td><td>中</td><td>低–中</td><td>改默认行为可能影响现有 E2E；需要「显式产物路径」与「排除 node_modules」两种模式</td><td><span class="pill p2">P2</span></td><td>新增 2 条测试；真实 E2E 产物不误判</td></tr>
               <tr><td class="num">8</td><td><b><code>tree_maintain gc</code></b></td><td>历史 smoke/e2e 树只能手工清理；<code>tree-engine-data</code> 膨胀</td><td>中</td><td>低</td><td>删除不可逆；必须先 backup；只对 pruned/archived 开放；dry-run 默认</td><td><span class="pill p2">P2</span></td><td>dry-run 列出候选；真实删除前有 backup；拒绝 active/done</td></tr>
-              <tr><td class="num">9</td><td><b>tools-mapping 从 schema 生成</b></td><td>设计稿与实现 action 不一致，照表调用会 unknown action</td><td>中</td><td>低</td><td>生成器需读 <code>index.js</code> 或导出 schema；避免手写第二真源</td><td><span class="pill p2">P2</span></td><td>生成表与 8 工具 schema 逐项一致；CI 检查未实现 action</td></tr>
+              <tr><td class="num">9</td><td><b>tools-mapping 从 schema 生成</b></td><td>设计稿与实现 action 不一致，照表调用会 unknown action</td><td>中</td><td>低</td><td>生成器需读 <code>index.js</code> 或导出 schema；避免手写第二真源</td><td><span class="pill p2">P2</span></td><td>生成表与 9 工具 schema 逐项一致；CI 检查未实现 action</td></tr>
               <tr><td class="num">10</td><td><b>leaf.status 与 runtime 同步</b></td><td>status 可能停在 <code>pending_brief</code>/<code>active</code>，观察者误读</td><td>中</td><td>中</td><td>动状态机风险高；可能影响 set-status/剪枝/归档；优先做「派生展示」而不是改真源</td><td><span class="pill p2">P2</span></td><td>列表/渲染以 runtime 为准；仍保留 status 语义；回归全绿</td></tr>
               <tr><td class="num">11</td><td><b>真实 50% 自然演练</b></td><td>B/C 组三次交接全是 <code>force</code> 模拟；阈值真实性未验证</td><td>中</td><td>高（token）</td><td>需要长会话与配额；可能撞 429；不应为了触发而灌水</td><td><span class="pill p2">P2</span></td><td>不 force 的 <code>status</code> ≥50% → handoff；<code>verify-handoff</code> 12/12</td></tr>
               <tr><td class="num">12</td><td><b>只读树面板</b></td><td>目前只有 <code>tree_status overview</code> 文本；看不到 runtime/verification 的全局视图</td><td>高</td><td>高</td><td>新客户端半、路由、权限；只读边界要写死；不要复制引擎状态</td><td><span class="pill p2">P2</span></td><td>只读；不新增写接口；数据来自 tree-state/事件</td></tr>
@@ -2072,25 +2073,25 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
         <h3 style="margin-top:30px">9.2 推荐先做的三个（展开）</h3>
 
         <article class="card tint-teal" style="margin:14px 0">
-          <div class="kicker">推荐 A · P0 · 0.5–1 天</div>
+          <div class="kicker">推荐 A · P0 · ✅ 已完成（Wave-1：<code>tree_doctor</code>）</div>
           <h3><code>doctor</code>：把「为什么没生效」变成一条命令</h3>
           <p><b>目标</b>：用户/支持者不再靠猜「是没装、没重载、旧会话，还是缺 provider」。</p>
-          <p><b>方案</b>：先做只读脚本 <code>scripts/doctor.mjs</code>（不改宿主），输出人类可读表 + <code>--json</code>。检查项：① profile <code>package.json</code> 的 bundles/dependencies 是否有两个 tree 包；② <code>cordis.patch.yml</code> 是否有两条 bundle insert 与两条 skill provider insert；③ 包版本与公开 tag 是否漂移（离线时跳过）；④ <code>tree-engine-data/apply.log</code> 是否有 <code>engine ready</code> 与当前版本；⑤ 通过 <code>cordis_inspect</code>（若可用）确认 <code>tree_send</code>/<code>session_handoff</code>/8 工具是否注册；⑥ Skill provider 是否可解析（读 patch 与包内 <code>skills/</code>）；⑦ 给出「下一步做什么」的命令，而不是只报错。</p>
+          <p><b>方案</b>：先做只读脚本 <code>scripts/doctor.mjs</code>（不改宿主），输出人类可读表 + <code>--json</code>。检查项：① profile <code>package.json</code> 的 bundles/dependencies 是否有两个 tree 包；② <code>cordis.patch.yml</code> 是否有两条 bundle insert 与两条 skill provider insert；③ 包版本与公开 tag 是否漂移（离线时跳过）；④ <code>tree-engine-data/apply.log</code> 是否有 <code>engine ready</code> 与当前版本；⑤ 通过 <code>cordis_inspect</code>（若可用）确认 <code>tree_send</code>/<code>session_handoff</code>/9 工具是否注册；⑥ Skill provider 是否可解析（读 patch 与包内 <code>skills/</code>）；⑦ 给出「下一步做什么」的命令，而不是只报错。</p>
           <p><b>风险/依赖</b>：只读；不能自动改 profile（改配置必须用户确认）；Windows 路径与编码要小心；「宿主服务不可用」与「未装配」必须区分，避免误报。</p>
           <p><b>验收</b>：构造 4 种故障（缺 bundle、缺 provider、patch 未重载、旧会话）分别给出不同 hint；正常环境 0 fail；<code>--json</code> 可被 CI 消费。</p>
         </article>
 
         <article class="card tint-amber" style="margin:14px 0">
-          <div class="kicker">推荐 B · P1 · 1–2 天</div>
+          <div class="kicker">推荐 B · P1 · ✅ 已完成（Wave-1：写面护栏）</div>
           <h3>写面护栏：把「谁能改这一行」写进引擎</h3>
           <p><b>目标</b>：消除审计 P1-05 的越权写面，让「worker 只能改自己的水位/事件/裁决」成为代码事实，而不是 Skill 里的口号。</p>
           <p><b>方案</b>：在 <code>src/guards.js</code> 增加统一的 <code>assertLeafWriter(caller, leaf, op)</code>：<code>set-context</code> 允许 owner 或祖先 commander；<code>event</code> 非 done 允许 owner；<code>set-verification</code> 允许 commander/root 或显式 verify caller；<code>dispatch:cancel</code> 允许 parent/creator；<code>verify run</code> 允许 commander。每个命令补负例测试；同步 <code>tree-worker</code>/<code>tree-commander</code> 的护栏表。</p>
           <p><b>风险/依赖</b>：旧 E2E 可能依赖宽松路径；竹节 owner 重绑后规则要按「当前 owner」判断；root 信任锚要保留例外；不要误伤 <code>set-session</code> 的 creator 语义。</p>
-          <p><b>验收</b>：5 个写操作各有「非授权 → 拒」与「授权 → 通过」测试；67/67 不回归；A 组真机 7/7 succeeded 仍成立；SKILL/README 与实现一致。</p>
+          <p><b>验收</b>：5 个写操作各有「非授权 → 拒」与「授权 → 通过」测试；112/112 不回归（落地时为 67/67）；A 组真机 7/7 succeeded 仍成立；SKILL/README 与实现一致。</p>
         </article>
 
         <article class="card tint-violet" style="margin:14px 0">
-          <div class="kicker">推荐 C · P1 · 1 天</div>
+          <div class="kicker">推荐 C · P1 · ✅ runner 已落地（W2.5；真机本体待发布前触发）</div>
           <h3>真机 E2E 常态化：把三条一次性取证变成发布前必跑</h3>
           <p><b>目标</b>：交接（root/sibling）、接替提示语语言、Skill 目录可见性这三条真机断言不再只在报告里跑过一次，而是每次发布前都跑并留证。</p>
           <p><b>方案</b>：复用现有 <code>scripts/e2e/verify-handoff.mjs</code>、<code>scripts/e2e/verify-kickoff-language.mjs</code>、<code>scripts/skill-e2e/collect-skills.mjs</code>，合成一个 runbook（或薄包装脚本）：起真实子会话 → 逐条断言 → artifacts 落到 <code>scripts/skill-e2e/artifacts/</code> → 在 <code>docs/guides/publishing.md</code> §6 检查清单加一项「真机 E2E 三断言」。失败时保留会话 id 与解码结果，便于复跑。</p>
@@ -2117,14 +2118,32 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
               <table class="compact">
                 <thead><tr><th>波次</th><th>内容</th><th>退出条件</th></tr></thead>
                 <tbody>
-                  <tr><td><b>Wave 1</b></td><td>doctor + 写面护栏 + 预算计入竹节</td><td>4 类故障可诊断；负例测试齐；67/67 + A 组不回归</td></tr>
-                  <tr><td><b>Wave 2</b></td><td>conformance fixture + RC2 单测 + Skill 版本一致性检查</td><td>29/29 可复现；兼容层 3 分支有测试；SKILL/README 断言一致</td></tr>
-                  <tr><td><b>Wave 3</b></td><td>artifact 路径 + gc + schema 生成文档 + 真实 50% 演练</td><td>产物不误判；删除可回滚；文档无 unknown action；自然阈值 PASS</td></tr>
+                  <tr><td><b>Wave 1</b> ✅</td><td>doctor + 写面护栏（预算计入竹节 carry 到 Wave 2）</td><td>4 类故障可诊断；负例测试齐；<code>tree_doctor</code> 7/7 PASS</td></tr>
+                  <tr><td><b>Wave 2</b> ✅</td><td>W2.1 预算链 + W2.2 conformance fixture + W2.3 RC2 兼容层 + W2.4 一致性脚本 + W2.5 E2E runner + W2.6 root id 兼容 + W2.7 发布自动化 + W2.8 GUI 规范</td><td><b>112/112</b>；conformance <b>29/29</b>；一致性脚本 <b>23 checks</b>；沙箱发布演练 exit 0；真机三断言留待发布前触发</td></tr>
+                  <tr><td><b>Wave 3</b> 📋</td><td>artifact 路径 + gc + schema 生成文档 + 真实 50% 演练 + <code>runtime.history</code> 预算口径 + relay 预检</td><td>产物不误判；删除可回滚；文档无 unknown action；自然阈值 PASS</td></tr>
                 </tbody>
               </table>
             </div>
             <p class="src"><b>建议依据</b>：<code>docs/reports/audit-tree-system-2026-11-11.md</code> P1-05/P1-06/P1-07；<code>README.md</code> 已知边界；<code>docs/reports/skill-e2e-2026-11-11.md</code> §5；<code>docs/guides/publishing.md</code> §4。</p>
           </article>
+        </div>
+
+        <h3 style="margin-top:30px" id="wave2">9.4 Wave 2 完成情况（2026-11-12 收口）</h3>
+        <p>以下八项已在本轮完成；证据以仓库文件/实测输出为准，完整清单见 <code>docs/reports/wave2-closeout-2026-11-12.md</code>。真机三断言本体与镜像真推是<b>已知边界</b>（发布前由 Lead/人工触发）。</p>
+        <div class="tablewrap">
+          <table class="compact">
+            <thead><tr><th style="width:7%">ID</th><th style="width:26%">项</th><th style="width:8%">状态</th><th style="width:59%">证据</th></tr></thead>
+            <tbody>
+              <tr><td><b>W2.1</b></td><td>会话预算计入竹节链</td><td>✅</td><td><code>src/guards.js</code> + <code>src/engine.js</code> validate；<code>tests/budget.test.js</code> 7 例；接力后计数与超限拒绝</td></tr>
+              <tr><td><b>W2.2</b></td><td>provider-conformance rc.2 fixture</td><td>✅</td><td><code>test/provider-conformance.cjs</code> <b>29/29</b>；缺 fixture exit 2；fixture SHA-256 留档（<code>docs/reports/conformance-rc2-2026-11-12.md</code>）</td></tr>
+              <tr><td><b>W2.3</b></td><td>RC2 兼容层单测</td><td>✅</td><td><code>src/compat.js</code> + <code>tests/compat.test.js</code> <b>11 例</b>；总数 84→112</td></tr>
+              <tr><td><b>W2.4</b></td><td>Skill/README/版本一致性检查</td><td>✅</td><td><code>scripts/check-version-consistency.mjs</code> <b>23 checks</b>；<code>--json</code>/<code>--run-tests</code>；故意改错能 FAIL</td></tr>
+              <tr><td><b>W2.5</b></td><td>真机 E2E 常态化 runner</td><td>✅（本体未跑）</td><td><code>scripts/e2e/run-release-e2e.mjs</code>：三条断言编排/汇总/artifacts + <code>--replay</code>；离线故障注入能 FAIL（<code>docs/reports/e2e-release-runner-2026-11-12.md</code>）</td></tr>
+              <tr><td><b>W2.6</b></td><td>root 会话 id 兼容</td><td>✅</td><td><code>normalizeSessionId</code>/<code>sameSession</code>；<code>tests/identity.test.js</code> 10 例；活体修复前 <code>E_INVALID_UUID_STRICT</code> → 修复后建树成功、root 存裸 UUID</td></tr>
+              <tr><td><b>W2.7</b></td><td>发布自动化（一条命令）</td><td>✅（真推未跑）</td><td><code>scripts/release-all.mjs</code>：预检→同步/SHA→本仓 commit→镜像 commit/tag→<code>ls-remote</code>；隔离沙箱全链路演练（<code>docs/reports/release-automation-2026-11-12.md</code>）</td></tr>
+              <tr><td><b>W2.8</b></td><td>GUI 迭代规范</td><td>✅</td><td><code>docs/architecture/session-tree-ui.md</code>：交互方案 + code map + 7 步迭代流程 + 变更记录（现行）</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -2162,7 +2181,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
               <tr><td><b>taskType / DoD</b></td><td>节点任务类型（research/question/doc/code-change/default）与「完成定义」；决定验证策略与注入文本。</td></tr>
               <tr><td><b>adversarial</b></td><td>对抗式验证：结构检查 + 异族红队攻击 + FAIL 回注修复，最多 3 轮。</td></tr>
               <tr><td><b>cleanroom</b></td><td>洁净室评审：独立子会话、干净上下文、只读 GitHub 实际内容，多轮找缺口。</td></tr>
-              <tr><td><b>18/18 SHA</b></td><td>发布同步脚本对 18 个文件逐个 SHA-256 比对，全部一致才允许推送。</td></tr>
+              <tr><td><b>19/19 SHA</b></td><td>发布同步脚本对 19 个文件逐个 SHA-256 比对，全部一致才允许推送（v1.3.6 起；更早版本 18/18 / 16/16 / 15/15）。</td></tr>
             </tbody>
           </table>
         </div>
@@ -2175,12 +2194,12 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           </div>
           <svg viewBox="0 0 1120 430" role="img" aria-labelledby="fig-timeline-title">
             <title id="fig-timeline-title">session-tree 与 tree-engine 的版本演进</title>
-            <desc>上轨为 session-tree 从 1.0.4 到 1.3.6 的功能演进；下轨为 tree-engine 从 0.4.0 到 0.5.1，以及 introspect 的版本。</desc>
+            <desc>上轨为 session-tree 从 1.0.4 到 1.3.6 的功能演进；下轨为 tree-engine 从 0.4.0 到 0.7.0，以及 introspect 的版本。</desc>
             <defs>
               <marker id="f7-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
             </defs>
             <rect class="s-bg" x="0" y="0" width="1120" height="430" rx="14"/>
-            <text class="s-hero" x="32" y="36" font-size="19">版本演进：一天之内从 1.0.4 到 1.3.6</text>
+            <text class="s-hero" x="32" y="36" font-size="19">版本演进：session-tree 1.0.4 → 1.3.6，tree-engine 0.4.0 → 0.7.0</text>
             <text class="s-t3" x="470" y="36" font-size="11.5">1.3.2 / 1.3.4 为文档版，无代码行为变化</text>
 
             <!-- lane 1 -->
@@ -2240,7 +2259,15 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
 
             <circle cx="570" cy="272" r="7" class="s-badge-teal"/>
             <text class="s-mono" x="570" y="297" font-size="9.8" text-anchor="middle">0.5.1</text>
-            <text class="s-t3" x="570" y="258" font-size="9.2" text-anchor="middle">SKILL 勘误（当前）</text>
+            <text class="s-t3" x="570" y="258" font-size="9.2" text-anchor="middle">SKILL 勘误</text>
+
+            <circle cx="690" cy="272" r="7" class="s-badge-teal"/>
+            <text class="s-mono" x="690" y="297" font-size="9.8" text-anchor="middle">0.6.0</text>
+            <text class="s-t3" x="690" y="258" font-size="9.2" text-anchor="middle">doctor + 护栏</text>
+
+            <circle cx="810" cy="272" r="8" class="s-badge-teal"/>
+            <text class="s-mono" x="810" y="297" font-size="10" text-anchor="middle">0.7.0</text>
+            <text class="s-on-teal" x="810" y="258" font-size="9.6" text-anchor="middle">Wave 2（当前）</text>
 
             <rect class="s-card" x="896" y="240" width="180" height="58" rx="8"/>
             <text class="s-mono" x="912" y="258" font-size="9.8">introspect 0.1.0</text>
@@ -2248,9 +2275,9 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-t3" x="912" y="289" font-size="9.2">运行中</text>
 
             <text class="s-t3" x="42" y="330" font-size="10.2">注：session-tree 的版本号同时是公开插件仓的 tag；tree-engine 未单独发仓，版本只在本仓 <tspan class="s-mono">package.json</tspan> 维护。</text>
-            <text class="s-t3" x="42" y="347" font-size="10.2">所有日期均为 2026-11-11（北京时间）；更早的 1.0.x 历史见公开插件仓 tags 与本仓 <tspan class="s-mono">docs/guides/publishing.md</tspan>。</text>
+            <text class="s-t3" x="42" y="347" font-size="10.2">session-tree 各版本均在 2026-11-11（北京时间）；tree-engine 0.6.0（Wave-1）/ 0.7.0（Wave-2）为 2026-11-11 / 2026-11-12。</text>
 
-            <text class="s-t3" x="32" y="402" font-size="10.5">读法：先看 session-tree 上轨的「能力拐点」（1.2.0 合并、1.3.0 Skill、1.3.1 语言、1.3.3 干跑），再看 tree-engine 下轨的两次修复（0.5.0 B1、0.5.1 勘误）。</text>
+            <text class="s-t3" x="32" y="402" font-size="10.5">读法：session-tree 上轨看「能力拐点」（1.2.0 合并、1.3.0 Skill、1.3.1 语言、1.3.3 干跑），tree-engine 下轨看修复拐点（0.5.0 B1、0.5.1 勘误、0.6.0 doctor+护栏、0.7.0 Wave-2 三修）。</text>
           </svg>
           <figcaption><b>图 7 · 版本演进</b>。<span class="how">怎么读：</span>上轨是「会话树/交接」的能力拐点，下轨是「执行引擎」的修复拐点。注意 1.3.2/1.3.4 只是文档版——这也是为什么本页把「有内容变化必须 bump」单独写成一条纪律：版本号本身是市场判断更新的唯一信号。</figcaption>
         </figure>
@@ -2259,8 +2286,8 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <table class="compact">
             <thead><tr><th>包</th><th>当前版本</th><th>状态</th><th>公开位置</th><th>测试</th></tr></thead>
             <tbody>
-              <tr><td><code>dsh-tree-engine</code></td><td class="num">0.5.1</td><td><span class="pill fact">运行中</span></td><td>随本仓公开（未单独发仓）</td><td><b>67/67</b></td></tr>
-              <tr><td><code>dsh-session-tree</code></td><td class="num">1.3.6</td><td><span class="pill fact">公开镜像</span></td><td><code>orphiczhou/dsh-session-tree</code> · tag <code>v1.3.5</code> · <code>1fb9193</code></td><td>41/41 + 3/3 + 22/22 + 0 fail</td></tr>
+              <tr><td><code>dsh-tree-engine</code></td><td class="num">0.7.0</td><td><span class="pill fact">运行中</span></td><td>随本仓公开（未单独发仓）</td><td><b>112/112</b></td></tr>
+              <tr><td><code>dsh-session-tree</code></td><td class="num">1.3.6</td><td><span class="pill fact">公开镜像</span></td><td><code>orphiczhou/dsh-session-tree</code> · tag <code>v1.3.6</code> · <code>298298d</code></td><td>41/41 + 3/3 + 22/22 + 0 fail + 29/29</td></tr>
               <tr><td><code>dsh-agent-introspect</code></td><td class="num">0.1.0</td><td><span class="pill fact">运行中</span></td><td>随本仓公开</td><td>无单测</td></tr>
             </tbody>
           </table>
@@ -2272,13 +2299,13 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <table class="compact">
             <thead><tr><th style="width:34%">仓库相对路径</th><th style="width:48%">用来核对什么</th><th style="width:18%">快照 / 注意</th></tr></thead>
             <tbody>
-              <tr><td><code>README.md</code></td><td>包表、快速开始、随包 Skill、已知边界、文档索引</td><td>2026-11-11；个别旧数字见 §8.1</td></tr>
-              <tr><td><code>agent.md</code></td><td>角色、D1–D15、R1–R12、状态快照、任务板、发布门禁</td><td>最后更新 2026-11-11（第七轮）</td></tr>
-              <tr><td><code>docs/guides/skills-usage.md</code></td><td>三个 Skill 的触发、参数、样例、42% vs 50%、排障</td><td>适用 v1.3.5 / v0.5.1</td></tr>
-              <tr><td><code>docs/operations/handoff-2026-11-11.md</code></td><td>当前交接、关键路径、测试/验活、风险与下一轮议程</td><td>快照 15:00；§9 有旧版本号</td></tr>
+              <tr><td><code>README.md</code></td><td>包表、快速开始、随包 Skill、已知边界、文档索引</td><td>2026-11-12；个别旧数字见 §8.1</td></tr>
+              <tr><td><code>agent.md</code></td><td>角色、D1–D17、R1–R14、状态快照、任务板、发布门禁</td><td>最后更新 2026-11-12（Wave-2 收口，D17）</td></tr>
+              <tr><td><code>docs/guides/skills-usage.md</code></td><td>三个 Skill 的触发、参数、样例、42% vs 50%、排障</td><td>适用 v1.3.6 / v0.7.0</td></tr>
+              <tr><td><code>docs/operations/handoff-2026-11-12.md</code></td><td>当前交接、关键路径、测试/验活、风险与下一轮议程</td><td>快照 2026-11-12 01:40</td></tr>
               <tr><td><code>docs/architecture/session-handoff-2026-11-11.md</code></td><td>交接设计、继承矩阵、闸门顺序、语言解析、防重复</td><td>设计/交付记录，含 v0.1.0 历史</td></tr>
-              <tr><td><code>docs/architecture/engine-spec.md</code></td><td><b>上游源引擎</b>的 S0 行为规约（33 工具、85 阈值）</td><td>不是本仓 8 工具/42% 的现状</td></tr>
-              <tr><td><code>docs/architecture/tools-mapping.md</code></td><td>8 工具与 33 源工具的映射、设计 action 集</td><td><b>设计稿</b>，含未实现 action</td></tr>
+              <tr><td><code>docs/architecture/engine-spec.md</code></td><td><b>上游源引擎</b>的 S0 行为规约（33 工具、85 阈值）</td><td>不是本仓 9 工具/42% 的现状</td></tr>
+              <tr><td><code>docs/architecture/tools-mapping.md</code></td><td>9 工具与 33 源工具的映射、设计 action 集</td><td><b>设计稿</b>，含未实现 action</td></tr>
               <tr><td><code>docs/architecture/segment-handoff.md</code></td><td>竹节阈值 42、链长 5、先 interrupt 后 start、K1–K5</td><td>2026-10-04 设计备忘</td></tr>
               <tr><td><code>docs/reports/audit-tree-system-2026-11-11.md</code></td><td>4 BLOCK / 12 需修 / 15 建议；P1-05/06/07 等</td><td>v0.5.0 基线（66/66）</td></tr>
               <tr><td><code>docs/reports/skill-e2e-2026-11-11.md</code></td><td>A/B/C 真机证据、7 节点 succeeded、FAIL→PASS、12/12 继承断言</td><td>2026-11-11；含 429 限制</td></tr>
@@ -2287,22 +2314,26 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
               <tr><td><code>docs/guides/publishing.md</code></td><td>GitHub 两仓、市场、npm 冻结、版本纪律、发布脚本护栏</td><td>快照 15:00；tag 链</td></tr>
               <tr><td><code>docs/reports/skill-cleanroom-2026-11-11.md</code></td><td>三轮洁净室：G1–G12、N1–N7、第三轮 PASS</td><td>2026-11-11</td></tr>
               <tr><td><code>docs/architecture/merge-session-tree-2026-11-11.md</code></td><td>§5 provider-conformance 的 rc.2 fixture 限制</td><td>2026-11-11</td></tr>
-              <tr><td><code>CHANGELOG.md</code></td><td>1.3.1–1.3.5 的变更与验证；1.3.0 的 Unreleased 段</td><td>2026-11-11</td></tr>
+              <tr><td><code>docs/reports/wave2-closeout-2026-11-12.md</code></td><td>W2.1–W2.8 结论表、代码变更清单、测试增量 84→112、脚本退出码、W2.6 活体前后</td><td>2026-11-12</td></tr>
+              <tr><td><code>docs/reports/conformance-rc2-2026-11-12.md</code></td><td>W2.2 29/29 复验、fixture 来源与 SHA-256、缺 fixture exit 2</td><td>2026-11-12</td></tr>
+              <tr><td><code>docs/reports/e2e-release-runner-2026-11-12.md</code></td><td>W2.5 runner 参数/流水线/artifacts、离线故障注入、replay 边界</td><td>2026-11-12</td></tr>
+              <tr><td><code>docs/reports/release-automation-2026-11-12.md</code></td><td>W2.7 一条命令发布、失败即停与回滚、凭据纪律、沙箱演练</td><td>2026-11-12</td></tr>
+              <tr><td><code>CHANGELOG.md</code></td><td>1.3.1–1.3.6 的变更与验证；1.3.0 的 Unreleased 段</td><td>2026-11-12</td></tr>
               <tr><td><code>packages/*/package.json</code></td><td>版本、<code>files</code>、<code>exports</code>、<code>dsh.bundle/client</code></td><td>当前工作树</td></tr>
-              <tr><td><code>packages/dsh-tree-engine/index.js</code></td><td>8 工具 schema、action 闭集、工具描述</td><td>v0.5.1</td></tr>
-              <tr><td><code>packages/dsh-tree-engine/src/*.js</code></td><td>状态机、护栏、验证策略、竹节、时钟、配置</td><td>当前工作树</td></tr>
-              <tr><td><code>packages/dsh-session-tree/index.js</code></td><td><code>tree_send</code>/<code>session_handoff</code> schema、继承、语言、闸门</td><td>v1.3.5</td></tr>
-              <tr><td><code>packages/dsh-session-tree/README.zh.md</code></td><td>侧栏树、工作区、<code>tree_send</code>、交接继承、安装/排障</td><td>v1.3.5</td></tr>
+              <tr><td><code>packages/dsh-tree-engine/index.js</code></td><td>9 工具 schema、action 闭集、工具描述</td><td>v0.7.0</td></tr>
+              <tr><td><code>packages/dsh-tree-engine/src/*.js</code></td><td>状态机、护栏、验证策略、竹节、时钟、配置、RC2 兼容层（<code>compat.js</code>）</td><td>当前工作树</td></tr>
+              <tr><td><code>packages/dsh-session-tree/index.js</code></td><td><code>tree_send</code>/<code>session_handoff</code> schema、继承、语言、闸门</td><td>v1.3.6</td></tr>
+              <tr><td><code>packages/dsh-session-tree/README.zh.md</code></td><td>侧栏树、工作区、<code>tree_send</code>、交接继承、安装/排障</td><td>v1.3.6</td></tr>
               <tr><td><code>packages/*/cordis.patch.yml</code></td><td>两行 insert：bundle + <code>dsh-skill-filesystem</code></td><td>当前工作树</td></tr>
-              <tr><td><code>git log</code> / <code>git status</code></td><td>本仓 master <code>ebeeaea</code>；工作树 clean；无 tag</td><td>2026-11-11 实测</td></tr>
-              <tr><td><b>本会话实测</b></td><td><code>tree-engine</code> 67/67、<code>handoff</code> 41/41、<code>skills</code> 3/3，退出码 0</td><td>2026-11-11</td></tr>
+              <tr><td><code>git log</code> / <code>git status</code></td><td>本仓 master <code>e09f39b</code>；工作树不 clean（Wave-2 未提交）；无 tag</td><td>2026-11-12 实测</td></tr>
+              <tr><td><b>本轮实测</b></td><td><code>tree-engine</code> 112/112、<code>handoff</code> 41/41、<code>skills</code> 3/3、<code>style-guard</code> 22/22，退出码 0；<code>tree_doctor</code> 7/7 PASS</td><td>2026-11-12</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="callout">
           <span class="label">引用建议</span>
-          <p>写文档/汇报时，优先引用<b>包内 <code>package.json</code></b>（版本）与<b>实测命令</b>（测试数）；引用 <code>docs/</code> 时请带上「快照日期」，因为本项目在 2026-11-11 一天内迭代了 5 个 session-tree 版本，旧文档里的 34/34、40/40、66/66、v1.3.3 都曾是正确的历史值。</p>
+          <p>写文档/汇报时，优先引用<b>包内 <code>package.json</code></b>（版本）与<b>实测命令</b>（测试数）；引用 <code>docs/</code> 时请带上「快照日期」，因为本项目在 2026-11-11 一天内迭代了 5 个 session-tree 版本、2026-11-12 又把 tree-engine 从 0.6.0 推到 0.7.0；旧文档里的 34/34、40/40、66/66、67/67、84/84、v1.3.3、v0.5.1 都曾是正确的历史值。</p>
         </div>
 
       </div>
@@ -2316,16 +2347,16 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
   <div class="wrap">
     <div>
       <h4>关于这份地图</h4>
-      <p>生成方式：由独立子会话 <code>bd97e78b-7a81-4cf4-8566-5706160712c2</code>（DSH 会话树体系「项目完整地图 + 能力/架构展示 + 下一步功能分析」任务）在 <b>2026-11-11</b> 只读扫描仓库后手写；单文件、完全离线、无脚本、无外链资源。</p>
+      <p>生成方式：由独立子会话 <code>bd97e78b-7a81-4cf4-8566-5706160712c2</code>（DSH 会话树体系「项目完整地图 + 能力/架构展示 + 下一步功能分析」任务）在 <b>2026-11-11</b> 只读扫描仓库后手写；<b>2026-11-12</b> 由 Wave-2 文档收口（D1b）刷新版本号/测试数/工具数/§9 完成状态；单文件、完全离线、无脚本、无外链资源。</p>
       <p>事实与示意分离：带 <span class="pill fact">事实</span> 的内容有仓库文件或本会话实测支撑；带 <span class="pill demo">示意</span> 的是为可读性重排的布局/命令返回；带 <span class="pill rec">建议</span> 的是分析，不代表仓库承诺。</p>
-      <p class="fine">本页未修改仓库其它文件；版本号、测试数、hash 均以 2026-11-11 快照为准。若与此后的 <code>package.json</code> / <code>git log</code> 冲突，以后者为准。</p>
+      <p class="fine">本页未修改仓库其它文件；版本号、测试数、hash 均以 2026-11-12 快照为准。若与此后的 <code>package.json</code> / <code>git log</code> 冲突，以后者为准。</p>
     </div>
     <div>
       <h4>源码与镜像（纯文本，不作为资源加载）</h4>
       <p class="mono fine">github.com/orphiczhou/dsh-tree-harness</p>
-      <p class="mono fine">github.com/orphiczhou/dsh-session-tree（tag v1.3.5 = 1fb9193）</p>
+      <p class="mono fine">github.com/orphiczhou/dsh-session-tree（tag v1.3.6 = 298298d）</p>
       <h4 style="margin-top:14px">快照</h4>
-      <p class="fine">session-tree v1.3.6 · 1fb9193 · 18/18 SHA<br>tree-engine v0.5.1 · introspect v0.1.0<br>本仓 master ebeeaea · MIT · npm 冻结（D3）</p>
+      <p class="fine">session-tree v1.3.6 · 298298d · 19/19 SHA<br>tree-engine v0.7.0 · introspect v0.1.0<br>本仓 master e09f39b · MIT · npm 冻结（D3）</p>
     </div>
   </div>
 </footer>

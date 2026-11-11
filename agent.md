@@ -3,7 +3,7 @@
 > **所有接手本项目的 AI Agent 的开工必读**，同时是项目**单一事实源**：角色授权 / 决策日志 / 路线图 / 工程约定 / 发布门禁。
 > 文件名由用户在 2026-11-11 明确指定为 **`agent.md`**（此前误建为 `agenda.md`，已 `git mv` 更名，见 §7）。
 > 由 **Lead（指挥官 + 架构师）** 维护，每轮收尾更新。
-> 最后更新：2026-11-11（第八轮 Wave-1 收口：tree-engine **v0.6.0** `tree_doctor` 只读自检 + leaf 写面护栏；C1 meta-loop 清理；文档/项目地图口径刷新到 9 工具 / 84-84）
+> 最后更新：2026-11-12（Wave 2 收口：tree-engine **v0.7.0** 的 W2.1 会话预算含竹节链 / W2.3 RC2 兼容层单测 / W2.6 会话 id 归一化 + 工具链 W2.2/W2.4/W2.5/W2.7 与 GUI 规范 W2.8；文档口径刷新到 9 工具 / 112-112）
 
 ---
 
@@ -22,7 +22,7 @@
 > 🗺️ **先看全景**：[docs/project-map-2026-11-11.html](docs/project-map-2026-11-11.html)（单文件离线项目地图：组件 / 工具面 / 真机流程 / 机制 / 边界 / 下一步）。
 
 1. 读本文件（决策 / 约定 / 门禁）；
-2. 读 [docs/operations/handoff-2026-11-11.md](docs/operations/handoff-2026-11-11.md)（当前状态 / 路径 / 命令）；
+2. 读 [docs/operations/handoff-2026-11-12.md](docs/operations/handoff-2026-11-12.md)（当前状态 / 路径 / 命令；旧版 `handoff-2026-11-11.md` 已归档到 [docs/archive/](docs/archive/)）；
 3. `git log --oneline -8` + `git status`，确认 HEAD 与工作树；
 4. 跑基线测试（见 §0.2），确认与最近记录一致；
 5. 改代码/发布前，先读 [docs/guides/publishing.md](docs/guides/publishing.md)（发布流程/版本纪律/检查清单）。
@@ -31,13 +31,13 @@
 
 ```powershell
 # 测试（bundled node；勿用目录形参 node --test tests —— Node 24 会报 test at tests:1:1 假失败）
-node --test tests/*.test.js            # packages/dsh-tree-engine → 84/84（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏）
+node --test tests/*.test.js            # packages/dsh-tree-engine → 112/112（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 11 compat + 10 identity + 7 budget）；14 个 .test.js
 tree_doctor {action:"run"}             # 只读自检：package / tool-count / skills / tree-data / stale / sweep / env 七项
 node test/handoff.test.js              # packages/dsh-session-tree → 41/41（宿主半 session_handoff）
 node test/render.test.cjs              # packages/dsh-session-tree → 全绿（参考 133 + 自检 9 + 实时 11）
 node test/style-guard.cjs              # packages/dsh-session-tree → 22/22
 node scripts/verify-bundle.mjs         # packages/dsh-session-tree → 0 fail
-node test/provider-conformance.cjs     # 需 rc.2 兼容的 asar 解包 fixture（默认目录若为旧版会快速失败，属环境依赖）
+node test/provider-conformance.cjs     # rc.2 fixture 解析（W2.2）：DSH_RC2_FIXTURE_DIR → %TEMP%\dsh-asar-inspect\out-rc2-compat → out；缺 fixture 以 exit 2 + 可操作报错退出，正常 29/29
 
 # 活体验证（唯一可编程观测通道；本会话若没有 cordis_inspect，用 spawn 子会话探针）
 cordis_inspect_list / cordis_inspect_query    # host Tool/Service/Config、client providers
@@ -49,10 +49,17 @@ cordis_inspect_list / cordis_inspect_query    # host Tool/Service/Config、clien
 node scripts/e2e/verify-handoff.mjs --source <id> --successor <id> --expect-kind root|sibling [--wait 120000]
 # 接替提示语种断言（v1.3.1）：读接替会话首条 user/message，--expect zh|en
 node scripts/e2e/verify-kickoff-language.mjs --session <successorId> --expect zh --json
+# 发布前真机 E2E 统一 runner（W2.5）：三条断言编排/汇总/artifacts；--replay 复算既有 artifact
+node scripts/e2e/run-release-e2e.mjs --source <id> --successor <id> --wait 120000
 # Skill 驱动 E2E：scripts/skill-e2e/collect-skills.mjs（会话看到的 skill 列表）+ summarize-run.mjs（工具/分层/交接序列）
+
+# 版本一致性（W2.4，只读；--json 机读，--run-tests 实跑引擎测试与文档数字比对）
+node scripts/check-version-consistency.mjs
 
 # 会话树单向发布同步（只写 --target，不执行 git、不 push）
 node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --target <公开插件仓本地 checkout>
+# 一键发布自动化（W2.7，默认 dry-run；--apply/--skip-push 走本地全链路，--push 才联网写远端）
+node scripts/release-all.mjs --dry-run --mirror-dir <dir>
 ```
 
 - node 路径：`%USERPROFILE%\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe`
@@ -93,23 +100,24 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 | **D13** | 2026-11-11 | **SKILL 工程化：技能随插件包发布 + 挂 filesystem skill provider（v1.3.0 / tree-engine v0.5.0）** | 用户要求「固化可复用的 skill；tree 体系的 skill 也是插件工程的一部分，要版本迭代」。落地：`packages/dsh-session-tree/skills/session-handoff/SKILL.md`（新建）+ `packages/dsh-tree-engine/skills/tree-commander\|tree-worker/SKILL.md`（从仓根迁入并更新）；两个 bundle 的 `cordis.patch.yml` 各增加一条 insert：`@deepseek-ai/dsh-skill-filesystem`（`providerName` 各自唯一、`includeDefaultRoots:false`、`watch:false`、`bundledSkillDir` 经安装包身份解析到包内 `skills/`，archify 同款模式）；`package.json.files` 纳入 `skills`，随包版本发布。三份 skill 均写入**每层会话 50% 自主交接**纪律并与 tree-engine 竹节 pct≥42 协议协调。版本：session-tree 1.2.0→**1.3.0**、tree-engine 0.4.0→**0.5.0**。 |
 | **D14** | 2026-11-11 | **交接接替提示语跟随 DSH 界面语言（v1.3.1）** | 用户指出「交接时新会话默认给英文提示词，应使用 DSH 界面语言设定」。落地：`buildSuccessorPrompt` 增加 zh 分支；新增 `readLocalePreference`——① 活体 Loader `locale` 条目（`options.config.preference`，volatile 展开，按 `@deepseek-ai/dsh-client-locale` 包名兜底查嵌套条目）→ ② profile `cordis.patch.yml`/`cordis.yml`（优先 `DSH_PROFILE_DIR`，实测宿主进程未导出该变量但 **cwd = profile 目录**，故用 `process.cwd()` 兜底）→ ③ 英文；`zh*`→zh、`en*`→en、其它/无偏好→en。`status`/`handoff` 返回 `interface_language`、渲染行尾 `lang=zh\|en`；交接文件 `Successor instructions` 同语言。验收脚本 `scripts/e2e/verify-kickoff-language.mjs`。版本 session-tree 1.3.0→**1.3.1**；测试 34→40；真机基线 en→修复后 zh PASS（[报告](docs/reports/e2e-kickoff-language-2026-11-11.md)）。 |
 | **D16** | 2026-11-12 | **GUI 迭代规范 + 文档归档规范（v1.3.6 起）** | 用户要求「文档按规矩归档、便于继续迭代」并同意 GUI 迭代新规则：① UI 方案先写 [docs/architecture/session-tree-ui.md](docs/architecture/session-tree-ui.md) 再改 `client.js`；② 每次改动走「方案→实现→render/style 测试→刷新自检→bump→release→记录」；③ 文档按 [docs/README.md](docs/README.md) 的 architecture/guides/operations/reports/archive 归档；④ 新增 `scripts/check-doc-links.mjs` 常驻链接校验。落地：docs 全量重排（35 文件 / 363 链接）、人类安装指南、Agent 安装指南（`AGENT-INSTALL.md`，随包 19 文件）、session-tree **v1.3.6** 发布（`298298d`）。 |
+| **D17** | 2026-11-12 | **Wave 2：引擎完整性 + 工具链 + 发布流程（tree-engine 0.6.0 → 0.7.0）** | ① **W2.1 会话预算计入竹节链**：`max_sessions` 计数集合补 `leaf.runtime.segmentChain`（与 `leaf.session_id` / `leaf.segment_chain` / `session_registry` 合并后按归一化 id 去重；`src/guards.js` 预算口径 + `src/engine.js` validate 同步）；② **W2.3 RC2 兼容层抽离**：`startContinuable` / `startActivation` 双形探测纯逻辑抽到 `src/compat.js`，新增 `tests/compat.test.js` **11 例**；③ **W2.6 root/主会话 id 归一化**：DSH 根/主会话带 `session-` 前缀（子会话为裸 UUID），引擎**写入侧归一化**（剥前缀、小写、存裸 UUID 规范形），**比较侧** `normalizeSessionId` / `sameSession` 归一化比较（`added_by` / owner / caller），历史带前缀旧值兼容读取；**UUID v4 严格性不放宽**（归一化后仍非 v4 仍 `E_INVALID_UUID_STRICT`）；活体：修复前 `tree_plan` 带前缀 → `E_INVALID_UUID_STRICT`，修复后同一调用成功、root 存裸 UUID、`tree_node add` 混合形态 `added_by` 可用；④ **W2.2** provider-conformance rc.2 fixture 显式解析（`DSH_RC2_FIXTURE_DIR` → `%TEMP%\dsh-asar-inspect\out-rc2-compat` → `out`；缺 fixture exit 2）→ **29/29**；⑤ **W2.4** `scripts/check-version-consistency.mjs`（23 checks、`--json`/`--run-tests`、故障注入 FAIL 自证）；⑥ **W2.5** `scripts/e2e/run-release-e2e.mjs`（三条真机断言编排/汇总/artifacts + `--replay`；真机本体由发布前人工触发）；⑦ **W2.7** `scripts/release-all.mjs`（预检→同步/SHA→本仓 commit→镜像 commit/tag→`ls-remote`，默认 dry-run，`--push` 才联网写）；⑧ **W2.8** GUI 规范 `docs/architecture/session-tree-ui.md` 7 步流程现行；⑨ 版本：`dsh-tree-engine` **0.6.0 → 0.7.0**（测试 84 → **112/112**，14 个 `.test.js`），`dsh-session-tree` **v1.3.6 不变**。**未做**：镜像/本仓均未推送（由 Lead 发布时执行）；真机三断言本体未跑。证据见 [docs/reports/wave2-closeout-2026-11-12.md](docs/reports/wave2-closeout-2026-11-12.md)。 |
 
 ---
 
-## 2. 当前状态快照（2026-11-11 第八轮 Wave-1：doctor 自检 + 写面护栏 + meta-loop 清理）
+## 2. 当前状态快照（2026-11-12 Wave-2 收口：引擎完整性 + 工具链 + 发布流程）
 
-- **项目全景地图**：[docs/project-map-2026-11-11.html](docs/project-map-2026-11-11.html)（单文件离线，也是 GitHub 项目介绍入口——README 顶部同链接）
-- **DSH 桌面**：`0.2.2-rc.1`；profile bundles **27** 个；loader 条目 244
-- **本仓**：public `master`，**最新提交以 `git log` 为准**（2026-11-12 已完成：Wave-1 `8796c88` tree-engine v0.6.0 / `14dc8c3` meta-loop 清理 / `b522138` Pages 在线地图 / `e280925`+`60d0db7` docs 归档与 v1.3.6 安装指南）；**项目地图已启用 GitHub Pages 在线版** `https://orphiczhou.github.io/dsh-tree-harness/project-map-2026-11-11.html`，仓库 About 指向地图；remote = `https://github.com/orphiczhou/dsh-tree-harness.git`
-- **公开面**：仓库 https://github.com/orphiczhou/dsh-tree-harness（public / master / MIT / 7 topics）；插件仓 `orphiczhou/dsh-session-tree` **v1.3.6**（交接提示语跟随界面语言 + 随包 Skill + 文档补全 + spawn:false 干跑修正 + Agent 安装指南；main+tag = `298298d`，19/19 SHA）、`orphiczhou/dsh-region-probe`；**npm 冻结（D3）**
-- **组件**：`dsh-tree-engine` **v0.6.0**（**9 工具** = 8 既有 + `tree_doctor` 只读自检；leaf 写面护栏 `LEAF_WRITE_MATRIX` + `assertLeafWriter`；随包 tree-commander/tree-worker Skill）、`dsh-agent-introspect` v0.1.0、`dsh-session-tree` **v1.3.6**（`tree_send` + `session_handoff` + 随包 `session-handoff` Skill + 语言跟随 + 干跑不拦阈值 + 文档归档/安装指南）
-- **测试**：tree-engine **84/84**（含 `tree_doctor` 9 例 + 写面护栏 8 例负例）；session-tree handoff **41/41**、skills **3/3**、render 全绿、style-guard **22/22**、verify-bundle **0 fail**
-- **Wave-1 收口**：① 删除已废止的 meta-loop 插件与其专属资料（`packages/dsh-meta-loop/`、`demo/metalp/`、`docs/meta-loop-design.md`、`docs/meta-system-argument.md`），当前材料中该插件信息已清除；② `tree_doctor`（7 检查项、FAIL 不 throw）；③ 写面护栏统一接入 set-context / set-verification / 非 done event / dispatch-cancel / status / set-session（非授权 → `E_BORROWED_IDENTITY`）
-- **洁净室评审**：独立子会话多轮（第 1 轮 12 缺口 → v1.3.2；第 2 轮 PASS_WITH_GAPS，N1–N7 → v1.3.3；R1-B/R2-B 文档债 → v1.3.4；第 3 轮 **PASS**，收尾 → v1.3.5）见 [docs/reports/skill-cleanroom-2026-11-11.md](docs/reports/skill-cleanroom-2026-11-11.md)
-- **会话树 / 技能活体**：`include:session-tree` / `include:tree-engine` 已重载；新会话 Skill 目录含 3 个 Skill；**接替提示语跟随界面语言**（本机 `locale.preference: zh` → `lang=zh`，接替首条中文，真机 PASS）；E2E 见 [docs/reports/skill-e2e-2026-11-11.md](docs/reports/skill-e2e-2026-11-11.md) 与 [docs/reports/e2e-kickoff-language-2026-11-11.md](docs/reports/e2e-kickoff-language-2026-11-11.md)
-- **用户文档**：新增 [docs/guides/skills-usage.md](docs/guides/skills-usage.md)（安装/发现/最小提示词/三层树/50% 交接/语言/排障）
-- **装配**：本项目三个包（tree-engine / session-tree / agent-introspect）均已装配，无未装配项；**降级项**：无（tree-engine `sweepMode=timer`）
-- **RC2 兼容层**：已在 HEAD 中；provider-conformance 依赖 rc.2 fixture（已知环境依赖）
+- **项目全景地图**：[docs/project-map-2026-11-11.html](docs/project-map-2026-11-11.html)（单文件离线，也是 GitHub 项目介绍入口——README 顶部同链接；**地图内容仍是 Wave-1 口径**，Wave-2 刷新归 D1b）
+- **DSH 桌面**：`0.2.2-rc.1`；profile bundles **26** 个（2026-11-12 活体实测）；loader 条目 244（2026-11-11 记录，以活体为准）
+- **本仓**：public `master`；**HEAD = `e09f39b`**（Wave-2 计划 + GUI 规范 + D16/R13 记录），Wave-2 全部代码/文档改动**在工作树未提交**（工作树不 clean 属正常，提交与推送由 Lead 收口）；**项目地图已启用 GitHub Pages 在线版** `https://orphiczhou.github.io/dsh-tree-harness/project-map-2026-11-11.html`，仓库 About 指向地图；remote = `https://github.com/orphiczhou/dsh-tree-harness.git`
+- **公开面**：仓库 https://github.com/orphiczhou/dsh-tree-harness（public / master / MIT / 7 topics）；插件仓 `orphiczhou/dsh-session-tree` **v1.3.6**（main+tag = `298298d`，19/19 SHA）、`orphiczhou/dsh-region-probe`；**npm 冻结（D3）**
+- **组件**：`dsh-tree-engine` **v0.7.0**（**9 工具** = 8 既有 + `tree_doctor` 只读自检；W2.1 会话预算计入竹节链 / W2.3 RC2 兼容层 `src/compat.js` / W2.6 会话 id 归一化；leaf 写面护栏 `LEAF_WRITE_MATRIX` + `assertLeafWriter`；随包 tree-commander/tree-worker Skill **v2.1**）、`dsh-agent-introspect` v0.1.0、`dsh-session-tree` **v1.3.6**（`tree_send` + `session_handoff` + 随包 `session-handoff` Skill + 语言跟随 + 干跑不拦阈值 + 文档归档/安装指南；**本轮版本与代码均未变**）
+- **测试**：tree-engine **112/112**（14 个 `.test.js`：62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 11 compat + 10 identity + 7 budget）；session-tree handoff **41/41**、skills **3/3**、render 全绿（133/133 + 9/9 + 11/11）、style-guard **22/22**、verify-bundle **0 fail**、provider-conformance **29/29**（rc.2 fixture）
+- **Wave 2 八项**：**W2.1 ✅** 预算计入 `runtime.segmentChain` + 归一化去重 / **W2.2 ✅** conformance rc.2 fixture **29/29**（缺 fixture exit 2 可操作报错）/ **W2.3 ✅** 兼容层抽 `src/compat.js` + **11 测** / **W2.4 ✅** 版本一致性脚本（23 checks，故障注入 FAIL 自证）/ **W2.5 ✅** runner 落地（三条真机断言编排 + `--replay`；**本体未执行**，发布前由 Lead/人工触发）/ **W2.6 ✅** root 会话 id 归一化（单测 + 活体）/ **W2.7 ✅** 发布自动化脚本 + 演练（**真推未执行**，发布时由 Lead 执行）/ **W2.8 ✅** [docs/architecture/session-tree-ui.md](docs/architecture/session-tree-ui.md) 7 步流程现行
+- **本轮新增脚本**：`scripts/check-version-consistency.mjs`（W2.4，**23 checks**，`--json` / `--run-tests`）、`scripts/release-all.mjs`（W2.7，**默认 dry-run**）、`scripts/e2e/run-release-e2e.mjs`（W2.5，三条真机断言 + `--replay`）
+- **本轮新增报告**：[reports/conformance-rc2-2026-11-12.md](docs/reports/conformance-rc2-2026-11-12.md)、[reports/e2e-release-runner-2026-11-12.md](docs/reports/e2e-release-runner-2026-11-12.md)、[reports/release-automation-2026-11-12.md](docs/reports/release-automation-2026-11-12.md)、[reports/wave2-closeout-2026-11-12.md](docs/reports/wave2-closeout-2026-11-12.md)（收口报告）
+- **W2.6 活体证据**：修复前 root 会话 `tree_plan` 带 `session-` 前缀 → `E_INVALID_UUID_STRICT`；修复后同一调用成功、root 存**裸 UUID**，`tree_node add` 的 `added_by` 两种形态均可用；历史带前缀旧值可读（比较侧归一化）——**UUID v4 严格性未放宽**
+- **装配与活体**：三个包（tree-engine / session-tree / agent-introspect）均已装配，无未装配项；`include:tree-engine` 重载后活体 **v0.7.0**；新会话 Skill 目录含 3 个 Skill；接替提示语跟随界面语言（本机 `locale.preference: zh` → `lang=zh`）；`sweepMode=timer`（无降级项）
+- **已知边界**：见 [docs/operations/handoff-2026-11-12.md](docs/operations/handoff-2026-11-12.md) §7——真机 E2E 三断言未实际触发、发布未真推、`runtime.history` 中接力前旧会话不计预算、artifact 验证策略对象错位、flash 审计 3 条等
 
 ## 3. 路线图（Roadmap）
 
@@ -126,7 +134,8 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 | **R9** | **交接并入 tree 体系 + 同工作区/权限模式/Agent 预设继承修复（D11）** | ✅ 已完成 | `packages/dsh-session-tree` **v1.2.0**：`session_handoff` 并入 host 半；root/degraded 接替会话 `attachSession` 到同一 workspace；`meta.agentPreset` + `setup` 内挂载预设组成；`permission/preset`+`sandbox/mode`+`approval/policy`（`source:'delegation'`）发布前追加；模型/思考等级继续用 `agentOptions`。测试 handoff **34/34**、render 全绿、style-guard 22/22、verify-bundle 0 fail；真机 E2E root **PASS 14/14**、sibling **PASS 12/12**；独立包删除、profile bundle 28→27；发布公开插件仓 v1.2.0（哈希见 §2/§7） |
 | **R10** | **SKILL 工程化：技能随包发布 + skill provider + 全层 50% 交接纪律（D13）** | ✅ 已完成 | session-tree **v1.3.0**（随包 `session-handoff` Skill + `@deepseek-ai/dsh-skill-filesystem` patch 行）；tree-engine **v0.5.0**（tree-commander/tree-worker Skill 迁入包内并更新，含 50% 交接纪律与竹节协议协调）；两 bundle disable→enable 后活体 Skill 目录可发现；极简提示词 E2E（三层分解/逐层干活/中间层交接）见 [docs/reports/skill-e2e-2026-11-11.md](docs/reports/skill-e2e-2026-11-11.md)；整体一致性审计见 [docs/reports/audit-tree-system-2026-11-11.md](docs/reports/audit-tree-system-2026-11-11.md) |
 
-| **R13** | **Wave 2 开发计划（项目地图 §9 建议与波次）** | 📋 待执行（下一轮） | 计划见 [docs/operations/wave2-plan-2026-11-12.md](docs/operations/wave2-plan-2026-11-12.md)：2A 引擎完整性（预算链 / RC2 单测 / root id 兼容）、2B 环境工具链（conformance fixture / Skill 一致性脚本）、2C 发布流程（真机 E2E 常态化 / 发布自动化 / GUI 规范）；Wave-1 剩余「预算计入竹节」carry 到 W2.1。 |
+| **R13** | **Wave 2 开发计划（项目地图 §9 建议与波次）** | ✅ 已完成（2026-11-12） | 计划见 [docs/operations/wave2-plan-2026-11-12.md](docs/operations/wave2-plan-2026-11-12.md)：2A 引擎完整性（W2.1 预算链 / W2.3 RC2 单测 / W2.6 root id 兼容）、2B 环境工具链（W2.2 conformance fixture 29/29 / W2.4 版本一致性脚本）、2C 发布流程（W2.5 真机 E2E runner / W2.7 发布自动化 / W2.8 GUI 规范）；tree-engine **v0.7.0**、测试 **112/112**。证据：[docs/reports/wave2-closeout-2026-11-12.md](docs/reports/wave2-closeout-2026-11-12.md)。**R14 建议下一轮**。 |
+| **R14** | **Wave 3 候选（仅列候选，不承诺）** | 📋 候选（下一轮建议） | ① artifact 验证策略对象错位（按字典序取 `**/*.md` 首个匹配可能命中无关文件）；② flash 审计 3 条；③ `tree_maintain gc`（清理 pruned/archived 节点与旧日志）；④ 40% `runtime.history` 预算口径（接力前旧会话是否计入）；⑤ 真机 E2E 实际触发（W2.5 三条断言本体）；⑥ nudge 绕状态机。排序与取舍由下一轮 Lead 决定。 |
 | **R12** | **洁净室评审驱动的 Skill 文档工程（多轮独立子会话）** | ✅ 已完成 | 第 1 轮：公开插件仓 12 缺口（G1–G12）+ 本仓 4 P1 → v1.3.2；第 2 轮：12/12 确认修复、新发现 N1–N7 → v1.3.3（含 `spawn:false` 干跑行为修正 + 41/41 测试）；R1-B/R2-B 文档债 → v1.3.4；第 3 轮 **PASS**（N1–N7 全修复、5 分钟路径 5/5），收尾 → v1.3.5；记录见 [docs/reports/skill-cleanroom-2026-11-11.md](docs/reports/skill-cleanroom-2026-11-11.md) |
 | **R11** | **交接提示语跟随 DSH 界面语言（D14）** | ✅ 已完成 | session-tree **v1.3.1**：`buildSuccessorPrompt` zh 分支 + `readLocalePreference`（Loader locale 条目 → profile 文件 → 英文）；`interface_language` + `lang=` 渲染；handoff 测试 34→**40/40**；真机基线 `lang=en` → 修复后 `lang=zh` 且接替首条中文（[报告](docs/reports/e2e-kickoff-language-2026-11-11.md)）；公开插件仓 v1.3.1 发布。新增用户指南 [docs/guides/skills-usage.md](docs/guides/skills-usage.md)。 |
 
@@ -149,6 +158,20 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 | T7 | patch 行/版本/发布/重载/提交（session-tree v1.3.0、tree-engine v0.5.0） | **Lead** | ✅ 两 bundle 各加 skill-filesystem insert 行；`files` 纳入 skills；disable→enable 两 entry；公开插件仓 v1.3.0 发布；本仓提交 |
 | **T9** | 洁净室多轮评审 + GitHub 用户材料收口（v1.3.2–v1.3.4） | **Lead** | ✅ 三轮独立子会话（公开插件仓 / 本仓文档）；G1–G12 + N1–N7 + R1-B/R2-B 文档债全部修订；`spawn:false` 干跑行为修正（41/41）；公开仓 v1.3.2/v1.3.3/v1.3.4 均 18/18 SHA 发布并核验远端=本地 |
 | T8 | 交接提示语跟随 DSH 界面语言（session-tree v1.3.1）+ 真机/离线验证 | **Lead** | ✅ zh 分支 + locale 解析（Loader 条目 → profile 文件 → 英文）；`interface_language`/`lang=`；handoff **40/40**；真机基线 en → zh PASS；`verify-kickoff-language.mjs`；公开插件仓 v1.3.1 |
+
+## 4.2 Wave 2 团队与任务板（2026-11-12，已收口）
+
+| 任务 | 主题 | Owner | 结果 |
+|---|---|---|---|
+| **Lead** | **W2.6 会话 id 归一化（独做）+ 全量集成/重载/回归** | **Lead** | ✅ W2.6 写入侧归一化 + 比较侧 `normalizeSessionId`/`sameSession`；活体修复前后对照（`E_INVALID_UUID_STRICT` → 成功、root 存裸 UUID）；集成后 tree-engine **112/112**、`include:tree-engine` 重载活体 v0.7.0 |
+| **A1** | W2.1 会话预算计入竹节链（`src/guards.js` 预算口径 + `src/engine.js` validate） | A1 | ✅ 计数集合补 `leaf.runtime.segmentChain` 并按归一化 id 去重；超限仍 `E_MAX_SESSIONS`；新增 `tests/budget.test.js` **7 例** |
+| **A2** | W2.3 RC2 兼容层抽离 + 单测（`src/compat.js` / `tests/compat.test.js`） | A2 | ✅ 兼容层纯逻辑 3 分支 **11 例**；不引入宿主依赖 |
+| **B1** | W2.2 provider-conformance rc.2 fixture（`test/provider-conformance.cjs`） | B1 | ✅ fixture 三级解析（`DSH_RC2_FIXTURE_DIR` → `%TEMP%\dsh-asar-inspect\out-rc2-compat` → `out`）；缺 fixture exit 2 可操作报错；**29/29** |
+| **B2** | W2.4 版本一致性脚本（`scripts/check-version-consistency.mjs`） | B2 | ✅ **23 checks**；`--json` / `--run-tests`；故意改错能 FAIL（故障注入自证） |
+| **C1** | W2.5 真机 E2E runner（`scripts/e2e/run-release-e2e.mjs`）+ W2.7 发布自动化（`scripts/release-all.mjs`） | C1 | ✅ 产物完整（三断言编排/汇总/artifacts + `--replay`；`release-all` 默认 dry-run + 隔离沙箱演练）。过程：**attempt1 超时、attempt2 结算**；**真机三断言与真推均未执行**（发布时由 Lead/人工触发） |
+| **C2** | W2.8 GUI 迭代规范（`docs/architecture/session-tree-ui.md`） | C2 | ✅ 文档已在 `e09f39b` 建立，7 步流程现行 |
+| **D1a** | 文档口径收口 A 组（`agent.md` / `docs/README.md` / `CHANGELOG.md` / `docs/guides/skills-usage.md` / `wave2-plan` / `engine-spec` 修订段 / SKILL 工具数） | D1a（并行 leaf） | ✅ 口径统一到 tree-engine **v0.7.0 / 9 工具 / 112-112**；脚本/报告索引入 `docs/README.md` |
+| **D1b** | 文档口径收口 B 组（根 README / 项目地图 / `docs/reports/wave2-closeout-2026-11-12.md` / `docs/operations/handoff-2026-11-12.md` + 旧交接归档） | D1b（并行 leaf） | ✅（由并行 leaf 完成；旧 `handoff-2026-11-11.md` 移入 `docs/archive/`） |
 
 ## 5. 发布门禁（不可跳过）
 
@@ -182,3 +205,4 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 - 2026-11-11（第五轮）：用户指出「交接时新会话默认英文提示词，应使用 DSH 界面语言设定」，并要求「改后测试好、提交 git/GitHub、GitHub 资料包含 skill 等完整使用要素、独立子会话多轮洁净室检查」。落地 D14/R11：session-tree **v1.3.1** 接替提示语跟随界面语言（Loader locale 条目 → profile cordis.patch.yml/cordis.yml → 英文回退；zh*→zh、en*→en、其它→en），status/handoff 新增 interface_language 与 lang= 渲染，交接文件 Successor instructions 同语言；handoff 测试 34→**40/40**；真机基线 lang=en → 修复后 lang=zh 且接替首条中文（独立复核 PASS，[报告](docs/reports/e2e-kickoff-language-2026-11-11.md)）；新增验收脚本 scripts/e2e/verify-kickoff-language.mjs 与用户指南 [docs/guides/skills-usage.md](docs/guides/skills-usage.md)。公开插件仓 v1.3.1 发布（`c257d61`，18/18 SHA，main+tag，远端=本地）；本仓提交 `781087f`（feat）/`6038a9e`（docs）。
 - 2026-11-11（第七轮）：用户要求「github 资料包含使用 skill 等完整要素，独立子会话多轮洁净室检查；提交 git/GitHub」。落地 D15/R12：**三轮独立子会话洁净室评审**（无本会话上下文、只读 GitHub 实际内容）——第 1 轮公开插件仓 12 缺口（G1–G12）+ 本仓 4 P1 → **v1.3.2** 修订；第 2 轮确认 12/12 修复、新发现 N1–N7 → **v1.3.3**（含 `spawn:false` 干跑不再被阈值闸拦的行为修正，handoff 40→**41/41**）；R1-B/R2-B 完整文档债清扫 → **v1.3.4**（语言验收表述、set-session 主体、tree SKILL 英文触发词、版本矩阵、安装命令）。三轮评审记录见 [docs/reports/skill-cleanroom-2026-11-11.md](docs/reports/skill-cleanroom-2026-11-11.md)；公开仓 tag v1.3.2=`c1541e5`、v1.3.3=`cce2975`、v1.3.4=`f784c6e`、v1.3.5=`1fb9193`（均 18/18 SHA，main+tag，远端=本地）；本仓提交 `23b488b`/`dd15580`/`e9b149d`/`72d1a11`/`e903336`/`a586096`/`2845717`/`cc656d7` 等。
 - 2026-11-11（第八轮 Wave-1 收口）：① **清理**：删除已废止的 meta-loop 插件（`packages/dsh-meta-loop/`、`demo/metalp/`、2 份专属文档），并从 README/agent/CHANGELOG/publishing/历史文档/项目地图清除其信息；② **tree-engine v0.5.1→0.6.0**：新增第 9 个工具 **`tree_doctor`**（`src/doctor.js`，7 检查项 package/tool-count/skills/tree-data/stale/sweep/env，只读零副作用，FAIL 不 throw）+ `tests/doctor.test.js` 9 例；③ **写面护栏**：`src/guards.js` 新增 `LEAF_WRITE_MATRIX` + `assertLeafWriter`，接入 set-context / set-verification / 非 done event / dispatch-cancel / status / set-session，负例统一 `E_BORROWED_IDENTITY`（`tests/write-guards.test.js` 8 例）；④ **口径刷新**：README / agent.md / docs/guides/skills-usage.md / CHANGELOG / 项目地图统一为 9 工具、**84/84**、tree-engine **v0.6.0**。全量 `node --test tests/*.test.js` = **84/84**（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 doctor + 8 写面护栏）；session-tree 各测试入口保持全绿。C4 integrate leaf 因宿主热重载崩溃中断（runtime=timeout），其文档/地图产物由 Lead 验收补齐；C1–C3 均 done。
+- 2026-11-12（Wave-2 收口，D17）：**tree-engine `0.6.0` → `0.7.0`** —— ① W2.1 会话预算计入竹节链（`leaf.runtime.segmentChain`，归一化去重；`src/guards.js` + `src/engine.js` validate）；② W2.3 RC2 兼容层抽 `src/compat.js` + **11 测**；③ W2.6 root/主会话 id 归一化（写入侧剥 `session-` 前缀存裸 UUID、比较侧 `normalizeSessionId`/`sameSession`；UUID v4 严格性不放宽，历史前缀旧值兼容；活体：修复前 `E_INVALID_UUID_STRICT` → 修复后成功且 root 存裸 UUID）；④ 工具链：W2.2 provider-conformance rc.2 fixture（`DSH_RC2_FIXTURE_DIR` → `%TEMP%\dsh-asar-inspect\out-rc2-compat` → `out`；缺 fixture exit 2）**29/29**、W2.4 `scripts/check-version-consistency.mjs`（**23 checks**、`--json`/`--run-tests`、故障注入 FAIL 自证）；⑤ 发布流程：W2.5 `scripts/e2e/run-release-e2e.mjs`（三条真机断言编排/汇总/artifacts + `--replay`）、W2.7 `scripts/release-all.mjs`（预检→同步/SHA→本仓 commit→镜像 commit/tag→`ls-remote`，默认 dry-run，`--push` 才写远端）；⑥ W2.8 GUI 规范 `docs/architecture/session-tree-ui.md` 7 步流程。**测试**：tree-engine **84 → 112/112**（14 个 `.test.js`：62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 11 compat + 10 identity + 7 budget）；session-tree **v1.3.6 未变**（镜像 `298298d`，handoff 41/41、skills 3/3、render 133+9+11、style-guard 22/22、verify-bundle 0 fail、conformance 29/29）。**文档/脚本清单**：新增 3 份报告（conformance-rc2 / e2e-release-runner / release-automation）+ 收口报告 `wave2-closeout-2026-11-12.md`；`docs/README.md` / `CHANGELOG.md` / `docs/guides/skills-usage.md` / `docs/operations/wave2-plan-2026-11-12.md` / `docs/architecture/engine-spec.md`（追加 v0.7.0 修订段）/ 两份 SKILL（v2.1、9 工具、归一化说明）同步。**发布状态**：本轮**未提交 git、未真推镜像/本仓**（由 Lead 发布时执行）；真机 E2E 三断言本体未执行（已知边界，见 [docs/operations/handoff-2026-11-12.md](docs/operations/handoff-2026-11-12.md) §7）。

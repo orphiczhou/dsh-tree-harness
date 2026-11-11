@@ -2,7 +2,7 @@
 
 > 本目录是 `dsh-tree-harness`（DSH 会话树体系）的**全部开发文档**。本文件是文档的**单一索引**，并规定新增/迁移/归档规则。
 > 改完文档必须跑：`node scripts/check-doc-links.mjs` 与 `node scripts/check-md-tables.mjs`。
-> 当前快照：2026-11-12 · tree-engine **v0.6.0**（9 工具 / 84-84 测试）· session-tree **v1.3.6**（公开镜像 tag `v1.3.6` = `298298d`）。
+> 当前快照：2026-11-12 · tree-engine **v0.7.0**（9 工具 / 112-112 测试）· session-tree **v1.3.6**（公开镜像 tag `v1.3.6` = `298298d`）。
 
 ## 0. 不同读者的入口
 
@@ -10,8 +10,8 @@
 |---|---|---|
 | 第一次接触（人） | [项目全景地图](project-map-2026-11-11.html)（[在线版](https://orphiczhou.github.io/dsh-tree-harness/project-map-2026-11-11.html)） | [安装指南](guides/install-guide.md) → [Skill 使用指南](guides/skills-usage.md) |
 | 第一次接触（Agent） | 公开镜像仓 [AGENT-INSTALL.md](https://github.com/orphiczhou/dsh-session-tree/blob/main/AGENT-INSTALL.md) | [Skill 使用指南](guides/skills-usage.md) → 对应 Skill 正文 |
-| 接手开发 | [agent.md](../agent.md)（决策/路线/约定） | [当前交接](operations/handoff-2026-11-11.md) → [架构](#1-架构与规格architecture) |
-| 要发版 | [发布流程](guides/publishing.md) | [当前交接 §发布](operations/handoff-2026-11-11.md) |
+| 接手开发 | [agent.md](../agent.md)（决策/路线/约定） | [当前交接](operations/handoff-2026-11-12.md) → [架构](#1-架构与规格architecture) |
+| 要发版 | [发布流程](guides/publishing.md) | [当前交接 §发布](operations/handoff-2026-11-12.md) |
 | 查历史结论 | [reports/](#3-一次性报告reports) | [archive/](#4-归档archive) |
 
 ## 1. 架构与规格（architecture/）
@@ -20,7 +20,7 @@
 
 | 文档 | 内容 | 状态 |
 |---|---|---|
-| [engine-spec.md](architecture/engine-spec.md) | tree-engine 行为规约（S0 冻结版）：树语义、状态机、收敛判据 | 现行·权威 |
+| [engine-spec.md](architecture/engine-spec.md) | tree-engine 行为规约（S0 冻结版）：树语义、状态机、收敛判据；**v0.7.0 修订：会话预算含 `runtime.segmentChain`；会话 id 归一化（可选 `session-` 前缀）**（§5 表后追加段） | 现行·权威 |
 | [tools-mapping.md](architecture/tools-mapping.md) | 上游工具 → 复合工具映射表（S0 设计稿）；**实际注册以 `packages/dsh-tree-engine/index.js` 的 schema 为准** | 设计稿（部分未实现） |
 | [segment-handoff.md](architecture/segment-handoff.md) | 竹节生长机制设计（pct≥42 同一 leaf 换会话、owner 重绑、链长 5） | 现行 |
 | [features-2026-11-11-spec.md](architecture/features-2026-11-11-spec.md) | 功能规格：会话自交接（A 节）+ 会话树 UI 工作区归档/隐藏/检索（B 节） | 已实现（UI 部分持续迭代） |
@@ -36,8 +36,8 @@
 | [guides/install-guide.md](guides/install-guide.md) | **人类安装指南**：三种安装路线（Git 镜像仓 / 本地 monorepo / 市场）、组件矩阵、验证、升级卸载 | 随安装方式变化更新 |
 | [guides/skills-usage.md](guides/skills-usage.md) | 三个随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）：发现、触发、参数、验收、42% vs 50%、升级、排障 | 随 Skill 改动更新 |
 | [guides/publishing.md](guides/publishing.md) | 发布流程与规则：唯一源码事实源、镜像仓同步、`release-plugin.mjs`、版本纪律 D6、市场/npm 现状 | 每次发版追加记录 |
-| [operations/handoff-2026-11-11.md](operations/handoff-2026-11-11.md) | **当前交接/运维手册**：架构、关键路径、测试与验活命令、发布现状、已知边界、下一轮议程 | 每轮收口刷新；旧版进 archive |
-| [operations/wave2-plan-2026-11-12.md](operations/wave2-plan-2026-11-12.md) | **Wave 2 开发计划**：项目地图 §9 建议与波次 + Wave-1 剩余项 + 新发现（root id 兼容、GUI 规范），含 DoD/风险/执行方式 | 下一轮执行依据；随完成情况更新 |
+| [operations/handoff-2026-11-12.md](operations/handoff-2026-11-12.md) | **当前交接/运维手册**：架构、关键路径、测试与验活命令、发布现状、已知边界、下一轮议程 | 每轮收口刷新；旧版进 archive |
+| [operations/wave2-plan-2026-11-12.md](operations/wave2-plan-2026-11-12.md) | **Wave 2 开发计划**：项目地图 §9 建议与波次 + Wave-1 剩余项 + 新发现（root id 兼容、GUI 规范），含 DoD/风险/执行方式；**✅ 已执行（W2.1–W2.8），证据见 [reports/wave2-closeout-2026-11-12.md](reports/wave2-closeout-2026-11-12.md)** | 计划为历史事实；完成情况见文首「执行状态」 |
 
 ## 3. 一次性报告（reports/）
 
@@ -53,6 +53,10 @@
 | [verification-2026-11-11.md](reports/verification-2026-11-11.md) | 公开前独立验证报告（T3 / D2） |
 | [bug-report-dsh-pnpm-exclude.md](reports/bug-report-dsh-pnpm-exclude.md) | DSH / pnpm `minimumReleaseAgeExclude` 锁文件校验路径 bug 报告 |
 | [defect-2026-10-17-subagents-rc2-api-drift.md](reports/defect-2026-10-17-subagents-rc2-api-drift.md) | DSH 0.2.1-rc.2 `subagents` API 漂移导致真机派发即死的缺陷报告 |
+| [conformance-rc2-2026-11-12.md](reports/conformance-rc2-2026-11-12.md) | W2.2 provider-conformance rc.2 fixture 取证：29/29 复验、fixture 来源与 SHA-256、缺 fixture 报错与版本漂移 |
+| [e2e-release-runner-2026-11-12.md](reports/e2e-release-runner-2026-11-12.md) | W2.5 发布前真机 E2E 统一 runner：三条断言的编排/汇总/artifacts 布局、离线故障注入、replay 边界与真机触发方式 |
+| [release-automation-2026-11-12.md](reports/release-automation-2026-11-12.md) | W2.7 发布自动化：一条命令（预检 → 同步/SHA → 本仓 commit → 镜像 commit/tag → `ls-remote`）、失败即停与回滚提示、凭据纪律、隔离沙箱演练 |
+| [wave2-closeout-2026-11-12.md](reports/wave2-closeout-2026-11-12.md) | **Wave 2 收口报告**：W2.1–W2.8 逐项结论与证据（测试数 84→112、29/29、版本一致性 23 checks、runner/发布脚本演练边界）、未执行项（真机三断言 / 真推）与下一轮候选 |
 
 ## 4. 归档（archive/）
 
@@ -66,6 +70,7 @@
 | [proposals-from-agent-notes.md](archive/proposals-from-agent-notes.md) | 2026-10-04 的候选提案 |
 | [project-restart-brief-2026-11-11.html](archive/project-restart-brief-2026-11-11.html) | 项目重启简报（依赖矩阵/重启清单，已被新文档取代） |
 | [frozen-parent-plan/](archive/frozen-parent-plan/) | 冻结的上游父计划（PLAN-v1.7 + 评审报告） |
+| [handoff-2026-11-11.md](archive/handoff-2026-11-11.md) | Wave-1 交接/运维手册（已被 [operations/handoff-2026-11-12.md](operations/handoff-2026-11-12.md) 取代） |
 
 ## 5. 归档与命名规则（强制）
 
@@ -78,7 +83,7 @@
    - `docs/project-map-*.html`：保留在 `docs/` 根，保证 GitHub Pages / 外部链接 URL 稳定。
 2. **新增文档必须**：① 放进对应目录；② 更新本索引 §1–§4；③ 更新根 `README.md` 的文档索引（如有面向用户）；④ 跑链接/表格检查。
 3. **跨仓引用**：公开镜像仓（`orphiczhou/dsh-session-tree`）里引用本仓文档**必须用绝对 URL**（`https://github.com/orphiczhou/dsh-tree-harness/blob/master/docs/...`），且只引用已发布/稳定路径。
-4. **版本口径**：文档中的版本号、测试数、SHA 必须与包 `package.json` / `git log` 一致；发版后同步 `guides/publishing.md`、`operations/handoff-2026-11-11.md`、`agent.md`。
+4. **版本口径**：文档中的版本号、测试数、SHA 必须与包 `package.json` / `git log` 一致；发版后同步 `guides/publishing.md`、`operations/handoff-2026-11-12.md`、`agent.md`。
 5. **状态词**：现行 / 设计稿（部分未实现）/ 已实现 / 历史性 / 已归档。禁止在现行文档里写「待填」。
 
 ## 6. 维护检查清单（每次提交文档前后）
