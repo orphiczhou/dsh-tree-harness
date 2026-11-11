@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.5.0**、`packages/dsh-session-tree` **v1.3.1** 及以上。
+> 适用版本：`packages/dsh-tree-engine` **v0.5.0**、`packages/dsh-session-tree` **v1.3.2** 及以上（公开插件仓同步 tag `v1.3.2`）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -78,7 +78,15 @@ https://github.com/orphiczhou/dsh-session-tree
    ```
 3. **让 agent 加载**：直接说「用 session-handoff skill」/「用 tree-commander skill」，agent 会调用 `skill {name:"…"}` 读正文后再执行。
 
-排障：三条都不出现 → 检查 ① 包是否装（`plugin_manager list_plugins`）；② profile 是否同时有 `@deepseek-ai/dsh-skill-filesystem`；③ 是否在改完 patch 后没做 disable→enable。
+排障：三条都不出现 → 检查 ① 包是否装（`plugin_manager list_plugins`）；② profile 是否同时有 `@deepseek-ai/dsh-skill-filesystem`（**随 DSH 桌面版内置，不要单独安装**）；③ 是否在改完 patch 后没做 disable→enable；④ 是否是**新开**会话（目录在会话启动时注入，旧会话不刷新）。
+
+### 3.1 五分钟冒烟（第一次用就照这个顺序）
+
+1. 装 bundle → 确认 Plugins 行已启用；
+2. **新开**一个会话，问「你看到的 Skill 有哪些」→ 应看到 `session-handoff`（若同时装了 tree-engine，还有 `tree-commander`/`tree-worker`）；
+3. 说「交接一下，先看 status」→ agent 调 `session_handoff {action:"status"}`，渲染行应含 `context=…% (threshold 50%) … lang=zh|en`；
+4. 说「写个交接文件，先别开新会话」→ agent 用 `spawn:false`，你得到一个 `HANDOFF-*.md`（这一步不触发阈值/防重复问题）；
+5. 想看完整接替：说「force 交接一次」→ 返回 `successor <id> kind=…`；5 分钟内再交接会被 `recent-handoff` 拒绝，**这是防重复闸，不是故障**；新会话在 50% 以下被 `below-threshold` 拒绝同样是预期。
 
 ---
 
@@ -205,7 +213,7 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.5.0 / `dsh-session-tree` 1.3.1。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.5.0 / `dsh-session-tree` 1.3.2（公开插件仓 tag `v1.3.2`；Skill 自 1.3.0 起，接替提示语语言跟随自 1.3.1 起）。
 - 升级包后：宿主半/patch 有变化 → disable→enable；只改 Skill 正文 → 新会话直接读到。
 - 会话树公开插件仓：`orphiczhou/dsh-session-tree`（tag = 版本号）；本仓 `packages/dsh-session-tree` 是唯一源码事实源。
 
@@ -219,7 +227,7 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 | `unknown tool session_handoff` | 会话树 bundle 未启用 | 不要自造工具；检查 `@orphiczhou/dsh-session-tree` |
 | 树任务第二层报 `E_DUPLICATE_LEAF` | 被派发的 commander 又 `tree_plan create` | 已存在的树 → 跳过 `tree_plan`，直接 `tree_node add` |
 | worker 写 `done` 被 `E_BORROWED_IDENTITY` 拒 | 旧版本竹节未重绑 owner | 升级 tree-engine ≥0.5.0；旧会话交棒前先写 done，或 commander 用 harvest 的 `relay.sessionId` 调 `tree_node set-session` |
-| 接替会话首条是英文但界面是中文 | 旧版插件（<1.3.1）或语言文件读不到 | 升级 sessions-tree ≥1.3.1；`status` 行看 `lang=`；确认 profile 有 `locale` 配置 |
+| 接替会话首条是英文但界面是中文 | 旧版插件（<1.3.1）或语言文件读不到 | 升级 `dsh-session-tree` ≥1.3.2（语言跟随自 1.3.1 起）；`status` 行看 `lang=`；确认 profile 有 `locale` 配置 |
 | `tree_report {action:"context"}` 报 `E_SCHEMA_INVALID` | `pct` 传了小数 | 传 0–100 整数 |
 
 ---

@@ -2,6 +2,26 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [1.3.2] — 2026-11-11 · Skill 使用文档补全（session-tree，洁净室评审修订）
+
+### 变更
+
+- 版本：`packages/dsh-session-tree` 由 `1.3.1` → **`1.3.2`**（公开插件仓同步发布；代码无行为变化，内容 = README/SKILL 文档与打包回归）。
+- **公开插件仓 README（中英）补全「使用随包 Skill」要素**（洁净室第一轮评审缺口 G1–G12）：
+  - 新增 handoff **调用样例 + 参数表**（`summary` 必填；`next_steps` / `files` / `open_questions` / `note` / `kind` / `spawn` / `threshold_pct` / `force`）与一行预期返回；
+  - 新增**冒烟测试**说明（新会话 `below-threshold`、`force` / `spawn:false`、5 分钟 `recent-handoff` 都是预期而非故障）；
+  - 明确 `@deepseek-ai/dsh-skill-filesystem` **随桌面版内置**、Skill 目录在**会话启动时注入**（需新开会话）；
+  - 从 <1.2.0 升级：先停用独立 `@local/dsh-session-handoff` bundle，避免同名工具/Skill 遮蔽；
+  - 指向源码仓的脚本改为**绝对链接**（`collect-skills.mjs`、`verify-kickoff-language.mjs`、`docs/skills-usage.md`），不再声称脚本在本插件仓内；
+  - 顶部加版本与特性时间线（v1.3.0 Skill / v1.3.1 语言 / v1.3.2 文档）；功能表 `lang=zh\|en` 管道转义修复；SKILL.md 改为直链；Dev 文件树补 `test/skills.test.cjs`；疑难排查补充「Skill 在目录但不用它」「升级后行为仍旧」两条。
+- **`session-handoff` SKILL.md**：frontmatter 补英文触发词（continue / running out of context / hand off to a fresh session / around 50 percent / handoff）；§3 样例路径改为通用示例（不再引用 monorepo 内部路径）；§8 注明 `tree-commander` / `tree-worker` 由 `@local/dsh-tree-engine` 提供、不在本包。
+- **`docs/skills-usage.md`**：适用版本升到 1.3.2；新增「§3.1 五分钟冒烟」；修正 `dsh-session-tree` 名称与升级建议。
+
+### 验证
+
+- `packages/dsh-session-tree/test/handoff.test.js` **40/40**、`test/skills.test.cjs` **3/3**、render/style-guard/verify-bundle 全绿（文档变更后复跑）。
+- 洁净室评审：两个独立子会话（无本会话上下文）分别评审公开插件仓与本仓文档；本版按第一轮缺口修订，第二轮由**新的**独立子会话复核（结果见发布记录与 `docs/skill-cleanroom-2026-11-11.md`）。
+
 ## [1.3.1] — 2026-11-11 · 交接提示语跟随 DSH 界面语言（session-tree）
 
 ### 新增

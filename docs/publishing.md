@@ -155,7 +155,7 @@ v1.3.1 实测（接替提示语跟随界面语言）：同一 clone 流程 → *
 
 - [ ] `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **67/67**（62 引擎 + 4 技能打包 + 1 B1 回归），退出码 0；
 - [ ] `packages/dsh-meta-loop`：`node --test tests/*.test.js` → **13/13**，退出码 0；
-- [ ] `packages/dsh-session-tree`：`node test/handoff.test.js`（**34/34**）、`node test/skills.test.cjs`（**3/3**，随包 Skill 打包回归）、`node test/render.test.cjs`、`node test/style-guard.cjs`（**22/22**）、`node scripts/verify-bundle.mjs`（0 fail）、`node test/provider-conformance.cjs [asar 解包目录]`（后者需 rc.2 兼容 asar fixture，见 [merge-session-tree-2026-11-11.md](merge-session-tree-2026-11-11.md) §5）；
+- [ ] `packages/dsh-session-tree`：`node test/handoff.test.js`（**40/40**）、`node test/skills.test.cjs`（**3/3**，随包 Skill 打包回归）、`node test/render.test.cjs`、`node test/style-guard.cjs`（**22/22**）、`node scripts/verify-bundle.mjs`（0 fail）、`node test/provider-conformance.cjs [asar 解包目录]`（后者需 rc.2 兼容 asar fixture，见 [merge-session-tree-2026-11-11.md](merge-session-tree-2026-11-11.md) §5）；
 - [ ] `packages/dsh-session-tree` 与公开插件仓逐文件 SHA 一致（`release-plugin.mjs`）；
 - [ ] 真机 E2E：`scripts/e2e/verify-handoff.mjs` 对 root/sibling 接替会话断言全 PASS（报告 [e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md)）；
 - [ ] README / handoff / publishing 中的路径、数字、状态与实际一致（版本号、测试数、装配状态、npm 404 结论）。
