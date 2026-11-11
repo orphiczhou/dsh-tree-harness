@@ -1,6 +1,29 @@
 # @local/dsh-tree-engine
 
-树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/engine-spec.md](../../docs/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 8 个工具 schema 为准（[docs/tools-mapping.md](../../docs/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
+树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/engine-spec.md](../../docs/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 9 个工具 schema 为准（[docs/tools-mapping.md](../../docs/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
+
+## v0.6.0 增量：只读自检工具 `tree_doctor`（第 9 个工具）
+
+- **新增只读自检工具 `tree_doctor`**（`src/doctor.js` 纯逻辑 + `index.js` 注册）：用户反馈「工具 / Skill 没出现」时不再靠猜——一次调用给出 7 项结构化检查与修复提示。**零写副作用**：只读文件与 `store.read/list`，树不变式校验复用引擎 `validate`（经 `engine.table.validate` 直调，不落 call-log），不写任何树状态/日志。
+- **7 项检查**（每项 `{id, status: PASS|WARN|FAIL, detail, hint?}`，顺序固定）：
+  1. `package`：`package.json` 的 name/version 与 README 最新版本节（`## vX.Y.Z …`）是否一致——版本漂移的直接证据；
+  2. `tool-count`：注册工具应为 **9**（8 既有 + `tree_doctor`），与 `index.js` 的 `TOOLS` 导出逐名核对（清单单一来源，不两处维护）；
+  3. `skills`：包内 `skills/tree-commander|tree-worker/SKILL.md` 存在且 frontmatter `name:` 对应；`cordis.patch.yml` 挂载 `@deepseek-ai/dsh-skill-filesystem` 且 `providerName: tree-engine`；
+  4. `tree-data`：state 根目录可读、树数/节点数/损坏文件数；给定 `tree_id` 时校验格式、存在性与不变式（复用引擎 validate，不复制逻辑）；
+  5. `stale`：给定树时统计 `runtime.state==='running'` 且超过 `nodeTimeoutMs` 的节点、`segment_pending` 数（只读），提示 `tree_status {action:"harvest"}`；
+  6. `sweep`：报告 `sweepMode`（timer）与「harvest 可立即强制一轮」提示；
+  7. `env`：bundled 测试 node 路径、DSH 版本（`runtime.json` / `DSH_VERSION`）、node 版本；**探测不到只 WARN，永不 FAIL**。
+- **FAIL 不 throw**：doctor 是诊断器不是门禁。返回 `{ok:true, action:"run", version, tool_count, checks:[...], summary:{pass,warn,fail}, hint}`；只有非法 `action` 抛错。工具面渲染为单行摘要，完整 JSON 在返回值里。
+- **用法**：
+
+  ```text
+  tree_doctor                        # 静态检查（tree-data/stale 走无树路径）
+  tree_doctor { tree_id: "wave1" }   # 额外校验指定树 + 统计停滞节点
+  tree_doctor: 7 checks · pass=5 warn=1 fail=1 · version=0.6.0
+  ```
+
+- **写权矩阵接入（同一批次，来自 P1-05 修复的联调发现）**：`tree_verify` 的 4 处落账（adversarial `record`、普通 verify 的 `leaf:set-verification`、两处 verify 后 `progress` 事件）现在都传入真实 `caller`——verification 允许 creator/root、非 done 事件允许 owner/creator，此前缺 caller 会被 fail-closed 拒为 `E_BORROWED_IDENTITY`。
+- **测试**：`tests/doctor.test.js` 9 例（正常树全 PASS + 零写副作用 / 缺 SKILL.md → FAIL / patch 缺 provider → FAIL / 非法与不存在 tree_id → FAIL 且不 throw / 无 tree_id 只做静态检查 / 工具数 8·缺名·重复·未注入 → FAIL / stale 超时 → WARN / env·sweep 探测不到 → WARN / `TOOLS` 9 项 + 真实包自检）。全量 `node --test tests/*.test.js` = **84/84**。
 
 ## v0.5.1 增量：SKILL 勘误（owner 语义 + 通用样例）
 

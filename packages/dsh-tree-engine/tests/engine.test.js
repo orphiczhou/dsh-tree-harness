@@ -65,10 +65,10 @@ test('竹节触发：set-context 达阈值 → segment_pending + drift 留痕；
   const { engine } = await seeded()
   // worker 初始 pending_brief——竹节仅对 active 非 root 触发，先转 active
   await engine.call('leaf:set-status', ['macp2', 'macp2-C1-worker', 'active'], S1_)
-  let r = await engine.call('leaf:set-context', ['macp2', 'macp2-C1-worker', 41])
+  let r = await engine.call('leaf:set-context', ['macp2', 'macp2-C1-worker', 41], S1_)
   assert.equal(r.ok, true)
   assert.equal(r.leaf.segment_pending, false)
-  r = await engine.call('leaf:set-context', ['macp2', 'macp2-C1-worker', 42])
+  r = await engine.call('leaf:set-context', ['macp2', 'macp2-C1-worker', 42], S1_)
   assert.equal(r.leaf.segment_pending, true)
   r = await engine.call('leaf:get', ['macp2', 'macp2-C1-worker'])
   assert.equal(r.leaf.status, 'segment_pending')
@@ -268,10 +268,10 @@ test('依赖闸：dependencies 未全部 done → dispatch 拒；全 done → �
 // ── §7 任务2：taskType 验证策略路由 + 裁决落账 ─────────────
 test('leaf:set-verification：裁决持久化到 leaf.verification；非法入参拒', async () => {
   const { engine } = await seeded()
-  let r = await engine.call('leaf:set-verification', ['macp2', 'macp2-C1-worker', { pass: 'yes' }])
+  let r = await engine.call('leaf:set-verification', ['macp2', 'macp2-C1-worker', { pass: 'yes' }], ROOT)
   assert.equal(r.error.code, 'E_SCHEMA_INVALID')
   const result = { policyId: 'self-report', pass: true, verdicts: [{ mode: 'self-report', pass: true }] }
-  r = await engine.call('leaf:set-verification', ['macp2', 'macp2-C1-worker', result])
+  r = await engine.call('leaf:set-verification', ['macp2', 'macp2-C1-worker', result], ROOT)
   assert.equal(r.ok, true)
   const leaf = (await engine.call('leaf:get', ['macp2', 'macp2-C1-worker'])).leaf
   assert.equal(leaf.verification.pass, true)

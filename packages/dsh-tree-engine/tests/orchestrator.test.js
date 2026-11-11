@@ -151,10 +151,10 @@ test('竹节链长上限：触顶 → frozen 等裁决（不再接力）', async
 test('cancel：running → cancelled；非 running 拒绝', async () => {
   const clock = new VirtualClock(1000)
   const engine = await setup(fakePorts(), clock)
-  let r = await engine.call('dispatch:cancel', ['bamboo', 'bamboo-C1-worker'])
+  let r = await engine.call('dispatch:cancel', ['bamboo', 'bamboo-C1-worker'], ROOT)
   assert.equal(r.error.code, 'E_SCHEMA_INVALID')   // 未派发（pending）
   await engine.call('dispatch:start', ['bamboo', 'bamboo-C1-worker', {}])
-  r = await engine.call('dispatch:cancel', ['bamboo', 'bamboo-C1-worker'])
+  r = await engine.call('dispatch:cancel', ['bamboo', 'bamboo-C1-worker'], ROOT)
   assert.equal(r.node.state, 'cancelled')
 })
 

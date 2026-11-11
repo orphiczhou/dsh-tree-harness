@@ -20,6 +20,7 @@ import { createAdversarial } from './src/adversarial.js'
 import { fsStore } from './src/store.js'
 import { systemClock } from './src/clock.js'
 import { configFromEnv } from './src/config.js'
+import { runDoctor } from './src/doctor.js'
 import path from 'node:path'
 import { promises as fsp } from 'node:fs'
 import { spawn } from 'node:child_process'
@@ -197,6 +198,8 @@ const dataDir = path.join(process.env.DSH_PROFILE_DIR ?? process.env.DSH_HOME ??
 let engine = null
 /** 验证器：宿主端口 = node fs（工作区经 exec.cwd）+ child_process exec（超时硬杀）。 */
 let verifier = null
+/** 编排配置（apply 期由 TREE_ENGINE_CONFIG 填充；tree_doctor 报告 sweepMode/超时口径用）。 */
+let orchestraCfg = {}
 /** 当前 sweep 停止器（热更时清理上一代僵尸定时器——E2E#5）。 */
 let currentStopSweep = null
 
@@ -625,6 +628,9 @@ const TREE_VERIFY = {
   output: { schema: { type: 'object' }, render: ok((v) => `tree_verify: ${v?.result?.pass ? 'PASS' : 'FAIL'} (${(v?.result?.verdicts ?? []).map((x) => x.mode).join(',')}${v?.result?.rounds ? ` × ${v.result.rounds.length} 轮` : ''})`) },
   execute: async (args, exec) => {
     verifyExec = exec   // 攻击会话派发的 parent Agent 捕获（同 dispatch 模式）
+    // P1-05 写权矩阵：verification 落账仅 creator/root、非 done event 仅 owner/creator——
+    // 两处落账都必须带上真实写入者，否则 fail-closed 报 E_BORROWED_IDENTITY。
+    const verifyCaller = callerOf(exec)
     // 策略路由（§5.2）：显式 policyId > leaf.taskType（经 taskTypeMap 映射）> default
     let policyId = args.policy_id
     let leaf = null
@@ -675,7 +681,7 @@ const TREE_VERIFY = {
           return false
         },
         wait: (ms) => new Promise((r) => setTimeout(r, ms)),
-        record: (result) => engine.call('leaf:set-verification', [args.tree_id, args.leaf_id, result]).then((r) => { if (!r.ok) throw toError(r) }),
+        record: (result) => engine.call('leaf:set-verification', [args.tree_id, args.leaf_id, result], verifyCaller).then((r) => { if (!r.ok) throw toError(r) }),
         maxRounds: args.max_rounds,
       })
       // 攻击目标：结构检查的 artifact 全文优先；否则 leaf 的 done/progress 事件证据
@@ -688,7 +694,7 @@ const TREE_VERIFY = {
         return { kind: 'leaf events', text: JSON.stringify(ev.slice(-8).map((e) => ({ type: e.type, meta: e.meta }))) }
       }
       const result = await adv.run({ treeId: args.tree_id, leafId: args.leaf_id, policyId, cwd, target, fixWaitMs: 60_000 })
-      const e = await engine.call('event:append', [args.tree_id, args.leaf_id, 'progress', { verification: { policy_id: result.policyId, pass: result.pass, rounds: result.rounds.length } }])
+      const e = await engine.call('event:append', [args.tree_id, args.leaf_id, 'progress', { verification: { policy_id: result.policyId, pass: result.pass, rounds: result.rounds.length } }], verifyCaller)
       if (!e.ok) throw toError(e)
       return { result }
     }
@@ -696,9 +702,9 @@ const TREE_VERIFY = {
     const result = await verifier.runVerifications(policyId, { cwd })
     // 落账：leaf.verification（裁决判据持久化）+ progress 事件（观测层）；PASS 才可 set-status done 的闸由调用方遵守
     if (args.leaf_id) {
-      const r = await engine.call('leaf:set-verification', [args.tree_id, args.leaf_id, result])
+      const r = await engine.call('leaf:set-verification', [args.tree_id, args.leaf_id, result], verifyCaller)
       if (!r.ok) throw toError(r)
-      const e = await engine.call('event:append', [args.tree_id, args.leaf_id, 'progress', { verification: { policy_id: result.policyId, pass: result.pass } }])
+      const e = await engine.call('event:append', [args.tree_id, args.leaf_id, 'progress', { verification: { policy_id: result.policyId, pass: result.pass } }], verifyCaller)
       if (!e.ok) throw toError(e)
     }
     return { result }
@@ -761,11 +767,45 @@ const TREE_MAINTAIN = {
   },
 }
 
+const TREE_DOCTOR = {
+  name: 'tree_doctor',
+  description:
+    'Read-only self-diagnosis for "tools/Skills did not show up" symptoms (not installed, not reloaded, stale session, missing skill provider, version drift, corrupt tree data). ' +
+    'action "run" (default) runs 7 checks: package (package.json name/version vs the README version section), tool-count (9 = 8 existing + tree_doctor, verified against the TOOLS export), ' +
+    'skills (bundled skills/*/SKILL.md frontmatter name + cordis.patch.yml mounts @deepseek-ai/dsh-skill-filesystem with providerName=tree-engine), ' +
+    'tree-data (state root readability, tree/node counts, and — when tree_id is given — tree_id format/existence/engine validate invariants), ' +
+    'stale (when tree_id is given: running nodes past nodeTimeoutMs + segment_pending counts), sweep (sweepMode + immediate-harvest hint), ' +
+    'env (bundled test node path / DSH version probes; unprobeable → WARN, never FAIL). ' +
+    'Zero write side effects. FAIL never throws: read checks[]/summary/hint (doctor diagnoses, it does not gate). Only an unknown action throws.',
+  parameters: {
+    type: 'object', additionalProperties: false,
+    properties: {
+      action: { type: 'string', enum: ['run'], description: 'Only "run" (default): a read-only diagnosis round.' },
+      tree_id: { type: 'string', description: 'Optional: validate this tree (format/existence/invariants) and count stale running nodes.' },
+    },
+  },
+  output: { schema: { type: 'object' }, render: ok((v) => `tree_doctor: ${v?.checks?.length ?? 0} checks · pass=${v?.summary?.pass ?? 0} warn=${v?.summary?.warn ?? 0} fail=${v?.summary?.fail ?? 0} · version=${v?.version ?? '?'}`) },
+  execute: async (args) => runDoctor({
+    action: args.action ?? 'run',                 // 非法 action 由 runDoctor fail-closed 抛错
+    treeId: args.tree_id,
+    toolNames: TOOLS.map((t) => t.name),          // 与实际注册表同源，不复制期望清单
+    engine,                                        // 只读面：table.validate / table.treeDump
+    store: fsStore(dataDir),                       // 只读 list/read；doctor 不写任何文件
+    stateRoot: path.resolve(dataDir),
+    sweepMode: engine ? engine.sweepModeOf() : null,
+    sweepIntervalMs: orchestraCfg.sweepIntervalMs,
+    nodeTimeoutMs: orchestraCfg.nodeTimeoutMs,
+  }),
+}
+
+/** 注册表（apply 逐项注册；tree_doctor 自身用它核对「注册工具数 = 9」，避免清单两处维护）。 */
+export const TOOLS = Object.freeze([TREE_PLAN, TREE_NODE, TREE_DISPATCH, TREE_REPORT, TREE_STATUS, TREE_VERIFY, TREE_LOG, TREE_MAINTAIN, TREE_DOCTOR])
+
 export function apply(ctx) {
   /** 文件自诊断（Loader 缓存下唯一可靠观测通道）：apply 全程留痕 + 全程容错。 */
   const diagPath = path.join(dataDir, 'apply.log')
   const diag = (msg) => { try { fsp.mkdir(path.dirname(diagPath), { recursive: true }).then(() => fsp.appendFile(diagPath, `${new Date().toISOString()} ${msg}\n`)).catch(() => {}) } catch {} }
-  diag(`apply() entered (v0.5.0); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
+  diag(`apply() entered (v0.6.0); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
   try {
     ctx.inject(['tools', 'subagents', 'sessionQuery'], (scoped) => {
       try {
@@ -796,6 +836,7 @@ export function apply(ctx) {
           return
         }
         if (Object.keys(envConfig.config).length || Object.keys(envConfig.orchestra).length) diag(`config loaded: ${JSON.stringify(envConfig)}`)
+        orchestraCfg = { ...envConfig.orchestra }   // tree_doctor 报告 sweepMode/超时口径（只读）
 
         engine = createEngine({ store: fsStore(dataDir), clock, ...(Object.keys(envConfig.config).length ? { config: envConfig.config } : {}), ...(Object.keys(envConfig.orchestra).length ? { orchestra: envConfig.orchestra } : {}) })
         engine.attachPorts(makePorts(services, log, { ctx, graceMs: envConfig.orchestra.graceMs }))
@@ -806,12 +847,12 @@ export function apply(ctx) {
         diag(`engine ready (sweepMode=${sweepMode})`)
 
         let okCount = 0
-        for (const tool of [TREE_PLAN, TREE_NODE, TREE_DISPATCH, TREE_REPORT, TREE_STATUS, TREE_VERIFY, TREE_LOG, TREE_MAINTAIN]) {
+        for (const tool of TOOLS) {
           try { services.tools.register(tool); okCount += 1; diag(`register OK: ${tool.name}`) }
           catch (e) { diag(`register FAILED: ${tool.name}: ${e?.message ?? e}`) }
         }
-        console.log(`[tree-engine] v0.5.0 registered ${okCount}/8 tools (fs persistence @ ${dataDir}; sweepMode=${sweepMode})`)
-        diag(`apply complete: ${okCount}/8 registered`)
+        console.log(`[tree-engine] v0.6.0 registered ${okCount}/${TOOLS.length} tools (fs persistence @ ${dataDir}; sweepMode=${sweepMode})`)
+        diag(`apply complete: ${okCount}/${TOOLS.length} registered`)
       } catch (e) {
         diag(`inject callback THREW: ${e?.stack ?? e}`)
         console.error(`[tree-engine] apply failed: ${e?.stack ?? e}`)

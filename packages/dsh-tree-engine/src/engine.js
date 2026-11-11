@@ -12,7 +12,7 @@ import {
 } from './state.js'
 import {
   DEFAULT_GUARDS, isStrictUuidV4, sessionBudget, activeLeafBudget, spawnBudget,
-  assertCallerIs, findSessionConflict,
+  assertCallerIs, assertLeafWriter, findSessionConflict,
 } from './guards.js'
 import { enqueue } from './queue.js'
 import { systemClock } from './clock.js'
@@ -163,11 +163,8 @@ export function createEngine(opts) {
     const [treeId, leafId, status] = args
     return withTree(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
-      // caller：owner / creator / root（P1 防借身份）
-      const rootSession = state.leaves[`${treeId}-root`].session_id
-      if (caller !== leaf.session_id && caller !== leaf.added_by && caller !== rootSession) {
-        treeError('E_BORROWED_IDENTITY', `caller not authorized to set status of "${leafId}" (owner/creator/root only)`)
-      }
+      // caller：owner / creator / root（P1-05 统一写权矩阵，语义与旧版一致）
+      assertLeafWriter(state, leaf, caller, 'status', state.leaves?.[`${treeId}-root`]?.session_id)
       assertTransition(leaf.status, status)
       if (status === 'done') {
         assertDoneEventGate(leaf)
@@ -197,7 +194,8 @@ export function createEngine(opts) {
     const [treeId, leafId, sessionId] = args
     return withTree(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
-      assertCallerIs(caller, leaf.added_by, 'set-session')
+      // 仅 creator（added_by）可重绑 owner；root 例外未开（P1-05 矩阵，不扩大写面）
+      assertLeafWriter(state, leaf, caller, 'set-session')
       if (!isStrictUuidV4(sessionId)) treeError('E_INVALID_UUID_STRICT', `session_id "${sessionId}" must be strict UUID v4`)
       const conflict = findSessionConflict(state, sessionId, leafId)
       if (conflict) treeError('E_SCHEMA_INVALID', conflict)
@@ -210,10 +208,12 @@ export function createEngine(opts) {
   }
 
   // ── set-verification（验证裁决落账：taskType 路由的判据持久化到 leaf）──
-  async function setVerification(args) {
+  async function setVerification(args, caller) {
     const [treeId, leafId, result] = args
     return withTree(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
+      // P1-05：verification 落账仅 creator/root（tree_verify 由指挥官跑；owner 不得自验）
+      assertLeafWriter(state, leaf, caller, 'verification', state.leaves?.[`${treeId}-root`]?.session_id)
       if (!result || typeof result !== 'object' || typeof result.pass !== 'boolean') {
         treeError('E_SCHEMA_INVALID', 'verification result object with boolean "pass" required')
       }
@@ -229,11 +229,13 @@ export function createEngine(opts) {
   }
 
   // ── set-context（竹节刚性触发）────────────────────────
-  async function setContext(args) {
+  async function setContext(args, caller) {
     const [treeId, leafId, pct] = args
     if (!Number.isInteger(pct) || pct < 0 || pct > 100) treeError('E_SCHEMA_INVALID', `pct "${pct}" must be an integer 0-100`)
     return withTree(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
+      // P1-05：水位自报仅 owner（执行者本人）或 root（信任锚监控）；creator 不得代报
+      assertLeafWriter(state, leaf, caller, 'context', state.leaves?.[`${treeId}-root`]?.session_id)
       leaf.context_usage_pct = pct
       let segTriggered = false
       const threshold = state.audit_meta?.ctx_segment_threshold ?? cfg.ctxSegmentThreshold
@@ -255,13 +257,9 @@ export function createEngine(opts) {
     return withTree(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       if (!EVENT_TYPE_ENUM.includes(type)) treeError('E_SCHEMA_INVALID', `event type "${type}" invalid (${EVENT_TYPE_ENUM.join('|')})`)
-      // done event 所有权：caller 必须 === leaf.session_id（V10-trust-anchor-fix：明确移除 added_by 代写权，
-      // 堵 commander 谎报 worker done——源 L2759-2760 失守根因）
-      if (type === 'done') {
-        if (caller !== leaf.session_id) {
-          treeError('E_BORROWED_IDENTITY', `caller cannot write done event for "${leafId}" (owner session only)`)
-        }
-      }
+      // 统一写权矩阵（P1-05）：非 done 事件 owner/creator 可写；done 维持 V10-trust-anchor-fix 仅 owner
+      // （明确移除 added_by 代写权，堵 commander 谎报 worker done——源 L2759-2760 失守根因）。
+      assertLeafWriter(state, leaf, caller, `event:${type}`, state.leaves?.[`${treeId}-root`]?.session_id)
       // 预算护栏（macp2）
       if (type === 'subagent_spawn') {
         const sb = spawnBudget(leaf, cfg)
@@ -456,6 +454,8 @@ export function createEngine(opts) {
     const [treeId, leafId] = args
     return withTree(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
+      // P1-05：止血操作 owner/creator/root 均可（陌生人不得取消别人的 running 节点）
+      assertLeafWriter(state, leaf, caller, 'cancel', state.leaves?.[`${treeId}-root`]?.session_id)
       const rt = runtimeOf(leaf)
       if (rt.state !== 'running') treeError('E_SCHEMA_INVALID', `cancel requires running node (got ${rt.state})`)
       try { if (typeof ports.interrupt === 'function') await ports.interrupt(rt.subagentSessionId) } catch { /* 中断失败仍置 cancelled（收割侧兜底） */ }

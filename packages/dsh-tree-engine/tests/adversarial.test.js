@@ -80,7 +80,7 @@ test('engine:leaf:set-verification 透传 rounds(adversarial 裁决落账)', asy
   await engine.call('init', ['macp2', {}, {}, ROOT])
   await engine.call('leaf:add', ['macp2', { leaf_id: 'macp2-C1-worker', session_id: S1_, parent: 'macp2-root', path: 'C1', role: 'worker', added_by: ROOT }], ROOT)
   const result = { policyId: 'doc+adversarial', pass: true, verdicts: [], rounds: [{ round: 1, attack: { pass: false, findings: ['a'] } }, { round: 2, attack: { pass: true, findings: [] } }] }
-  const r = await engine.call('leaf:set-verification', ['macp2', 'macp2-C1-worker', result])
+  const r = await engine.call('leaf:set-verification', ['macp2', 'macp2-C1-worker', result], ROOT)
   assert.equal(r.ok, true)
   const leaf = (await engine.call('leaf:get', ['macp2', 'macp2-C1-worker'])).leaf
   assert.equal(leaf.verification.policy_id, 'doc+adversarial')
