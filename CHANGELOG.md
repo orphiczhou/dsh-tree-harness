@@ -2,6 +2,23 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [Unreleased]
+
+### 变更
+
+- **移除已废止的 meta-loop 插件及其资料（与本项目无关）**：删除 `packages/dsh-meta-loop/`、`demo/metalp/`、`docs/meta-loop-design.md`、`docs/meta-system-argument.md`；并从 `README.md`、`agent.md`、`docs/publishing.md`、项目地图等当前材料中清除该插件信息。本项目组件口径 = `dsh-tree-engine` + `dsh-session-tree` + `dsh-agent-introspect` 三个包。
+- 项目全景地图（`docs/project-map-2026-11-11.html`）提升为 GitHub 项目介绍入口：README 标题区新增入口段，`agent.md` 开工顺序新增同一链接。
+- **tree-engine `0.5.1` → `0.6.0`：新增只读自检工具 `tree_doctor`（第 9 个工具）**。`src/doctor.js` 纯逻辑 + `index.js` 注册；7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`），每项 `{id, status: PASS|WARN|FAIL, detail, hint?}`；返回 `summary{pass,warn,fail}` + 一行 `hint`，传 `tree_id` 时额外校验树并统计停滞节点。**只读零写副作用**（不写树状态/日志），**FAIL 不 throw**（诊断器不是门禁；只有非法 `action` 抛错）。治「工具或 Skill 为什么没出现」只能靠猜。`tests/doctor.test.js` 9 例。
+- **leaf 写面护栏统一（P1-05）**：`src/guards.js` 新增 `LEAF_WRITE_MATRIX` + `assertLeafWriter(caller, leaf, kind)`，并接入 `set-context` / `set-verification` / 非 done `event` / `dispatch:cancel` / `status` / `set-session` 六类写操作；非授权统一 `E_BORROWED_IDENTITY`（未知 kind fail-closed；缺失 caller 不再放行）。矩阵：context=owner/root、verification=creator/root、event(done)=owner only、event(其它)=owner/creator、cancel=owner/creator/root、status=owner/creator/root、set-session=creator only。`tests/write-guards.test.js` 8 例负例/回归；`index.js` 同步补 `tree_verify` 落账的真实 caller 接线。
+- **口径刷新（文档与项目地图）**：根 `README.md`、`agent.md`、`docs/skills-usage.md`、本 CHANGELOG 与 `docs/project-map-2026-11-11.html` 统一到 **tree-engine v0.6.0 / 9 个 `tree_*` 工具 / 84-84 测试**；HTML 的工具面图新增 `tree_doctor` 卡片、写面护栏由「缺口」改为「已实现」、§9 把 doctor 与护栏标记为 **Wave 1 已完成**，并保持单文件离线（0 `<script>` / 0 `<link>` / 无 http 资源）。
+
+### 验证
+
+- `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **84/84**（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 `tree_doctor` + 8 写面护栏）。
+- `packages/dsh-session-tree`：handoff **41/41**、skills **3/3**、render 全绿（133/133 + 9/9 + 11/11）、style-guard **22/22**、verify-bundle **0 fail**。
+- 文档表格门禁：`node scripts/check-md-tables.mjs README.md agent.md CHANGELOG.md docs/skills-usage.md docs/handoff-2026-11-11.md docs/project-map-2026-11-11.html` → Tables OK。
+- 版本与测试数字为 2026-11-11 工作树实测；本次改动**未提交 git**。
+
 ## [1.3.5] — 2026-11-11 · 第三轮洁净室收尾（session-tree）
 
 ### 变更
@@ -145,7 +162,7 @@
 
 ### 版本与发布说明
 
-- 当前四个包版本：`@local/dsh-tree-engine` 0.5.0、`@orphiczhou/dsh-session-tree` 1.3.0、`@local/dsh-meta-loop` 0.2.0、`@local/dsh-agent-introspect` 0.1.0；后两者本轮未改动。
+- 本轮涉及包版本：`@local/dsh-tree-engine` 0.5.0、`@orphiczhou/dsh-session-tree` 1.3.0、`@local/dsh-agent-introspect` 0.1.0（未改动）；另一独立插件（非本项目组件，已于 2026-11-11 移除）本轮同样未改动。
 - 本轮变更已提交到本仓 `master`（提交哈希见 `git log`；上一版 HEAD 为 `0cbc31e`，对应 tree-engine 0.4.0 / session-tree 1.2.0）。提交后发布公开插件仓 v1.3.0。
 - npm 维持冻结（决策 D3）：`@orphiczhou/*` 候选包名在 registry 均为 404，本轮没有 npm 发布，安装仍走 Git / `link:`。
 - GitHub 插件镜像仓 `orphiczhou/dsh-session-tree` 已发布 **v1.3.0**（tag `v1.3.0` = `1086e9e`，远端 `main` 为同一 commit，release-plugin 18/18 SHA；2026-11-11 以 `git ls-remote` 核对）；上一版 **v1.2.0**（`597ca31`）为历史记录。

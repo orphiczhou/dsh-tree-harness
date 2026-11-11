@@ -367,12 +367,12 @@ table.compact thead th,table.compact tbody td{padding:8px 10px}
       <h1 class="title">一棵会<span class="thin">生长</span>的<em>任务树</em></h1>
       <p class="lede">
         这不是一个插件，而是围绕「<b>把长任务拆成树、让每一层都真的有人干、干完还能验收和接力</b>」的一组 DSH 包与规约：
-        执行层 <b>tree-engine</b> 提供 8 个 <code>tree_*</code> 工具，会话树单包 <b>session-tree</b> 提供可见的侧栏树、跨层通信与 50% 交接，
-        外加未装配的治理层 <b>meta-loop</b>、自省层 <b>introspect</b>，以及 3 份随包 Skill。
+        执行层 <b>tree-engine</b> 提供 9 个 <code>tree_*</code> 工具（含只读自检 <code>tree_doctor</code>），会话树单包 <b>session-tree</b> 提供可见的侧栏树、跨层通信与 50% 交接，
+        外加自省层 <b>introspect</b>，以及 3 份随包 Skill。
       </p>
       <div class="meta-row">
         <span>会话树 <b>v1.3.5</b> · 公开仓 <b>1fb9193</b> · 18/18 SHA</span>
-        <span>tree-engine <b>v0.5.1</b></span>
+        <span>tree-engine <b>v0.6.0</b> · 9 工具 · <b>84/84</b></span>
         <span>本仓 master <b>ebeeaea</b></span>
         <span>MIT · npm 冻结（D3）</span>
         <span>9 张手写 SVG · 0 外链</span>
@@ -442,7 +442,7 @@ table.compact thead th,table.compact tbody td{padding:8px 10px}
           <article class="card tint-teal">
             <div class="kicker">01 · 是什么</div>
             <h3>DSH 上的「树形任务执行 Harness」</h3>
-            <p>它不是单个插件，而是一组围绕树形分解的 DSH 包：执行层 <b>tree-engine</b>（8 个工具 + 竹节接力）、会话树单包 <b>session-tree</b>（侧栏树 + <code>tree_send</code> + <code>session_handoff</code>）、治理层 <b>meta-loop</b>（未装配）、自省层 <b>introspect</b>（<code>self_spec</code>）。</p>
+            <p>它不是单个插件，而是一组围绕树形分解的 DSH 包：执行层 <b>tree-engine</b>（9 个工具 + 竹节接力 + leaf 写面护栏）、会话树单包 <b>session-tree</b>（侧栏树 + <code>tree_send</code> + <code>session_handoff</code>）、自省层 <b>introspect</b>（<code>self_spec</code>）。</p>
             <p class="src"><b>事实</b>：根 <code>README.md</code> 包表；各包 <code>package.json</code>。</p>
           </article>
           <article class="card tint-amber">
@@ -470,19 +470,18 @@ table.compact thead th,table.compact tbody td{padding:8px 10px}
             <ul>
               <li><b>不是新的 Agent 框架</b>：没有自己的模型/运行时，只通过宿主 <code>ctx</code> 用 DSH 原生服务。</li>
               <li><b>不是自动项目管理器</b>：模型仍是决策者；工具提供账本、闸门与可观测性。</li>
-              <li><b>不是 npm 包</b>：<code>@orphiczhou/*</code> 四个候选名在 registry 均 404，安装只走 Git / <code>link:</code>（D3）。</li>
+              <li><b>不是 npm 包</b>：<code>@orphiczhou/*</code> 三个候选名在 registry 均 404，安装只走 Git / <code>link:</code>（D3）。</li>
               <li><b>不是零配置</b>：装 bundle、重载宿主半、<b>新开会话</b>，三步缺一不可。</li>
             </ul>
           </article>
           <article class="card flat">
-            <h3>四个组件，三种状态</h3>
+            <h3>三个组件，两种状态</h3>
             <div class="tablewrap" style="margin:8px 0 0">
               <table class="compact">
                 <thead><tr><th>包</th><th>版本</th><th>状态</th><th>一句话</th></tr></thead>
                 <tbody>
-                  <tr><td><code>dsh-tree-engine</code></td><td class="num">0.5.1</td><td><span class="pill fact">运行中</span></td><td>8 个 tree 工具 + 竹节 + 验证</td></tr>
+                  <tr><td><code>dsh-tree-engine</code></td><td class="num">0.6.0</td><td><span class="pill fact">运行中</span></td><td>9 个 tree 工具（含自检）+ 竹节 + 护栏 + 验证</td></tr>
                   <tr><td><code>dsh-session-tree</code></td><td class="num">1.3.5</td><td><span class="pill fact">公开镜像</span></td><td>侧栏树 + tree_send + handoff + Skill</td></tr>
-                  <tr><td><code>dsh-meta-loop</code></td><td class="num">0.2.0</td><td><span class="pill off">未装配</span></td><td>六阶段方法轮 + /metaloop/ 面板</td></tr>
                   <tr><td><code>dsh-agent-introspect</code></td><td class="num">0.1.0</td><td><span class="pill fact">运行中</span></td><td><code>self_spec</code> 自省</td></tr>
                 </tbody>
               </table>
@@ -633,7 +632,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
       <div class="sec-body">
 
         <div class="metrics">
-          <div class="metric teal"><div class="v">10</div><div class="l">宿主工具</div><div class="n">8 个 tree_* + tree_send + session_handoff</div></div>
+          <div class="metric teal"><div class="v">11</div><div class="l">宿主工具</div><div class="n">9 个 tree_* + tree_send + session_handoff</div></div>
           <div class="metric amber"><div class="v">3</div><div class="l">随包 Skill</div><div class="n">tree-commander / tree-worker / session-handoff</div></div>
           <div class="metric violet"><div class="v">3</div><div class="l">层级上限</div><div class="n">root → commander → worker（worker 无子节点）</div></div>
           <div class="metric rose"><div class="v">2</div><div class="l">接力机制</div><div class="n">竹节 42%（同 leaf）/ 交接 50%（同层会话）</div></div>
@@ -662,10 +661,16 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
                 <td>阈值缺省 50%；5 分钟防重复；<code>spawn:false</code> 只写文件（不被阈值闸拦）；提示语只做 <code>zh</code>/<code>en</code>，其它语言回退英文。</td>
               </tr>
               <tr>
-                <td><b>8 个 <code>tree_*</code></b></td>
+                <td><b>9 个 <code>tree_*</code></b></td>
                 <td>tree-engine 宿主半</td>
-                <td>建树、建 commander/worker、依赖编排、派发/取消、上下文自报、事件、收割、验证（6 模式 + 对抗式）、日志、备份/恢复/登记。</td>
-                <td>action 是<b>闭集</b>（见图 2）；<code>tree_verify</code> FAIL <b>不阻断</b> <code>succeeded</code>；<code>set-status done</code> 在工具面打不通（里程碑无写入命令）。</td>
+                <td>建树、建 commander/worker、依赖编排、派发/取消、上下文自报、事件、收割、验证（6 模式 + 对抗式）、日志、备份/恢复/登记、<b>只读自检</b>（<code>tree_doctor</code>，7 检查项）。</td>
+                <td>action 是<b>闭集</b>（见图 2）；<code>tree_verify</code> FAIL <b>不阻断</b> <code>succeeded</code>；<code>set-status done</code> 在工具面打不通（里程碑无写入命令）；<code>tree_doctor</code> FAIL 也<b>不 throw</b>（诊断器不是门禁）。</td>
+              </tr>
+              <tr>
+                <td><b>leaf 写面护栏</b></td>
+                <td><code>src/guards.js</code><br><span class="sub"><code>LEAF_WRITE_MATRIX</code></span></td>
+                <td>统一判定「谁能写这一个 leaf」：<code>set-context</code> / <code>set-verification</code> / 非 done <code>event</code> / <code>dispatch:cancel</code> / <code>status</code> / <code>set-session</code> 六类写操作走同一张矩阵；未知 kind fail-closed。</td>
+                <td>非授权一律 <code>E_BORROWED_IDENTITY</code>；<code>done</code> 仍<b>只给 owner</b>；root 只在 context/status 有例外（不扩大到 verification/set-session）；矩阵是代码事实，不是 Skill 口号。</td>
               </tr>
               <tr>
                 <td><b>3 个随包 Skill</b></td>
@@ -700,28 +705,28 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             </tbody>
           </table>
         </div>
-        <p class="src"><b>事实来源</b>：<code>packages/dsh-session-tree/README.zh.md</code>「功能」；<code>packages/dsh-tree-engine/index.js</code> 工具 schema；<code>src/verify.js</code>；<code>docs/skills-usage.md</code> §8。</p>
+        <p class="src"><b>事实来源</b>：<code>packages/dsh-session-tree/README.zh.md</code>「功能」；<code>packages/dsh-tree-engine/index.js</code> 工具 schema（9 个）；<code>src/verify.js</code>；<code>src/guards.js</code>（<code>LEAF_WRITE_MATRIX</code>）；<code>src/doctor.js</code>（7 检查项）；<code>docs/skills-usage.md</code> §8。</p>
 
         <figure class="fig" id="fig-tools">
           <div class="figtop">
             <span class="name">figure-02 · tool-surface</span>
             <div class="tags"><span class="pill fact">事实</span><span class="pill demo">示意布局</span></div>
           </div>
-          <svg viewBox="0 0 1120 600" role="img" aria-labelledby="fig-tools-title">
-            <title id="fig-tools-title">十个宿主工具与 action 闭集</title>
-            <desc>左侧为 tree-engine 的 8 个工具及其 action 闭集，右侧为 session-tree 的 tree_send 与 session_handoff，底部标注未装配的 meta_loop 与自省工具。</desc>
+          <svg viewBox="0 0 1120 700" role="img" aria-labelledby="fig-tools-title">
+            <title id="fig-tools-title">十一个宿主工具与 action 闭集</title>
+            <desc>左侧为 tree-engine 的 9 个工具及其 action 闭集，并在第 5 行给出 leaf 写面护栏（非工具）；右侧为 session-tree 的 tree_send 与 session_handoff，底部标注自省工具。</desc>
             <defs>
               <marker id="f2-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
                 <path d="M0,0 L8,4 L0,8 z" class="s-head"/>
               </marker>
             </defs>
-            <rect class="s-bg" x="0" y="0" width="1120" height="600" rx="14"/>
-            <text class="s-hero" x="32" y="38" font-size="20">工具面：8 + 2</text>
+            <rect class="s-bg" x="0" y="0" width="1120" height="700" rx="14"/>
+            <text class="s-hero" x="32" y="38" font-size="20">工具面：9 + 2</text>
             <text class="s-t3" x="176" y="38" font-size="12.5">宿主半注册；action 闭集以 <tspan class="s-mono">index.js</tspan> schema 为准</text>
 
-            <rect class="s-layer" x="24" y="54" width="756" height="492" rx="12"/>
-            <text class="s-on-teal" x="44" y="80" font-size="13">tree-engine v0.5.1 · 8 tools</text>
-            <text class="s-t3" x="264" y="80" font-size="11.5">执行层 · 账本 + 派发 + 验证 + 竹节</text>
+            <rect class="s-layer" x="24" y="54" width="756" height="588" rx="12"/>
+            <text class="s-on-teal" x="44" y="80" font-size="13">tree-engine v0.6.0 · 9 tools</text>
+            <text class="s-t3" x="264" y="80" font-size="11.5">执行层 · 账本 + 派发 + 验证 + 竹节 + 自检</text>
 
             <!-- cards row 1 -->
             <rect class="s-card" x="44" y="96" width="348" height="98" rx="10"/>
@@ -775,8 +780,20 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-t2" x="420" y="480" font-size="11.5">backup · restore · nudge-reset · register-session</text>
             <text class="s-t3" x="420" y="499" font-size="10.5">备份轮转 10；restore 校验 tree_id；gc 未实现</text>
 
+            <!-- cards row 5：第 9 个工具 + 写面护栏（非工具，同批次） -->
+            <rect class="s-card" x="44" y="520" width="708" height="98" rx="10"/>
+            <text class="s-mono" x="60" y="542" font-size="10">09 · 自检（只读）</text>
+            <text class="s-hero-sm" x="60" y="564" font-size="15">tree_doctor</text>
+            <text class="s-t2" x="60" y="586" font-size="11.5">run</text>
+            <text class="s-t3" x="60" y="605" font-size="10.5">7 检查项 · FAIL 不 throw · version=0.6.0</text>
+            <line class="s-line" x1="390" y1="534" x2="390" y2="604"/>
+            <text class="s-mono" x="406" y="542" font-size="10">GUARD · 非工具（v0.6.0）</text>
+            <text class="s-hero-sm" x="406" y="564" font-size="15">leaf 写面护栏</text>
+            <text class="s-t2" x="406" y="586" font-size="11.5">LEAF_WRITE_MATRIX · 六类写操作</text>
+            <text class="s-t3" x="406" y="605" font-size="10.5">非授权 → E_BORROWED_IDENTITY；done 仅 owner</text>
+
             <!-- right panel -->
-            <rect class="s-layer" x="792" y="54" width="304" height="492" rx="12"/>
+            <rect class="s-layer" x="792" y="54" width="304" height="588" rx="12"/>
             <text class="s-on-amber" x="812" y="80" font-size="13">session-tree v1.3.5</text>
             <text class="s-t3" x="812" y="98" font-size="11.5">会话层 · 树视图 + 通信 + 交接</text>
 
@@ -807,9 +824,13 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <rect class="s-badge" x="982" y="490" width="88" height="26" rx="13"/>
             <text class="s-t2" x="1026" y="507" font-size="9.6" text-anchor="middle">session-handoff</text>
 
-            <text class="s-t3" x="32" y="578" font-size="11.5">另：<tspan class="s-mono">self_spec</tspan>（agent-introspect，v0.1.0，运行中）；<tspan class="s-mono">meta_loop</tspan>（meta-loop，v0.2.0，未装配）——不计入 10 个。</text>
+            <text class="s-t3" x="812" y="560" font-size="10.8">注：本图 9 + 2 = 11 个宿主工具；</text>
+            <text class="s-t3" x="812" y="577" font-size="10.8">护栏是能力（非工具），不计入 11。</text>
+            <text class="s-t3" x="812" y="602" font-size="10.8">action 以 index.js schema 为准。</text>
+
+            <text class="s-t3" x="32" y="674" font-size="11.5">另：<tspan class="s-mono">self_spec</tspan>（agent-introspect，v0.1.0，运行中）——不计入 11 个。</text>
           </svg>
-          <figcaption><b>图 2 · 工具面地图</b>。<span class="how">怎么读：</span>左边 8 个是「任务树账本」，右边 2 个是「会话层能力」；每张卡第二行是该工具<b>真正支持</b>的 action——不在卡片里的 action 会返回 unknown action，<code>docs/tools-mapping.md</code> 里的 <code>drift</code> / <code>milestone-*</code> / <code>gc</code> 等仍在设计稿里。</figcaption>
+          <figcaption><b>图 2 · 工具面地图</b>。<span class="how">怎么读：</span>左边 9 个是「任务树账本」（第 9 个 <code>tree_doctor</code> 只读自检），右边 2 个是「会话层能力」，第 5 行右半是<b>写面护栏</b>（能力不是工具：<code>LEAF_WRITE_MATRIX</code> 决定「谁能写这个 leaf」）；每张卡第二行是该工具<b>真正支持</b>的 action——不在卡片里的 action 会返回 unknown action，<code>docs/tools-mapping.md</code> 里的 <code>drift</code> / <code>milestone-*</code> / <code>gc</code> 等仍在设计稿里。</figcaption>
         </figure>
 
         <figure class="fig" id="fig-tree">
@@ -917,8 +938,8 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <article class="card">
             <h3>能力不是「越多越好」</h3>
             <p>tree-engine 的 <code>tree_*</code> 只负责<b>任务账本与执行编排</b>；会话生命周期（创建/fork/列表）仍走 DSH 原生 <code>subagents</code>，跨会话消息也可用内置 <code>send_message</code>（但只覆盖直接父子）。</p>
-            <p>meta-loop 虽在仓内，但<b>不在 profile bundles</b>，<code>/metaloop/</code> 面板与胶囊入口当前不可用；不要把它算进「已装配能力」。</p>
-            <p class="src"><b>事实</b>：<code>README.md</code> §已知边界 1；<code>docs/tools-mapping.md</code> §4。</p>
+            <p>发布面只有会话树是「公开镜像包」；tree-engine 与 introspect 随本仓公开、未单独发仓（见 <code>docs/publishing.md</code> §1）。</p>
+            <p class="src"><b>事实</b>：<code>docs/publishing.md</code> §1；<code>docs/tools-mapping.md</code> §4。</p>
           </article>
         </div>
 
@@ -1001,9 +1022,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-t2" x="906" y="217" font-size="9" text-anchor="middle">tree-engine</text>
             <rect class="s-badge" x="950" y="202" width="76" height="22" rx="11"/>
             <text class="s-t2" x="988" y="217" font-size="9" text-anchor="middle">introspect</text>
-            <rect class="s-badge" x="1032" y="202" width="56" height="22" rx="11" stroke-dasharray="3 3"/>
-            <text class="s-t3" x="1060" y="217" font-size="8.6" text-anchor="middle">meta-loop</text>
-            <text class="s-t3" x="770" y="238" font-size="9.2">实心 = 已装配；虚线 = 未装配</text>
+            <text class="s-t3" x="770" y="238" font-size="9.2">三个包均已在 profile 装配</text>
 
             <!-- L2 -->
             <rect class="s-layer" x="24" y="270" width="1072" height="150" rx="12"/>
@@ -1018,25 +1037,18 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-t3" x="56" y="399" font-size="10.2">skills/session-handoff/SKILL.md</text>
 
             <rect class="s-card-teal" x="362" y="302" width="400" height="106" rx="10"/>
-            <text class="s-on-teal" x="378" y="324" font-size="10">tree-engine v0.5.1</text>
-            <text class="s-hero-sm" x="378" y="346" font-size="13.5">8 个 tree_* 工具 + sweep + ports</text>
+            <text class="s-on-teal" x="378" y="324" font-size="10">tree-engine v0.6.0</text>
+            <text class="s-hero-sm" x="378" y="346" font-size="13.5">9 个 tree_* 工具 + sweep + ports</text>
             <text class="s-t3" x="378" y="365" font-size="10.2">ports：dispatch / interrupt / readSession / glob / exec / judge</text>
             <text class="s-t3" x="378" y="382" font-size="10.2">sweep：超时、收割、竹节自动接力</text>
             <text class="s-t3" x="378" y="399" font-size="10.2">skills/tree-commander · tree-worker</text>
 
-            <rect class="s-card" x="774" y="302" width="180" height="106" rx="10" stroke-dasharray="5 4"/>
-            <text class="s-t3" x="790" y="324" font-size="10">meta-loop v0.2.0</text>
-            <text class="s-mono" x="790" y="346" font-size="12">meta_loop</text>
-            <text class="s-t3" x="790" y="365" font-size="10.2">六阶段 + 门禁</text>
-            <text class="s-t3" x="790" y="382" font-size="10.2">/metaloop/ 面板</text>
-            <text class="s-t3" x="790" y="399" font-size="10.2">未装配，不在 bundles</text>
-
-            <rect class="s-card" x="966" y="302" width="120" height="106" rx="10"/>
-            <text class="s-t3" x="980" y="324" font-size="10">introspect</text>
-            <text class="s-mono" x="980" y="346" font-size="12">self_spec</text>
-            <text class="s-t3" x="980" y="365" font-size="10.2">model / 权限 /</text>
-            <text class="s-t3" x="980" y="381" font-size="10.2">sandbox / cwd /</text>
-            <text class="s-t3" x="980" y="397" font-size="10.2">token 投影</text>
+            <rect class="s-card" x="790" y="302" width="300" height="106" rx="10"/>
+            <text class="s-t3" x="806" y="324" font-size="10">introspect v0.1.0</text>
+            <text class="s-mono" x="806" y="346" font-size="12">self_spec</text>
+            <text class="s-t3" x="806" y="365" font-size="10.2">model / 权限 / sandbox / cwd / token 投影</text>
+            <text class="s-t3" x="806" y="382" font-size="10.2">只读 projcache；effort / 温度显式 unavailable</text>
+            <text class="s-t3" x="806" y="399" font-size="10.2">无单测；随本仓公开</text>
 
             <!-- L3 -->
             <rect class="s-layer" x="24" y="436" width="1072" height="104" rx="12"/>
@@ -1078,7 +1090,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
 
             <text class="s-t3" x="32" y="676" font-size="10.8">数据流：模型调用工具 → 宿主半 → <tspan class="s-mono">engine.call()</tspan> → 原子写 → sweep/收割 → 验证落账 → 面板/E2E 读取。客户端半只读会话 store，不写树账本。</text>
           </svg>
-          <figcaption><b>图 1 · 系统全景</b>。<span class="how">怎么读：</span>从上往下看「服务 → 装配 → 工具 → 逻辑 → 落盘」；<b>纯逻辑层没有任何 DSH import</b>，所以 67 项引擎测试可以离线跑；<b>客户端半</b>只画树、不改账本，因此它坏了不会影响工具与竹节。</figcaption>
+          <figcaption><b>图 1 · 系统全景</b>。<span class="how">怎么读：</span>从上往下看「服务 → 装配 → 工具 → 逻辑 → 落盘」；<b>纯逻辑层没有任何 DSH import</b>，所以 84 项引擎测试可以离线跑；<b>客户端半</b>只画树、不改账本，因此它坏了不会影响工具与竹节。</figcaption>
         </figure>
 
         <div class="grid2">
@@ -1102,7 +1114,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
 
           <article class="card">
             <h3>「一条缝」：ports 与 skill provider</h3>
-            <p>引擎把宿主能力收束成几个端口：派发、取消、读会话、glob、执行命令、judge。生产装配接 DSH 服务，测试装配接假实现——这是它能同时做到「深逻辑」与「离线 67 项」的原因。</p>
+            <p>引擎把宿主能力收束成几个端口：派发、取消、读会话、glob、执行命令、judge。生产装配接 DSH 服务，测试装配接假实现——这是它能同时做到「深逻辑」与「离线 84 项」的原因。</p>
             <p>Skill 则走另一条装配：两个 tree 包各在自己的 patch 第 2 行 insert <code>@deepseek-ai/dsh-skill-filesystem</code>，<code>bundledSkillDir</code> 经<b>安装包身份</b>解析到包内 <code>skills/</code>，不字符串拼 <code>baseUrl</code>。</p>
             <div class="cmd"><div class="cap"><b>yaml</b> · cordis.patch.yml（节选，真实结构）</div><pre><code>- insert:
     - id: tree-engine
@@ -1121,7 +1133,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
 
         <div class="callout">
           <span class="label">为什么强调「零依赖」</span>
-          <p>四个包都不 <code>import</code> 任何 <code>@deepseek-ai/*</code> 包，只通过宿主 <code>ctx</code> 取服务。好处是测试不需要装载 DSH；代价是 <b>DSH API 漂移</b>时要自己补兼容层——RC2 的 <code>startContinuable</code> 移除就是一次实例，当前兼容层已运行但<b>缺单测</b>。</p>
+          <p>三个包都不 <code>import</code> 任何 <code>@deepseek-ai/*</code> 包，只通过宿主 <code>ctx</code> 取服务。好处是测试不需要装载 DSH；代价是 <b>DSH API 漂移</b>时要自己补兼容层——RC2 的 <code>startContinuable</code> 移除就是一次实例，当前兼容层已运行但<b>缺单测</b>。</p>
         </div>
       </div>
     </section>
@@ -1704,7 +1716,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
       <div class="sec-body">
 
         <div class="metrics">
-          <div class="metric teal"><div class="v">67/67</div><div class="l">tree-engine</div><div class="n">62 引擎 + 4 技能打包 + 1 B1 回归</div></div>
+          <div class="metric teal"><div class="v">84/84</div><div class="l">tree-engine</div><div class="n">62 引擎 + 4 技能打包 + 1 B1 + 9 doctor + 8 护栏</div></div>
           <div class="metric amber"><div class="v">41/41</div><div class="l">session-tree handoff</div><div class="n">继承/工作区/闸门/语言/干跑</div></div>
           <div class="metric violet"><div class="v">3/3</div><div class="l">随包 Skill 打包</div><div class="n">frontmatter / files / patch 行</div></div>
           <div class="metric rose"><div class="v">18/18</div><div class="l">发布 SHA</div><div class="n">v1.3.5 = 1fb9193（main + tag）</div></div>
@@ -1715,8 +1727,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <table>
             <thead><tr><th style="width:22%">对象</th><th style="width:34%">命令</th><th style="width:16%">结果</th><th style="width:28%">依赖 / 备注</th></tr></thead>
             <tbody>
-              <tr><td><code>dsh-tree-engine</code></td><td><code>node --test tests/*.test.js</code></td><td><b>67/67</b></td><td>纯逻辑 + 假时钟/假 store；<code>--test-reporter=tap</code> 要放在位置参数前</td></tr>
-              <tr><td><code>dsh-meta-loop</code></td><td><code>node --test tests/*.test.js</code></td><td><b>13/13</b></td><td>治理层；<b>未装配</b>，测试仍可跑</td></tr>
+              <tr><td><code>dsh-tree-engine</code></td><td><code>node --test tests/*.test.js</code></td><td><b>84/84</b></td><td>纯逻辑 + 假时钟/假 store；含 <code>doctor</code> 9 例与写面护栏 8 例负例；<code>--test-reporter=tap</code> 要放在位置参数前</td></tr>
               <tr><td><code>session-tree</code> handoff</td><td><code>node test/handoff.test.js</code></td><td><b>41/41</b></td><td>mock 四类服务；含语言跟随 6 例 + <code>spawn:false</code> 干跑</td></tr>
               <tr><td><code>session-tree</code> skills</td><td><code>node test/skills.test.cjs</code></td><td><b>3/3</b></td><td>frontmatter / <code>package.json.files</code> / patch provider 行</td></tr>
               <tr><td><code>session-tree</code> render</td><td><code>node test/render.test.cjs</code></td><td><b>全绿</b><br><span class="sub">133/133 + 9/9 + 11/11</span></td><td>确定性夹具渲染；客户端半的 DOM 契约</td></tr>
@@ -1726,7 +1737,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             </tbody>
           </table>
         </div>
-        <p class="src"><b>实测</b>：2026-11-11 本会话复跑 <code>tree-engine</code> <b>67/67</b>、<code>handoff</code> <b>41/41</b>、<code>skills</code> <b>3/3</b>，退出码均为 0；其余数字采信仓库报告。<b>注意</b>：不要写 <code>node --test tests</code>——Node 24 会把目录当文件路径，报 <code>test at tests:1:1</code> 的假失败。</p>
+        <p class="src"><b>实测</b>：2026-11-11 本会话复跑 <code>tree-engine</code> <b>84/84</b>、<code>handoff</code> <b>41/41</b>、<code>skills</code> <b>3/3</b>，退出码均为 0；其余数字采信仓库报告。<b>注意</b>：不要写 <code>node --test tests</code>——Node 24 会把目录当文件路径，报 <code>test at tests:1:1</code> 的假失败。</p>
 
         <figure class="fig" id="fig-release">
           <div class="figtop">
@@ -1861,7 +1872,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <article class="card tint-amber">
             <h3>为什么 npm 冻结（D3）</h3>
             <p>Git 安装已够用；npm token / 2FA / CI 是额外凭据面；不发 npm 就不存在「npm 版本 ≠ GitHub 版本」的双源漂移。</p>
-            <p>四个 <code>@orphiczhou/*</code> 候选名在 registry 均 <b>404</b>。解冻不是技术动作，是项目所有者的显式决策：要先定包名、版本/tag 策略、凭据归属、文档切换、预发布演练、registry 元数据核对，缺一不可。</p>
+            <p>三个 <code>@orphiczhou/*</code> 候选名在 registry 均 <b>404</b>。解冻不是技术动作，是项目所有者的显式决策：要先定包名、版本/tag 策略、凭据归属、文档切换、预发布演练、registry 元数据核对，缺一不可。</p>
           </article>
         </div>
 
@@ -1891,8 +1902,8 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           <table>
             <thead><tr><th style="width:5%" class="num">#</th><th style="width:24%">边界 / 坑</th><th style="width:37%">实际影响</th><th style="width:34%">当前处理 / 绕法</th></tr></thead>
             <tbody>
-              <tr><td class="num">1</td><td><b>npm 冻结（D3）</b></td><td>不能 <code>npm install</code>；四个候选名 registry 404；市场条目是 browse-only，按 Git 安装</td><td>用 Git URL 或 <code>link:</code>；解冻需所有者显式批准（条件见 <code>docs/publishing.md</code> §4）</td></tr>
-              <tr><td class="num">2</td><td><b>meta-loop 未装配</b></td><td><code>/metaloop/</code> 面板与胶囊入口当前不可用；不在 profile bundles</td><td>源码/测试/面板都在仓内；装载即加载，但需先决定是否进 bundles，并跑 <code>live-panel-check.mjs</code></td></tr>
+              <tr><td class="num">1</td><td><b>npm 冻结（D3）</b></td><td>不能 <code>npm install</code>；三个候选名 registry 404；市场条目是 browse-only，按 Git 安装</td><td>用 Git URL 或 <code>link:</code>；解冻需所有者显式批准（条件见 <code>docs/publishing.md</code> §4）</td></tr>
+              <tr><td class="num">2</td><td><b>sweep 依赖宿主 timer</b></td><td>宿主 timer 可用时用其 interval；不可用时靠进程内 60s 兜底（<code>sweepMode=timer</code>），自动收割可能慢一轮</td><td>不要假设「必须显式 harvest」；<code>tree_status harvest</code> 只是立即触发一轮</td></tr>
               <tr><td class="num">3</td><td><b>provider-conformance 依赖 asar fixture</b></td><td>默认目录不存在 → ENOENT；DSH 0.2.2-rc.1 把 schema 引擎拆到 shared chunk，旧启发式拿不到 29/29</td><td>需要 rc.2 兼容的解包 fixture（逐字节 shipped chunk）；这是测试环境依赖，不是包内容缺陷</td></tr>
               <tr><td class="num">4</td><td><b><code>docs/tools-mapping.md</code> 是设计稿</b></td><td>表里的 <code>tree_report drift</code>、<code>tree_node milestone-*</code>、<code>tree_maintain gc</code> 等<b>未实现</b>；照表调会 unknown action</td><td>以 <code>index.js</code> schema 为准；本页图 2 只列已实现 action</td></tr>
               <tr><td class="num">5</td><td><b>市场只认 version</b></td><td>改了代码但不 bump，market 不刷新，等于发假更新；无内容变化乱 bump 又制造假版本</td><td>D6：有内容变化必须 bump；<code>version = GitHub tag = package.json.version</code></td></tr>
@@ -1930,7 +1941,6 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
               <tr><td><code>packages/dsh-tree-engine/README.md</code> v0.3 节</td><td>「register-session（旁路登记幂等）」</td><td>代码对重复登记直接 <code>E_SCHEMA_INVALID</code>（注释口径是「幂等拒绝重复计」）；工具描述仍写 idempotent（审计 P1-07）</td></tr>
               <tr><td><code>README.md</code> 包表 vs §跑测试</td><td>「包内 5 份测试」vs「6 个测试入口」</td><td>实际 <code>test/</code> 下 5 个测试文件 + <code>scripts/verify-bundle.mjs</code> 1 个入口；两种说法指代不同，建议统一为「5 个测试文件 + 1 个清单自检」</td></tr>
               <tr><td><code>README.md</code> 文档索引 vs <code>docs/handoff-2026-11-11.md</code></td><td>仍标「当前交接」</td><td>该文正文混有 v1.3.2/v1.3.3 残留；建议标注「历史交接，版本数字以包 package.json 为准」</td></tr>
-              <tr><td>meta-loop 文档口径</td><td>根 README/agent 写 <b>G1–G11</b>；<code>docs/meta-loop-design.md</code> 写「12 条 G-*」</td><td>门禁数量口径不一；本页只写「G1–G11（README 口径）」，不展开具体规则</td></tr>
             </tbody>
           </table>
         </div>
@@ -1957,7 +1967,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
         </div>
       </div>
       <div class="sec-body">
-        <p>当前功能面已经够用，真正的短板在<b>三处</b>：装不上/看不见（诊断）、写面不够严（完整性）、治理层没装配（能力闲置）。因此建议的顺序不是「继续加工具」，而是先把这三处补齐，再谈可视化与多语言。</p>
+        <p>当前功能面已经够用，真正的短板在<b>三处</b>：装不上/看不见（诊断）、写面不够严（完整性）、真机验活只做过一次性取证（回归）。因此建议的顺序不是「继续加工具」，而是先把这三处补齐，再谈可视化与多语言。</p>
 
         <figure class="fig" id="fig-priority">
           <div class="figtop">
@@ -2004,7 +2014,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <text class="s-t2" x="266" y="304" font-size="10.5">预算计入竹节</text>
 
             <circle cx="700" cy="150" r="9" fill="var(--amber)"/>
-            <text class="s-t2" x="716" y="154" font-size="10.5">meta-loop 装配</text>
+            <text class="s-t2" x="716" y="154" font-size="10.5">真机 E2E 常态化</text>
 
             <circle cx="900" cy="120" r="9" fill="var(--amber)"/>
             <text class="s-t2" x="916" y="124" font-size="10.5">树面板（只读）</text>
@@ -2032,7 +2042,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
 
             <text class="s-t3" x="90" y="492" font-size="10.2">注：气泡位置是定性判断；「成本」含调研、实现、测试、文档与发布，不含等待用户决策的时间。</text>
           </svg>
-          <figcaption><b>图 9 · 下一步优先级</b>。<span class="how">怎么读：</span>先做左上角（doctor、护栏），再排右上角（meta-loop、树面板），左下角顺手做（预算、gc），右下角明确暂缓（npm 解冻、大改状态机）。这张图不替代下表：每个候选的验收方式在表里。</figcaption>
+          <figcaption><b>图 9 · 下一步优先级</b>。<span class="how">怎么读：</span>先做左上角（doctor、护栏），再排右上角（真机 E2E、树面板），左下角顺手做（预算、gc），右下角明确暂缓（npm 解冻、大改状态机）。这张图不替代下表：每个候选的验收方式在表里。</figcaption>
         </figure>
 
         <h3>9.1 候选功能表</h3>
@@ -2043,7 +2053,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
               <tr><td class="num">1</td><td><b>安装/运行自检 <code>doctor</code></b></td><td>「工具没出现 / Skill 没有 / 树是旧的」只能靠人猜；D12 缓存、Skill 注入时机、provider 缺失都很难自查</td><td>高</td><td>低–中</td><td>只读；不能改 profile；要区分「未装」「未重载」「旧会话」「provider 缺失」「版本漂移」</td><td><span class="pill p0">P0</span></td><td>故障注入 4 类均给出可执行 hint；正常环境 0 fail</td></tr>
               <tr><td class="num">2</td><td><b>写面护栏补全</b></td><td><code>set-context</code>/<code>set-verification</code>/非 done event/取消/verify 无统一 caller 校验，worker 可改他人水位或裁决</td><td>高</td><td>中</td><td>可能破坏旧 E2E 的宽松假设；竹节 owner 重绑后规则要兼容；需同步 SKILL 护栏表</td><td><span class="pill p1">P1</span></td><td>每个写操作有负例测试；67/67 与 A 组 7/7 不回归</td></tr>
               <tr><td class="num">3</td><td><b>会话预算纳入竹节链</b></td><td><code>max_sessions=50</code> 漏计 <code>runtime.segmentChain</code>，高频接力时护栏数字失真</td><td>中</td><td>低</td><td>需同时改 <code>guards.js</code>、<code>validate</code>、文档口径；不要把「预算拒绝」误判成竹节故障</td><td><span class="pill p1">P1</span></td><td>接力 N 次后计数正确；超限拒绝；单测覆盖</td></tr>
-              <tr><td class="num">4</td><td><b>meta-loop 装配与验活</b></td><td>治理层源码/测试/面板都在，但不在 profile bundles，能力闲置</td><td>高</td><td>低–中</td><td>client half 与面板可能冲突；bundle 顺序；改 profile 需备份；它只读 tree-state，不能写引擎</td><td><span class="pill p1">P1</span></td><td>面板 12/12；13/13；可回滚</td></tr>
+              <tr><td class="num">4</td><td><b>Skill 版本/文档一致性检查</b></td><td>三份 SKILL 的版本头、命令与测试数字靠人工对齐，容易和代码/README 漂移</td><td>中</td><td>低</td><td>只读脚本；要解析 frontmatter 与 README 表格；不引入外部依赖</td><td><span class="pill p1">P1</span></td><td>3 份 SKILL + README + skills-usage 断言一致；故意改错会失败</td></tr>
               <tr><td class="num">5</td><td><b>provider-conformance rc.2 fixture</b></td><td>29/29 依赖 asar 解包布局；DSH 0.2.2-rc.1 shared chunk 让旧启发式失败</td><td>中</td><td>中</td><td>fixture 易随版本漂移；不能把 ENOENT 当代码失败；需记录 fixture 来源与校验</td><td><span class="pill p1">P1</span></td><td>按文档步骤得到 29/29；缺 fixture 时错误信息明确</td></tr>
               <tr><td class="num">6</td><td><b>RC2 兼容层单测</b></td><td>双形探测分支（<code>startContinuable</code>/<code>startActivation</code>）未被 67 项覆盖；宿主升级时风险高</td><td>中</td><td>低</td><td>需要 mock 两种服务形状；不要为了测兼容层引入宿主依赖</td><td><span class="pill p1">P1</span></td><td>3 分支有测试；总数 67→70</td></tr>
               <tr><td class="num">7</td><td><b>artifact 验证路径修复</b></td><td><code>**/*.md</code> 首个匹配可能命中 <code>node_modules</code>；<code>minSize</code> 是字符数不是字节</td><td>中</td><td>低–中</td><td>改默认行为可能影响现有 E2E；需要「显式产物路径」与「排除 node_modules」两种模式</td><td><span class="pill p2">P2</span></td><td>新增 2 条测试；真实 E2E 产物不误判</td></tr>
@@ -2079,12 +2089,12 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
         </article>
 
         <article class="card tint-violet" style="margin:14px 0">
-          <div class="kicker">推荐 C · P1 · 0.5 天</div>
-          <h3>meta-loop 装配：把「已在仓里」变成「真的能用」</h3>
-          <p><b>目标</b>：治理层不再是一个只在源码里的包；用户能看到 <code>/metaloop/</code> 面板，跑通六阶段与门禁。</p>
-          <p><b>方案</b>：在 profile 备份后加入 <code>@local/dsh-meta-loop</code> 依赖与 bundle；<code>pnpm install</code>；对 <code>include:meta-loop</code> disable→enable；跑 <code>node --test tests/*.test.js</code>（13/13）与 <code>node scripts/live-panel-check.mjs</code>（12 项）；验证面板与胶囊入口；把回滚步骤写进 <code>docs/</code>。</p>
-          <p><b>风险/依赖</b>：client half 与现有侧栏可能冲突；bundle 顺序影响装载；面板同源路由；meta-loop 只读 tree-state，不能写引擎状态；如果决定长期不装配，也应把「未装配」写进 README，而不是让用户以为坏了。</p>
-          <p><b>验收</b>：<code>/metaloop/</code> 可打开且 12 项断言全过；13/13；装配后 tree-engine 的 8 工具与 session-tree 的 2 工具仍在线；回滚 3 步可复现。</p>
+          <div class="kicker">推荐 C · P1 · 1 天</div>
+          <h3>真机 E2E 常态化：把三条一次性取证变成发布前必跑</h3>
+          <p><b>目标</b>：交接（root/sibling）、接替提示语语言、Skill 目录可见性这三条真机断言不再只在报告里跑过一次，而是每次发布前都跑并留证。</p>
+          <p><b>方案</b>：复用现有 <code>scripts/e2e/verify-handoff.mjs</code>、<code>scripts/e2e/verify-kickoff-language.mjs</code>、<code>scripts/skill-e2e/collect-skills.mjs</code>，合成一个 runbook（或薄包装脚本）：起真实子会话 → 逐条断言 → artifacts 落到 <code>scripts/skill-e2e/artifacts/</code> → 在 <code>docs/publishing.md</code> §6 检查清单加一项「真机 E2E 三断言」。失败时保留会话 id 与解码结果，便于复跑。</p>
+          <p><b>风险/依赖</b>：需要真实会话与配额（曾遇到 429）；无 GUI 的 CI 不能跑，只能发布前由人触发；会话日志格式可能随 DSH 版本漂移（断言器要能明确报「格式变了」而不是静默 PASS）。</p>
+          <p><b>验收</b>：发布前一次运行三条断言全 PASS 且 artifacts 落盘；故障注入（改坏一条断言）能 FAIL；runbook 步骤可被另一个会话照做。</p>
         </article>
 
         <h3 style="margin-top:30px">9.3 不建议现在做</h3>
@@ -2107,7 +2117,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
                 <thead><tr><th>波次</th><th>内容</th><th>退出条件</th></tr></thead>
                 <tbody>
                   <tr><td><b>Wave 1</b></td><td>doctor + 写面护栏 + 预算计入竹节</td><td>4 类故障可诊断；负例测试齐；67/67 + A 组不回归</td></tr>
-                  <tr><td><b>Wave 2</b></td><td>meta-loop 装配 + conformance fixture + RC2 单测</td><td>面板 12/12；29/29 可复现；兼容层 3 分支有测试</td></tr>
+                  <tr><td><b>Wave 2</b></td><td>conformance fixture + RC2 单测 + Skill 版本一致性检查</td><td>29/29 可复现；兼容层 3 分支有测试；SKILL/README 断言一致</td></tr>
                   <tr><td><b>Wave 3</b></td><td>artifact 路径 + gc + schema 生成文档 + 真实 50% 演练</td><td>产物不误判；删除可回滚；文档无 unknown action；自然阈值 PASS</td></tr>
                 </tbody>
               </table>
@@ -2164,7 +2174,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
           </div>
           <svg viewBox="0 0 1120 430" role="img" aria-labelledby="fig-timeline-title">
             <title id="fig-timeline-title">session-tree 与 tree-engine 的版本演进</title>
-            <desc>上轨为 session-tree 从 1.0.4 到 1.3.5 的功能演进；下轨为 tree-engine 从 0.4.0 到 0.5.1，以及 meta-loop/introspect 的版本。</desc>
+            <desc>上轨为 session-tree 从 1.0.4 到 1.3.5 的功能演进；下轨为 tree-engine 从 0.4.0 到 0.5.1，以及 introspect 的版本。</desc>
             <defs>
               <marker id="f7-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
             </defs>
@@ -2216,8 +2226,8 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
 
             <!-- lane 2 -->
             <rect class="s-layer" x="24" y="206" width="1072" height="150" rx="11"/>
-            <text class="s-on-teal" x="42" y="228" font-size="11.5">tree-engine / meta-loop / introspect</text>
-            <line class="s-line" x1="70" y1="272" x2="700" y2="272" marker-end="url(#f7-arrow)"/>
+            <text class="s-on-teal" x="42" y="228" font-size="11.5">tree-engine / introspect</text>
+            <line class="s-line" x1="70" y1="272" x2="880" y2="272" marker-end="url(#f7-arrow)"/>
 
             <circle cx="150" cy="272" r="6" class="s-badge-teal"/>
             <text class="s-mono" x="150" y="297" font-size="9.5" text-anchor="middle">0.4.0</text>
@@ -2230,11 +2240,6 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <circle cx="570" cy="272" r="7" class="s-badge-teal"/>
             <text class="s-mono" x="570" y="297" font-size="9.8" text-anchor="middle">0.5.1</text>
             <text class="s-t3" x="570" y="258" font-size="9.2" text-anchor="middle">SKILL 勘误（当前）</text>
-
-            <rect class="s-card" x="720" y="240" width="160" height="58" rx="8"/>
-            <text class="s-mono" x="736" y="258" font-size="9.8">meta-loop 0.2.0</text>
-            <text class="s-t3" x="736" y="274" font-size="9.2">六阶段 + 面板</text>
-            <text class="s-t3" x="736" y="289" font-size="9.2">未装配</text>
 
             <rect class="s-card" x="896" y="240" width="180" height="58" rx="8"/>
             <text class="s-mono" x="912" y="258" font-size="9.8">introspect 0.1.0</text>
@@ -2255,7 +2260,6 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
             <tbody>
               <tr><td><code>dsh-tree-engine</code></td><td class="num">0.5.1</td><td><span class="pill fact">运行中</span></td><td>随本仓公开（未单独发仓）</td><td><b>67/67</b></td></tr>
               <tr><td><code>dsh-session-tree</code></td><td class="num">1.3.5</td><td><span class="pill fact">公开镜像</span></td><td><code>orphiczhou/dsh-session-tree</code> · tag <code>v1.3.5</code> · <code>1fb9193</code></td><td>41/41 + 3/3 + 22/22 + 0 fail</td></tr>
-              <tr><td><code>dsh-meta-loop</code></td><td class="num">0.2.0</td><td><span class="pill off">未装配</span></td><td>随本仓公开</td><td><b>13/13</b></td></tr>
               <tr><td><code>dsh-agent-introspect</code></td><td class="num">0.1.0</td><td><span class="pill fact">运行中</span></td><td>随本仓公开</td><td>无单测</td></tr>
             </tbody>
           </table>
@@ -2320,7 +2324,7 @@ plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}
       <p class="mono fine">github.com/orphiczhou/dsh-tree-harness</p>
       <p class="mono fine">github.com/orphiczhou/dsh-session-tree（tag v1.3.5 = 1fb9193）</p>
       <h4 style="margin-top:14px">快照</h4>
-      <p class="fine">session-tree v1.3.5 · 1fb9193 · 18/18 SHA<br>tree-engine v0.5.1 · meta-loop v0.2.0（未装配）· introspect v0.1.0<br>本仓 master ebeeaea · MIT · npm 冻结（D3）</p>
+      <p class="fine">session-tree v1.3.5 · 1fb9193 · 18/18 SHA<br>tree-engine v0.5.1 · introspect v0.1.0<br>本仓 master ebeeaea · MIT · npm 冻结（D3）</p>
     </div>
   </div>
 </footer>

@@ -96,7 +96,7 @@ git status --porcelain=v1 -b; git rev-list --all --count; git rev-parse HEAD; gi
 - 分支 `master`；**无 git remote**（`git remote -v` 空）
 - commit 数 **26**（`git rev-list --all --count`）
 - HEAD `2cb2d17af13ab995c5260cb694e99d391d52b78e`
-- 工作树状态：已修改 `.gitignore`、`README.md`、`packages/dsh-meta-loop/panel/index.html`、`packages/dsh-tree-engine/index.js`；未跟踪 `agent.md`、`docs/defect-2026-10-17-subagents-rc2-api-drift.md`、`docs/project-restart-brief-2026-11-11.html` 以及 T1/T4 产出（验证过程中陆续落盘，见 1.3）
+- 工作树状态：已修改 `.gitignore`、`README.md`、`packages/dsh-tree-engine/index.js`；未跟踪 `agent.md`、`docs/defect-2026-10-17-subagents-rc2-api-drift.md`、`docs/project-restart-brief-2026-11-11.html` 以及 T1/T4 产出（验证过程中陆续落盘，见 1.3）
 
 ### 1.2 验证环境
 
@@ -139,7 +139,7 @@ node --version   # bundled node
 输出摘要：
 
 - **HITS = 1（两轮相同）**：
-  - `token_assign` @ `packages/dsh-meta-loop/client.js:28`
+  - `token_assign` @ `某客户端插件 client.js:28`（该插件已移除，非本项目组件）
   - 人工判读：该行是运行时单例所有权 token（`INSTANCE_TOKEN = ${CLIENT_REV}#${Date.now()}` 的消费点），**不是凭据**；上下文见同文件 L18-20 注释「单实例仲裁」。
 - **真实密钥命中：0**。
 - 读取错误：0 个文件。
@@ -166,7 +166,7 @@ git --no-pager log -p --all --no-color   # 逐行流式扫描（含新增与删�
 输出摘要（2026-11-11T12:36:48+08:00，耗时 826 ms）：
 
 - 总行数 **19,886**；`^commit` 头 **26** 个（与 commit 数一致，覆盖 `--all` 全部历史）
-- 预过滤候选行 43 行；**唯一命中**：`82f7b823 | packages/dsh-meta-loop/client.js | token_assign`（同 2.1 的良性运行时 token；该文件在该 commit 引入）
+- 预过滤候选行 43 行；**唯一命中**：`82f7b823 | 某客户端插件 client.js | token_assign`（同 2.1 的良性运行时 token；该文件在该 commit 引入，插件已移除）
 - **真实密钥命中：0**
 - 注：`git log -p` 同时扫描新增/删除行，因此「历史上曾提交后删除的密钥」也在覆盖范围内。
 
@@ -193,7 +193,7 @@ git --no-pager log --all --name-only --format=''   # 历史出现过的全部路
 
 **0 个真实密钥命中**（工作树两轮 + 全历史 + 二进制 + 本地文件/忽略区 + 可疑文件名）。唯一命中为良性运行时实例 token。**密钥维度无 BLOCK。**
 
-> **历史重写后最终状态复扫**（2026-11-11 12:45，见附录 A6）：工作树 **113** 文件 + 全历史 **30** commits / 23,724 diff 行——仍为 **0 真实密钥**，命中仍只有同一条良性运行时 token（`packages/dsh-meta-loop/client.js:28`）。
+> **历史重写后最终状态复扫**（2026-11-11 12:45，见附录 A6）：工作树 **113** 文件 + 全历史 **30** commits / 23,724 diff 行——仍为 **0 真实密钥**，命中仍只有同一条良性运行时 token（某客户端插件 `client.js:28`，该插件已移除）。
 
 ---
 
@@ -267,8 +267,6 @@ git count-objects -vH; git rev-list --all --count
 $node = "$env:USERPROFILE\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
 # workdir: packages\dsh-tree-engine
 & $node --test tests/*.test.js
-# workdir: packages/dsh-meta-loop
-& $node --test tests/*.test.js
 ```
 
 输出摘要：
@@ -276,12 +274,11 @@ $node = "$env:USERPROFILE\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\nod
 | 套件 | 时间戳 | tests | pass | fail | 退出码 | duration |
 |---|---|---|---|---|---|---|
 | `packages/dsh-tree-engine` | 12:36:50 — 12:36:52 | 62 | **62** | 0 | **0** | 1900.47 ms |
-| `packages/dsh-meta-loop` | 12:36:52 — 12:36:53 | 13 | **13** | 0 | **0** | 229.78 ms |
 
 - node：`v24.21.0`
-- 运行对象是**当前工作树（含未提交改动）**，与 `agent.md` §2 的「62/62、13/13」一致。
+- 运行对象是**当前工作树（含未提交改动）**，与当时 `agent.md` §2 的「62/62、13/13」一致（另有一套 13 项测试属当时仓内一个已移除的独立插件，非本项目组件）。
 - 结论：**测试基线通过**（无 fail / 无 cancelled / 无 skipped）。
-- **最终 HEAD 复扫（2026-11-11 12:45:32，HEAD `4062974`，工作树 clean）**：tree-engine **62/62 exit 0**、meta-loop **13/13 exit 0**——与重写前一致，代码改动已随 4 个 commit 入库后仍全绿。
+- **最终 HEAD 复扫（2026-11-11 12:45:32，HEAD `4062974`，工作树 clean）**：tree-engine **62/62 exit 0**、另一已移除插件 13/13 exit 0——与重写前一致，代码改动已随 4 个 commit 入库后仍全绿。
 
 ---
 
@@ -340,7 +337,7 @@ git hash-object -- <src>/<rel>; git hash-object -- <dst>/<rel>
 
 - **`SessionTree` ✓ 在线**（提供 `snapshot`：rows/groupCount/rowCount）
 - **`Regions` ✓ 在线**（提供 `outline`/`snapshot`/`failures`）
-- **`meta-loop-ui` ✗ 不在线**（与 `agent.md` §2「meta-loop 未装配」一致；非发布阻塞）
+- **某已移除插件的 `*-ui` provider ✗ 不在线**（该插件非本项目组件，源码已随 2026-11-11 清理移除；非发布阻塞）
 - 另有 `meta-adapter-ui`、`nanju-ui` 两个已装配插件 provider（与本次发布无直接关系，仅记录环境事实）
 
 ### 7.2 宿主 Config 目录总量
@@ -383,7 +380,7 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 | R3 | LOW | **历史重写已完成**：全部 commit SHA 已变化（新 HEAD `4062974`，30 commits）；本报告 §0.3/§2.3 中 `2cb2d17`/`6de30d1`/`439976f`/`82f7b82` 等均为 **pre-rewrite 坐标** | 发布核对以新 HEAD 为准；`packages/dsh-session-tree` v1.0.4 不 bump（D6），market 判定不受影响 |
 | R4 | LOW | 密钥防护仅依赖 `.gitignore` + 人工扫描，无 CI 侧 secret scanning | 建议 push 后开启 GitHub secret scanning / push protection 作为纵深（非阻塞） |
 | R5 | ~~LOW~~ **已关闭** | 移除 BLOCK-2 后 `demo/agspec/w2-source.md` 的摘录清单可能留下指向已删文件的悬空引用 | **2026-11-11 12:41 复查：已解决**——该文件已更新（工作区 M），新增「公开仓说明（D7）」块覆盖全部 6 个第三方文件并注明「已移除」+ 备份位置，且明确 `_extract.cjs` 保留 |
-| R6 | INFO | `meta-loop-ui` client provider 未装配（agenda 已记录） | 属装配状态而非发布缺陷；本报告仅记录活体事实 |
+| R6 | INFO | 某已移除插件的 client provider 未装配（该插件非本项目组件） | 属装配状态而非发布缺陷；本报告仅记录活体事实 |
 | R7 | — | ~~历史清除尚未执行~~ **已关闭（2026-11-11 12:44 完成）** | 附录 A 全绿；旧 HEAD/对象/refs 全部不可达 |
 | R8 | INFO | `.git/refs/original/` 为 filter-branch 留下的**空目录**（0 条 refs；`for-each-ref` 只有 `refs/heads/master`；无对象泄漏） | 纯装饰性残留，不影响 push（push 只传对象与 refs）；可选 `Remove-Item .git/refs/original` 清理 |
 | R9 | INFO | `git log -p` 正文出现已删除文件名（附录 A3 的 42 条正文命中） | 全部来自 `agent.md` D7 说明、`demo/agspec/w2-source.md` 移除说明、本报告与 commit message——**属 D7 透明记录，不是内容泄漏**；文件内容/对象均为 0 |
@@ -404,11 +401,11 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 | A3c | 重写前对象残留扫描 | `git cat-file --batch-all-objects` 前缀：`2cb2d17`/`6de30d1`/`439976f`/`82f7b82`/`dc7c27d` → **0 个对象**；旧 HEAD `git cat-file -e` = **False** | ✅ |
 | A4 | `git log --all --diff-filter=A --name-only \| Select-String`（历史新增文件名） | **hits = 0** | ✅ |
 | A5 | `git rev-list --objects --all \| Select-String`（历史对象路径） | **hits = 0** | ✅ |
-| A6 | 全量密钥复扫（工作树 tracked+untracked / `git log -p --all` / 二进制 PNG） | 工作树 113 文件 **1 良性命中**（`packages/dsh-meta-loop/client.js:28` 运行时 token）；历史 23,724 行 / 30 commits **1 良性命中**（`c60f8996`|client.js，同一 token）；2 个 PNG 字节级 **0**；**0 真实密钥** | ✅ |
+| A6 | 全量密钥复扫（工作树 tracked+untracked / `git log -p --all` / 二进制 PNG） | 工作树 113 文件 **1 良性命中**（某已移除插件 `client.js:28` 运行时 token）；历史 23,724 行 / 30 commits **1 良性命中**（`c60f8996`|client.js，同一 token）；2 个 PNG 字节级 **0**；**0 真实密钥** | ✅ |
 | A7 | `.gitignore` D7 条目 | `.env` / `.env.*` / `*.pem` / `*.p12` / `id_rsa*` 各 1 条，**全部在** | ✅ |
 | A8 | 新 HEAD / 时间戳 | HEAD `40629745f1df16d67706223bb73ce67d1e67055c`；**30 commits**；`git status` clean；refs 仅 `refs/heads/master`；packed-refs 仅 master；reflog **0 条**；`ORIG_HEAD` 不存在 | ✅ |
 | A9 | 历史瘦身效果 | `count-objects`：**360 objects / 1 pack / 609.35 KiB**；`.git` **0.64 MB（652.49 KiB）**（重写前 3.80 MB / 317 objects）；最大 blob **87,653 B**、`blobs_over_1MB = 0`；`git fsck --full --no-reflogs` **0 行**、unreachable/dangling **0** | ✅ |
-| A10 | 结构完整性补充（非原门禁项） | `demo/agspec/` 仅剩 6 个保留文件；2 张 crop SHA-256 与重写前一致（`06f20d18…` / `236413ca…`）；最终 HEAD 测试 tree-engine **62/62**、meta-loop **13/13**（exit 0） | ✅ |
+| A10 | 结构完整性补充（非原门禁项） | `demo/agspec/` 仅剩 6 个保留文件；2 张 crop SHA-256 与重写前一致（`06f20d18…` / `236413ca…`）；最终 HEAD 测试 tree-engine **62/62**（另一已移除插件 13/13，exit 0） | ✅ |
 
 **结论：A1–A9（含补充 A3b/A3c/A10）全部通过 → §0.1 升级为 PASS WITH RISKS，可 push。**
 
@@ -441,7 +438,7 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 | 12:36:20 | `.gitignore` 初检 | 缺 `.env*` 等（已报 Lead，D7 补齐） |
 | 12:36:20—12:36:40 | `read_image` 三张 demo 图 | **BLOCK-1：screen 需处理**；2 张 crop 可公开 |
 | 12:36:48 | **git 全历史密钥扫描**（19,886 行 / 26 commits） | 1 良性命中（82f7b823），0 真实密钥 |
-| 12:36:50—12:36:53 | 测试基线 | tree-engine 62/62 exit 0；meta-loop 13/13 exit 0 |
+| 12:36:50—12:36:53 | 测试基线 | tree-engine 62/62 exit 0；另一已移除插件 13/13 exit 0 |
 | 12:36:59 | 历史文件名清单（104 个） | 可疑文件名 0 个 |
 | 12:37:20 | **合并包哈希比对 #1** | 15/15 一致，v1.0.4 |
 | 12:37:31 | 活体：Config total / subagents Service | total=248；无 startContinuable，有 startActivation/sendMessage/interrupt |
@@ -464,7 +461,7 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 | 12:45:02—12:45:03 | A9 对象库 / fsck / 瘦身 | 360 objects / 1 pack / **609.35 KiB**；`.git` 0.64 MB；max blob 87,653 B；fsck 0 行、unreachable 0 |
 | 12:45:03—12:45:05 | A6 密钥复扫（工作树 113 文件 + 历史 23,724 行/30 commits + 2 PNG） | 各 1 条良性命中，**0 真实密钥** |
 | 12:45:31 | 最终树结构 / 保留文件 / 大文件核查 | `demo/agspec` 仅 6 个保留文件；**0 个 >2MB**；tracked 113 / 1.35 MB |
-| 12:45:32 | 最终 HEAD 测试复跑 | tree-engine **62/62**、meta-loop **13/13**，exit 0 |
+| 12:45:32 | 最终 HEAD 测试复跑 | tree-engine **62/62**、另一已移除插件 **13/13**，exit 0 |
 | 12:45:35 | crop SHA / PII 复扫 | crop SHA 与重写前一致；PII 用户名 27 行/9 文件、email 0、私网 IP 0 |
 | 12:46 | **复扫结论：A1–A9 全绿 → PASS WITH RISKS** | **可 push** |
 | 12:47 | 本报告 **v1.2** 写入（结论升级 + 附录 A 实测回填） | PASS WITH RISKS |

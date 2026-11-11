@@ -3,7 +3,7 @@
 > **所有接手本项目的 AI Agent 的开工必读**，同时是项目**单一事实源**：角色授权 / 决策日志 / 路线图 / 工程约定 / 发布门禁。
 > 文件名由用户在 2026-11-11 明确指定为 **`agent.md`**（此前误建为 `agenda.md`，已 `git mv` 更名，见 §7）。
 > 由 **Lead（指挥官 + 架构师）** 维护，每轮收尾更新。
-> 最后更新：2026-11-11（第七轮：洁净室二轮修订 + session-tree v1.3.3 / tree-engine v0.5.1：`spawn:false` 干跑修正、Skill 文档补全、语言跟随）
+> 最后更新：2026-11-11（第八轮 Wave-1 收口：tree-engine **v0.6.0** `tree_doctor` 只读自检 + leaf 写面护栏；C1 meta-loop 清理；文档/项目地图口径刷新到 9 工具 / 84-84）
 
 ---
 
@@ -19,6 +19,8 @@
 
 ## 0.1 新 Agent 开工顺序（30 秒）
 
+> 🗺️ **先看全景**：[docs/project-map-2026-11-11.html](docs/project-map-2026-11-11.html)（单文件离线项目地图：组件 / 工具面 / 真机流程 / 机制 / 边界 / 下一步）。
+
 1. 读本文件（决策 / 约定 / 门禁）；
 2. 读 [docs/handoff-2026-11-11.md](docs/handoff-2026-11-11.md)（当前状态 / 路径 / 命令）；
 3. `git log --oneline -8` + `git status`，确认 HEAD 与工作树；
@@ -29,8 +31,8 @@
 
 ```powershell
 # 测试（bundled node；勿用目录形参 node --test tests —— Node 24 会报 test at tests:1:1 假失败）
-node --test tests/*.test.js            # packages/dsh-tree-engine → 67/67（62 引擎 + 4 技能打包 + 1 B1 回归）
-node --test tests/*.test.js            # packages/dsh-meta-loop  → 13/13
+node --test tests/*.test.js            # packages/dsh-tree-engine → 84/84（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏）
+tree_doctor {action:"run"}             # 只读自检：package / tool-count / skills / tree-data / stale / sweep / env 七项
 node test/handoff.test.js              # packages/dsh-session-tree → 41/41（宿主半 session_handoff）
 node test/render.test.cjs              # packages/dsh-session-tree → 全绿（参考 133 + 自检 9 + 实时 11）
 node test/style-guard.cjs              # packages/dsh-session-tree → 22/22
@@ -55,6 +57,7 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 
 - node 路径：`%USERPROFILE%\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe`
 - `packages/` 位于 profile 的 `hmr.root`（`D:/Codes/dsh-tree-harness/packages`）。**实测（2026-11-11 第三/四轮）：改了已加载包的宿主半 `index.js` 或 bundle patch（含新增 skill provider 行）后，活体仍是旧实现；必须对相应 entry（`include:session-tree` / `include:tree-engine`）做一次 `plugin_manager set_plugin enabled:false → true`（或重启 DSH）才加载新代码。客户端半改动刷新页面生效。**
+- **热重载安全（2026-11-11 实际事故，务必遵守）**：`packages/` 在 `hmr.root` 内时，**直接覆盖写宿主半文件可能被 HMR 读到半写状态**，本次 Wave-1 期间就因此让宿主启动崩溃（`ReferenceError: TOOLS is not defined`）。改 `index.js` / `cordis.patch.yml` 前先对相应 bundle 做 disable，或改完立即 disable→enable；批量/脚本改动用「写 `.tmp` 再原子 rename」。宿主崩溃会留下孤儿进程并占用文件锁——这是宿主机制的结构性限制（需宿主侧加「父进程死亡即自杀」守护），本仓代码无法根治，只能减少触发。
 - git push 需要凭据：token 从 **User 环境变量 `GH_TOKEN`** 在内存中取用（`[Environment]::GetEnvironmentVariable('GH_TOKEN','User')` + `http.extraheader`），**禁止打印、禁止落盘、禁止写进 remote URL**；GitHub 访问需按 handoff 用 `-c http.proxy=` 等逐命令覆盖失效代理。
 
 ## 0.3 会话交接纪律（上下文接近 50% 时必做）
@@ -92,17 +95,19 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 
 ---
 
-## 2. 当前状态快照（2026-11-11 第五轮：交接语言跟随 + Skill 用户指南）
+## 2. 当前状态快照（2026-11-11 第八轮 Wave-1：doctor 自检 + 写面护栏 + meta-loop 清理）
 
+- **项目全景地图**：[docs/project-map-2026-11-11.html](docs/project-map-2026-11-11.html)（单文件离线，也是 GitHub 项目介绍入口——README 顶部同链接）
 - **DSH 桌面**：`0.2.2-rc.1`；profile bundles **27** 个；loader 条目 244
-- **本仓**：public `master`，第五轮提交见 `git log -1`；工作树 clean；remote = `https://github.com/orphiczhou/dsh-tree-harness.git`
+- **本仓**：public `master`，HEAD `3c36931`；**Wave-1 改动已收口并提交**（C1 清理 + C2 doctor + C3 写面护栏 + C4 文档/地图刷新；tree-engine **v0.6.0**、84/84），remote = `https://github.com/orphiczhou/dsh-tree-harness.git`
 - **公开面**：仓库 https://github.com/orphiczhou/dsh-tree-harness（public / master / MIT / 7 topics）；插件仓 `orphiczhou/dsh-session-tree` **v1.3.5**（交接提示语跟随界面语言 + 随包 Skill + 文档补全 + spawn:false 干跑修正；main+tag = `1fb9193`，18/18 SHA）、`orphiczhou/dsh-region-probe`；**npm 冻结（D3）**
-- **组件**：`dsh-tree-engine` **v0.5.1**（8 工具 + 随包 tree-commander/tree-worker Skill）、`dsh-meta-loop` v0.2.0（未装配）、`dsh-agent-introspect` v0.1.0、`dsh-session-tree` **v1.3.5**（`tree_send` + `session_handoff` + 随包 `session-handoff` Skill + 语言跟随 + 干跑不拦阈值）
-- **测试**：tree-engine **67/67**、meta-loop **13/13**；session-tree handoff **41/41**、skills **3/3**、render 全绿、style-guard **22/22**、verify-bundle **0 fail**；新增 `scripts/e2e/verify-kickoff-language.mjs`（接替首条语种断言）
+- **组件**：`dsh-tree-engine` **v0.6.0**（**9 工具** = 8 既有 + `tree_doctor` 只读自检；leaf 写面护栏 `LEAF_WRITE_MATRIX` + `assertLeafWriter`；随包 tree-commander/tree-worker Skill）、`dsh-agent-introspect` v0.1.0、`dsh-session-tree` **v1.3.5**（`tree_send` + `session_handoff` + 随包 `session-handoff` Skill + 语言跟随 + 干跑不拦阈值）
+- **测试**：tree-engine **84/84**（含 `tree_doctor` 9 例 + 写面护栏 8 例负例）；session-tree handoff **41/41**、skills **3/3**、render 全绿、style-guard **22/22**、verify-bundle **0 fail**
+- **Wave-1 收口**：① 删除已废止的 meta-loop 插件与其专属资料（`packages/dsh-meta-loop/`、`demo/metalp/`、`docs/meta-loop-design.md`、`docs/meta-system-argument.md`），当前材料中该插件信息已清除；② `tree_doctor`（7 检查项、FAIL 不 throw）；③ 写面护栏统一接入 set-context / set-verification / 非 done event / dispatch-cancel / status / set-session（非授权 → `E_BORROWED_IDENTITY`）
 - **洁净室评审**：独立子会话多轮（第 1 轮 12 缺口 → v1.3.2；第 2 轮 PASS_WITH_GAPS，N1–N7 → v1.3.3；R1-B/R2-B 文档债 → v1.3.4；第 3 轮 **PASS**，收尾 → v1.3.5）见 [docs/skill-cleanroom-2026-11-11.md](docs/skill-cleanroom-2026-11-11.md)
 - **会话树 / 技能活体**：`include:session-tree` / `include:tree-engine` 已重载；新会话 Skill 目录含 3 个 Skill；**接替提示语跟随界面语言**（本机 `locale.preference: zh` → `lang=zh`，接替首条中文，真机 PASS）；E2E 见 [docs/skill-e2e-2026-11-11.md](docs/skill-e2e-2026-11-11.md) 与 [docs/e2e-kickoff-language-2026-11-11.md](docs/e2e-kickoff-language-2026-11-11.md)
 - **用户文档**：新增 [docs/skills-usage.md](docs/skills-usage.md)（安装/发现/最小提示词/三层树/50% 交接/语言/排障）
-- **未装配**：`@local/dsh-meta-loop`；**降级项**：无（tree-engine `sweepMode=timer`）
+- **装配**：本项目三个包（tree-engine / session-tree / agent-introspect）均已装配，无未装配项；**降级项**：无（tree-engine `sweepMode=timer`）
 - **RC2 兼容层**：已在 HEAD 中；provider-conformance 依赖 rc.2 fixture（已知环境依赖）
 
 ## 3. 路线图（Roadmap）
@@ -114,7 +119,7 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 | **R3** | 止血：RC2 兼容层入库 | ✅ 已完成 | 兼容层 + 缺陷报告入库；**补单测**列 R6 |
 | **R4** | 文档对齐（README / handoff / publishing） | ✅ 已完成 | README/License/handoff-2026-11-11/publishing/merge 记录/验证报告 v1.2 全部落盘 |
 | **R5** | npm 发布 | ⏸ 冻结（D3） | 无需动作；解冻需用户批准 |
-| **R6** | meta-loop 装配 / timer 降级 / RC2 单测补强 / provider-conformance 布局适配 | 📋 待排期 | 下一轮候选；均非阻塞 |
+| **R6** | timer 降级 / RC2 单测补强 / provider-conformance 布局适配 | 📋 待排期 | 下一轮候选；均非阻塞 |
 | **R7** | 会话自交接（D9） | ✅ 已完成（v0.1.0）→ 已被 R9 取代 | 原 host-only 插件 `packages/dsh-session-handoff/`（`session_handoff` status/handoff，24/24 测试）；已装 profile 并活体验证（兄弟接替 E2E 成功）。**v1.2.0 起并入会话树单包，独立包删除** |
 | **R8** | 会话树工作区归档/隐藏 + 最近活动排序（D10） | ✅ 已完成 | `packages/dsh-session-tree` **v1.1.0**：工作区按最近活动排序（可切 Host 顺序）、工作区隐藏/恢复（localStorage 持久化）、已隐藏工作区三分区态、搜索召回、`…` 菜单整合；`render.test.cjs` **153 PASS / 0 FAIL**（133 gating 全保留 + 26 新增）、style-guard 22/22、verify-bundle OK；**需刷新页面生效**（客户端半） |
 | **R9** | **交接并入 tree 体系 + 同工作区/权限模式/Agent 预设继承修复（D11）** | ✅ 已完成 | `packages/dsh-session-tree` **v1.2.0**：`session_handoff` 并入 host 半；root/degraded 接替会话 `attachSession` 到同一 workspace；`meta.agentPreset` + `setup` 内挂载预设组成；`permission/preset`+`sandbox/mode`+`approval/policy`（`source:'delegation'`）发布前追加；模型/思考等级继续用 `agentOptions`。测试 handoff **34/34**、render 全绿、style-guard 22/22、verify-bundle 0 fail；真机 E2E root **PASS 14/14**、sibling **PASS 12/12**；独立包删除、profile bundle 28→27；发布公开插件仓 v1.2.0（哈希见 §2/§7） |
@@ -168,9 +173,10 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 - 2026-11-11：建立本文件（初名 `agenda.md`）；记录 D1–D6；启动团队任务 T1–T5。
 - 2026-11-11（收口）：D7 扩展为 **7 文件** + 2 个瘦身路径；T1–T4 完成；4 个逻辑 commit + **历史重写**（9 路径从全部历史清除，`.git` 3.80MB→0.64MB）；独立验证 **A1–A9 全绿（PASS WITH RISKS）**；**公开仓 `orphiczhou/dsh-tree-harness` 创建并推送（远端 HEAD == 本地）**；npm 维持冻结。
 - 2026-11-11（更名）：用户更正文件名 → **本文件 `git mv agenda.md agent.md`**（D8）；全仓引用同步更新；状态快照与任务板按收口实测刷新。
-- 2026-11-11（功能轮）：实现并验收两个新功能（D9/D10）：**会话自交接**（新插件 `dsh-session-handoff`，文档 [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md)，规格 [docs/features-2026-11-11-spec.md](docs/features-2026-11-11-spec.md)）+ **会话树 v1.1.0**（工作区排序/隐藏/召回）。验收：handoff 24/24；会话树 153 PASS/0 FAIL、style-guard 22/22；tree-engine 62/62、meta-loop 13/13；真机 E2E 兄弟接替成功。`.gitignore` 增 `HANDOFF-*.md`（运行时交接产物不入库）。
+- 2026-11-11（功能轮）：实现并验收两个新功能（D9/D10）：**会话自交接**（新插件 `dsh-session-handoff`，文档 [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md)，规格 [docs/features-2026-11-11-spec.md](docs/features-2026-11-11-spec.md)）+ **会话树 v1.1.0**（工作区排序/隐藏/召回）。验收：handoff 24/24；会话树 153 PASS/0 FAIL、style-guard 22/22；tree-engine 62/62；真机 E2E 兄弟接替成功。`.gitignore` 增 `HANDOFF-*.md`（运行时交接产物不入库）。
 - 2026-11-11（发布）：monorepo master 已推送；**公开插件仓 `orphiczhou/dsh-session-tree` v1.1.0 已同步并推送（`dcf3519`，远端=本地）**；`dsh-session-handoff` 仅本机安装（未对外发布，R7 后续可考虑随仓传播）。
 - 2026-11-11（第三轮）：用户要求「交接并入 tree 体系、各层级同层交接」并指出真机缺陷「未定位同工作区、接手会话权限/工作模式/思考等级/模型未继承」。落地 D11/R9：handoff 并入 `packages/dsh-session-tree` **v1.2.0**（独立包删除），修复工作区归属（`attachSession`）与继承（`meta.agentPreset` + `setup` 挂载 + 权限三元组 `source:'delegation'`）；测试 handoff 34/34、render/style/verify-bundle 全绿；真机 E2E root 14/14 + sibling 12/12；profile bundle 28→27；公开插件仓 v1.2.0 发布（哈希见 §2）。同时记录 D12（宿主半热更实测不生效，需 disable→enable）。
 - 2026-11-11（第四轮）：用户要求「固化可复用 skill；tree 体系 skill 也是插件工程的一部分、要版本迭代；派团队整体检查+更新；极简提示词验证子会话能否按 skill 识别用法、分层分解、每层继续干活/分层、并在 50% 上下文自主交接」。落地 D13/R10：`session-handoff` Skill 新建、`tree-commander`/`tree-worker` 迁入 `packages/dsh-tree-engine/skills/` 并更新（含 50% 交接纪律与竹节协议协调）；两 bundle 各加 `@deepseek-ai/dsh-skill-filesystem` insert 行；版本 session-tree **1.3.0** / tree-engine **0.5.0**；审计报告 + 极简提示词 E2E 报告落盘；公开插件仓 v1.3.0 发布、本仓提交推送（提交 `efe1baf` / `eb080ab` / `cbd4810`）。审计发现并修复 B1（竹节接力后 owner 不迁移 → 接力会话 done 被拒）、B2（热更说明矛盾）、B3（SKILL timer 主张与代码相反）、B4（被派发的 commander 无条件 tree_plan）；tree-engine 67/67、session-tree handoff 34/34 + skills 3/3；E2E：3 skill 活体可见 3/3、A 组三层分解 + 每层再分层 PASS、B/C 组同层交接 verify-handoff 12/12 PASS（真实 50% 未跑到，均 force 模拟，见报告 §5）。
 - 2026-11-11（第五轮）：用户指出「交接时新会话默认英文提示词，应使用 DSH 界面语言设定」，并要求「改后测试好、提交 git/GitHub、GitHub 资料包含 skill 等完整使用要素、独立子会话多轮洁净室检查」。落地 D14/R11：session-tree **v1.3.1** 接替提示语跟随界面语言（Loader locale 条目 → profile cordis.patch.yml/cordis.yml → 英文回退；zh*→zh、en*→en、其它→en），status/handoff 新增 interface_language 与 lang= 渲染，交接文件 Successor instructions 同语言；handoff 测试 34→**40/40**；真机基线 lang=en → 修复后 lang=zh 且接替首条中文（独立复核 PASS，[报告](docs/e2e-kickoff-language-2026-11-11.md)）；新增验收脚本 scripts/e2e/verify-kickoff-language.mjs 与用户指南 [docs/skills-usage.md](docs/skills-usage.md)。公开插件仓 v1.3.1 发布（`c257d61`，18/18 SHA，main+tag，远端=本地）；本仓提交 `781087f`（feat）/`6038a9e`（docs）。
 - 2026-11-11（第七轮）：用户要求「github 资料包含使用 skill 等完整要素，独立子会话多轮洁净室检查；提交 git/GitHub」。落地 D15/R12：**三轮独立子会话洁净室评审**（无本会话上下文、只读 GitHub 实际内容）——第 1 轮公开插件仓 12 缺口（G1–G12）+ 本仓 4 P1 → **v1.3.2** 修订；第 2 轮确认 12/12 修复、新发现 N1–N7 → **v1.3.3**（含 `spawn:false` 干跑不再被阈值闸拦的行为修正，handoff 40→**41/41**）；R1-B/R2-B 完整文档债清扫 → **v1.3.4**（语言验收表述、set-session 主体、tree SKILL 英文触发词、版本矩阵、安装命令）。三轮评审记录见 [docs/skill-cleanroom-2026-11-11.md](docs/skill-cleanroom-2026-11-11.md)；公开仓 tag v1.3.2=`c1541e5`、v1.3.3=`cce2975`、v1.3.4=`f784c6e`、v1.3.5=`1fb9193`（均 18/18 SHA，main+tag，远端=本地）；本仓提交 `23b488b`/`dd15580`/`e9b149d`/`72d1a11`/`e903336`/`a586096`/`2845717`/`cc656d7` 等。
+- 2026-11-11（第八轮 Wave-1 收口）：① **清理**：删除已废止的 meta-loop 插件（`packages/dsh-meta-loop/`、`demo/metalp/`、2 份专属文档），并从 README/agent/CHANGELOG/publishing/历史文档/项目地图清除其信息；② **tree-engine v0.5.1→0.6.0**：新增第 9 个工具 **`tree_doctor`**（`src/doctor.js`，7 检查项 package/tool-count/skills/tree-data/stale/sweep/env，只读零副作用，FAIL 不 throw）+ `tests/doctor.test.js` 9 例；③ **写面护栏**：`src/guards.js` 新增 `LEAF_WRITE_MATRIX` + `assertLeafWriter`，接入 set-context / set-verification / 非 done event / dispatch-cancel / status / set-session，负例统一 `E_BORROWED_IDENTITY`（`tests/write-guards.test.js` 8 例）；④ **口径刷新**：README / agent.md / docs/skills-usage.md / CHANGELOG / 项目地图统一为 9 工具、**84/84**、tree-engine **v0.6.0**。全量 `node --test tests/*.test.js` = **84/84**（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 doctor + 8 写面护栏）；session-tree 各测试入口保持全绿。C4 integrate leaf 因宿主热重载崩溃中断（runtime=timeout），其文档/地图产物由 Lead 验收补齐；C1–C3 均 done。

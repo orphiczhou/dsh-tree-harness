@@ -41,7 +41,7 @@
 
 1. **测量**：sweep 周期逐 `running` 节点读 usage——宿主侧 `tokenMeter` 估算 ∨ 执行者自报（二级），先到者生效；
 2. **交棒指令**：≥ 阈值 → 引擎经 `subagents.prompt`（持久化父地址授权，tree_send 同款先例）令旧会话输出结构化交接简报（复用 R8 K1–K5 骨架：进度 / 关键发现 / 未完成 / 产物引用 / 继续指针）；
-3. **释放名额 → 接手**（顺序约束，meta-system-argument.md §4.2 修正：**先 interrupt 后 start**，防瞬时双占用击穿 `maxActiveSubagents: 20`）：简报到达后先 interrupt 旧会话并确认名额释放，再 `startContinuable` 新子会话；自适应旁路——引擎派发闸检查并发水位，水位 +1 ≤ 上限时可在旧会话 settle 期间提前 start（L1 自适应，缺省保守串行）。新会话提示词 = 角色预设 + 原节点任务书 + **简报全文** + DoD（同一验证策略，PLAN §5.3 前置注入不换版）+ 约束。任务书在引擎状态里，竹节天然不丢；
+3. **释放名额 → 接手**（顺序约束修正：**先 interrupt 后 start**，防瞬时双占用击穿 `maxActiveSubagents: 20`）：简报到达后先 interrupt 旧会话并确认名额释放，再 `startContinuable` 新子会话；自适应旁路——引擎派发闸检查并发水位，水位 +1 ≤ 上限时可在旧会话 settle 期间提前 start（L1 自适应，缺省保守串行）。新会话提示词 = 角色预设 + 原节点任务书 + **简报全文** + DoD（同一验证策略，PLAN §5.3 前置注入不换版）+ 约束。任务书在引擎状态里，竹节天然不丢；
 4. **落账**：`segment.chain.push(newSessionId)`（继承全树会话 id 唯一校验）；**`dispatchedAt`/`lastOutputAt` 按新会话重置**（否则 sweep 立即误判 timeout——与冻结版收割语义最关键的咬合点）；旧会话收割落账为节点历史（不终态、不计失败）；
 5. **竞争语义**（沿用冻结版「先到者生效」范式）：简报宽限期内不出 → 照常接手、简报标注 `no-handoff-summary`（同 Nanju skip 的 no-predecessor-summary 模式）；超时硬截止先到 → `timeout` 赢、竹节中止；`cancel` 同理；
 6. **防竹节风暴**：`segment.chain` 长度上限 → 超限 `frozen` 等裁决（复用既有 frozen 语义）；

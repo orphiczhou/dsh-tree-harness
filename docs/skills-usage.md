@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.5.1**、`packages/dsh-session-tree` **v1.3.5** 及以上（公开插件仓同步 tag `v1.3.5`）。
+> 适用版本：`packages/dsh-tree-engine` **v0.6.0**、`packages/dsh-session-tree` **v1.3.5** 及以上（公开插件仓同步 tag `v1.3.5`）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -120,6 +120,8 @@ pnpm install
 3. **让 agent 加载**：直接说「用 session-handoff skill」/「用 tree-commander skill」，agent 会调用 `skill {name:"…"}` 读正文后再执行。
 
 排障：三条都不出现 → 检查 ① 包是否装（`plugin_manager list_plugins`）；② profile 是否同时有 `@deepseek-ai/dsh-skill-filesystem`（**随 DSH 桌面版内置，不要单独安装**）；③ 是否在改完 patch 后没做 disable→enable；④ 是否是**新开**会话（目录在会话启动时注入，旧会话不刷新）。
+
+> **安装后自检（推荐）：`tree_doctor {action:"run"}`**（tree-engine ≥ 0.6.0）。它是第 9 个 `tree_*` 工具、**只读零写副作用**：一次给出 7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`）与 `summary{pass,warn,fail}` + 一行 `hint`；传 `tree_id`（如 `tree_doctor {action:"run", tree_id:"wave1"}`）会额外校验该树并统计停滞节点。**FAIL 不 throw**——它是诊断器不是门禁，装完/重载后先跑它，比逐项猜「工具或 Skill 为什么没出现」快。
 
 ### 3.1 五分钟冒烟（第一次用就照这个顺序）
 
@@ -254,7 +256,8 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.5.1 / `dsh-session-tree` 1.3.5（公开插件仓 tag `v1.3.5`）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.6.0 / `dsh-session-tree` 1.3.5（公开插件仓 tag `v1.3.5`）。
+- **tree-engine 0.6.0**：新增第 9 个工具 **`tree_doctor`**（只读自检，7 检查项）+ leaf 写面护栏（`LEAF_WRITE_MATRIX`）；Skill 正文未变，测试数 67→**84/84**。安装/重载后推荐先跑一次自检（见 §3）。
 - **版本差异速查**：
   - **1.3.0**：随包 `session-handoff` Skill + skill provider patch 行（此前无 Skill）；
   - **1.3.1**：接替提示语跟随 DSH 界面语言（zh/en；`lang=` + `interface_language`）；

@@ -3,7 +3,7 @@
 | 项 | 值 |
 |---|---|
 | 日期 | 2026-10-04 |
-| 输入 | PLAN.md（含 §5.5 并入）、docs/engine-spec.md、docs/tools-mapping.md、docs/segment-handoff.md、docs/meta-system-argument.md（APX D1–D8） |
+| 输入 | PLAN.md（含 §5.5 并入）、docs/engine-spec.md、docs/tools-mapping.md、docs/segment-handoff.md |
 | 效力 | S1 实现的直接依据；与冻结版 v1.7 冲突处以本记录 + 本仓 PLAN 为准（裁剪与增量授权见 PLAN §1） |
 
 ## 裁决清单

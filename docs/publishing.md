@@ -15,11 +15,11 @@
 | 社区市场 | awesome-dsh-plugin **PR #6334**（会话树） | ✅ 已合并（2026-10-14） | 市场按 GitHub topic + PR listing 收录；条目为 browse-only，按 `package.json.version` 判断更新 |
 | 社区市场 | awesome-dsh-plugin **PR #6435**（region-probe） | ✅ 已合并（2026-10-15） | 同上 |
 | 社区市场 | imsai-sh **PR #554** | ✅ 已合并 | 同上 |
-| npm | `@orphiczhou/*` 候选包名（4 个） | ⏸ **冻结**（D3），registry 均 404 | 只走 Git / `link:` 安装；解冻条件见 §4 |
+| npm | `@orphiczhou/*` 候选包名（3 个） | ⏸ **冻结**（D3），registry 均 404 | 只走 Git / `link:` 安装；解冻条件见 §4 |
 
 行为边界：
 
-- **本仓公开 ≠ 插件独立发包**：`dsh-tree-engine` / `dsh-meta-loop` / `dsh-agent-introspect` 目前**随本仓公开**（`packages/` 源码 + 测试 + `cordis.patch.yml`），未单独建仓、未单独发布；安装方式是 `link:` 本仓目录。
+- **本仓公开 ≠ 插件独立发包**：`dsh-tree-engine` / `dsh-agent-introspect` 目前**随本仓公开**（`packages/` 源码 + 测试 + `cordis.patch.yml`），未单独建仓、未单独发布；安装方式是 `link:` 本仓目录。
 - **会话树是唯一「发布镜像」包**：本仓 `packages/dsh-session-tree/` 是唯一源码事实源，GitHub `orphiczhou/dsh-session-tree` 是它的发布副本（D1/D5）。**v1.2.0 起会话自交接也随该包发布**（原独立插件已并入并删除）；**v1.3.0 起随包发布 `session-handoff` Skill**（`package.json.files` 含 `skills`，patch 行挂 filesystem skill provider）；**v1.3.1 起接替提示语跟随 DSH 界面语言**（zh/en）；**v1.3.3 起 `spawn:false` 干跑不受阈值闸限制**。
 - **不发布**：仓库外的历史 `publish/` 副本（D5 不复制进仓）、本机 profile 配置、运行时数据（`tree-engine-data/` 等）。
 - **开源协议**：MIT，版权人 orphiczhou（D4）。
@@ -57,13 +57,13 @@ awesome-dsh-plugin / imsai-sh 市场条目（browse-only，按版本判断更新
 node -p "require('./packages/dsh-session-tree/package.json').version"
 ```
 
-5. `dsh-tree-engine` / `dsh-meta-loop` / `dsh-agent-introspect` 的版本号当前只在各自 `package.json` 中维护（未独立发仓，不涉及市场刷新）。
+5. `dsh-tree-engine` / `dsh-agent-introspect` 的版本号当前只在各自 `package.json` 中维护（未独立发仓，不涉及市场刷新）。
 
 ---
 
 ## 4. npm 冻结（D3）
 
-**现状**：4 个 `@orphiczhou/*` 候选包名在 npm registry 均 **404**（2026-11-11 直查）；README 与市场条目均只提供 Git 安装方式。
+**现状**：3 个 `@orphiczhou/*` 候选包名在 npm registry 均 **404**（2026-11-11 直查）；README 与市场条目均只提供 Git 安装方式。
 
 **冻结原因**：
 
@@ -156,7 +156,6 @@ v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 实测（文档补全 + spawn:false 干跑修�
 ### 测试与一致性
 
 - [ ] `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **67/67**（62 引擎 + 4 技能打包 + 1 B1 回归），退出码 0；
-- [ ] `packages/dsh-meta-loop`：`node --test tests/*.test.js` → **13/13**，退出码 0；
 - [ ] `packages/dsh-session-tree`：`node test/handoff.test.js`（**41/41**）、`node test/skills.test.cjs`（**3/3**，随包 Skill 打包回归）、`node test/render.test.cjs`、`node test/style-guard.cjs`（**22/22**）、`node scripts/verify-bundle.mjs`（0 fail）、`node test/provider-conformance.cjs [asar 解包目录]`（后者需 rc.2 兼容 asar fixture，见 [merge-session-tree-2026-11-11.md](merge-session-tree-2026-11-11.md) §5）；
 - [ ] `packages/dsh-session-tree` 与公开插件仓逐文件 SHA 一致（`release-plugin.mjs`）；
 - [ ] 真机 E2E：`scripts/e2e/verify-handoff.mjs` 对 root/sibling 接替会话断言全 PASS（报告 [e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md)）；

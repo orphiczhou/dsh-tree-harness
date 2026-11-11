@@ -251,7 +251,7 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius
       <span>数据时间：2026-11-11 ~12:30 +08:00</span>
       <span>DSH：<code>FileVersion 0.2.2-rc.1</code></span>
       <span>本仓：<code>master @ 2cb2d17</code>（+3 个文件未提交）</span>
-      <span>测试：<b>62/62</b> + <b>13/13</b></span>
+      <span>测试：<b>62/62</b></span>
       <span>npm：<b>0</b> 个已发布</span>
     </div>
 
@@ -335,8 +335,8 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius
       <div class="verdict v-mix">◐ 会话树 / region-probe：已公开并进了市场；本仓库：完全没有</div>
       <p><b>已上 GitHub</b>：<a href="https://github.com/orphiczhou/dsh-session-tree" target="_blank" rel="noopener">orphiczhou/dsh-session-tree</a>（MIT、topic <code>dsh-plugin</code>、5 commits、v1.0.4）与 <a href="https://github.com/orphiczhou/dsh-region-probe" target="_blank" rel="noopener">orphiczhou/dsh-region-probe</a>。<br>
       <b>市场收录</b>：awesome-dsh-plugin <b>PR #6334 已合并</b>（2026-10-14）、region-probe <b>PR #6435 已合并</b>（2026-10-15）、imsai-sh PR #554 已合并。<br>
-      <b>未上 GitHub</b>：本仓库 <code>D:\Codes\dsh-tree-harness</code> <b>没有 remote</b>（不是推送失败，是根本没配）；<code>tree-engine</code> / <code>meta-loop</code> / <code>agent-introspect</code> 都在这个仓里 → 同样未公开；<code>td-tweak</code> 不是 git 仓库；<code>nanju-dsh</code> 是 git 但无 remote。<br>
-      <b>npm</b>：四个候选包名全部 404 —— 这是<b>刻意的</b>，发布 README 明确写「只支持 Git 安装」。</p>
+      <b>未上 GitHub</b>：本仓库 <code>D:\Codes\dsh-tree-harness</code> <b>没有 remote</b>（不是推送失败，是根本没配）；<code>tree-engine</code> / <code>agent-introspect</code> 都在这个仓里 → 同样未公开；<code>td-tweak</code> 不是 git 仓库；<code>nanju-dsh</code> 是 git 但无 remote。<br>
+      <b>npm</b>：三个候选包名全部 404 —— 这是<b>刻意的</b>，发布 README 明确写「只支持 Git 安装」。</p>
       <details><summary>证据</summary><div class="ev">
         <ul>
           <li><code>git remote -v</code> 本仓输出为空；<code>git config --global user.name</code> 也是空</li>
@@ -352,7 +352,7 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius
 <!-- ============ 系统全景 ============ -->
 <section id="arch">
   <div class="sec-head"><span class="idx">02</span><h2>系统全景：谁在宿主、谁在浏览器、谁在发布</h2></div>
-  <p class="sec-desc">点击任意方块看它在现场的细节（虚线 = 当前未装配 / 未加载）。这张图只覆盖本项目及直接相邻的插件，同 profile 下的 nanju、meta-adapter、flow-engine 等未展开。</p>
+  <p class="sec-desc">点击任意方块看它在现场的细节。这张图只覆盖本项目及直接相邻的插件，同 profile 下的 nanju、meta-adapter、flow-engine 等未展开。</p>
 
   <div class="arch-wrap">
     <svg class="arch-svg" viewBox="0 0 1100 560" role="img" aria-label="DSH 插件系统全景图">
@@ -393,11 +393,6 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius
         <text class="nm" x="56" y="378">td-tweak 0.3.1  ·  第三方/自建（非 git）</text>
         <text class="ds" x="56" y="396">菜单行胶囊 · --td-tweak-left · 入口按钮</text>
       </g>
-      <g class="node dim" data-k="metaloopclient">
-        <rect x="40" y="426" width="290" height="58"></rect>
-        <text class="nm" x="56" y="448">meta-loop client 半  ·  当前未装载</text>
-        <text class="ds" x="56" y="466">提供 /metaloop/ 面板 + 胶囊入口</text>
-      </g>
 
       <!-- ===== host zone ===== -->
       <g class="node" data-k="cordis">
@@ -422,11 +417,6 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius
         <rect x="400" y="370" width="290" height="58"></rect>
         <text class="nm" x="416" y="394">@local/dsh-agent-introspect  v0.1.0</text>
         <text class="ds" x="416" y="412">self_spec · 直接读 session_projcache</text>
-      </g>
-      <g class="node dim" data-k="metaloophost">
-        <rect x="400" y="440" width="290" height="58"></rect>
-        <text class="nm" x="416" y="464">meta-loop host 半  ·  当前未装载</text>
-        <text class="ds" x="416" y="482">tools + webServer(/metaloop/) · 六阶段门禁</text>
       </g>
 
       <!-- ===== data / publish zone ===== -->
@@ -477,7 +467,7 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius
 
     <div class="arch-legend">
       <span><i style="background:var(--green)"></i>运行中 / 已发布</span>
-      <span><i style="background:var(--tx3)"></i>虚线 = 未装配 / 软集成</span>
+      <span><i style="background:var(--tx3)"></i>虚线 = 软集成（DOM 协作）</span>
       <span><i style="background:var(--orange)"></i>本仓产物</span>
       <span>点击方块查看详情</span>
     </div>
@@ -516,7 +506,7 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius
         <tr><td>市场收录</td><td class="lose">一条 listing 只能指一个仓库 → 双包没法上市场</td><td class="win">已收录（#6334 已合并）</td></tr>
       </tbody>
     </table>
-    <p class="note">⚠️ 本仓 <code>packages/</code> 位于 profile 的 <code>hmr.root</code> 下（这就是 tree-engine、meta-loop 改完约 25 秒热更的原因）。把这层机制算进去，合并包如果放进本仓 <code>packages/</code>，宿主改动仍然可以热更——包名缓存的坑只在「仓外安装的包」上才无解。</p>
+    <p class="note">⚠️ 本仓 <code>packages/</code> 位于 profile 的 <code>hmr.root</code> 下（这就是 tree-engine 改完约 25 秒热更的原因）。把这层机制算进去，合并包如果放进本仓 <code>packages/</code>，宿主改动仍然可以热更——包名缓存的坑只在「仓外安装的包」上才无解。</p>
   </div>
 
   <div class="grid3" style="margin-top:14px">
@@ -583,12 +573,11 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius
       <table class="compare">
         <tbody>
           <tr><td><code>tree-engine/index.js</code></td><td><b class="win">+102 / −36</b> · RC2 兼容层：双形探测 <code>startContinuable</code>/<code>startActivation</code>，interrupt authority 顺序兼容，sendMessage/prompt 回退</td></tr>
-          <tr><td><code>meta-loop/panel/index.html</code></td><td><b>+275 / −24</b> · 面板新增六阶段 SVG 流程图（flowSVG）+ 阶段摘要 + 门禁信息</td></tr>
           <tr><td><code>README.md</code></td><td>+5 / −4 · 项目关系图更新（Nanju / tree-harness / proma-easy-dsh 路径）</td></tr>
           <tr><td><code>docs/defect-2026-10-17-…md</code></td><td><b class="lose">未跟踪</b> · 该缺陷报告本身还没入库</td></tr>
         </tbody>
       </table>
-      <p class="note">好消息：当前工作树（含这笔改动）跑全量测试 <b>62/62 + 13/13 全绿</b>。坏消息：这些改动没有 commit，也没有任何远端备份。</p>
+      <p class="note">好消息：当前工作树（含这笔改动）跑全量测试 <b>62/62 全绿</b>。坏消息：这些改动没有 commit，也没有任何远端备份。</p>
     </div>
 
     <div class="card">
@@ -600,7 +589,6 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius
         <dt>tree-engine 工具</dt><dd>8/8 已注册（apply.log 2026-11-10 19:23）</dd>
         <dt>sweep 模式</dt><dd>degraded:no-timer（宿主无 timer 服务，收割靠工具调用）</dd>
         <dt>agent-introspect</dt><dd>self_spec 在线</dd>
-        <dt>meta-loop</dt><dd>未在 profile bundles → 未加载</dd>
         <dt>树引擎最近使用</dt><dd>tree-engine-data/ 下有 prj_mw4k、floweng、rsipoc 等树</dd>
       </dl>
       <p class="note">风险：<code>subagents</code> 服务已无 <code>startContinuable</code>（live 实测方法表），旧派发路径在当前宿主下会直接死；本仓 HEAD 上的版本正是旧契约。</p>
@@ -627,7 +615,7 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius
     </div>
     <div class="card">
       <h4 style="margin:0 0 6px">决策 3：npm 要不要发</h4>
-      <p class="note" style="color:var(--tx2)">目前四个包名全部 404，README 也写明只走 Git 安装。上 npm 的唯一收益是市场条目可从「browse-only」变「一键安装」，成本是 npm token 与发布流程。</p>
+      <p class="note" style="color:var(--tx2)">目前三个包名全部 404，README 也写明只走 Git 安装。上 npm 的唯一收益是市场条目可从「browse-only」变「一键安装」，成本是 npm token 与发布流程。</p>
     </div>
   </div>
 </section>
@@ -641,7 +629,6 @@ mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius
       <h3 style="font-size:15px;margin-bottom:8px">本机文件</h3>
       <pre class="code">D:\Codes\dsh-tree-harness\                <span class="c"># 本仓（git, 无 remote）</span>
   packages\dsh-tree-engine\               <span class="c"># v0.4.0, 62 tests</span>
-  packages\dsh-meta-loop\                 <span class="c"># v0.2.0, 13 tests</span>
   packages\dsh-agent-introspect\          <span class="c"># v0.1.0</span>
   docs\defect-2026-10-17-...md            <span class="c"># 未跟踪</span>
 C:\Users\sir_c\Documents\deepseek-harness\default-workspace\
@@ -712,15 +699,13 @@ const ARCH = {
   client: ['DSH Web GUI（客户端壳）', 'React shell + slot 系统；菜单行、侧栏、右栏都挂在 slot 上。', '当前 web 产物由 dsh web 注入 __DSH_BOOT__ 后才可运行。'],
   sessiontree: ['@local/dsh-session-tree · UI 半（运行中）', 'client.js 74.2 KB。占 sidebar.workspaces 单席位 priority −100，压过自带 WorkspaceBrowser(priority 0)；禁用即还原。', '同时注册只读 inspect provider SessionTree（cordisInspect 可选注入）。数据来自 slot props，零 Host RPC。'],
   regionprobe: ['@local/dsh-region-probe · 只读观测（运行中）', '提供 inspect provider Regions：outline / snapshot / failures，让 agent 能读到界面实际渲染成什么。', '已在 GitHub 公开并进市场（PR #6435 已合并）。'],
-  tdtweak: ['td-tweak 0.3.1 · 第三方/自建（非 git）', '菜单行胶囊与入口按钮的持有者：发布 --td-tweak-left 变量、承载「元方法」按钮。', '不属于本仓、不是 git 仓库、没有任何远端备份。'],
-  metaloopclient: ['meta-loop client 半 · 当前未装载', '设计上提供 /metaloop/ 面板 iframe、胶囊入口、inspect provider meta-loop-ui。', '当前 profile bundles 不含 @local/dsh-meta-loop → 活体 provider 列表里没有它（确定性证据）。'],
+  tdtweak: ['td-tweak 0.3.1 · 第三方/自建（非 git）', '菜单行胶囊的持有者：发布 --td-tweak-left 变量（水平定位依据）。', '不属于本仓、不是 git 仓库、没有任何远端备份。'],
   cordis: ['Cordis Loader 账本：248 条', '每个 bundle 贡献 patch 行（insert），Loader 按包名 import 宿主模块、按 dsh.client 拉客户端半。', '关键机制：宿主模块按包名缓存 → 改已装载包的 index.js 必须重启，或换新包名。'],
   sessiontreetools: ['@local/dsh-session-tree-tools · 工具半（运行中）', 'index.js 5.5 KB，只注册 tree_send。走 ctx.subagents.prompt（按 durable 父地址授权），因此能达兄弟会话。', '依赖 tools / subagents / sessionQuery 三个宿主服务（可选注入）。'],
   treeengine: ['@local/dsh-tree-engine v0.4.0（运行中）', '8 个 tree_* 工具：plan/node/dispatch/report/status/verify/log/maintain。', 'apply.log：sweep degraded:no-timer → 收割依赖显式工具调用。RC2 兼容层已热修但未提交。'],
   introspect: ['@local/dsh-agent-introspect v0.1.0（运行中）', 'self_spec：从 projcache 投影 model/permissions/sandbox/cwd/token。', '直接读 ~/.dsh/storages/session_projcache/sessions/&lt;id&gt;.json → 依赖 DSH 存储布局。'],
-  metaloophost: ['meta-loop host 半 · 当前未装载', '六阶段门禁 G1–G11 + M4 递归触发表 + /metaloop/ 面板 API。', '实现完整（13/13 测试），只是没进 profile bundles。'],
   profile: ['profile: desktop', '29 个 bundles、link: 依赖指向本地目录、cordis.patch.yml 是补丁层。', '本仓三个包以 link: 方式装载；会话树两个包同样 link:。'],
-  data: ['运行时数据', 'tree-engine-data/：树状态、meta-loop 状态、attack/、apply.log。session_projcache/：会话投影缓存。', 'apply.log 最后写入 2026-11-10 19:23，可据此判断引擎是否在跑。'],
+  data: ['运行时数据', 'tree-engine-data/：树状态、attack/、apply.log。session_projcache/：会话投影缓存。', 'apply.log 最后写入 2026-11-10 19:23，可据此判断引擎是否在跑。'],
   publish: ['publish/（发布副本）', '@orphiczhou/dsh-session-tree v1.0.4 单包：client+index+patch+locale+测试+中英 README+MIT。', '与 GitHub main 逐字节一致：9 个根文件 git blob SHA 全匹配。'],
   github: ['GitHub：orphiczhou', 'dsh-session-tree（MIT、topic dsh-plugin、5 commits、v1.0.4）；dsh-region-probe（公开）。', '本仓 dsh-tree-harness 不在其中：没有任何 remote。'],
   market: ['社区市场', 'awesome-dsh-plugin #6334（会话树）与 #6435（region-probe）均已合并；imsai-sh #554 已合并；bradeGithub 按 topic 自动收录。', 'npm 上一律 404 —— 市场条目是 browse-only / Git 安装。']
@@ -799,12 +784,11 @@ const DEPS = [
   { k: 'host-svc', kind: '宿主服务', name: 'sessionQuery', rel: '硬依赖（ctx.inject）', how: '省略 parent 时，用 filterSessions 读目标会话日志里的 parentSession 来解析父地址。', miss: '缺 → 必须显式传 parent' },
   { k: 'client-svc', kind: '客户端服务', name: 'slots / sessions / uiWorkspace / sidebarRight / locale', rel: '客户端注入（apply 内）', how: 'slots 占席位、sessions 读会话树数据、uiWorkspace 导航与操作、sidebarRight 在右栏打开、locale 注册中英文案。', miss: '缺任一 → 对应交互降级（locale 失败则用内置字典）' },
   { k: 'client-svc', kind: '客户端服务', name: 'cordisInspect', rel: '可选注入（软）', how: '有它才注册 SessionTree 只读 provider；没有时回调不执行，界面照常渲染。', miss: '缺 → agent 读不到渲染快照' },
-  { k: 'third', kind: '第三方 / 自建', name: 'td-tweak 0.3.1（@local，非 git）', rel: '软集成（DOM）', how: '提供菜单行胶囊与「元方法」入口按钮、发布 --td-tweak-left。meta-loop 会检测 .dsh-td-meta 并让出入口；缺席则退化为自立浮动按钮。', miss: '缺 → meta-loop 入口退化，不影响会话树' },
-  { k: 'third', kind: '第三方 / 自建', name: 'dsh-thoughtdag 0.5.26（npm，第三方）', rel: '软集成（DOM）', how: '提供 .dsh-td-switch 胶囊容器（历史入口位）。会话树本身不依赖它，meta-loop 的历史入口逻辑会用到。', miss: '缺 → 无胶囊容器，入口自立' },
+  { k: 'third', kind: '第三方 / 自建', name: 'td-tweak 0.3.1（@local，非 git）', rel: '软集成（DOM）', how: '提供菜单行胶囊与 --td-tweak-left 变量（历史入口位）；会话树本身不依赖它。', miss: '缺 → 入口自立，不影响会话树' },
+  { k: 'third', kind: '第三方 / 自建', name: 'dsh-thoughtdag 0.5.26（npm，第三方）', rel: '软集成（DOM）', how: '提供 .dsh-td-switch 胶囊容器（历史入口位）；会话树本身不依赖它。', miss: '缺 → 无胶囊容器，入口自立' },
   { k: 'third', kind: '第三方 / 自建', name: 'react（由客户端模块 loader 提供）', rel: '运行时提供，非 npm 依赖', how: 'client.js 在 factory(require) 里 require("react")，由 DSH 客户端 runner 注入。', miss: '缺 → 不可能，宿主自带' },
   { k: 'npm', kind: 'npm 依赖', name: '（无）', rel: '0 依赖 · 0 peerDependencies', how: '刻意留空：不 import 任何 @deepseek-ai/* 包；peerDependencies 是 DSH 唯一强制的兼容字段，留空=不设限，宿主升级不会硬失败。', miss: '无 — 这是刻意设计' },
   { k: 'host-svc', kind: '宿主服务', name: '（本仓其他插件）tree-engine：tools/subagents/sessionQuery/timer/agents', rel: '可选 + 硬混合', how: 'tree-engine 硬依赖 tools/subagents/sessionQuery；可选 get(timer)（当前宿主无 → degraded-lazy）；用 ctx.agents 找活祖先 Agent。', miss: '无 timer → sweep 降级（当前即如此）' },
-  { k: 'host-svc', kind: '宿主服务', name: '（本仓其他插件）meta-loop：tools/webServer', rel: '硬依赖', how: 'tools 注册 meta_loop；webServer 挂 /metaloop/ 面板路由与只读 API。', miss: '缺 webServer → 无面板' },
   { k: 'host-svc', kind: '宿主服务', name: '（本仓其他插件）agent-introspect：tools + 文件', rel: '硬依赖 + 存储布局耦合', how: 'self_spec 直接读 ~/.dsh/storages/session_projcache/sessions/&lt;id&gt;.json；DSH 改存储布局会静默降级。', miss: '布局变了 → 字段 unavailable' }
 ]
 const depGrid = document.getElementById('depGrid')
@@ -847,7 +831,7 @@ const STATUS = [
   ['@orphiczhou/dsh-region-probe', '✅ 公开', 'v1.0.0', '❌ 404（刻意）', '✅ #6435 已合并'],
   ['@local/dsh-session-tree（开发态）', '❌ 未公开', '不是 git 仓库；本机 link: 运行', '—', '—'],
   ['@local/dsh-session-tree-tools（开发态）', '❌ 未公开', '不是 git 仓库；本机 link: 运行', '—', '—'],
-  ['dsh-tree-engine / meta-loop / agent-introspect', '❌ 未公开', '在本仓内，但本仓无 remote', '—', '—'],
+  ['dsh-tree-engine / agent-introspect', '❌ 未公开', '在本仓内，但本仓无 remote', '—', '—'],
   ['dsh-tree-harness（本仓）', '❌ 无 remote', 'git 仓存在，HEAD 2cb2d17，另有未提交改动', '—', '—'],
   ['td-tweak', '❌ 不是 git', '本机自建胶囊插件，无版本管理', '—', '—'],
   ['nanju-dsh', '❌ 无 remote', 'git 仓存在', '—', '—']
@@ -862,8 +846,8 @@ const CHECKS = [
   { id: 'c2', t: '给本仓配 remote 并推第一版', d: '先建私有仓（或决定公开范围）→ git remote add → 推送 master + 未提交改动。', why: 'GitHub 是唯一能承载传播的渠道；本仓目前零备份。' },
   { id: 'c3', t: '决定合并方案（推荐 B⁺）', d: '单包迁入 packages/dsh-session-tree 吃 HMR；profile 停用两个 @local/* 包、改装单包；发布由 git push 到公开仓。', why: '把「开发双包」与「发布单包」两态收敛成一态，消除同步漂移。' },
   { id: 'c4', t: '统一文档入口', d: 'README 还停留在「下一步 S0 规约冻结」；真正最新的状态散在 docs/handoff-2026-10-14.md 与 default-workspace 的 5 份 HANDOFF*.md。', why: '重启项目时，入口文档错了比没有更贵。' },
-  { id: 'c5', t: '处理 meta-loop 与 timer 两个「半死」状态', d: 'meta-loop 实现完整但没进 profile bundles；tree-engine 的 sweep 因宿主无 timer 进入 degraded-lazy。', why: '两个都写着「能用」，实际一个是未装载、一个是降级。' },
-  { id: 'c6', t: '决定 npm 发布策略', d: '当前 4 个包名全部 404，README 明确只走 Git 安装。上 npm 可让市场条目变一键安装，需要 npm token。', why: '传播效率 vs 发布流程成本的取舍，属于你的决策。' },
+  { id: 'c5', t: '处理 timer 的「半死」状态', d: 'tree-engine 的 sweep 因宿主无 timer 进入 degraded-lazy（进程内 60s 兜底）。', why: '写着「能用」，实际是降级；要么接受兜底，要么补测 timer 托管路径。' },
+  { id: 'c6', t: '决定 npm 发布策略', d: '当前 3 个包名全部 404，README 明确只走 Git 安装。上 npm 可让市场条目变一键安装，需要 npm token。', why: '传播效率 vs 发布流程成本的取舍，属于你的决策。' },
   { id: 'c7', t: '确立版本纪律', d: '市场按 package.json 的 version 判断更新 → 改代码必须 bump version；发布清单用 publish/verify-bundle.mjs 自检。', why: '不 bump = 市场永远显示旧版本。' }
 ]
 const checklist = document.getElementById('checklist')
