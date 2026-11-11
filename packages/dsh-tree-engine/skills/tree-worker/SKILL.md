@@ -1,10 +1,10 @@
 ---
 name: tree-worker
-description: '树节点执行者（worker）：按派发任务书与 DoD 完成一个 leaf 的交付物，用 tree_report 上报 brief_echo/plan/progress/context/done，用自报上下文水位 pct 配合 tree-engine 竹节接力（pct≥42 换会话继续同一 leaf），并在上下文接近 50% 时自主 session_handoff 同层接替。适用于被派发到树节点、收到「按任务书干活」「执行这个 leaf」「自报进度」「到上下文 50% 就交接」等场景。'
+description: '树节点执行者（worker）：按派发任务书与 DoD 完成一个 leaf 的交付物，用 tree_report 上报 brief_echo/plan/progress/context/done，用自报上下文水位 pct 配合 tree-engine 竹节接力（pct≥42 换会话继续同一 leaf），并在上下文接近 50% 时自主 session_handoff 同层接替。适用于被派发到树节点、收到「按任务书干活」「执行这个 leaf」「自报进度」「到上下文 50% 就交接」等场景。English triggers: work on this tree node, execute this leaf, report progress, complete and settle, continue until running low on context.'
 whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / DoD / 结算指令；用户说「按任务书干」「执行这个节点」「干完结算」「自报进度」「继续干，快到上限就交接」「上下文 50% 就交接」；你是树的执行层，需要知道能做什么/不能做什么、竹节协议和 50% 自主交接规则时。'
 ---
 
-# tree-worker SKILL（DSH 版 v2.0，随 tree-engine v0.5.0 分发）
+# tree-worker SKILL（DSH 版 v2.0，随 tree-engine v0.5.1 分发）
 
 > 你是被派发到树节点的**执行者（worker）**。树侧只依赖 tree-engine 的 8 个工具（实际只需 `tree_report` 上报）；
 > 你的工作面很窄：**干活 + 用 `tree_report` 上报 + 到点交接**。不要碰树的结构。
@@ -60,7 +60,7 @@ whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / Do
 
 - `pct` 必须是 **0–100 的整数**（传小数会 `E_SCHEMA_INVALID`），诚实估计。
 - **`pct ≥ 42`（DSH 缺省阈值，可被 `TREE_ENGINE_CONFIG.ctx_segment_threshold` / `bambooThresholdPct` 覆盖）**：引擎会在收割时启动竹节接力——**先中断你的会话，再派新会话接手同一 leaf**（任务书 + 简报 + 同一 `taskType` 策略 DoD；leaf 不变、attempt 不变、链 +1）。这是正常机制，不是故障。若你的 leaf 已是 `active`，状态位会置 `segment_pending`；初始 `pending_brief` 时状态位可能不翻，但收割仍按自报 pct 触发——**别把「没看到 segment_pending」当没上报**。
-- **接力不会瞬间发生**：引擎启动即以 `sweepMode=timer` 注册 60s 周期 sweep（宿主 timer 服务缺失时用进程内 interval 兜底；启动日志里的 `sweep:degraded:no-timer` 只是提示，**不等于没有后台收割**）。你上报后继续干活、等交棒指令；commander 调 `tree_status {action:"harvest"}` 可立即强制扫一轮。
+- **接力不会瞬间发生**：引擎启动即以 `sweepMode=timer` 注册 60s 周期 sweep（宿主 timer 服务缺失时用进程内 interval 兜底；启动日志里的「无宿主 timer、改用进程内 interval」提示，**不等于没有后台收割**）。你上报后继续干活、等交棒指令；commander 调 `tree_status {action:"harvest"}` 可立即强制扫一轮。
 - 收到**交棒指令**（要求输出 K1–K5 简报）时：立即停止新任务步骤，输出简报：
 
   ```

@@ -1,10 +1,10 @@
 ---
 name: tree-commander
-description: '把复杂任务拆成多层任务树、派独立子会话执行并逐点验收收口：tree_plan 建树 → tree_node 建 commander/worker 节点（依赖/产物/DoD）→ tree_dispatch 派发（无依赖可并行）→ tree_status harvest 收割 → tree_verify 按 taskType 自动路由验证 → tree_report 自报与收尾；每个 leaf 是独立 DSH 会话，上下文接近 50% 时自主 session_handoff 同层级接替。适用于「把这个任务拆成三层并派人做」「多层分解执行」「派一队人并行做」「继续干，快到上限就交接」「验收后收口」「根会话→中间层→执行层三层都能干活」「演示三层分解」等请求。'
-whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；任务可拆成可独立验证的中间产物；需要依赖拓扑（先 A 后 B）或并行推进；需要验收证据而不是一句「做完了」；任务长到单个会话装不下（要配合会话交接）；用户说「拆三层」「派人做」「多层分解」「任务树」「并行做」「分派子任务」「派一队人」「做完验收收口」「继续干，快到上限就交接」「根会话→中间层→执行层」「三层都能干活」「演示三层」。'
+description: '把复杂任务拆成多层任务树、派独立子会话执行并逐点验收收口：tree_plan 建树 → tree_node 建 commander/worker 节点（依赖/产物/DoD）→ tree_dispatch 派发（无依赖可并行）→ tree_status harvest 收割 → tree_verify 按 taskType 自动路由验证 → tree_report 自报与收尾；每个 leaf 是独立 DSH 会话，上下文接近 50% 时自主 session_handoff 同层级接替。适用于「把这个任务拆成三层并派人做」「多层分解执行」「派一队人并行做」「继续干，快到上限就交接」「验收后收口」「根会话→中间层→执行层三层都能干活」「演示三层分解」等请求。English triggers: decompose this into layers, build a task tree, dispatch subagents, three-layer decomposition, parallel work, verify and close, hand off when running low on context.'
+whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；任务可拆成可独立验证的中间产物；需要依赖拓扑（先 A 后 B）或并行推进；需要验收证据而不是一句「做完了」；任务长到单个会话装不下（要配合会话交接）；用户说「拆三层」「派人做」「多层分解」「任务树」「并行做」「分派子任务」「派一队人」「做完验收收口」「继续干，快到上限就交接」「根会话→中间层→执行层」「三层都能干活」「演示三层」。English speakers may say: split this into three layers, build the tree, dispatch workers, parallelize, verify and close the tree.'
 ---
 
-# tree-commander SKILL（DSH 版 v2.0，随 tree-engine v0.5.0 分发）
+# tree-commander SKILL（DSH 版 v2.0，随 tree-engine v0.5.1 分发）
 
 > 你是树节点的指挥官（commander）。与"脚本执行者"的根本区别：**你拿到的只有目标，没有结构**——
 > 分解成几个子节点、串行还是并行、谁依赖谁、各自什么 taskType，**全部由你自主决定**。
@@ -127,7 +127,7 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
 - 派发即绑定：`leaf.session_id = 执行者会话`（done 事件所有权自举）、`runtime.state=running`、`attempt+1`。派发提示词由宿主适配层自动附「策略 DoD + 结算指令」。
 - 无依赖的节点可立即 start（并行天然支持）；有依赖的等闸门放行。
 - 派发后可选把 leaf 置 `active`（`tree_node {action:"set-status", status:"active"}`；`pending_brief→active` 合法）——自报 pct 的 `segment_pending` 状态位只在 active 时置位；不置也不影响 harvest 路径，但别把「没看到 segment_pending」当没触发。
-- **收割**：引擎启动后即以 `sweepMode=timer` 注册周期 sweep（进程内 60s；宿主有 timer 服务时走宿主 timer）。启动日志若打印 `sweep:degraded:no-timer`，那只是「宿主 timer 服务缺失」的提示，随后仍用 `systemClock()` 的进程内 interval 兜底——**不要据此假设没有后台收割**。轮询：先等 30–45s 再 `tree_status {action:"harvest"}` + `tree_node {action:"get"}`；harvest 立即强制扫一轮（不必等 60s 周期），但别假设毫秒级实时。
+- **收割**：引擎启动后即以 `sweepMode=timer` 注册周期 sweep（进程内 60s；宿主有 timer 服务时走宿主 timer）。启动日志若提示「宿主无 timer 服务、改用进程内 interval 兜底」，那只是提示——**不要据此假设没有后台收割**。轮询：先等 30–45s 再 `tree_status {action:"harvest"}` + `tree_node {action:"get"}`；harvest 立即强制扫一轮（不必等 60s 周期），但别假设毫秒级实时。
 - 看 `runtime.state`：`pending`/`running` → 继续等；`succeeded` → 收；`timeout`/`cancelled`/`frozen` → 读 `tree_log {action:"events"}` 分析，决定重派（同 leaf 再 start，attempt+1）或新建替代节点。
 - **竹节接力后的 owner 归属（v0.5.0 语义）**：接力成功后引擎会把 `leaf.session_id`（owner）**重绑给接手会话**，接手会话可以正常 `tree_report done`。若在旧版本/异常路径下接力会话写 done 被 `E_BORROWED_IDENTITY` 拒：a) 旧会话在交棒前先把当前阶段 done 写掉；或 b) 从 `tree_status {action:"harvest"}` 返回的 `swept[].events[]` 取 `event='bamboo'` 的 `sessionId`（接力会话 id），由你（creator）`tree_node {action:"set-session"}` 重绑 owner。
 - 轮询预算：别死等一个节点；一个节点超时（nodeTimeoutMs 缺省 30 分钟）就按失败处理。
