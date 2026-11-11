@@ -19,7 +19,8 @@
 | [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.4.0 | 执行层：8 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain`），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准 | **62/62** | ✅ 运行中（本机 desktop profile 已装载） |
 | [`packages/dsh-meta-loop`](packages/dsh-meta-loop/) | 0.2.0 | 治理层：六阶段方法轮 + **G1–G11** 机械门禁 + `/metaloop/` Web 面板 + M4 递归触发表 | **13/13** | ⏸ 未装配（不在 profile bundles，按需装载） |
 | [`packages/dsh-agent-introspect`](packages/dsh-agent-introspect/) | 0.1.0 | 自省层：`self_spec` 工具，投影当前会话的 model / permissions / sandbox / cwd / token 用量 | —（无单测） | ✅ 运行中 |
-| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | 1.0.4 | 会话树单包（原「UI 半 + 工具半」合并）：左栏嵌套会话树 + `tree_send` 跨层级消息工具 | 3 份包内测试（107 / 22 / 29 断言） | 🌐 GitHub 公开、社区市场已收录；**npm 未发布** |
+| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | 1.1.0 | 会话树单包（原「UI 半 + 工具半」合并）：左栏嵌套会话树 + `tree_send` 跨层级消息工具；**工作区按最近活动排序 / 隐藏与恢复 / 已隐藏分区 / 检索召回** | 3 份包内测试（153 / 22 / 29 断言） | 🌐 GitHub 公开（**v1.1.0 已发布**）、社区市场已收录；**npm 未发布** |
+| [`packages/dsh-session-handoff`](packages/dsh-session-handoff/) | 0.1.0 | 会话自交接：`session_handoff`（status/handoff）——上下文到 50% 时写交接文件，并启动**同层级**（同模型/同思考强度/同工作区）接替会话 | 24/24 | ✅ 运行中（本机已装载） |
 
 状态口径：
 

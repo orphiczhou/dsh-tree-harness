@@ -78,9 +78,10 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 
 - **DSH 桌面**：`0.2.2-rc.1`；宿主 loader 账本 **248** 条；profile bundles **28** 个
 - **本仓**：public `master`，HEAD **`d67915e`（32 commits）**，工作树 clean；remote = `https://github.com/orphiczhou/dsh-tree-harness.git`
-- **公开面**：仓库 https://github.com/orphiczhou/dsh-tree-harness（public / master / MIT / 7 topics）；插件仓 `orphiczhou/dsh-session-tree` v1.0.4、`orphiczhou/dsh-region-probe`；**npm 冻结（D3）**
+- **公开面**：仓库 https://github.com/orphiczhou/dsh-tree-harness（public / master / MIT / 7 topics）；插件仓 `orphiczhou/dsh-session-tree` **v1.1.0**（已发布：workspace ordering / hiding / recall）、`orphiczhou/dsh-region-probe`；**npm 冻结（D3）**
+- **组件**：`dsh-tree-engine` v0.4.0（8 工具）、`dsh-meta-loop` v0.2.0（未装配）、`dsh-agent-introspect` v0.1.0、`dsh-session-tree` **v1.1.0**、`dsh-session-handoff` **v0.1.0**（会话自交接，已装载）
 - **测试**：tree-engine **62/62**、meta-loop **13/13**；session-tree render/style-guard exit 0；provider-conformance 依赖 rc.2 兼容 fixture（旧 fixture 会快速失败，非代码回归）
-- **会话树**：已合并为**单包** `packages/dsh-session-tree/`（15 文件逐字节 = 已发布版 v1.0.4）；本机 profile 已切单包（bundles 29→28，`plugin_manager` applied）；活体 `tree_send`×1 + 8 个 `tree_*` 无缺失/重复；`SessionTree` provider 在线
+- **会话树**：**单包** `packages/dsh-session-tree/` **v1.1.0**（工作区排序/隐藏/召回，15 文件）；本机 profile 已切单包（bundles 29→28，`plugin_manager` applied）；活体 `tree_send`×1 + 8 个 `tree_*` 无缺失/重复；`SessionTree` provider 在线（**刷新页面后**才加载 v1.1.0 客户端半）
 - **未装配**：`@local/dsh-meta-loop`（源码/13 测试/面板均在仓内，按需装载；`/metaloop/` 面板当前不可用）
 - **降级项**：tree-engine `sweep degraded:no-timer`（宿主无 timer 服务 → 收割依赖显式工具调用）
 - **RC2 兼容层**：已在 HEAD 中（DSH 0.2.1-rc.2 起 `subagents.startContinuable` 被移除；见 [docs/defect-2026-10-17-subagents-rc2-api-drift.md](docs/defect-2026-10-17-subagents-rc2-api-drift.md)）；**新增分支尚未补单测**（R6）
@@ -131,3 +132,4 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 - 2026-11-11（收口）：D7 扩展为 **7 文件** + 2 个瘦身路径；T1–T4 完成；4 个逻辑 commit + **历史重写**（9 路径从全部历史清除，`.git` 3.80MB→0.64MB）；独立验证 **A1–A9 全绿（PASS WITH RISKS）**；**公开仓 `orphiczhou/dsh-tree-harness` 创建并推送（远端 HEAD == 本地）**；npm 维持冻结。
 - 2026-11-11（更名）：用户更正文件名 → **本文件 `git mv agenda.md agent.md`**（D8）；全仓引用同步更新；状态快照与任务板按收口实测刷新。
 - 2026-11-11（功能轮）：实现并验收两个新功能（D9/D10）：**会话自交接**（新插件 `dsh-session-handoff`，文档 [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md)，规格 [docs/features-2026-11-11-spec.md](docs/features-2026-11-11-spec.md)）+ **会话树 v1.1.0**（工作区排序/隐藏/召回）。验收：handoff 24/24；会话树 153 PASS/0 FAIL、style-guard 22/22；tree-engine 62/62、meta-loop 13/13；真机 E2E 兄弟接替成功。`.gitignore` 增 `HANDOFF-*.md`（运行时交接产物不入库）。
+- 2026-11-11（发布）：monorepo master 已推送；**公开插件仓 `orphiczhou/dsh-session-tree` v1.1.0 已同步并推送（`dcf3519`，远端=本地）**；`dsh-session-handoff` 仅本机安装（未对外发布，R7 后续可考虑随仓传播）。

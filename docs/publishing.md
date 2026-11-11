@@ -10,7 +10,7 @@
 | 渠道 | 对象 | 状态 | 证据 / 说明 |
 |---|---|---|---|
 | GitHub | `orphiczhou/dsh-tree-harness`（本仓） | 🚀 **本轮公开**（D2） | 发布前检查清单见 §6；收尾核对远端 HEAD = 本地 HEAD |
-| GitHub | [`orphiczhou/dsh-session-tree`](https://github.com/orphiczhou/dsh-session-tree)（会话树插件） | ✅ 公开，**v1.0.4**，MIT，5 commits | 与仓内 `packages/dsh-session-tree/` 逐字节一致（9 个根文件 blob SHA 9/9 吻合）；发布镜像仓 |
+| GitHub | [`orphiczhou/dsh-session-tree`](https://github.com/orphiczhou/dsh-session-tree)（会话树插件） | ✅ 公开，**v1.1.0**，MIT，6 commits | 与仓内 `packages/dsh-session-tree/` 逐字节一致（release-plugin SHA 校验 15/15）；发布镜像仓 |
 | GitHub | [`orphiczhou/dsh-region-probe`](https://github.com/orphiczhou/dsh-region-probe)（区域观测插件） | ✅ 公开 | 独立插件仓，与本仓无源码依赖 |
 | 社区市场 | awesome-dsh-plugin **PR #6334**（会话树） | ✅ 已合并（2026-10-14） | 市场按 GitHub topic + PR listing 收录；条目为 browse-only |
 | 社区市场 | awesome-dsh-plugin **PR #6435**（region-probe） | ✅ 已合并（2026-10-15） | 同上 |
@@ -30,7 +30,7 @@
 
 ```
 dsh-tree-harness/                     ← 唯一源码事实源（private 开发 → public 发布）
-  packages\dsh-session-tree\          ← 会话树单包源码（v1.0.4）
+  packages\dsh-session-tree\          ← 会话树单包源码（v1.1.0）
         │
         │  scripts/release-plugin.mjs（逐文件 SHA 校验，不自动 push）
         ▼
@@ -48,7 +48,8 @@ awesome-dsh-plugin / imsai-sh 市场条目（browse-only，按版本判断更新
 ## 3. 版本纪律（D6）
 
 1. **改代码必须 bump version**：market 按 `package.json.version` 判断条目是否更新，不 bump = 市场不刷新，等于发了假更新。
-2. **无内容变化不 bump**：本次会话树迁移进本仓（D1）内容逐字节不变，因此**保持 v1.0.4**，不制造假版本。
+2. **无内容变化不 bump**：会话树单包迁入本仓（D1）时内容逐字节不变，因此当时**保持 v1.0.4**，不制造假版本。
+3. **有内容变化必须 bump**：2026-11-11 功能轮给会话树加入工作区排序/隐藏/召回 → bump **v1.1.0**，经 `release-plugin.mjs` 同步到公开插件仓并推送（`dcf3519`，远端=本地）。新插件 `dsh-session-handoff` v0.1.0 目前只在**本机 profile 安装**，未对外发布。
 3. **版本号 = 公开仓 tag = package.json.version** 三者一致；建议 SemVer：修 bug → patch，新增行为 → minor，破坏兼容 → major。
 4. 发布前在包目录自查版本：
 
