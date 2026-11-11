@@ -31,7 +31,7 @@
 | 评审员 | 对象 | 结论 | 关键发现 |
 |---|---|---|---|
 | R2-A（公开插件仓） | v1.3.2 main（= tag v1.3.2） | **PASS_WITH_GAPS** | **G1–G12 全部确认修复（12/12）**、无新增死链、版本链与 tag 自洽；新发现 **N1（中）**：README 冒烟测试称「单发 `spawn:false` 可只写文件」不准确——阈值闸在 `spawn:false` 分支之前，pct 可测且 <50 时会被 `below-threshold` 拒；N2–N7（低）：例题含 monorepo 内部路径、marketplace 问题自相矛盾、SKILL 样例行缺 `lang=`、SKILL 保留过期 34/34、`package.json.files` 缺 `README.zh.md`、tree_send 示例内部路径 |
-| R2-B（本仓文档） | v1.3.2 本仓 | 首轮初步 P1 已在 §「第 1 轮修订」处理；完整报告见（评审会话未按期回报，按 4 条 P1 + 覆盖矩阵本地复核） | 4 P1 已修（`d7db874`） |
+| R2-B（本仓文档） | v1.3.2 本仓 | **PASS_WITH_GAPS**（无 BLOCK；6 个 P1 文档债） | 首轮 4 P1 中 3 已修、1 部分；G1 `spawn:false` 与阈值闸顺序（与 R2-A N1 同源）；G2 tree-commander owner 矛盾；G3 根 README 随包 Skill 节仍 v1.3.1；G4 已知边界 sweep 说法；G5 `collect-skills.mjs` 自检缺 `--expect`（只装 session-tree 会误报 missing）；G6 cleanroom/CHANGELOG/README 的「待第二轮」占位；另 P2：34/34 残留、SKILL status 缺 `lang=`、tree-worker owner 句、旧 degraded 日志串、patch YAML 伪代码、测试入口计数、tree skill 无英文触发词、`skills-usage` 自称「全部可复制」；P3：SKILL 版本头、旧日志串 |
 
 **第 2 轮修订（v1.3.3）**：
 
@@ -41,6 +41,14 @@
 4. N6：`package.json.files` 补 `README.zh.md`。
 5. N7：tree_send 示例路径中性化。
 6. 发布 v1.3.3（`cce2975`，18/18 SHA，main+tag）。
+
+**第 2 轮 B（本仓文档）与 R1-B 补交报告的修订（v1.3.4）**：
+
+1. 根 README 随包 Skill 节版本矩阵 → v1.3.4；`docs/publishing.md` / `docs/handoff-2026-11-11.md` / `docs/session-handoff-2026-11-11.md` / `agent.md` 同步清扫；历史 `v1.0.4`、`3 份 cjs` 残留修正；测试入口改为 6 个。
+2. `docs/skills-usage.md`：`collect-skills.mjs` 自检补 `--expect`（只装 session-tree 不再误报）；tree_plan 样例补 `session_id` 并按 `root_dod:{dod:...}` 对齐；worker 验收明确「commander 跑 tree_verify」；竹节等待原因改为「链满 frozen / 简报回收失败 / 已非 running owner」；新增 profile 修改备份警示；新增版本差异速查（1.3.0→1.3.3）；patch YAML 改为真实行并注明「无需手抄」。
+3. `tree-commander` / `tree-worker` SKILL：补英文触发词（英文用户可发现）；版本头改 v0.5.1；旧 `sweep:degraded:no-timer` 表述改为「宿主无 timer、进程内兜底」。
+4. `session-handoff` SKILL：`set-session` 重绑主体改为「leaf 的 creator/上级（通常是父 commander）」；README 语言验收表述修正（脚本会解码接替会话首条消息）。
+5. 发布 v1.3.4（`f784c6e`，18/18 SHA，main+tag）。
 
 ## 第 3 轮（对象：v1.3.3 已发布内容）
 

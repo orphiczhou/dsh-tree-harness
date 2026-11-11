@@ -19,7 +19,7 @@
 | [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.5.1 | 执行层：8 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain`），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准；**随包 tree-commander/tree-worker Skill** | **67/67** | ✅ 运行中（本机 desktop profile 已装载） |
 | [`packages/dsh-meta-loop`](packages/dsh-meta-loop/) | 0.2.0 | 治理层：六阶段方法轮 + **G1–G11** 机械门禁 + `/metaloop/` Web 面板 + M4 递归触发表 | **13/13** | ⏸ 未装配（不在 profile bundles，按需装载） |
 | [`packages/dsh-agent-introspect`](packages/dsh-agent-introspect/) | 0.1.0 | 自省层：`self_spec` 工具，投影当前会话的 model / permissions / sandbox / cwd / token 用量 | —（无单测） | ✅ 运行中 |
-| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.3.4** | 会话树单包：左栏嵌套会话树 + `tree_send` 跨层级消息工具 + **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回 | 包内 5 份测试（handoff **41/41**、render 全绿、style-guard 22/22、verify-bundle 0 fail） | 🌐 GitHub 公开（**v1.3.3**）、社区市场已收录；**npm 未发布** |
+| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.3.5** | 会话树单包：左栏嵌套会话树 + `tree_send` 跨层级消息工具 + **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回 | 包内 5 份测试（handoff **41/41**、render 全绿、style-guard 22/22、verify-bundle 0 fail） | 🌐 GitHub 公开（**v1.3.3**）、社区市场已收录；**npm 未发布** |
 
 状态口径：
 
@@ -136,18 +136,18 @@ node test/provider-conformance.cjs [asar 解包目录]
 - 所有 DOM 副作用放在 `apply(ctx)` 里；
 - 客户端半热更会**残留旧实例**：用单例注册表 + 令牌仲裁压制，彻底干净仍需刷新一次页面。
 
-### 随包 Skill（SKILL 工程化，v0.5.1 / v1.3.4）
+### 随包 Skill（SKILL 工程化，v0.5.1 / v1.3.5）
 
 Skill 是插件工程的一部分，与工具同包、同版本、同发布：
 
 | 包 | 随包 Skill | 挂载方式 |
 |---|---|---|
 | `packages/dsh-tree-engine` v0.5.1 | `skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md` | `cordis.patch.yml` 第 2 行 insert `@deepseek-ai/dsh-skill-filesystem`（`providerName: tree-engine`、`includeDefaultRoots:false`、`bundledSkillDir` 经安装包身份解析到包内 `skills/`） |
-| `packages/dsh-session-tree` v1.3.4 | `skills/session-handoff/SKILL.md` | 同模式，`providerName: session-tree` |
+| `packages/dsh-session-tree` v1.3.5 | `skills/session-handoff/SKILL.md` | 同模式，`providerName: session-tree` |
 
 - 效果：新会话的 Skill 目录直接出现 `tree-commander` / `tree-worker` / `session-handoff`，模型在**极简提示词**下即可发现「分层分解 / 逐层干活 / 上下文 50% 自主交接」的用法，不需要先把工具名喂给它；真机验证见 [docs/skill-e2e-2026-11-11.md](docs/skill-e2e-2026-11-11.md)。
 - 打包回归：`packages/dsh-tree-engine/tests/skills.test.js`（4 项）与 `packages/dsh-session-tree/test/skills.test.cjs`（3 项）校验 frontmatter、`package.json.files`、patch provider 行与旧路径清理。
-- 发布：会话树单包的 `skills/` 随 `package.json.files` 发布到公开插件仓（v1.3.4，release-plugin 逐文件 SHA 一致）；tree-engine 为仓内插件，Skill 随本仓公开。
+- 发布：会话树单包的 `skills/` 随 `package.json.files` 发布到公开插件仓（v1.3.5，release-plugin 逐文件 SHA 一致）；tree-engine 为仓内插件，Skill 随本仓公开。
 - 热更：新增/修改 patch 行受 D12 约束——对相应 bundle entry 做一次 disable→enable 或重启 DSH。
 
 ### Loader 包名缓存（关键机制）

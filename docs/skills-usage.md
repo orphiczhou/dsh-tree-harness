@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.5.1**、`packages/dsh-session-tree` **v1.3.4** 及以上（公开插件仓同步 tag `v1.3.4`）。
+> 适用版本：`packages/dsh-tree-engine` **v0.5.1**、`packages/dsh-session-tree` **v1.3.5** 及以上（公开插件仓同步 tag `v1.3.5`）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -254,7 +254,7 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.5.1 / `dsh-session-tree` 1.3.4（公开插件仓 tag `v1.3.4`）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.5.1 / `dsh-session-tree` 1.3.5（公开插件仓 tag `v1.3.5`）。
 - **版本差异速查**：
   - **1.3.0**：随包 `session-handoff` Skill + skill provider patch 行（此前无 Skill）；
   - **1.3.1**：接替提示语跟随 DSH 界面语言（zh/en；`lang=` + `interface_language`）；

@@ -2,6 +2,19 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [1.3.5] — 2026-11-11 · 第三轮洁净室收尾（session-tree）
+
+### 变更
+
+- 版本：`packages/dsh-session-tree` 由 `1.3.4` → **`1.3.5`**（公开插件仓同步发布；代码无行为变化）。
+- `session-handoff` SKILL §0 补充例外说明：低于 50% 会被阈值闸拒，**但 `spawn:false` 干跑不被拦**（5 分钟内重复仍受防重复闸）。
+- README（英文）修正 root→grandchild 表述：拒绝原因是「调用者不是目标的直接父会话」，不再写成「D 不是那个父会话自己的孩子」。
+
+### 验证
+
+- handoff **41/41**、skills **3/3**；其余测试无改动。
+- 洁净室第三轮：**PASS**（N1–N7 全部确认修复、G1–G12 无回归、5 分钟路径 5/5），见 [docs/skill-cleanroom-2026-11-11.md](docs/skill-cleanroom-2026-11-11.md)。
+
 ## [1.3.4] — 2026-11-11 · 洁净室最终文档清扫（session-tree）
 
 ### 变更
