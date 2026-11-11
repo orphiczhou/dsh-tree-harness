@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dsh-tree-harness · 项目重启简报 · 2026-11-11</title>
+<style>
+:root{
+  --bg:#0b0f14; --bg2:#0e141b; --panel:#121a24; --panel2:#16202c; --line:rgba(148,163,184,.16);
+  --tx:#e6edf6; --tx2:#a8b6c8; --tx3:#6f8199;
+  --green:#34d399; --green-bg:rgba(52,211,153,.12);
+  --orange:#f59e0b; --orange-bg:rgba(245,158,11,.12);
+  --blue:#60a5fa; --blue-bg:rgba(96,165,250,.12);
+  --red:#f87171; --red-bg:rgba(248,113,113,.12);
+  --purple:#c084fc; --purple-bg:rgba(192,132,252,.12);
+  --mono:ui-monospace,SFMono-Regular,"Cascadia Code",Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+  --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.28);
+}
+[data-theme="light"]{
+  --bg:#f7f8fa; --bg2:#eef1f5; --panel:#ffffff; --panel2:#f4f6f9; --line:rgba(15,23,42,.12);
+  --tx:#111827; --tx2:#475569; --tx3:#7b8a9e;
+  --green:#059669; --green-bg:rgba(5,150,105,.10);
+  --orange:#b45309; --orange-bg:rgba(180,83,9,.10);
+  --blue:#2563eb; --blue-bg:rgba(37,99,235,.10);
+  --red:#dc2626; --red-bg:rgba(220,38,38,.08);
+  --purple:#7c3aed; --purple-bg:rgba(124,58,237,.09);
+  --shadow:0 10px 24px rgba(15,23,42,.10);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:86px}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:15px;line-height:1.65;
+  background-image:radial-gradient(900px 500px at 12% -10%,rgba(52,211,153,.09),transparent 60%),radial-gradient(800px 500px at 95% 0%,rgba(96,165,250,.08),transparent 55%);}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+code,.mono{font-family:var(--mono);font-size:.86em;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:.1em .4em;color:var(--tx2);word-break:break-all}
+h1,h2,h3{margin:0;line-height:1.25}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 82%,transparent);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:14px;height:60px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.2px;white-space:nowrap}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}
+nav.navlinks{display:flex;gap:2px;overflow:auto;flex:1;scrollbar-width:none}
+nav.navlinks a{color:var(--tx2);padding:6px 10px;border-radius:8px;font-size:13px;white-space:nowrap}
+nav.navlinks a:hover{background:var(--panel2);text-decoration:none;color:var(--tx)}
+nav.navlinks a.active{background:var(--panel2);color:var(--tx);box-shadow:inset 0 0 0 1px var(--line)}
+.tbtn{flex:none;background:var(--panel);border:1px solid var(--line);color:var(--tx2);border-radius:9px;padding:7px 11px;cursor:pointer;font-size:13px;font-family:inherit}
+.tbtn:hover{color:var(--tx);border-color:var(--tx3)}
+
+/* hero */
+header.hero{padding:46px 0 26px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--green);background:var(--green-bg);border:1px solid rgba(52,211,153,.28);padding:5px 11px;border-radius:999px;letter-spacing:.3px}
+h1.title{font-size:clamp(28px,4vw,44px);margin:16px 0 8px;letter-spacing:-.5px}
+h1.title em{font-style:normal;color:var(--green)}
+.lede{color:var(--tx2);max-width:860px;font-size:16px}
+.lede b{color:var(--tx)}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;color:var(--tx3);font-size:12.5px}
+.meta-row span{padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:12px;margin:26px 0 8px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;position:relative;overflow:hidden}
+.kpi::after{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:var(--k,var(--green));opacity:.85}
+.kpi .lab{font-size:12px;color:var(--tx3);letter-spacing:.3px}
+.kpi .val{font-size:22px;font-weight:700;margin-top:5px;letter-spacing:-.3px;font-family:var(--mono)}
+.kpi .sub{font-size:12px;color:var(--tx2);margin-top:3px}
+.kpi.g .val{color:var(--green)} .kpi.o .val{color:var(--orange)} .kpi.b .val{color:var(--blue)} .kpi.r .val{color:var(--red)}
+
+/* sections */
+section{padding:38px 0 8px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.sec-head h2{font-size:clamp(21px,2.6vw,27px);letter-spacing:-.3px}
+.sec-head .idx{font-family:var(--mono);color:var(--tx3);font-size:13px;border:1px solid var(--line);border-radius:7px;padding:2px 8px}
+.sec-desc{color:var(--tx2);margin:6px 0 20px;max-width:900px}
+
+/* answer cards */
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:880px){.answers{grid-template-columns:1fr}}
+.ans{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 6px;box-shadow:var(--shadow)}
+.ans .q{display:flex;gap:10px;align-items:flex-start}
+.ans .qn{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--panel2);border:1px solid var(--line);font-family:var(--mono);font-size:13px;color:var(--tx2)}
+.ans .qt{font-weight:650;font-size:15.5px}
+.ans .verdict{display:inline-flex;align-items:center;gap:6px;margin:10px 0 4px;font-size:12.5px;font-weight:650;padding:3px 10px;border-radius:999px}
+.v-yes{color:var(--green);background:var(--green-bg);border:1px solid rgba(52,211,153,.3)}
+.v-no{color:var(--red);background:var(--red-bg);border:1px solid rgba(248,113,113,.3)}
+.v-mix{color:var(--orange);background:var(--orange-bg);border:1px solid rgba(245,158,11,.3)}
+.ans p{margin:8px 0;color:var(--tx2);font-size:14px}
+.ans p b{color:var(--tx)}
+.ans details{border-top:1px dashed var(--line);margin-top:6px;padding:8px 0 10px}
+.ans summary{cursor:pointer;font-size:13px;color:var(--blue);list-style:none;display:flex;align-items:center;gap:6px}
+.ans summary::-webkit-details-marker{display:none}
+.ans summary::before{content:"▸";transition:transform .15s;display:inline-block}
+.ans details[open] summary::before{transform:rotate(90deg)}
+.ans .ev{font-size:13px;color:var(--tx2);margin-top:8px}
+.ans .ev ul{margin:6px 0 0;padding-left:18px}
+.ans .ev li{margin:4px 0}
+
+/* cards / generic */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+.note{font-size:13px;color:var(--tx3);margin-top:10px}
+.pill{display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--tx2);font-family:var(--mono)}
+.pill.g{color:var(--green);background:var(--green-bg);border-color:rgba(52,211,153,.3)}
+.pill.o{color:var(--orange);background:var(--orange-bg);border-color:rgba(245,158,11,.3)}
+.pill.r{color:var(--red);background:var(--red-bg);border-color:rgba(248,113,113,.3)}
+.pill.b{color:var(--blue);background:var(--blue-bg);border-color:rgba(96,165,250,.3)}
+.pill.p{color:var(--purple);background:var(--purple-bg);border-color:rgba(192,132,252,.3)}
+
+/* architecture */
+.arch-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
+.arch-svg{width:100%;height:auto;display:block;border-radius:10px}
+.arch-svg .zone{fill:var(--panel2);stroke:var(--line);stroke-width:1.2;rx:12}
+.arch-svg .zone-label{fill:var(--tx3);font-size:12px;font-family:var(--mono);letter-spacing:.5px}
+.arch-svg .node{cursor:pointer}
+.arch-svg .node rect{fill:var(--panel);stroke:var(--line);stroke-width:1.2;rx:9;transition:stroke .15s,filter .15s}
+.arch-svg .node:hover rect,.arch-svg .node.sel rect{stroke:var(--green);filter:drop-shadow(0 0 8px rgba(52,211,153,.35))}
+.arch-svg .node .nm{fill:var(--tx);font-size:12.5px;font-weight:600}
+.arch-svg .node .ds{fill:var(--tx3);font-size:10.5px;font-family:var(--mono)}
+.arch-svg .node.dim rect{opacity:.45;stroke-dasharray:4 3}
+.arch-svg .node.dim .nm,.arch-svg .node.dim .ds{opacity:.5}
+.arch-svg .edge{stroke:var(--tx3);stroke-width:1.2;fill:none;opacity:.55}
+.arch-svg .edge.dash{stroke-dasharray:5 4}
+.arch-svg .edge.hl{stroke:var(--green);opacity:1;stroke-width:1.8}
+.arch-svg .elab{fill:var(--tx3);font-size:9.5px;font-family:var(--mono)}
+.arch-detail{margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:13px 15px;min-height:74px;font-size:13.5px;color:var(--tx2)}
+.arch-detail h4{margin:0 0 5px;color:var(--tx);font-size:14.5px}
+.arch-detail .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.arch-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--tx3)}
+.arch-legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px}
+
+/* merge toggle */
+.toggle-bar{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px;margin-bottom:16px}
+.toggle-bar button{background:transparent;border:0;color:var(--tx2);font-family:inherit;font-size:13px;padding:7px 16px;border-radius:999px;cursor:pointer;transition:.15s}
+.toggle-bar button.on{background:var(--panel);color:var(--tx);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.merge-body{display:grid;grid-template-columns:1.05fr .95fr;gap:14px}
+@media(max-width:900px){.merge-body{grid-template-columns:1fr}}
+.tree{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.85;overflow:auto}
+.tree .dir{color:var(--blue);font-weight:600}
+.tree .file{color:var(--tx2)}
+.tree .new{color:var(--green)}
+.tree .merged{color:var(--orange)}
+.tree .cm{color:var(--tx3);font-family:var(--sans);font-size:11.5px}
+.tree .bad{color:var(--red)}
+.merge-side h3{font-size:15px;margin-bottom:8px}
+.merge-side ul{margin:8px 0 0;padding-left:18px;color:var(--tx2);font-size:13.5px}
+.merge-side li{margin:5px 0}
+.hidden{display:none!important}
+.compare{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.compare th,.compare td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+.compare th{color:var(--tx3);font-weight:600;font-size:12.5px;letter-spacing:.3px}
+.compare td:first-child{color:var(--tx2);white-space:nowrap}
+.compare .win{color:var(--green);font-weight:600}
+.compare .lose{color:var(--red)}
+.opt{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--panel2);position:relative}
+.opt.rec{border-color:rgba(52,211,153,.45);background:linear-gradient(180deg,rgba(52,211,153,.07),transparent)}
+.opt .badge{position:absolute;top:-10px;right:12px;background:var(--green);color:#062018;font-size:11px;font-weight:700;padding:2px 10px;border-radius:999px}
+.opt h4{margin:0 0 6px;font-size:15px}
+.opt .k{font-family:var(--mono);font-size:12px;color:var(--tx3)}
+.opt p{margin:6px 0;font-size:13.5px;color:var(--tx2)}
+
+/* deps */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filters button{background:var(--panel);border:1px solid var(--line);color:var(--tx2);border-radius:999px;padding:6px 13px;font-size:12.5px;cursor:pointer;font-family:inherit}
+.filters button.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+.dep-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.dep{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 15px}
+.dep .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.dep .name{font-family:var(--mono);font-size:13px;color:var(--tx);word-break:break-all}
+.dep .kind{flex:none;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--tx3)}
+.dep .rel{margin-top:8px;font-size:12.5px;color:var(--tx2)}
+.dep .how{margin-top:6px;font-size:12.5px;color:var(--tx3)}
+.dep .miss{margin-top:6px;font-size:12px;color:var(--orange)}
+.dep[data-kind]::before{content:"";display:block;height:2px;border-radius:2px;margin:-14px -15px 12px;background:var(--kc,var(--line))}
+.filter-hide{display:none!important}
+
+/* timeline */
+.timeline{position:relative;margin:6px 0 0;padding-left:26px}
+.timeline::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl{position:relative;padding:0 0 18px 8px}
+.tl::before{content:"";position:absolute;left:-24px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid var(--tx3)}
+.tl.ok::before{border-color:var(--green);background:var(--green-bg)}
+.tl.now::before{border-color:var(--orange);background:var(--orange-bg);box-shadow:0 0 10px var(--orange)}
+.tl .date{font-family:var(--mono);font-size:11.5px;color:var(--tx3)}
+.tl .tt{font-weight:600;margin:2px 0;font-size:14px}
+.tl .dd{font-size:13px;color:var(--tx2)}
+.status-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+.status-table th,.status-table td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left}
+.status-table th{font-size:12px;color:var(--tx3);letter-spacing:.3px}
+.status-table td:first-child{font-family:var(--mono);font-size:12.5px;color:var(--tx2)}
+
+/* checklist */
+.checklist{display:grid;gap:10px}
+.chk{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer;transition:.12s}
+.chk:hover{border-color:var(--tx3)}
+.chk.done{opacity:.66}
+.chk .box{flex:none;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--tx3);display:grid;place-items:center;margin-top:1px;font-size:12px;color:transparent;transition:.12s}
+.chk.done .box{background:var(--green);border-color:var(--green);color:#062018}
+.chk .body{flex:1;min-width:0}
+.chk .t{font-weight:600;font-size:14px}
+.chk.done .t{text-decoration:line-through}
+.chk .d{font-size:13px;color:var(--tx2);margin-top:3px}
+.chk .why{font-size:12px;color:var(--tx3);margin-top:4px}
+.progress{height:8px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:4px 0 16px}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--blue));transition:width .25s}
+.progress-lab{font-size:12.5px;color:var(--tx3);margin-bottom:6px}
+
+/* code block */
+pre.code{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow:auto;font-family:var(--mono);font-size:12.5px;line-height:1.7;color:var(--tx2);margin:10px 0}
+pre.code b{color:var(--green);font-weight:600}
+pre.code .c{color:var(--tx3)}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:4px 14px;font-size:13.5px}
+.kv dt{color:var(--tx3)}
+.kv dd{margin:0;color:var(--tx2);font-family:var(--mono);font-size:12.5px;word-break:break-all}
+
+footer{margin-top:52px;border-top:1px solid var(--line);padding:22px 0 46px;color:var(--tx3);font-size:12.5px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--tx);color:var(--bg);padding:9px 18px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:200}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+mark{background:var(--orange-bg);color:var(--orange);padding:0 4px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span>dsh-tree-harness · 重启简报</div>
+    <nav class="navlinks" id="navlinks">
+      <a href="#answers">四问四答</a>
+      <a href="#arch">系统全景</a>
+      <a href="#merge">合并专题</a>
+      <a href="#deps">依赖矩阵</a>
+      <a href="#publish">发布现状</a>
+      <a href="#repo">本仓现状</a>
+      <a href="#restart">重启清单</a>
+      <a href="#sources">数据来源</a>
+    </nav>
+    <button class="tbtn" id="themeBtn" title="切换主题">◐ 主题</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">● 全部数字为 2026-11-11 实测快照 · 活体检查 + Git/GitHub/npm 直查</span>
+    <h1 class="title">项目重启简报：<em>两个插件、一个包、零 npm 依赖</em></h1>
+    <p class="lede">本机 DSH 桌面现在是 <b>0.2.2-rc.1</b>，宿主 loader 账本 <b>248</b> 条；会话树在<strong>本机开发态是两个插件</strong>（UI 半 + 工具半），但<strong>面向传播的发布版早已合并成单包</strong>（<code>@orphiczhou/dsh-session-tree</code> v1.0.4，GitHub 公开、两个市场 PR 已合并、npm 未发布）。而<strong>本仓库 dsh-tree-harness 本身还没有任何 git remote</strong>——这是重启前最需要先补的一刀。</p>
+    <div class="meta-row">
+      <span>数据时间：2026-11-11 ~12:30 +08:00</span>
+      <span>DSH：<code>FileVersion 0.2.2-rc.1</code></span>
+      <span>本仓：<code>master @ 2cb2d17</code>（+3 个文件未提交）</span>
+      <span>测试：<b>62/62</b> + <b>13/13</b></span>
+      <span>npm：<b>0</b> 个已发布</span>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi g"><div class="lab">会话树插件</div><div class="val">运行中</div><div class="sub">SessionTree provider 活体在线</div></div>
+      <div class="kpi b"><div class="lab">本地形态</div><div class="val">2 个包</div><div class="sub">UI 半 + 工具半（link:）</div></div>
+      <div class="kpi o"><div class="lab">发布形态</div><div class="val">1 个包</div><div class="sub">@orphiczhou/dsh-session-tree v1.0.4</div></div>
+      <div class="kpi g"><div class="lab">GitHub</div><div class="val">2 仓公开</div><div class="sub">session-tree / region-probe</div></div>
+      <div class="kpi r"><div class="lab">本仓 GitHub</div><div class="val">未推送</div><div class="sub">连 remote 都还没配</div></div>
+      <div class="kpi o"><div class="lab">npm</div><div class="val">404 ×4</div><div class="sub">刻意只走 Git 安装</div></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ============ 四问四答 ============ -->
+<section id="answers">
+  <div class="sec-head"><span class="idx">01</span><h2>先回答你的四个问题</h2></div>
+  <p class="sec-desc">每条结论都附现场证据；点开「证据」可直接看到我读的是哪个文件 / 哪次查询。</p>
+
+  <div class="answers">
+    <div class="ans">
+      <div class="q"><span class="qn">Q1</span><span class="qt">会话树是不是拆成了「UI 界面 + 工具方法」两个插件？</span></div>
+      <div class="verdict v-yes">✓ 确认：是，而且现在正以两个包在运行</div>
+      <p><b>UI 半</b> <code>@local/dsh-session-tree</code> v1.0.0：<code>client.js</code> 74.2 KB，占左栏 <code>sidebar.workspaces</code> 单席位（priority −100），提供树形会话、四态圆点、搜索、折叠、右键菜单等；同时注册只读 inspect provider <code>SessionTree</code>。<br>
+      <b>工具半</b> <code>@local/dsh-session-tree-tools</code> v1.0.0：纯宿主包，只提供一个 <code>tree_send</code> 工具（跨层级给任意 continuable 子会话发消息，含兄弟）。</p>
+      <details><summary>证据（活体 + 文件）</summary><div class="ev">
+        <ul>
+          <li><code>cordis_inspect_list</code> → client provider <code>SessionTree</code> 已注册（UI 半在运行）</li>
+          <li><code>cordis_inspect_query</code> host Tool → 工具清单里有 <code>tree_send</code>（工具半在运行）</li>
+          <li>profile <code>bundles</code> 里两个名字各占一行，且 <code>dependencies</code> 是 <code>link:</code> 指向两个目录</li>
+          <li>UI 包 <code>index.js</code> 只有 23 行，注释明说「故意为空」</li>
+        </ul>
+      </div></details>
+      <details><summary>为什么要拆？（核心原因，和你要的合并直接相关）</summary><div class="ev">
+        <ul>
+          <li>DSH Loader 对<b>宿主模块按包名缓存</b>：改一个已装载包的 <code>index.js</code>，<b>停用/启用、卸载重装、换入口文件路径三种方式都拿不到新代码</b>，只能重启进程。</li>
+          <li>但<b>新包名没有缓存</b> → 普通 <code>install_bundle</code> 就能立即生效。所以 <code>tree_send</code> 被拆成新包，装完当场出现在工具列表里。</li>
+          <li>顺带收益：重启后不会有两个包重复注册 <code>tree_send</code>。</li>
+          <li>代价：两个包、两条测试/两份测试文件、两个版本号要维护。</li>
+        </ul>
+      </div></details>
+    </div>
+
+    <div class="ans">
+      <div class="q"><span class="qn">Q2</span><span class="qt">那我想把它们合并成一个，好打包发布和传播——现在是什么状态？</span></div>
+      <div class="verdict v-mix">◐ 好消息：合并版已经存在，而且已经发布了</div>
+      <p><code>publish/dsh-session-tree/</code> 就是<b>单包合并版</b>：<code>client.js</code> + <code>index.js</code>（6.1 KB，含 tree_send）+ 一条 patch 行 + locale + icon + 3 份测试 + <code>verify-bundle.mjs</code> + 中英 README + MIT LICENSE，包名 <code>@orphiczhou/dsh-session-tree</code>，版本 <b>v1.0.4</b>。</p>
+      <p><b>GitHub main 与本地 <code>publish/</code> 逐字节一致</b>：9 个根文件（<code>package.json</code> / <code>client.js</code> / <code>index.js</code> / <code>cordis.patch.yml</code> / 中英 README / LICENSE / icon / .gitignore）用 <code>git hash-object</code> 与 GitHub blob SHA 逐一比对，<b>9/9 完全吻合</b>。</p>
+      <p>所以「合并」不是待办，而是<b>选择</b>：仓库里现在同时存在「本机开发双包」和「已发布单包」两种形态。方案与推荐见 <a href="#merge">02 合并专题</a>。</p>
+      <details><summary>证据</summary><div class="ev">
+        <ul>
+          <li>GitHub API <code>contents/</code>：根目录单层 <code>client.js 74265</code> / <code>index.js 6146</code> / <code>package.json 1435</code> / <code>cordis.patch.yml 632</code> / <code>locale/ scripts/ test/</code> ——与本地 publish 目录同尺寸；再用 <code>git hash-object</code> 比对 9 个根文件的 blob SHA，<b>9/9 一致</b></li>
+          <li>GitHub 提交历史 5 个 commit：v1.0.1 → v1.0.2 → v1.0.3 → v1.0.4（2026-10-01~02）</li>
+          <li><code>package.json</code> base64 解码 → <code>"version": "1.0.4"</code>、<code>files</code>、<code>dsh.client.inject</code> 齐全</li>
+        </ul>
+      </div></details>
+    </div>
+
+    <div class="ans">
+      <div class="q"><span class="qn">Q3</span><span class="qt">这个插件依赖哪些 DSH 官方系统插件 / 第三方插件？</span></div>
+      <div class="verdict v-yes">✓ 零 npm 依赖；官方依赖分「客户端包 / 宿主服务」两层</div>
+      <p><b>npm 依赖 = 0</b>（<code>dependencies</code> 与 <code>peerDependencies</code> 都刻意留空：不 import 任何 <code>@deepseek-ai/*</code>；而 <code>peerDependencies</code> 是 DSH 唯一强制的兼容字段，留空=不设限，宿主升级不会硬失败）。</p>
+      <p><b>官方硬依赖</b>：仅 2 个<b>客户端</b>包 —— <code>@deepseek-ai/dsh-client-ui-sidebar</code>、<code>@deepseek-ai/dsh-client-ui-workspace</code>（写在 <code>dsh.client.inject</code>，缺了客户端半边不加载）。<br>
+      <b>宿主服务</b>：<code>tools</code> / <code>subagents</code> / <code>sessionQuery</code>（<code>ctx.inject</code> 可选注入，缺了就静默不注册工具）。<br>
+      <b>第三方/自建</b>：只有 <code>td-tweak</code>（胶囊入口，用户自有、非 git）与 <code>dsh-thoughtdag 0.5.26</code>（胶囊容器，第三方 npm）——都是<b>软集成</b>，不在就退化，不报错。</p>
+      <details><summary>证据 + 完整矩阵</summary><div class="ev">
+        <ul>
+          <li><code>publish/.../package.json</code>：无 dependencies / peerDependencies 字段</li>
+          <li><code>dsh.client.inject</code> = <code>["@deepseek-ai/dsh-client-ui-sidebar","@deepseek-ai/dsh-client-ui-workspace"]</code></li>
+          <li>工具半 <code>index.js</code>：<code>ctx.inject(['tools','subagents','sessionQuery'], ...)</code></li>
+          <li>客户端 <code>apply</code> 里：<code>inject: ['slots','sessions','uiWorkspace','sidebarRight','locale']</code>；<code>cordisInspect</code> 用可选注入</li>
+          <li>完整逐项说明见 <a href="#deps">03 依赖矩阵</a></li>
+        </ul>
+      </div></details>
+    </div>
+
+    <div class="ans">
+      <div class="q"><span class="qn">Q4</span><span class="qt">提交到我的 GitHub 了吗？</span></div>
+      <div class="verdict v-mix">◐ 会话树 / region-probe：已公开并进了市场；本仓库：完全没有</div>
+      <p><b>已上 GitHub</b>：<a href="https://github.com/orphiczhou/dsh-session-tree" target="_blank" rel="noopener">orphiczhou/dsh-session-tree</a>（MIT、topic <code>dsh-plugin</code>、5 commits、v1.0.4）与 <a href="https://github.com/orphiczhou/dsh-region-probe" target="_blank" rel="noopener">orphiczhou/dsh-region-probe</a>。<br>
+      <b>市场收录</b>：awesome-dsh-plugin <b>PR #6334 已合并</b>（2026-10-14）、region-probe <b>PR #6435 已合并</b>（2026-10-15）、imsai-sh PR #554 已合并。<br>
+      <b>未上 GitHub</b>：本仓库 <code>D:\Codes\dsh-tree-harness</code> <b>没有 remote</b>（不是推送失败，是根本没配）；<code>tree-engine</code> / <code>meta-loop</code> / <code>agent-introspect</code> 都在这个仓里 → 同样未公开；<code>td-tweak</code> 不是 git 仓库；<code>nanju-dsh</code> 是 git 但无 remote。<br>
+      <b>npm</b>：四个候选包名全部 404 —— 这是<b>刻意的</b>，发布 README 明确写「只支持 Git 安装」。</p>
+      <details><summary>证据</summary><div class="ev">
+        <ul>
+          <li><code>git remote -v</code> 本仓输出为空；<code>git config --global user.name</code> 也是空</li>
+          <li>GitHub API：<code>/users/orphiczhou/repos</code> 里有 dsh-session-tree、dsh-region-probe；无 dsh-tree-harness</li>
+          <li><code>GET /search/issues?q=author:orphiczhou repo:awesome-dsh-plugin/awesome-dsh-plugin</code> → #6334 merged、#6435 merged</li>
+          <li>npm registry 直查：<code>@orphiczhou/dsh-session-tree</code> / <code>-tools</code> / <code>dsh-region-probe</code> / <code>meta-adapter</code> 全 404</li>
+        </ul>
+      </div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 系统全景 ============ -->
+<section id="arch">
+  <div class="sec-head"><span class="idx">02</span><h2>系统全景：谁在宿主、谁在浏览器、谁在发布</h2></div>
+  <p class="sec-desc">点击任意方块看它在现场的细节（虚线 = 当前未装配 / 未加载）。这张图只覆盖本项目及直接相邻的插件，同 profile 下的 nanju、meta-adapter、flow-engine 等未展开。</p>
+
+  <div class="arch-wrap">
+    <svg class="arch-svg" viewBox="0 0 1100 560" role="img" aria-label="DSH 插件系统全景图">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="context-stroke"></path>
+        </marker>
+      </defs>
+
+      <!-- zones -->
+      <rect class="zone" x="20" y="70" width="330" height="450" rx="12"></rect>
+      <rect class="zone" x="380" y="70" width="330" height="450" rx="12"></rect>
+      <rect class="zone" x="740" y="70" width="340" height="450" rx="12"></rect>
+      <text class="zone-label" x="38" y="94">WEB 客户端（浏览器半）</text>
+      <text class="zone-label" x="398" y="94">DSH 宿主（Cordis 插件宿主）</text>
+      <text class="zone-label" x="758" y="94">数据 / 发布面（仓库外）</text>
+
+      <!-- ===== client zone ===== -->
+      <g class="node" data-k="client">
+        <rect x="40" y="112" width="290" height="74"></rect>
+        <text class="nm" x="56" y="138">DSH Web GUI</text>
+        <text class="ds" x="56" y="158">React shell · slot 系统 · 菜单行</text>
+        <text class="ds" x="56" y="174">loader 由 dsh web 注入 __DSH_BOOT__</text>
+      </g>
+      <g class="node" data-k="sessiontree">
+        <rect x="40" y="200" width="290" height="70"></rect>
+        <text class="nm" x="56" y="224">@local/dsh-session-tree  ·  UI 半</text>
+        <text class="ds" x="56" y="242">client.js 74.2 KB · 占 sidebar.workspaces</text>
+        <text class="ds" x="56" y="258">注册 inspect provider：SessionTree</text>
+      </g>
+      <g class="node" data-k="regionprobe">
+        <rect x="40" y="282" width="290" height="62"></rect>
+        <text class="nm" x="56" y="305">@local/dsh-region-probe  ·  只读观测</text>
+        <text class="ds" x="56" y="323">inspect provider：Regions</text>
+      </g>
+      <g class="node" data-k="tdtweak">
+        <rect x="40" y="356" width="290" height="58"></rect>
+        <text class="nm" x="56" y="378">td-tweak 0.3.1  ·  第三方/自建（非 git）</text>
+        <text class="ds" x="56" y="396">菜单行胶囊 · --td-tweak-left · 入口按钮</text>
+      </g>
+      <g class="node dim" data-k="metaloopclient">
+        <rect x="40" y="426" width="290" height="58"></rect>
+        <text class="nm" x="56" y="448">meta-loop client 半  ·  当前未装载</text>
+        <text class="ds" x="56" y="466">提供 /metaloop/ 面板 + 胶囊入口</text>
+      </g>
+
+      <!-- ===== host zone ===== -->
+      <g class="node" data-k="cordis">
+        <rect x="400" y="112" width="290" height="74"></rect>
+        <text class="nm" x="416" y="138">Cordis Loader 账本：248 条</text>
+        <text class="ds" x="416" y="158">bundle patch → insert 行 → import 包</text>
+        <text class="ds" x="416" y="174">宿主模块按「包名」缓存（合并专题的关键）</text>
+      </g>
+      <g class="node" data-k="sessiontreetools">
+        <rect x="400" y="200" width="290" height="70"></rect>
+        <text class="nm" x="416" y="224">@local/dsh-session-tree-tools  ·  工具半</text>
+        <text class="ds" x="416" y="242">tree_send · index.js 5.5 KB · 无 dsh.client</text>
+        <text class="ds" x="416" y="258">走 subagents.prompt（按父地址授权）</text>
+      </g>
+      <g class="node" data-k="treeengine">
+        <rect x="400" y="282" width="290" height="76"></rect>
+        <text class="nm" x="416" y="306">@local/dsh-tree-engine  v0.4.0</text>
+        <text class="ds" x="416" y="324">8 个 tree_* 工具 · 本仓产物</text>
+        <text class="ds" x="416" y="340">sweep degraded:no-timer（当前宿主无 timer）</text>
+      </g>
+      <g class="node" data-k="introspect">
+        <rect x="400" y="370" width="290" height="58"></rect>
+        <text class="nm" x="416" y="394">@local/dsh-agent-introspect  v0.1.0</text>
+        <text class="ds" x="416" y="412">self_spec · 直接读 session_projcache</text>
+      </g>
+      <g class="node dim" data-k="metaloophost">
+        <rect x="400" y="440" width="290" height="58"></rect>
+        <text class="nm" x="416" y="464">meta-loop host 半  ·  当前未装载</text>
+        <text class="ds" x="416" y="482">tools + webServer(/metaloop/) · 六阶段门禁</text>
+      </g>
+
+      <!-- ===== data / publish zone ===== -->
+      <g class="node" data-k="profile">
+        <rect x="760" y="112" width="300" height="66"></rect>
+        <text class="nm" x="776" y="136">profile: desktop</text>
+        <text class="ds" x="776" y="154">29 个 bundles · link: 依赖 · cordis.patch.yml</text>
+      </g>
+      <g class="node" data-k="data">
+        <rect x="760" y="188" width="300" height="66"></rect>
+        <text class="nm" x="776" y="212">运行时数据</text>
+        <text class="ds" x="776" y="230">tree-engine-data/ · session_projcache/</text>
+      </g>
+      <g class="node" data-k="publish">
+        <rect x="760" y="264" width="300" height="72"></rect>
+        <text class="nm" x="776" y="288">publish/（发布副本）</text>
+        <text class="ds" x="776" y="306">@orphiczhou/dsh-session-tree v1.0.4</text>
+        <text class="ds" x="776" y="322">单包 · 与 GitHub main 逐字节一致</text>
+      </g>
+      <g class="node" data-k="github">
+        <rect x="760" y="348" width="300" height="66"></rect>
+        <text class="nm" x="776" y="372">GitHub：orphiczhou</text>
+        <text class="ds" x="776" y="390">dsh-session-tree ✅ · dsh-region-probe ✅</text>
+      </g>
+      <g class="node" data-k="market">
+        <rect x="760" y="424" width="300" height="72"></rect>
+        <text class="nm" x="776" y="448">社区市场</text>
+        <text class="ds" x="776" y="466">awesome-dsh-plugin #6334 ✓ · #6435 ✓</text>
+        <text class="ds" x="776" y="482">imsai-sh #554 ✓ · npm 404（Git 安装）</text>
+      </g>
+
+      <!-- ===== edges ===== -->
+      <path class="edge" d="M330 235 L400 235" marker-end="url(#ar)"></path>
+      <text class="elab" x="334" y="228">bundle 行</text>
+      <path class="edge dash" d="M330 385 L400 385" marker-end="url(#ar)"></path>
+      <text class="elab" x="330" y="378">入口按钮</text>
+      <path class="edge" d="M400 320 L330 320" marker-end="url(#ar)"></path>
+      <text class="elab" x="336" y="313">tools</text>
+      <path class="edge dash" d="M690 235 L760 145" marker-end="url(#ar)"></path>
+      <text class="elab" x="694" y="180">安装</text>
+      <path class="edge" d="M690 305 L760 300" marker-end="url(#ar)"></path>
+      <text class="elab" x="694" y="298">发布</text>
+      <path class="edge" d="M910 264 L910 254" marker-end="url(#ar)"></path>
+      <path class="edge" d="M910 336 L910 348" marker-end="url(#ar)"></path>
+      <path class="edge" d="M910 414 L910 424" marker-end="url(#ar)"></path>
+      <text class="elab" x="886" y="342" style="font-size:9px">push → 收录</text>
+    </svg>
+
+    <div class="arch-legend">
+      <span><i style="background:var(--green)"></i>运行中 / 已发布</span>
+      <span><i style="background:var(--tx3)"></i>虚线 = 未装配 / 软集成</span>
+      <span><i style="background:var(--orange)"></i>本仓产物</span>
+      <span>点击方块查看详情</span>
+    </div>
+
+    <div class="arch-detail" id="archDetail">
+      <h4>点一个方块</h4>
+      每个方块都会显示：角色、半边、版本/状态、它依赖什么、我是在哪读到的。
+    </div>
+  </div>
+</section>
+
+<!-- ============ 合并专题 ============ -->
+<section id="merge">
+  <div class="sec-head"><span class="idx">03</span><h2>合并专题：两个包 → 一个包，该走哪条路</h2></div>
+  <p class="sec-desc">切换看两种形态的实际文件布局。关键差异不在文件数量，而在 <mark>DSH Loader 的包名缓存</mark>——它决定了「合并后改宿主代码还能不能热更」。</p>
+
+  <div class="toggle-bar" id="mergeToggle">
+    <button class="on" data-mode="dev">现状：开发态 · 两个包</button>
+    <button data-mode="pub">已发布：发布态 · 一个包</button>
+  </div>
+
+  <div class="merge-body">
+    <div class="tree" id="mergeTree"></div>
+    <div class="merge-side" id="mergeSide"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3 style="font-size:15px;margin-bottom:8px">合并值不值？一张表说清</h3>
+    <table class="compare">
+      <thead><tr><th>维度</th><th>两个包（现状开发态）</th><th>一个包（已发布发布态）</th></tr></thead>
+      <tbody>
+        <tr><td>安装/传播</td><td class="lose">两条 install、两个版本要对齐</td><td class="win">一条 <code>dsh plugin add orphiczhou/dsh-session-tree</code> 装完</td></tr>
+        <tr><td>宿主改动能热更吗</td><td class="win">工具半是独立包，改它可换包名立即生效（UI 半本就能刷新页面生效）</td><td class="lose">同包名已缓存 → 改 index.js 必须重启应用或再换包名</td></tr>
+        <tr><td>版本/测试维护</td><td class="lose">2 个 package.json、2 套测试副本</td><td class="win">1 个版本号、3 份测试都在一个包里</td></tr>
+        <tr><td>注册冲突风险</td><td class="lose">重启后两个包可能重复注册 tree_send（已用空 apply 规避）</td><td class="win">天然不存在</td></tr>
+        <tr><td>市场收录</td><td class="lose">一条 listing 只能指一个仓库 → 双包没法上市场</td><td class="win">已收录（#6334 已合并）</td></tr>
+      </tbody>
+    </table>
+    <p class="note">⚠️ 本仓 <code>packages/</code> 位于 profile 的 <code>hmr.root</code> 下（这就是 tree-engine、meta-loop 改完约 25 秒热更的原因）。把这层机制算进去，合并包如果放进本仓 <code>packages/</code>，宿主改动仍然可以热更——包名缓存的坑只在「仓外安装的包」上才无解。</p>
+  </div>
+
+  <div class="grid3" style="margin-top:14px">
+    <div class="opt">
+      <h4>方案 A：维持双态</h4>
+      <div class="k">开发双包 → 手动同步 → 发布单包</div>
+      <p>不动现状，发布前把 <code>client.js/index.js</code> 同步进 <code>publish/</code> 并 bump 版本。风险最小，但每次发布要手工同步两处，容易漂移。</p>
+    </div>
+    <div class="opt rec">
+      <div class="badge">推荐</div>
+      <h4>方案 B⁺：合并进本仓，单包 + HMR</h4>
+      <div class="k">一个包 · 放 packages/ · 发布就是 git push</div>
+      <p>把 <code>publish/dsh-session-tree/</code> 迁进 <code>packages/dsh-session-tree/</code>（hmr.root 内）：一个包、一条 profile 行、一份测试；宿主改动照常热更；发布时把包内容推到公开仓库。唯一迁移动作 = profile 里停用两个 <code>@local/*</code> 包、改装单包。</p>
+    </div>
+    <div class="opt">
+      <h4>方案 C：只保留发布单包</h4>
+      <div class="k">弃用本机开发双包</div>
+      <p>最省事但最痛：开发时改宿主半要重启应用（每次约十几秒到几十秒），历史包袱里「为什么拆」的教训会重演。不建议。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 依赖矩阵 ============ -->
+<section id="deps">
+  <div class="sec-head"><span class="idx">04</span><h2>依赖矩阵：官方两层 + 第三方软集成 + 零 npm</h2></div>
+  <p class="sec-desc">按「缺了会怎样」分类：<b>硬</b> = 缺了插件不加载；<b>可选</b> = 缺了静默跳过；<b>软</b> = DOM/约定层集成，缺了退化但工作。</p>
+  <div class="filters" id="depFilters">
+    <button class="on" data-f="all">全部</button>
+    <button data-f="client-pkg">官方客户端包（硬）</button>
+    <button data-f="host-svc">官方宿主服务</button>
+    <button data-f="client-svc">客户端服务</button>
+    <button data-f="third">第三方 / 自建</button>
+    <button data-f="npm">npm 依赖</button>
+  </div>
+  <div class="dep-grid" id="depGrid"></div>
+</section>
+
+<!-- ============ 发布现状 ============ -->
+<section id="publish">
+  <div class="sec-head"><span class="idx">05</span><h2>发布与传播现状</h2></div>
+  <p class="sec-desc">「发了没」分三个渠道看：GitHub、社区市场、npm。三个渠道的结论完全不同。</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:12px">时间线</h3>
+      <div class="timeline" id="timeline"></div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:8px">逐项状态表</h3>
+      <table class="status-table" id="statusTable"></table>
+      <p class="note">说明：市场收录 PR 由脚本 <code>publish/_market-prs.ps1</code> 生成，清单文件在 <code>publish/_listings/</code>；bradeGithub 的市场站按 GitHub topic 每 2 小时自动扫描收录。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 本仓现状 ============ -->
+<section id="repo">
+  <div class="sec-head"><span class="idx">06</span><h2>本仓现状：有一笔未提交的重要改动</h2></div>
+  <p class="sec-desc">DSH 在 10-17 升级到 0.2.1-rc.2（现在是 0.2.2-rc.1），<code>subagents</code> API 发生漂移：<code>startContinuable</code> 被移除。当时由 Nanju 会话热修了树引擎，<b>但至今没合入本仓</b>。</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:10px">未提交改动（<code>git status</code> 实测）</h3>
+      <table class="compare">
+        <tbody>
+          <tr><td><code>tree-engine/index.js</code></td><td><b class="win">+102 / −36</b> · RC2 兼容层：双形探测 <code>startContinuable</code>/<code>startActivation</code>，interrupt authority 顺序兼容，sendMessage/prompt 回退</td></tr>
+          <tr><td><code>meta-loop/panel/index.html</code></td><td><b>+275 / −24</b> · 面板新增六阶段 SVG 流程图（flowSVG）+ 阶段摘要 + 门禁信息</td></tr>
+          <tr><td><code>README.md</code></td><td>+5 / −4 · 项目关系图更新（Nanju / tree-harness / proma-easy-dsh 路径）</td></tr>
+          <tr><td><code>docs/defect-2026-10-17-…md</code></td><td><b class="lose">未跟踪</b> · 该缺陷报告本身还没入库</td></tr>
+        </tbody>
+      </table>
+      <p class="note">好消息：当前工作树（含这笔改动）跑全量测试 <b>62/62 + 13/13 全绿</b>。坏消息：这些改动没有 commit，也没有任何远端备份。</p>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:10px">现场读数（活体）</h3>
+      <dl class="kv">
+        <dt>DSH 桌面</dt><dd>0.2.2-rc.1（Product 0.2.2.0）</dd>
+        <dt>loader 账本</dt><dd>248 条</dd>
+        <dt>profile bundles</dt><dd>29 个</dd>
+        <dt>tree-engine 工具</dt><dd>8/8 已注册（apply.log 2026-11-10 19:23）</dd>
+        <dt>sweep 模式</dt><dd>degraded:no-timer（宿主无 timer 服务，收割靠工具调用）</dd>
+        <dt>agent-introspect</dt><dd>self_spec 在线</dd>
+        <dt>meta-loop</dt><dd>未在 profile bundles → 未加载</dd>
+        <dt>树引擎最近使用</dt><dd>tree-engine-data/ 下有 prj_mw4k、floweng、rsipoc 等树</dd>
+      </dl>
+      <p class="note">风险：<code>subagents</code> 服务已无 <code>startContinuable</code>（live 实测方法表），旧派发路径在当前宿主下会直接死；本仓 HEAD 上的版本正是旧契约。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 重启清单 ============ -->
+<section id="restart">
+  <div class="sec-head"><span class="idx">07</span><h2>重启准备清单（可勾选，存在本地浏览器）</h2></div>
+  <p class="sec-desc">按「先止血、再开源、最后传播」排序。勾选状态只存在本页 localStorage，不影响任何文件。</p>
+  <div class="progress-lab" id="progressLab">0 / 7 完成</div>
+  <div class="progress"><i id="progressBar"></i></div>
+  <div class="checklist" id="checklist"></div>
+
+  <div class="grid3" style="margin-top:20px">
+    <div class="card">
+      <h4 style="margin:0 0 6px">决策 1：本仓公开范围</h4>
+      <p class="note" style="color:var(--tx2)">整个仓公开，还是只公开 <code>packages/</code>？仓里还有 <code>docs/</code>（含审计与交接）、<code>logs/</code>、<code>skills/</code>。建议先建私有 GitHub 仓推上去，再决定哪些目录转公开。</p>
+    </div>
+    <div class="card">
+      <h4 style="margin:0 0 6px">决策 2：合并方案</h4>
+      <p class="note" style="color:var(--tx2)">推荐 <b>方案 B⁺</b>：单包迁入 <code>packages/</code> 吃 HMR，发布由 git push 到公开仓。若你更想「本机也保持双包」，就维持 A，但要把同步规则写进交接文档。</p>
+    </div>
+    <div class="card">
+      <h4 style="margin:0 0 6px">决策 3：npm 要不要发</h4>
+      <p class="note" style="color:var(--tx2)">目前四个包名全部 404，README 也写明只走 Git 安装。上 npm 的唯一收益是市场条目可从「browse-only」变「一键安装」，成本是 npm token 与发布流程。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 数据来源 ============ -->
+<section id="sources">
+  <div class="sec-head"><span class="idx">08</span><h2>数据来源与核对方式</h2></div>
+  <p class="sec-desc">这份简报不是回忆，是当场读出来的。下表是每条结论的取证位置，方便你复核。</p>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:8px">本机文件</h3>
+      <pre class="code">D:\Codes\dsh-tree-harness\                <span class="c"># 本仓（git, 无 remote）</span>
+  packages\dsh-tree-engine\               <span class="c"># v0.4.0, 62 tests</span>
+  packages\dsh-meta-loop\                 <span class="c"># v0.2.0, 13 tests</span>
+  packages\dsh-agent-introspect\          <span class="c"># v0.1.0</span>
+  docs\defect-2026-10-17-...md            <span class="c"># 未跟踪</span>
+C:\Users\sir_c\Documents\deepseek-harness\default-workspace\
+  dsh-session-tree\                       <span class="c"># 开发态 UI 半</span>
+  dsh-session-tree-tools\                 <span class="c"># 开发态 工具半</span>
+  publish\dsh-session-tree\               <span class="c"># 发布态单包 v1.0.4</span>
+  publish\region-probe\                   <span class="c"># @orphiczhou/dsh-region-probe v1.0.0</span>
+  publish\_listings\                      <span class="c"># 市场清单</span>
+  HANDOFF*.md                             <span class="c"># 5 份交接/发布文档</span></pre>
+    </div>
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:8px">活体查询 / 远端核对</h3>
+      <pre class="code"><span class="c"># 活体（本会话当场执行）</span>
+cordis_inspect_list                    <span class="c"># provider: SessionTree / Regions / ...</span>
+cordis_inspect_query host Tool         <span class="c"># tree_send / tree_* / self_spec</span>
+cordis_inspect_query host Service      <span class="c"># subagents 方法表（无 startContinuable）</span>
+cordis_inspect_query host Config       <span class="c"># total = 248</span>
+Get-Item "...\DeepSeek Harness.exe"    <span class="c"># FileVersion 0.2.2-rc.1</span>
+
+<span class="c"># 远端</span>
+git remote -v                            <span class="c"># 本仓：空</span>
+GET /repos/orphiczhou/dsh-session-tree         <span class="c"># 公开, MIT, 5 commits</span>
+GET .../contents/package.json            <span class="c"># base64 → version 1.0.4</span>
+GET .../contents/ + git hash-object      <span class="c"># 9 个根文件 blob SHA 9/9 一致</span>
+GET /search/issues?q=author:orphiczhou…  <span class="c"># PR #6334 #6435 merged</span>
+registry.npmjs.org/@orphiczhou%2F…       <span class="c"># 全部 404</span></pre>
+    </div>
+  </div>
+  <p class="note">范围说明：本页只读了文件、Git 元数据、GitHub 公共 API、npm registry 与 DSH 活体查询；<b>没有读取任何会话内容</b>，因此不含隐私数据。所有「已合并/未推送」都是当时快照，时间戳见页首。</p>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>dsh-tree-harness · 项目重启简报 · 2026-11-11</span>
+    <span>单文件离线可用 · 无外部资源 · 数据快照 2026-11-11 12:30 +08:00</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast">已复制</div>
+
+<script>
+/* ============ 主题 ============ */
+const root = document.documentElement
+const themeBtn = document.getElementById('themeBtn')
+const savedTheme = localStorage.getItem('dth-theme')
+if (savedTheme) root.dataset.theme = savedTheme
+themeBtn.addEventListener('click', () => {
+  root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'
+  localStorage.setItem('dth-theme', root.dataset.theme)
+})
+
+/* ============ 导航高亮 ============ */
+const navLinks = [...document.querySelectorAll('#navlinks a')]
+const sections = navLinks.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean)
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id))
+    }
+  })
+}, { rootMargin: '-30% 0px -60% 0px' })
+sections.forEach(s => io.observe(s))
+
+/* ============ 架构详情 ============ */
+const ARCH = {
+  client: ['DSH Web GUI（客户端壳）', 'React shell + slot 系统；菜单行、侧栏、右栏都挂在 slot 上。', '当前 web 产物由 dsh web 注入 __DSH_BOOT__ 后才可运行。'],
+  sessiontree: ['@local/dsh-session-tree · UI 半（运行中）', 'client.js 74.2 KB。占 sidebar.workspaces 单席位 priority −100，压过自带 WorkspaceBrowser(priority 0)；禁用即还原。', '同时注册只读 inspect provider SessionTree（cordisInspect 可选注入）。数据来自 slot props，零 Host RPC。'],
+  regionprobe: ['@local/dsh-region-probe · 只读观测（运行中）', '提供 inspect provider Regions：outline / snapshot / failures，让 agent 能读到界面实际渲染成什么。', '已在 GitHub 公开并进市场（PR #6435 已合并）。'],
+  tdtweak: ['td-tweak 0.3.1 · 第三方/自建（非 git）', '菜单行胶囊与入口按钮的持有者：发布 --td-tweak-left 变量、承载「元方法」按钮。', '不属于本仓、不是 git 仓库、没有任何远端备份。'],
+  metaloopclient: ['meta-loop client 半 · 当前未装载', '设计上提供 /metaloop/ 面板 iframe、胶囊入口、inspect provider meta-loop-ui。', '当前 profile bundles 不含 @local/dsh-meta-loop → 活体 provider 列表里没有它（确定性证据）。'],
+  cordis: ['Cordis Loader 账本：248 条', '每个 bundle 贡献 patch 行（insert），Loader 按包名 import 宿主模块、按 dsh.client 拉客户端半。', '关键机制：宿主模块按包名缓存 → 改已装载包的 index.js 必须重启，或换新包名。'],
+  sessiontreetools: ['@local/dsh-session-tree-tools · 工具半（运行中）', 'index.js 5.5 KB，只注册 tree_send。走 ctx.subagents.prompt（按 durable 父地址授权），因此能达兄弟会话。', '依赖 tools / subagents / sessionQuery 三个宿主服务（可选注入）。'],
+  treeengine: ['@local/dsh-tree-engine v0.4.0（运行中）', '8 个 tree_* 工具：plan/node/dispatch/report/status/verify/log/maintain。', 'apply.log：sweep degraded:no-timer → 收割依赖显式工具调用。RC2 兼容层已热修但未提交。'],
+  introspect: ['@local/dsh-agent-introspect v0.1.0（运行中）', 'self_spec：从 projcache 投影 model/permissions/sandbox/cwd/token。', '直接读 ~/.dsh/storages/session_projcache/sessions/&lt;id&gt;.json → 依赖 DSH 存储布局。'],
+  metaloophost: ['meta-loop host 半 · 当前未装载', '六阶段门禁 G1–G11 + M4 递归触发表 + /metaloop/ 面板 API。', '实现完整（13/13 测试），只是没进 profile bundles。'],
+  profile: ['profile: desktop', '29 个 bundles、link: 依赖指向本地目录、cordis.patch.yml 是补丁层。', '本仓三个包以 link: 方式装载；会话树两个包同样 link:。'],
+  data: ['运行时数据', 'tree-engine-data/：树状态、meta-loop 状态、attack/、apply.log。session_projcache/：会话投影缓存。', 'apply.log 最后写入 2026-11-10 19:23，可据此判断引擎是否在跑。'],
+  publish: ['publish/（发布副本）', '@orphiczhou/dsh-session-tree v1.0.4 单包：client+index+patch+locale+测试+中英 README+MIT。', '与 GitHub main 逐字节一致：9 个根文件 git blob SHA 全匹配。'],
+  github: ['GitHub：orphiczhou', 'dsh-session-tree（MIT、topic dsh-plugin、5 commits、v1.0.4）；dsh-region-probe（公开）。', '本仓 dsh-tree-harness 不在其中：没有任何 remote。'],
+  market: ['社区市场', 'awesome-dsh-plugin #6334（会话树）与 #6435（region-probe）均已合并；imsai-sh #554 已合并；bradeGithub 按 topic 自动收录。', 'npm 上一律 404 —— 市场条目是 browse-only / Git 安装。']
+}
+const archDetail = document.getElementById('archDetail')
+document.querySelectorAll('.arch-svg .node').forEach(n => {
+  n.addEventListener('click', () => {
+    const k = n.dataset.k
+    const d = ARCH[k]
+    if (!d) return
+    document.querySelectorAll('.arch-svg .node').forEach(x => x.classList.toggle('sel', x === n))
+    archDetail.innerHTML = '<h4>' + d[0] + '</h4><div>' + d[1] + '</div><div class="row"><span class="pill">' + d[2] + '</span></div>'
+  })
+})
+
+/* ============ 合并切换 ============ */
+const MERGE = {
+  dev: {
+    tree: `<div><span class="dir">default-workspace/</span></div>
+<div>├── <span class="dir">dsh-session-tree/</span>          <span class="cm">← UI 半 @local v1.0.0</span></div>
+<div>│   ├── <span class="file">client.js</span>              <span class="cm">74.2 KB · 全部渲染</span></div>
+<div>│   ├── <span class="file">index.js</span>               <span class="cm">23 行 · 故意空 apply()</span></div>
+<div>│   ├── <span class="file">package.json</span>           <span class="cm">dsh.client.inject 2 个官方包</span></div>
+<div>│   ├── <span class="file">cordis.patch.yml</span>       <span class="cm">insert 行 #1</span></div>
+<div>│   ├── <span class="dir">locale/</span> <span class="file">icon.svg</span></div>
+<div>│   └── <span class="dir">test/</span> <span class="cm">render / provider-conformance / style-guard</span></div>
+<div>└── <span class="dir">dsh-session-tree-tools/</span>    <span class="cm">← 工具半 @local v1.0.0</span></div>
+<div>    ├── <span class="file">index.js</span>               <span class="cm">5.5 KB · tree_send</span></div>
+<div>    ├── <span class="file">package.json</span>           <span class="cm">无 dsh.client（纯宿主）</span></div>
+<div>    └── <span class="file">cordis.patch.yml</span>       <span class="cm">insert 行 #2</span></div>
+<div style="margin-top:8px"><span class="bad">profile bundles: 2 行 → 两个包都要加载</span></div>`,
+    side: `<h3>现状 · 开发态（本机正在跑的）</h3>
+<ul>
+  <li><b>为什么拆</b>：Loader 按包名缓存宿主模块；改已装载包的 <code>index.js</code> 三种方式都不生效，只有换包名才能立即生效。</li>
+  <li><b>谁在运行</b>：两个包都活着 —— 活体 provider <code>SessionTree</code> + 工具清单里的 <code>tree_send</code> 同时在线。</li>
+  <li><b>好处</b>：宿主半可以迭代（换包名即生效）；UI 半刷新页面即生效。</li>
+  <li><b>代价</b>：两条版本线、两套测试副本、无法作为单一市场条目传播。</li>
+</ul>`
+  },
+  pub: {
+    tree: `<div><span class="dir">publish/dsh-session-tree/</span>   <span class="cm">← 发布态 v1.0.4 = GitHub main</span></div>
+<div>├── <span class="file">index.js</span>                  <span class="merged">6.1 KB · 宿主半 + tree_send 合并</span></div>
+<div>├── <span class="file">client.js</span>                 <span class="cm">74.2 KB · 仅模块 id 改成 @orphiczhou/…</span></div>
+<div>├── <span class="file">package.json</span>              <span class="cm">1435 B · name/version/repository/files</span></div>
+<div>├── <span class="file">cordis.patch.yml</span>          <span class="merged">632 B · 只有 1 条 insert（id: session-tree）</span></div>
+<div>├── <span class="dir">locale/</span> <span class="file">icon.svg</span> <span class="file">LICENSE</span>  <span class="cm">MIT</span></div>
+<div>├── <span class="file">README.md</span> <span class="file">README.zh.md</span>    <span class="cm">英文 + 中文，含安装/特性/回退</span></div>
+<div>├── <span class="dir">scripts/</span> <span class="file">verify-bundle.mjs</span>  <span class="cm">按 DSH 真实规则校验 manifest</span></div>
+<div>└── <span class="dir">test/</span> <span class="cm">render(107 断言) / provider-conformance / style-guard</span></div>
+<div style="margin-top:8px"><span class="new">profile bundles: 1 行 → 一次安装即传播</span></div>`,
+    side: `<h3>已发布 · 发布态（GitHub 上的）</h3>
+<ul>
+  <li><b>已经合并好了</b>：单包、单 patch 行、单版本号；GitHub 上 5 个 commit，最后一个就是 v1.0.4。</li>
+  <li><b>传播路径</b>：Git 安装 <code>dsh plugin add orphiczhou/dsh-session-tree</code>；市场条目已合并；npm 未发（刻意）。</li>
+  <li><b>代价</b>：同包名缓存 → 之后改宿主半必须重启应用（或再次换名）。</li>
+  <li><b>和本仓的关系</b>：发布副本在 <code>default-workspace/publish/</code>，不在本 git 仓里 → 没有版本历史保护。</li>
+</ul>`
+  }
+}
+const mergeTree = document.getElementById('mergeTree')
+const mergeSide = document.getElementById('mergeSide')
+function setMerge(mode) {
+  mergeTree.innerHTML = MERGE[mode].tree
+  mergeSide.innerHTML = MERGE[mode].side
+  document.querySelectorAll('#mergeToggle button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode))
+}
+document.querySelectorAll('#mergeToggle button').forEach(b => b.addEventListener('click', () => setMerge(b.dataset.mode)))
+setMerge('dev')
+
+/* ============ 依赖矩阵 ============ */
+const DEPS = [
+  { k: 'client-pkg', kind: '官方客户端包', name: '@deepseek-ai/dsh-client-ui-sidebar', rel: '硬依赖（dsh.client.inject）', how: '提供左栏 sidebar slot 体系；缺了 → 客户端半不加载，侧栏退回自带浏览器。', miss: '缺 → SessionTree 不出现' },
+  { k: 'client-pkg', kind: '官方客户端包', name: '@deepseek-ai/dsh-client-ui-workspace', rel: '硬依赖（dsh.client.inject）', how: '提供 uiWorkspace 服务（openSession / fork / archive），点节点打开会话走它。', miss: '缺 → 点击无法打开会话' },
+  { k: 'host-svc', kind: '宿主服务', name: 'tools', rel: '硬依赖（ctx.inject）', how: '注册 tree_send 工具；缺了工具永不注册。', miss: '缺 → tree_send 不存在' },
+  { k: 'host-svc', kind: '宿主服务', name: 'subagents', rel: '硬依赖（ctx.inject）', how: '工具半用 subagents.prompt（按 durable 父地址授权）投递跨层消息；不 import 其 npm 包，只依赖服务形状。', miss: '缺 → tree_send 静默不注册；形状变了 → E_PORTS_PROTOCOL' },
+  { k: 'host-svc', kind: '宿主服务', name: 'sessionQuery', rel: '硬依赖（ctx.inject）', how: '省略 parent 时，用 filterSessions 读目标会话日志里的 parentSession 来解析父地址。', miss: '缺 → 必须显式传 parent' },
+  { k: 'client-svc', kind: '客户端服务', name: 'slots / sessions / uiWorkspace / sidebarRight / locale', rel: '客户端注入（apply 内）', how: 'slots 占席位、sessions 读会话树数据、uiWorkspace 导航与操作、sidebarRight 在右栏打开、locale 注册中英文案。', miss: '缺任一 → 对应交互降级（locale 失败则用内置字典）' },
+  { k: 'client-svc', kind: '客户端服务', name: 'cordisInspect', rel: '可选注入（软）', how: '有它才注册 SessionTree 只读 provider；没有时回调不执行，界面照常渲染。', miss: '缺 → agent 读不到渲染快照' },
+  { k: 'third', kind: '第三方 / 自建', name: 'td-tweak 0.3.1（@local，非 git）', rel: '软集成（DOM）', how: '提供菜单行胶囊与「元方法」入口按钮、发布 --td-tweak-left。meta-loop 会检测 .dsh-td-meta 并让出入口；缺席则退化为自立浮动按钮。', miss: '缺 → meta-loop 入口退化，不影响会话树' },
+  { k: 'third', kind: '第三方 / 自建', name: 'dsh-thoughtdag 0.5.26（npm，第三方）', rel: '软集成（DOM）', how: '提供 .dsh-td-switch 胶囊容器（历史入口位）。会话树本身不依赖它，meta-loop 的历史入口逻辑会用到。', miss: '缺 → 无胶囊容器，入口自立' },
+  { k: 'third', kind: '第三方 / 自建', name: 'react（由客户端模块 loader 提供）', rel: '运行时提供，非 npm 依赖', how: 'client.js 在 factory(require) 里 require("react")，由 DSH 客户端 runner 注入。', miss: '缺 → 不可能，宿主自带' },
+  { k: 'npm', kind: 'npm 依赖', name: '（无）', rel: '0 依赖 · 0 peerDependencies', how: '刻意留空：不 import 任何 @deepseek-ai/* 包；peerDependencies 是 DSH 唯一强制的兼容字段，留空=不设限，宿主升级不会硬失败。', miss: '无 — 这是刻意设计' },
+  { k: 'host-svc', kind: '宿主服务', name: '（本仓其他插件）tree-engine：tools/subagents/sessionQuery/timer/agents', rel: '可选 + 硬混合', how: 'tree-engine 硬依赖 tools/subagents/sessionQuery；可选 get(timer)（当前宿主无 → degraded-lazy）；用 ctx.agents 找活祖先 Agent。', miss: '无 timer → sweep 降级（当前即如此）' },
+  { k: 'host-svc', kind: '宿主服务', name: '（本仓其他插件）meta-loop：tools/webServer', rel: '硬依赖', how: 'tools 注册 meta_loop；webServer 挂 /metaloop/ 面板路由与只读 API。', miss: '缺 webServer → 无面板' },
+  { k: 'host-svc', kind: '宿主服务', name: '（本仓其他插件）agent-introspect：tools + 文件', rel: '硬依赖 + 存储布局耦合', how: 'self_spec 直接读 ~/.dsh/storages/session_projcache/sessions/&lt;id&gt;.json；DSH 改存储布局会静默降级。', miss: '布局变了 → 字段 unavailable' }
+]
+const depGrid = document.getElementById('depGrid')
+const KINDCOLOR = { 'client-pkg': 'var(--green)', 'host-svc': 'var(--blue)', 'client-svc': 'var(--purple)', third: 'var(--orange)', npm: 'var(--tx3)' }
+DEPS.forEach(d => {
+  const el = document.createElement('div')
+  el.className = 'dep'
+  el.dataset.kind = d.k
+  el.style.setProperty('--kc', KINDCOLOR[d.k] || 'var(--line)')
+  el.innerHTML = '<div class="top"><span class="name">' + d.name + '</span><span class="kind">' + d.kind + '</span></div>' +
+    '<div class="rel">' + d.rel + '</div><div class="how">' + d.how + '</div><div class="miss">⚠ ' + d.miss + '</div>'
+  depGrid.appendChild(el)
+})
+document.querySelectorAll('#depFilters button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#depFilters button').forEach(x => x.classList.toggle('on', x === b))
+    const f = b.dataset.f
+    document.querySelectorAll('#depGrid .dep').forEach(el => el.classList.toggle('filter-hide', f !== 'all' && el.dataset.kind !== f))
+  })
+})
+
+/* ============ 时间线 + 状态表 ============ */
+const TL = [
+  { d: '2026-10-01', t: '公开仓库创建', dd: 'orphiczhou/dsh-session-tree 建仓（MIT，topic dsh-plugin）；首次提交即单包合并形态。', c: 'ok' },
+  { d: '2026-10-02', t: 'v1.0.1 → v1.0.4 五个 commit', dd: '工作区分组、SessionTree inspect provider、样式表自救（262px 图标事故）、样式表自愈。最后一个 commit 即 v1.0.4。', c: 'ok' },
+  { d: '2026-10-14', t: '市场 PR #6334 合并', dd: 'awesome-dsh-plugin 收录会话树（community listing）。同日 PR #6435 于次日合并收录 region-probe。', c: 'ok' },
+  { d: '2026-10-17', t: 'DSH 升级 0.2.1-rc.2，API 漂移', dd: 'subagents 移除 startContinuable → tree_dispatch / 竹节 / adversarial judge 全部失效；Nanju 会话热修树引擎，但改动至今未提交本仓。', c: 'now' },
+  { d: '2026-11-10', t: '当前宿主重装：0.2.2-rc.1', dd: 'tree-engine apply.log：8/8 工具注册，sweep 进入 degraded:no-timer；会话树两端仍在线。', c: 'ok' },
+  { d: '2026-11-11', t: '本次简报', dd: '重新核对全部状态：合并版已在 GitHub/npm/GitHub 三面取证；本仓仍是「有 git、无 remote、有未提交改动」。', c: 'now' }
+]
+const timeline = document.getElementById('timeline')
+TL.forEach(x => {
+  const el = document.createElement('div')
+  el.className = 'tl ' + x.c
+  el.innerHTML = '<div class="date">' + x.d + '</div><div class="tt">' + x.t + '</div><div class="dd">' + x.dd + '</div>'
+  timeline.appendChild(el)
+})
+const STATUS = [
+  ['@orphiczhou/dsh-session-tree', '✅ 公开', 'MIT · dsh-plugin · 5 commits · v1.0.4 = 本地 publish 逐字节一致', '❌ 404（刻意）', '✅ #6334 已合并'],
+  ['@orphiczhou/dsh-region-probe', '✅ 公开', 'v1.0.0', '❌ 404（刻意）', '✅ #6435 已合并'],
+  ['@local/dsh-session-tree（开发态）', '❌ 未公开', '不是 git 仓库；本机 link: 运行', '—', '—'],
+  ['@local/dsh-session-tree-tools（开发态）', '❌ 未公开', '不是 git 仓库；本机 link: 运行', '—', '—'],
+  ['dsh-tree-engine / meta-loop / agent-introspect', '❌ 未公开', '在本仓内，但本仓无 remote', '—', '—'],
+  ['dsh-tree-harness（本仓）', '❌ 无 remote', 'git 仓存在，HEAD 2cb2d17，另有未提交改动', '—', '—'],
+  ['td-tweak', '❌ 不是 git', '本机自建胶囊插件，无版本管理', '—', '—'],
+  ['nanju-dsh', '❌ 无 remote', 'git 仓存在', '—', '—']
+]
+const statusTable = document.getElementById('statusTable')
+statusTable.innerHTML = '<thead><tr><th>对象</th><th>GitHub</th><th>说明</th><th>npm</th><th>市场</th></tr></thead><tbody>' +
+  STATUS.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + r[4] + '</td></tr>').join('') + '</tbody>'
+
+/* ============ 重启清单 ============ */
+const CHECKS = [
+  { id: 'c1', t: '提交 RC2 兼容层 + 补单测', d: '把 tree-engine/index.js 的兼容层与 defect 文档做成一个 commit；补 fake subagents 覆盖 startActivation / interrupt authority / sendMessage 回退。', why: '不提交 = 换机器/重装即失；且当前宿主已无 startContinuable。' },
+  { id: 'c2', t: '给本仓配 remote 并推第一版', d: '先建私有仓（或决定公开范围）→ git remote add → 推送 master + 未提交改动。', why: 'GitHub 是唯一能承载传播的渠道；本仓目前零备份。' },
+  { id: 'c3', t: '决定合并方案（推荐 B⁺）', d: '单包迁入 packages/dsh-session-tree 吃 HMR；profile 停用两个 @local/* 包、改装单包；发布由 git push 到公开仓。', why: '把「开发双包」与「发布单包」两态收敛成一态，消除同步漂移。' },
+  { id: 'c4', t: '统一文档入口', d: 'README 还停留在「下一步 S0 规约冻结」；真正最新的状态散在 docs/handoff-2026-10-14.md 与 default-workspace 的 5 份 HANDOFF*.md。', why: '重启项目时，入口文档错了比没有更贵。' },
+  { id: 'c5', t: '处理 meta-loop 与 timer 两个「半死」状态', d: 'meta-loop 实现完整但没进 profile bundles；tree-engine 的 sweep 因宿主无 timer 进入 degraded-lazy。', why: '两个都写着「能用」，实际一个是未装载、一个是降级。' },
+  { id: 'c6', t: '决定 npm 发布策略', d: '当前 4 个包名全部 404，README 明确只走 Git 安装。上 npm 可让市场条目变一键安装，需要 npm token。', why: '传播效率 vs 发布流程成本的取舍，属于你的决策。' },
+  { id: 'c7', t: '确立版本纪律', d: '市场按 package.json 的 version 判断更新 → 改代码必须 bump version；发布清单用 publish/verify-bundle.mjs 自检。', why: '不 bump = 市场永远显示旧版本。' }
+]
+const checklist = document.getElementById('checklist')
+const progressBar = document.getElementById('progressBar')
+const progressLab = document.getElementById('progressLab')
+const checked = JSON.parse(localStorage.getItem('dth-checked') || '{}')
+function renderProgress() {
+  const n = CHECKS.filter(c => checked[c.id]).length
+  progressBar.style.width = (n / CHECKS.length * 100) + '%'
+  progressLab.textContent = n + ' / ' + CHECKS.length + ' 完成' + (n === CHECKS.length ? ' · 可以开工了 🚀' : '')
+}
+CHECKS.forEach(c => {
+  const el = document.createElement('div')
+  el.className = 'chk' + (checked[c.id] ? ' done' : '')
+  el.dataset.id = c.id
+  el.innerHTML = '<div class="box">✓</div><div class="body"><div class="t">' + c.t + '</div><div class="d">' + c.d + '</div><div class="why">为什么：' + c.why + '</div></div>'
+  el.addEventListener('click', () => {
+    checked[c.id] = !checked[c.id]
+    el.classList.toggle('done', checked[c.id])
+    localStorage.setItem('dth-checked', JSON.stringify(checked))
+    renderProgress()
+  })
+  checklist.appendChild(el)
+})
+renderProgress()
+
+/* ============ 复制反馈 ============ */
+const toast = document.getElementById('toast')
+function showToast(msg) {
+  toast.textContent = msg || '已复制'
+  toast.classList.add('show')
+  clearTimeout(showToast._t)
+  showToast._t = setTimeout(() => toast.classList.remove('show'), 1300)
+}
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[href^="#"]')
+  if (a) return
+})
+</script>
+</body>
+</html>

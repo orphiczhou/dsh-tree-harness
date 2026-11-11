@@ -220,8 +220,15 @@ const NO_START_CAPABILITIES = Object.freeze({ agentOptions:false, outputSchema:f
 3. one-shot 支持 outputSchema 且单轮；continuable 剥离 label/signal/outputSchema、必填 label+childId 可指定、强制持久化、冷恢复与 send_message 结算。
 4. 温度：无派发配置点（仅 LLM 层类型存在）；权限：无请求字段、仅父状态隐式继承且审批钉死 never；作用域：toolFilter（部署级）+ 恒定 delegation 声明。
 
-证据文件（本仓库本地抽取副本，便于复核）：
-- demo/agspec/_subagent-index.js（= @deepseek-ai/dsh-subagent/lib/index.js 全文）
-- demo/agspec/_tool-subagent.js（= @deepseek-ai/dsh-tool-subagent/lib/index.js 全文）
-- demo/agspec/_driver.js（= @deepseek-ai/dsh-subagent-in-process-driver/lib/index.js）
-- demo/agspec/_spawn.js（= @deepseek-ai/dsh-subagent-spawn-in-process/lib/index.js）
+证据文件（原为本仓库本地抽取副本，便于复核）：
+
+> ⚠️ **公开仓说明（2026-11-11，决策 D7）**：下列 6 个「DSH 第三方源码全文摘录」文件**已从公开仓库及其 git 历史中移除**（避免再分发第三方源码），原件保存在维护者本机
+> `default-workspace/backups/public-release-privacy-2026-11-11/`，不入库。本笔记中的 `@deepseek-ai/...` 包路径 + 行号即复现依据；
+> 提取工具 `demo/agspec/_extract.cjs`（自写代码）保留在仓内。
+>
+> - `demo/agspec/_subagent-index.js`（= `@deepseek-ai/dsh-subagent/lib/index.js` 全文）— 已移除
+> - `demo/agspec/_tool-subagent.js`（= `@deepseek-ai/dsh-tool-subagent/lib/index.js` 全文）— 已移除
+> - `demo/agspec/_tool-subagent.md`（= 该包 README）— 已移除
+> - `demo/agspec/_driver.js`（= `@deepseek-ai/dsh-subagent-in-process-driver/lib/index.js`）— 已移除
+> - `demo/agspec/_spawn.js`（= `@deepseek-ai/dsh-subagent-spawn-in-process/lib/index.js`）— 已移除
+> - `demo/agspec/_fork.js`（= `@deepseek-ai/dsh-subagent-fork-in-process/lib/index.js`）— 已移除

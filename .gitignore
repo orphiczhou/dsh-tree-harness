@@ -3,6 +3,14 @@ node_modules/
 tree-engine-data/
 .asar-tool-out*
 
+# 本地机密（公开仓禁止入库）
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+id_rsa*
+
 # 会话遗留 / 工具临时输出（2026-10-14 小债轮清理，勿再提交）
 # 旧版测试曾用真实 fileStore 把引擎状态写进包目录（现测试全走 memoryStore/os.tmpdir）
 packages/*/11111111-1111-4111-8111-111111111111/
