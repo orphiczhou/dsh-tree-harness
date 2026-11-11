@@ -1,0 +1,943 @@
+{
+  "tool": "summarize-run",
+  "generatedAt": "2026-11-11T07:51:58.747Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "profileDir": "C:\\Users\\sir_c\\.dsh\\profiles\\desktop",
+  "options": {
+    "session": [
+      "8fb77300-3559-453a-9596-b02f4d693b28"
+    ],
+    "childDepth": 2,
+    "scanWorkspace": "same"
+  },
+  "sessions": [
+    {
+      "id": "8fb77300-3559-453a-9596-b02f4d693b28",
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\8fb77300-3559-453a-9596-b02f4d693b28\\session.v4.jsonl.zstd",
+      "workspaceEncoding": "--D-Codes-dsh-tree-harness--",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": "7dd52e8b-a3c2-4481-a9da-8ef94b9a093e",
+        "origin": "subagent",
+        "delegationDepth": 3,
+        "agentPreset": "standard",
+        "createdAt": 1794382509304
+      },
+      "header": {
+        "seq": 61,
+        "config": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        },
+        "toolCount": 158,
+        "headerCount": 3
+      },
+      "eventCount": 155,
+      "firstUserMessage": {
+        "seq": 10,
+        "text": "你是树 `c3demo` 的 **中间层指挥官**（leaf `c3demo-M1-commander`），父 leaf 是 `c3demo-root`（根会话 `7dd52e8b-a3c2-4481-a9da-8ef94b9a093e`），工作区 `D:\\Codes\\dsh-tree-harness`。你的容器会话（你）的 id 用 `$env:DSH_SESSION_ID` 读出（裸 UUID）。\n\n演示目标（用户原话）：根会话→中间层→执行层三层都能干活，并在中间层交接一次。你是中间层：本层必须真干活、可核验，不能只转发。\n\n【第一步】调用 `skill {name:\"tree-commander\"}` 读协议（重点 §1 建点/派发、§3 交接与 §3.3 owner 协调）。再调用 `skill {name:\"session-handoff\"}` 读交接规范。\n\n【本层工作（严格按序）】\n1. 写 `demo/c3layer/01-middle.md`（UTF-8，≥300 字节）：中间层是谁（会话 id/leaf）、收到什么目标、你的分解、派发的执行层 leaf 与结果、worker 产物路径、验收结果、交接 successor id/HANDOFF 路径。先写初稿，交接后再补最终值。\n2. 在自己下面建执行层 worker leaf（一次 `tree_node {action:\"add\"}`）：\n   - `leaf_id`: `c3demo-M1a1-worker`，`parent`: `c3demo-M1-commander`，`path`: `M1a1`，`role`: `worker`，`taskType`: `default`，`added_by`: 你的会话 id（$env:DSH_SESSION_ID）。\n   - `brief`: `{\"goal\":\"写 demo/c3layer/02-execution.md（≥300 字节）：含执行层名称、会话 id、实际命令与输出（node --version、Get-Date -Format o）、读到的 00-root.md/01-middle.md 摘要、结论。\"}`\n   - `dod`: `{\"dod\":\"02-execution.md 存在、≥300 字节、含「执行层」字样；执行层会话完成 done 上报。\"}`\n   - **不要传 `session_id`**（派发时引擎自动绑定，传了会 E_MAX_SESSIONS/冲突）。\n3. `tree_dispatch {action:\"start\", tree_id:\"c3demo\", leaf_id:\"c3demo-M1a1-worker\", prompt: \"<执行层任务书>\", dod:{...}}` 派发。执行层任务书：\n   「你是树 `c3demo` 的执行层 worker（leaf `c3demo-M1a1-worker`）。只做一件事：写 `demo/c3layer/02-execution.md`（UTF-8，≥300 字节）。内容：①标题「执行层记录」；②你的会话 id（`$env:DSH_SESSION_ID`）；③实际执行 `node --version` 与 `Get-Date -Format o` 的真实输出；④`demo/c3layer/00-root.md` 与 `demo/c3layer/01-middle.md` 是否存在、各一行摘要；⑤结论。不要建子节点、不要改其他文件、不要调用 session_handoff。写完后按引擎结算指令用 `tree_report {action:\"event\", type:\"done\"}` 登记完成。」\n4. 轮询收割：间隔约 25 秒，最多 6 次，调用 `tree_status {action:\"harvest\", tree_id:\"c3demo\"}` + `tree_node {action:\"get\", tree_id:\"c3demo\", leaf_id:\"c3demo-M1a1-worker\"}`，直到 worker 的 `runtime.state=succeeded`（done 事件会回流）。若 timeout/failed/cancelled：如实写进 01-middle.md，仍继续后续步骤（不要无限等）。\n5. `tree_verify {action:\"run\", tree_id:\"c3demo\", leaf_id:\"c3demo-M1a1-worker\"}`（不传 policy_id；taskType=default → self-report 策略）。记录 PASS/FAIL 与策略名。\n6. 上下文自报：`session_handoff {action:\"status\"}` 读真实 `context_pct`；随后 `tree_report {action:\"context\", tree_id:\"c3demo\", leaf_id:\"c3demo-M1-commander\", pct:<真实值>}`。若真实值 ≥42 就不要在报完后再次 harvest（避免触发竹节）。\n7. **会话交接（用户明确要求，题目就是「在中间层交接一次」；不是 50% 触发，允许且必须 force:true）**：\n   `session_handoff {action:\"handoff\", force:true, summary:\"<一句话：树 c3demo 中间层；worker ... 已 ...；现在把中间层交棒，接替会话只做收尾核对与回报，不操作树账本>\", next_steps:[\"先读 HANDOFF 文件（路径见你首条消息），用 tree_status overview 只读确认树 c3demo 的节点状态\",\"读 demo/c3layer/01-middle.md 与 demo/c3layer/02-execution.md，核对 02 是否由执行层会话产出且含真实命令输出；不要修改 00/01/02\",\"用 self_spec 记录你继承的 cwd/预设/权限/模型，写 demo/c3layer/03-handoff-successor.md（≥200 字节）记录接管结论\",\"用 send_message 给根会话 7dd52e8b-a3c2-4481-a9da-8ef94b9a093e 发送：接管完成 + 03 路径 + 核对结论\"], files:[\"demo/c3layer/01-middle.md\",\"demo/c3layer/02-execution.md\"], open_questions:[], note:\"中间层交接是用户明确要求的演示；tree leaf owner 仍是旧会话（交接不自动迁移），接替会话不要写 done。执行层 leaf id 为 c3demo-M1a1-worker。\"}`\n   - 若返回被拒绝（below-threshold），说明 force 没生效或参数错：核对并重试一次（仍带 force:true）。\n   - 把返回中的 successor id / kind / HANDOFF 路径 / preset / workspace / inherited 原文记下。\n8. 更新 `01-middle.md` 最终版（含 successor 与 HANDOFF 路径），然后 `tree_report {action:\"event\", tree_id:\"c3demo\", leaf_id:\"c3demo-M1-commander\", type:\"done\", meta:{summary:\"...\", self_check:[{item:\"...\",pass:true,evidence:\"...\"}]}}`。**done 必须由你（owner）写**；写完即停，不再新开步骤（交接后让位）。\n\n【纪律】只写 `demo/c3layer/01-middle.md` 与你自己的 `HANDOFF-*.md`；不碰 packages/、agent.md、README、git；不重复派发 worker；不替接替会话写 done。遇到工具错误先读错误码，按 tree-commander §5 处理，并把经过写进 01-middle.md。\n\n[DoD 验收标准（完成定义，验收器与本文同源）]\n1. 结论自述完成并给出关键产出\n\n[结算指令] 你是树节点 c3demo/c3demo-M1-commander 的执行者。任务完成（含结论自述与关键产出）后，必须调用工具 tree_report {action:\"event\", tree_id:\"c3demo\", leaf_id:\"c3demo-M1-commander\", type:\"done\", meta:{summary:\"<一句话结论>\"}} 登记完成；失败/无法完成时同样回报 done 并在 summary 写明失败原因。除此之外不得操作树。\nYour parent agent id is \"7dd52e8b-a3c2-4481-a9da-8ef94b9a093e\". Before you finish, send your result to that agent with send_message({ agent_id: \"7dd52e8b-a3c2-4481-a9da-8ef94b9a093e\", message: \"<self-contained result>\" }). The parent shares your workspace but does not automatically receive your transcript, tool output, or reasoning. Send earlier messages as well when a finding changes what the parent should do next; sending a message does not end your turn."
+      },
+      "assistantFinal": {
+        "seq": 144,
+        "text": "All files exist. 01-middle.md 5781 bytes, 02 1291 bytes, HANDOFF 3040 bytes. Now write done as owner with meta summary + self_check, then send_message to parent. These two are independent — but the order requested: done then stop. The send_message is required by the runtime instructions. I can do both in one block since they're independent. Let me compose done meta: { summary: \"中间层完成：建并派发执行层 c3demo-M1a1-worker（sess 63530e9d），worker succeeded + verify PASS(self-report)，02-execution.md 1291B 含真实 node/Get-Date 输出；已做用户要求的 session_handoff（successor d703b780, kind=sibling, HANDOFF-8fb77300-20261111-…"
+      },
+      "skills": {
+        "found": true,
+        "firstSeq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "evolution": [
+          {
+            "seq": 12,
+            "count": 15,
+            "targets": [
+              "tree-commander",
+              "tree-worker",
+              "session-handoff"
+            ]
+          }
+        ],
+        "loaded": [
+          {
+            "seq": 18,
+            "name": "tree-commander"
+          },
+          {
+            "seq": 20,
+            "name": "session-handoff"
+          }
+        ]
+      },
+      "tree": {
+        "plan": [],
+        "nodes": [
+          {
+            "seq": 34,
+            "action": "list-all",
+            "tree_id": "c3demo",
+            "leaf": null,
+            "ok": true,
+            "result": "tree_node: 2 leaves"
+          },
+          {
+            "seq": 46,
+            "action": "add",
+            "tree_id": "c3demo",
+            "leaf": {
+              "leaf_id": "c3demo-M1a1-worker",
+              "parent": "c3demo-M1-commander",
+              "path": "M1a1",
+              "role": "worker",
+              "added_by": "8fb77300-3559-453a-9596-b02f4d693b28",
+              "brief": {
+                "goal": "写 demo/c3layer/02-execution.md（≥300 字节）：含执行层名称、会话 id、实际命令与输出（node --version、Get-Date -Format o）、读到的 00-root.md/01-middle.md 摘要、结论。"
+              },
+              "dod": {
+                "dod": "02-execution.md 存在、≥300 字节、含「执行层」字样；执行层会话完成 done 上报。"
+              },
+              "taskType": "default"
+            },
+            "ok": false,
+            "result": "Error: unknown tool \"tree_node\""
+          },
+          {
+            "seq": 52,
+            "action": "add",
+            "tree_id": "c3demo",
+            "leaf": {
+              "added_by": "8fb77300-3559-453a-9596-b02f4d693b28",
+              "brief": {
+                "goal": "写 demo/c3layer/02-execution.md（≥300 字节）：含执行层名称、会话 id、实际命令与输出（node --version、Get-Date -Format o）、读到的 00-root.md/01-middle.md 摘要、结论。"
+              },
+              "dod": {
+                "dod": "02-execution.md 存在、≥300 字节、含「执行层」字样；执行层会话完成 done 上报。"
+              },
+              "leaf_id": "c3demo-M1a1-worker",
+              "parent": "c3demo-M1-commander",
+              "path": "M1a1",
+              "role": "worker",
+              "taskType": "default"
+            },
+            "ok": true,
+            "result": "tree_node: c3demo-M1a1-worker status=pending_brief · (未派发) ctx=0%"
+          },
+          {
+            "seq": 78,
+            "action": "get",
+            "tree_id": "c3demo",
+            "leaf": null,
+            "leaf_id": "c3demo-M1a1-worker",
+            "ok": true,
+            "result": "tree_node: c3demo-M1a1-worker status=pending_brief · runtime[state=running attempt=1 chain=0 sess=63530e9d] ctx=0%"
+          },
+          {
+            "seq": 97,
+            "action": "get",
+            "tree_id": "c3demo",
+            "leaf": null,
+            "leaf_id": "c3demo-M1a1-worker",
+            "ok": true,
+            "result": "tree_node: c3demo-M1a1-worker status=pending_brief · runtime[state=succeeded attempt=1 chain=0 sess=63530e9d] ctx=0%"
+          }
+        ],
+        "dispatch": [
+          {
+            "seq": 57,
+            "action": "start",
+            "tree_id": "c3demo",
+            "leaf_id": "c3demo-M1a1-worker",
+            "ok": false,
+            "result": "Error: unknown tool \"tree_dispatch\""
+          },
+          {
+            "seq": 63,
+            "action": "start",
+            "tree_id": "c3demo",
+            "leaf_id": "c3demo-M1a1-worker",
+            "ok": true,
+            "result": "tree_dispatch: c3demo-M1a1-worker → running"
+          }
+        ],
+        "reports": [
+          {
+            "seq": 118,
+            "action": "context",
+            "tree_id": "c3demo",
+            "leaf_id": "c3demo-M1-commander",
+            "meta": null,
+            "pct": 7.2,
+            "ok": false,
+            "result": "Error: E_SCHEMA_INVALID: pct \"7.2\" must be an integer 0-100"
+          },
+          {
+            "seq": 123,
+            "action": "context",
+            "tree_id": "c3demo",
+            "leaf_id": "c3demo-M1-commander",
+            "meta": null,
+            "pct": 7,
+            "ok": true,
+            "result": "tree_report: ok (c3demo-M1-commander)"
+          },
+          {
+            "seq": 145,
+            "action": "event",
+            "tree_id": "c3demo",
+            "leaf_id": "c3demo-M1-commander",
+            "type": "done",
+            "meta": {
+              "summary": "中间层真干活并交棒完成：建并派发执行层 c3demo-M1a1-worker（会话 63530e9d），worker runtime.state=succeeded、tree_verify PASS(self-report)，02-execution.md 1291B 含真实 node --version=v24.20.0 与 Get-Date 输出；已按用户要求做 session_handoff(force) → successor d703b780 (kind=sibling, HANDOFF-8fb77300-20261111-153844.md)；01-middle.md 定稿 5781B。",
+              "self_check": [
+                {
+                  "item": "执行层真干活（非转发）",
+                  "pass": true,
+                  "evidence": "demo/c3layer/02-execution.md 1291 bytes，由执行层会话 63530e9d 写入，含 node --version=v24.20.0 与 Get-Date=2026-11-11T15:37:14.7856484+08:00 及 00/01 摘要"
+                },
+                {
+                  "item": "worker 终态 succeeded",
+                  "pass": true,
+                  "evidence": "tree_node get: runtime[state=succeeded attempt=1 chain=0 sess=63530e9d]；done 事件由执行层上报"
+                },
+                {
+                  "item": "tree_verify PASS",
+                  "pass": true,
+                  "evidence": "tree_verify run → PASS（策略 self-report，taskType=default 路由）"
+                },
+                {
+                  "item": "中间层交接完成",
+                  "pass": true,
+                  "evidence": "session_handoff handoff force=true → handed-off, successor d703b780-4981-4f66-a7c5-881b3385d51c kind=sibling preset=standard inherited=session-route, HANDOFF-8fb77300-20261111-153844.md"
+                },
+                {
+                  "item": "01-middle.md 定稿",
+                  "pass": true,
+                  "evidence": "5781 bytes，含中间层身份/分解/派发结果/产物/验收/successor+HANDOFF 路径/过程异常"
+                },
+                {
+                  "item": "纪律：只写本层产物",
+                  "pass": true,
+                  "evidence": "仅写 demo/c3layer/01-middle.md 与 HANDOFF 文件；02 由执行层写；未碰 packages/、agent.md、README、git；未重复派发"
+                }
+              ]
+            },
+            "pct": null,
+            "ok": true,
+            "result": "tree_report: ok (c3demo-M1-commander)"
+          }
+        ],
+        "verify": [
+          {
+            "seq": 108,
+            "action": "run",
+            "tree_id": "c3demo",
+            "leaf_id": "c3demo-M1a1-worker",
+            "ok": true,
+            "result": "tree_verify: PASS (self-report)"
+          }
+        ],
+        "status": [
+          {
+            "seq": 29,
+            "action": "overview",
+            "tree_id": "c3demo",
+            "result": "tree_status: ok (sweepMode=timer)"
+          },
+          {
+            "seq": 76,
+            "action": "harvest",
+            "tree_id": "c3demo",
+            "result": "tree_status: harvest c3demo:∅ | chlog:∅ | floweng:∅ | prj_mw4k:∅ | rsipoc:∅ | tchlog:∅ (sweepMode=timer)"
+          },
+          {
+            "seq": 95,
+            "action": "harvest",
+            "tree_id": "c3demo",
+            "result": "tree_status: harvest c3demo:∅ | chlog:∅ | floweng:∅ | prj_mw4k:∅ | rsipoc:∅ | tchlog:∅ (sweepMode=timer)"
+          }
+        ],
+        "log": [],
+        "maintain": [],
+        "send": []
+      },
+      "handoff": [
+        {
+          "seq": 113,
+          "args": {
+            "action": "status"
+          },
+          "parsed": {
+            "action": "status",
+            "text": "session_handoff status: context=7.2% (threshold 50%) pressure=72255/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue",
+            "status": {
+              "context_pct": 7.2,
+              "context_pct_raw": "7.2",
+              "threshold_pct": 50,
+              "pressure": "72255/1000000",
+              "model": "opencode-go/deepseek-v4.1-flash",
+              "effort": "max",
+              "preset": "standard",
+              "permission": "danger-full-access/danger-full-access/never",
+              "successor_kind": "sibling",
+              "raw": "session_handoff status: context=7.2% (threshold 50%) pressure=72255/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue"
+            },
+            "handoff": null
+          },
+          "result": "session_handoff status: context=7.2% (threshold 50%) pressure=72255/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue"
+        },
+        {
+          "seq": 128,
+          "args": {
+            "action": "handoff",
+            "files": [
+              "demo/c3layer/01-middle.md",
+              "demo/c3layer/02-execution.md"
+            ],
+            "force": true,
+            "next_steps": [
+              "先读 HANDOFF 文件（路径见你首条消息），用 tree_status overview 只读确认树 c3demo 的节点状态",
+              "读 demo/c3layer/01-middle.md 与 demo/c3layer/02-execution.md，核对 02 是否由执行层会话产出且含真实命令输出；不要修改 00/01/02",
+              "用 self_spec 记录你继承的 cwd/预设/权限/模型，写 demo/c3layer/03-handoff-successor.md（≥200 字节）记录接管结论",
+              "用 send_message 给根会话 7dd52e8b-a3c2-4481-a9da-8ef94b9a093e 发送：接管完成 + 03 路径 + 核对结论"
+            ],
+            "note": "中间层交接是用户明确要求的演示；tree leaf owner 仍是旧会话（交接不自动迁移），接替会话不要写 done。执行层 leaf id 为 c3demo-M1a1-worker。",
+            "open_questions": [],
+            "summary": "树 c3demo 中间层（leaf c3demo-M1-commander，会话 8fb77300-3559-453a-9596-b02f4d693b28）：已在本地建并派发执行层 leaf c3demo-M1a1-worker（会话 63530e9d-3eac-4fcb-9363-6efb456fe7db），worker 已 done 且 runtime.state=succeeded，tree_verify PASS(self-report)，产物 demo/c3layer/02-execution.md（1291 字节，含真实 node --version=v24.20.0 与 Get-Date 输出）；现在把中间层交棒，接替会话只做收尾核对与回报，不操作树账本。"
+          },
+          "parsed": {
+            "action": "handoff",
+            "text": "session_handoff: wrote D:\\Codes\\dsh-tree-harness\\HANDOFF-8fb77300-20261111-153844.md; successor d703b780-4981-4f66-a7c5-881b3385d51c kind=sibling preset=standard inherited=session-route",
+            "status": null,
+            "handoff": {
+              "handoff_path": "D:\\Codes\\dsh-tree-harness\\HANDOFF-8fb77300-20261111-153844.md",
+              "successor_id": "d703b780-4981-4f66-a7c5-881b3385d51c",
+              "kind": "sibling",
+              "preset": "standard",
+              "workspace": null,
+              "inherited": "session-route",
+              "degraded": null
+            }
+          },
+          "result": "session_handoff: wrote D:\\Codes\\dsh-tree-harness\\HANDOFF-8fb77300-20261111-153844.md; successor d703b780-4981-4f66-a7c5-881b3385d51c kind=sibling preset=standard inherited=session-route"
+        }
+      ],
+      "subagents": [],
+      "toolCounts": {
+        "skill": 2,
+        "pwsh": 5,
+        "tree_status": 3,
+        "tree_node": 5,
+        "read": 2,
+        "todo_write": 1,
+        "write": 2,
+        "tree_dispatch": 2,
+        "tree_verify": 1,
+        "session_handoff": 2,
+        "tree_report": 3,
+        "send_message": 1
+      },
+      "toolSequence": [
+        {
+          "seq": 18,
+          "name": "skill",
+          "argsSummary": "{\"name\":\"tree-commander\"}",
+          "resultHead": "<skill_content name=\"tree-commander\"> <skill_resources> Base directory for this skill: D:\\Codes\\dsh-tree-harness\\packages\\dsh-tree-engine\\skills\\tree-commander Resolve relative paths mentioned by this…",
+          "resultIsError": false
+        },
+        {
+          "seq": 20,
+          "name": "skill",
+          "argsSummary": "{\"name\":\"session-handoff\"}",
+          "resultHead": "<skill_content name=\"session-handoff\"> <skill_resources> Base directory for this skill: D:\\Codes\\dsh-tree-harness\\packages\\dsh-session-tree\\skills\\session-handoff Resolve relative paths mentioned by t…",
+          "resultIsError": false
+        },
+        {
+          "seq": 25,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Write-Output \\\"SESSION_ID=$env:DSH_SESSION_ID\\\"; Write-Output \\\"CWD=$(Get-Location)\\\"; if (Test-Path \\\"demo\\\\c3layer\\\") { Get-ChildItem \\\"demo\\\\c3layer\\\" | Select-Object Name,Length } else { Write-Output \\\"de…",
+          "resultHead": "SESSION_ID=8fb77300-3559-453a-9596-b02f4d693b28 CWD=D:\\Codes\\dsh-tree-harness Name Length ---- ------ 00-root.md 1560",
+          "resultIsError": false
+        },
+        {
+          "seq": 29,
+          "name": "tree_status",
+          "argsSummary": "{\"action\":\"overview\",\"tree_id\":\"c3demo\"}",
+          "resultHead": "tree_status: ok (sweepMode=timer)",
+          "resultIsError": false
+        },
+        {
+          "seq": 34,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"list-all\",\"tree_id\":\"c3demo\"}",
+          "resultHead": "tree_node: 2 leaves",
+          "resultIsError": false
+        },
+        {
+          "seq": 36,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\demo\\\\c3layer\\\\00-root.md\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\demo\\c3layer\\00-root.md</path> <type>file</type> <content> 1: # 三层最小演示 · 根层记录（root） 2: 3: - 树：`c3demo`（root leaf `c3demo-root`） 4: - 根会话：`7dd52e8b-a3c2-4481-a9da-8ef94b…",
+          "resultIsError": false
+        },
+        {
+          "seq": 41,
+          "name": "todo_write",
+          "argsSummary": "{\"todos\":[{\"content\":\"写 01-middle.md 初稿（≥300 字节，含中间层身份/分解/待补占位）\",\"status\":\"in_progress\"},{\"content\":\"tree_node add 建 c3demo-M1a1-worker 执行层 leaf\",\"status\":\"in_progress\"},{\"content\":\"tree_dispatch start 派发执行层任务书\",\"status\"…",
+          "resultHead": "Updated todo list: 6 pending, 2 in progress, 0 completed.",
+          "resultIsError": false
+        },
+        {
+          "seq": 44,
+          "name": "write",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\demo\\\\c3layer\\\\01-middle.md\",\"content\":\"# 三层最小演示 · 中间层记录（commander）\\n\\n> 版本：初稿（派发前写入；收割与交接完成后在文末补齐最终值）\\n\\n## 1. 中间层是谁\\n\\n- 角色：中间层指挥官（commander），树 `c3demo` 的第二层。\\n- leaf：`c3demo-…",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\demo\\c3layer\\01-middle.md</path> <type>file</type> <content> Created file </content>",
+          "resultIsError": false
+        },
+        {
+          "seq": 46,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"add\",\"tree_id\":\"c3demo\",\"leaf\":{\"leaf_id\":\"c3demo-M1a1-worker\",\"parent\":\"c3demo-M1-commander\",\"path\":\"M1a1\",\"role\":\"worker\",\"added_by\":\"8fb77300-3559-453a-9596-b02f4d693b28\",\"brief\":{\"goal\":\"写 demo/c3layer/02-…",
+          "resultHead": "Error: unknown tool \"tree_node\"",
+          "resultIsError": true
+        },
+        {
+          "seq": 52,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"add\",\"leaf\":{\"added_by\":\"8fb77300-3559-453a-9596-b02f4d693b28\",\"brief\":{\"goal\":\"写 demo/c3layer/02-execution.md（≥300 字节）：含执行层名称、会话 id、实际命令与输出（node --version、Get-Date -Format o）、读到的 00-root.md/01-middle.md 摘要、结论…",
+          "resultHead": "tree_node: c3demo-M1a1-worker status=pending_brief · (未派发) ctx=0%",
+          "resultIsError": false
+        },
+        {
+          "seq": 57,
+          "name": "tree_dispatch",
+          "argsSummary": "{\"action\":\"start\",\"leaf_id\":\"c3demo-M1a1-worker\",\"prompt\":\"你是树 `c3demo` 的执行层 worker（leaf `c3demo-M1a1-worker`）。只做一件事：写 `demo/c3layer/02-execution.md`（UTF-8，≥300 字节）。内容：①标题「执行层记录」；②你的会话 id（`$env:DSH_SESSION_ID`）；③实际执行 `no…",
+          "resultHead": "Error: unknown tool \"tree_dispatch\"",
+          "resultIsError": true
+        },
+        {
+          "seq": 63,
+          "name": "tree_dispatch",
+          "argsSummary": "{\"action\":\"start\",\"dod\":{\"dod\":\"02-execution.md 存在、≥300 字节、含「执行层」字样；执行层会话完成 done 上报。\"},\"leaf_id\":\"c3demo-M1a1-worker\",\"prompt\":\"你是树 `c3demo` 的执行层 worker（leaf `c3demo-M1a1-worker`）。只做一件事：写 `demo/c3layer/02-execution.md`（U…",
+          "resultHead": "tree_dispatch: c3demo-M1a1-worker → running",
+          "resultIsError": false
+        },
+        {
+          "seq": 69,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Start-Sleep -Seconds 25; Write-Output \\\"waited 25s\\\"\",\"description\":\"Wait 25 seconds before harvest\",\"timeoutMs\":40000}",
+          "resultHead": "waited 25s",
+          "resultIsError": false
+        },
+        {
+          "seq": 76,
+          "name": "tree_status",
+          "argsSummary": "{\"action\":\"harvest\",\"tree_id\":\"c3demo\"}",
+          "resultHead": "tree_status: harvest c3demo:∅ | chlog:∅ | floweng:∅ | prj_mw4k:∅ | rsipoc:∅ | tchlog:∅ (sweepMode=timer)",
+          "resultIsError": false
+        },
+        {
+          "seq": 78,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"get\",\"leaf_id\":\"c3demo-M1a1-worker\",\"tree_id\":\"c3demo\"}",
+          "resultHead": "tree_node: c3demo-M1a1-worker status=pending_brief · runtime[state=running attempt=1 chain=0 sess=63530e9d] ctx=0%",
+          "resultIsError": false
+        },
+        {
+          "seq": 83,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Start-Sleep -Seconds 25; Write-Output \\\"waited 25s\\\"\",\"description\":\"Wait 25 seconds before second harvest\",\"timeoutMs\":40000}",
+          "resultHead": "waited 25s",
+          "resultIsError": false
+        },
+        {
+          "seq": 95,
+          "name": "tree_status",
+          "argsSummary": "{\"action\":\"harvest\",\"tree_id\":\"c3demo\"}",
+          "resultHead": "tree_status: harvest c3demo:∅ | chlog:∅ | floweng:∅ | prj_mw4k:∅ | rsipoc:∅ | tchlog:∅ (sweepMode=timer)",
+          "resultIsError": false
+        },
+        {
+          "seq": 97,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"get\",\"leaf_id\":\"c3demo-M1a1-worker\",\"tree_id\":\"c3demo\"}",
+          "resultHead": "tree_node: c3demo-M1a1-worker status=pending_brief · runtime[state=succeeded attempt=1 chain=0 sess=63530e9d] ctx=0%",
+          "resultIsError": false
+        },
+        {
+          "seq": 99,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"$f=\\\"demo\\\\c3layer\\\\02-execution.md\\\"; $b=[System.IO.File]::ReadAllBytes((Resolve-Path $f)); $t=[System.IO.File]::ReadAllText((Resolve-Path $f),[System.Text.UTF8Encoding]::new($false)); Write-Output (\\\"bytes=…",
+          "resultHead": "bytes=1291 chars=819 has_exec_str=True",
+          "resultIsError": false
+        },
+        {
+          "seq": 106,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\demo\\\\c3layer\\\\02-execution.md\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\demo\\c3layer\\02-execution.md</path> <type>file</type> <content> 1: # 执行层记录 2: 3: - 树 / 节点：`c3demo` / `c3demo-M1a1-worker`（执行层 worker） 4: - 会话 id（`$env:DSH_SESSION_ID`）：…",
+          "resultIsError": false
+        },
+        {
+          "seq": 108,
+          "name": "tree_verify",
+          "argsSummary": "{\"action\":\"run\",\"leaf_id\":\"c3demo-M1a1-worker\",\"tree_id\":\"c3demo\"}",
+          "resultHead": "tree_verify: PASS (self-report)",
+          "resultIsError": false
+        },
+        {
+          "seq": 113,
+          "name": "session_handoff",
+          "argsSummary": "{\"action\":\"status\"}",
+          "resultHead": "session_handoff status: context=7.2% (threshold 50%) pressure=72255/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never succ…",
+          "resultIsError": false
+        },
+        {
+          "seq": 118,
+          "name": "tree_report",
+          "argsSummary": "{\"action\":\"context\",\"leaf_id\":\"c3demo-M1-commander\",\"pct\":7.2,\"tree_id\":\"c3demo\"}",
+          "resultHead": "Error: E_SCHEMA_INVALID: pct \"7.2\" must be an integer 0-100",
+          "resultIsError": true
+        },
+        {
+          "seq": 123,
+          "name": "tree_report",
+          "argsSummary": "{\"action\":\"context\",\"leaf_id\":\"c3demo-M1-commander\",\"pct\":7,\"tree_id\":\"c3demo\"}",
+          "resultHead": "tree_report: ok (c3demo-M1-commander)",
+          "resultIsError": false
+        },
+        {
+          "seq": 128,
+          "name": "session_handoff",
+          "argsSummary": "{\"action\":\"handoff\",\"files\":[\"demo/c3layer/01-middle.md\",\"demo/c3layer/02-execution.md\"],\"force\":true,\"next_steps\":[\"先读 HANDOFF 文件（路径见你首条消息），用 tree_status overview 只读确认树 c3demo 的节点状态\",\"读 demo/c3layer/01-middle.md 与 demo/…",
+          "resultHead": "session_handoff: wrote D:\\Codes\\dsh-tree-harness\\HANDOFF-8fb77300-20261111-153844.md; successor d703b780-4981-4f66-a7c5-881b3385d51c kind=sibling preset=standard inherited=session-route",
+          "resultIsError": false
+        },
+        {
+          "seq": 133,
+          "name": "write",
+          "argsSummary": "{\"content\":\"# 三层最小演示 · 中间层记录（commander）\\n\\n> 版本：定稿（2026-11-11 15:39 +08:00；派发、收割、验收、交接全部完成后的最终值）\\n\\n## 1. 中间层是谁\\n\\n- 角色：中间层指挥官（commander），树 `c3demo` 的第二层。\\n- leaf：`c3demo-M1-commander`（父 leaf `c3demo-root`）。\\n- 会话 id：`8f…",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\demo\\c3layer\\01-middle.md</path> <type>file</type> <content> Updated file </content>",
+          "resultIsError": false
+        },
+        {
+          "seq": 138,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"foreach($f in @(\\\"demo\\\\c3layer\\\\01-middle.md\\\",\\\"demo\\\\c3layer\\\\02-execution.md\\\",\\\"HANDOFF-8fb77300-20261111-153844.md\\\")){ if(Test-Path $f){ $n=(Get-Item $f).Length; Write-Output (\\\"{0} EXISTS {1} bytes\\\" …",
+          "resultHead": "demo\\c3layer\\01-middle.md EXISTS 5781 bytes demo\\c3layer\\02-execution.md EXISTS 1291 bytes HANDOFF-8fb77300-20261111-153844.md EXISTS 3040 bytes",
+          "resultIsError": false
+        },
+        {
+          "seq": 145,
+          "name": "tree_report",
+          "argsSummary": "{\"action\":\"event\",\"leaf_id\":\"c3demo-M1-commander\",\"meta\":{\"summary\":\"中间层真干活并交棒完成：建并派发执行层 c3demo-M1a1-worker（会话 63530e9d），worker runtime.state=succeeded、tree_verify PASS(self-report)，02-execution.md 1291B 含真实 node --versi…",
+          "resultHead": "tree_report: ok (c3demo-M1-commander)",
+          "resultIsError": false
+        },
+        {
+          "seq": 147,
+          "name": "send_message",
+          "argsSummary": "{\"agent_id\":\"7dd52e8b-a3c2-4481-a9da-8ef94b9a093e\",\"message\":\"中间层（leaf c3demo-M1-commander）已完成并交棒。\\n\\n【本层身份】会话 8fb77300-3559-453a-9596-b02f4d693b28，父 leaf c3demo-root。\\n\\n【做了什么（真干活，非转发）】\\n1. 建执行层 leaf：tree_node add → c3d…",
+          "resultHead": "message delivered to agent 7dd52e8b-a3c2-4481-a9da-8ef94b9a093e",
+          "resultIsError": false
+        }
+      ]
+    }
+  ],
+  "children": [],
+  "layering": {
+    "trees": [],
+    "nodes": [
+      {
+        "tree_id": "c3demo",
+        "leaf_id": "c3demo-M1a1-worker",
+        "parent": "c3demo-M1-commander",
+        "role": "worker",
+        "taskType": "default",
+        "dependencies": [],
+        "addedBy": "8fb77300-3559-453a-9596-b02f4d693b28",
+        "path": "M1a1",
+        "seq": 52,
+        "depth": 100
+      }
+    ],
+    "maxDepth": 100,
+    "layers": 101,
+    "roles": {
+      "worker": 1
+    },
+    "dispatch": [
+      {
+        "seq": 63,
+        "action": "start",
+        "tree_id": "c3demo",
+        "leaf_id": "c3demo-M1a1-worker",
+        "ok": true,
+        "result": "tree_dispatch: c3demo-M1a1-worker → running",
+        "session": "8fb77300-3559-453a-9596-b02f4d693b28",
+        "delegationDepth": 3
+      }
+    ],
+    "dispatchBySession": {
+      "8fb77300-3559-453a-9596-b02f4d693b28": 1
+    },
+    "doneReports": [
+      {
+        "seq": 145,
+        "action": "event",
+        "tree_id": "c3demo",
+        "leaf_id": "c3demo-M1-commander",
+        "type": "done",
+        "meta": {
+          "summary": "中间层真干活并交棒完成：建并派发执行层 c3demo-M1a1-worker（会话 63530e9d），worker runtime.state=succeeded、tree_verify PASS(self-report)，02-execution.md 1291B 含真实 node --version=v24.20.0 与 Get-Date 输出；已按用户要求做 session_handoff(force) → successor d703b780 (kind=sibling, HANDOFF-8fb77300-20261111-153844.md)；01-middle.md 定稿 5781B。",
+          "self_check": [
+            {
+              "item": "执行层真干活（非转发）",
+              "pass": true,
+              "evidence": "demo/c3layer/02-execution.md 1291 bytes，由执行层会话 63530e9d 写入，含 node --version=v24.20.0 与 Get-Date=2026-11-11T15:37:14.7856484+08:00 及 00/01 摘要"
+            },
+            {
+              "item": "worker 终态 succeeded",
+              "pass": true,
+              "evidence": "tree_node get: runtime[state=succeeded attempt=1 chain=0 sess=63530e9d]；done 事件由执行层上报"
+            },
+            {
+              "item": "tree_verify PASS",
+              "pass": true,
+              "evidence": "tree_verify run → PASS（策略 self-report，taskType=default 路由）"
+            },
+            {
+              "item": "中间层交接完成",
+              "pass": true,
+              "evidence": "session_handoff handoff force=true → handed-off, successor d703b780-4981-4f66-a7c5-881b3385d51c kind=sibling preset=standard inherited=session-route, HANDOFF-8fb77300-20261111-153844.md"
+            },
+            {
+              "item": "01-middle.md 定稿",
+              "pass": true,
+              "evidence": "5781 bytes，含中间层身份/分解/派发结果/产物/验收/successor+HANDOFF 路径/过程异常"
+            },
+            {
+              "item": "纪律：只写本层产物",
+              "pass": true,
+              "evidence": "仅写 demo/c3layer/01-middle.md 与 HANDOFF 文件；02 由执行层写；未碰 packages/、agent.md、README、git；未重复派发"
+            }
+          ]
+        },
+        "pct": null,
+        "ok": true,
+        "result": "tree_report: ok (c3demo-M1-commander)",
+        "session": "8fb77300-3559-453a-9596-b02f4d693b28",
+        "delegationDepth": 3
+      }
+    ],
+    "verifies": [
+      {
+        "seq": 108,
+        "session": "8fb77300-3559-453a-9596-b02f4d693b28",
+        "leaf_id": "c3demo-M1a1-worker",
+        "pass": true,
+        "result": "tree_verify: PASS (self-report)"
+      }
+    ],
+    "handoffs": [
+      {
+        "seq": 113,
+        "args": {
+          "action": "status"
+        },
+        "parsed": {
+          "action": "status",
+          "text": "session_handoff status: context=7.2% (threshold 50%) pressure=72255/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue",
+          "status": {
+            "context_pct": 7.2,
+            "context_pct_raw": "7.2",
+            "threshold_pct": 50,
+            "pressure": "72255/1000000",
+            "model": "opencode-go/deepseek-v4.1-flash",
+            "effort": "max",
+            "preset": "standard",
+            "permission": "danger-full-access/danger-full-access/never",
+            "successor_kind": "sibling",
+            "raw": "session_handoff status: context=7.2% (threshold 50%) pressure=72255/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue"
+          },
+          "handoff": null
+        },
+        "result": "session_handoff status: context=7.2% (threshold 50%) pressure=72255/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue",
+        "session": "8fb77300-3559-453a-9596-b02f4d693b28",
+        "delegationDepth": 3,
+        "origin": "subagent"
+      },
+      {
+        "seq": 128,
+        "args": {
+          "action": "handoff",
+          "files": [
+            "demo/c3layer/01-middle.md",
+            "demo/c3layer/02-execution.md"
+          ],
+          "force": true,
+          "next_steps": [
+            "先读 HANDOFF 文件（路径见你首条消息），用 tree_status overview 只读确认树 c3demo 的节点状态",
+            "读 demo/c3layer/01-middle.md 与 demo/c3layer/02-execution.md，核对 02 是否由执行层会话产出且含真实命令输出；不要修改 00/01/02",
+            "用 self_spec 记录你继承的 cwd/预设/权限/模型，写 demo/c3layer/03-handoff-successor.md（≥200 字节）记录接管结论",
+            "用 send_message 给根会话 7dd52e8b-a3c2-4481-a9da-8ef94b9a093e 发送：接管完成 + 03 路径 + 核对结论"
+          ],
+          "note": "中间层交接是用户明确要求的演示；tree leaf owner 仍是旧会话（交接不自动迁移），接替会话不要写 done。执行层 leaf id 为 c3demo-M1a1-worker。",
+          "open_questions": [],
+          "summary": "树 c3demo 中间层（leaf c3demo-M1-commander，会话 8fb77300-3559-453a-9596-b02f4d693b28）：已在本地建并派发执行层 leaf c3demo-M1a1-worker（会话 63530e9d-3eac-4fcb-9363-6efb456fe7db），worker 已 done 且 runtime.state=succeeded，tree_verify PASS(self-report)，产物 demo/c3layer/02-execution.md（1291 字节，含真实 node --version=v24.20.0 与 Get-Date 输出）；现在把中间层交棒，接替会话只做收尾核对与回报，不操作树账本。"
+        },
+        "parsed": {
+          "action": "handoff",
+          "text": "session_handoff: wrote D:\\Codes\\dsh-tree-harness\\HANDOFF-8fb77300-20261111-153844.md; successor d703b780-4981-4f66-a7c5-881b3385d51c kind=sibling preset=standard inherited=session-route",
+          "status": null,
+          "handoff": {
+            "handoff_path": "D:\\Codes\\dsh-tree-harness\\HANDOFF-8fb77300-20261111-153844.md",
+            "successor_id": "d703b780-4981-4f66-a7c5-881b3385d51c",
+            "kind": "sibling",
+            "preset": "standard",
+            "workspace": null,
+            "inherited": "session-route",
+            "degraded": null
+          }
+        },
+        "result": "session_handoff: wrote D:\\Codes\\dsh-tree-harness\\HANDOFF-8fb77300-20261111-153844.md; successor d703b780-4981-4f66-a7c5-881b3385d51c kind=sibling preset=standard inherited=session-route",
+        "session": "8fb77300-3559-453a-9596-b02f4d693b28",
+        "delegationDepth": 3,
+        "origin": "subagent"
+      }
+    ],
+    "treeStates": [],
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": false,
+        "detail": {
+          "trees": []
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": true,
+        "detail": {
+          "maxDepth": 100,
+          "nodeCount": 1
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {
+            "worker": 1
+          }
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {
+            "8fb77300-3559-453a-9596-b02f4d693b28": 1
+          }
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": true,
+        "detail": {
+          "doneReports": 1,
+          "leavesDone": [
+            "c3demo-M1-commander"
+          ]
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": true,
+        "detail": {
+          "leavesDispatched": [
+            "c3demo-M1a1-worker"
+          ]
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": true,
+        "detail": {
+          "verifies": 1,
+          "pass": 1
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": true,
+        "detail": {
+          "count": 1,
+          "successors": [
+            "d703b780-4981-4f66-a7c5-881b3385d51c"
+          ]
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": true,
+        "detail": {
+          "handoffInChild": [
+            {
+              "session": "8fb77300-3559-453a-9596-b02f4d693b28",
+              "depth": 3,
+              "kind": "sibling"
+            }
+          ]
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": true,
+        "detail": {
+          "contextReports": 1
+        }
+      }
+    ]
+  },
+  "summary": {
+    "sessions": 1,
+    "roots": 1,
+    "children": 0,
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": false,
+        "detail": {
+          "trees": []
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": true,
+        "detail": {
+          "maxDepth": 100,
+          "nodeCount": 1
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {
+            "worker": 1
+          }
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {
+            "8fb77300-3559-453a-9596-b02f4d693b28": 1
+          }
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": true,
+        "detail": {
+          "doneReports": 1,
+          "leavesDone": [
+            "c3demo-M1-commander"
+          ]
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": true,
+        "detail": {
+          "leavesDispatched": [
+            "c3demo-M1a1-worker"
+          ]
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": true,
+        "detail": {
+          "verifies": 1,
+          "pass": 1
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": true,
+        "detail": {
+          "count": 1,
+          "successors": [
+            "d703b780-4981-4f66-a7c5-881b3385d51c"
+          ]
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": true,
+        "detail": {
+          "handoffInChild": [
+            {
+              "session": "8fb77300-3559-453a-9596-b02f4d693b28",
+              "depth": 3,
+              "kind": "sibling"
+            }
+          ]
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": true,
+        "detail": {
+          "contextReports": 1
+        }
+      }
+    ],
+    "passCount": 7,
+    "totalChecks": 10
+  }
+}

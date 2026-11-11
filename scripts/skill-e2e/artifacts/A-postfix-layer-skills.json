@@ -1,0 +1,222 @@
+{
+  "tool": "collect-skills",
+  "generatedAt": "2026-11-11T08:00:08.306Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "expected": [
+    "tree-commander",
+    "tree-worker",
+    "session-handoff"
+  ],
+  "expectAt": "latest",
+  "sessions": [
+    {
+      "id": "a77f45e3-5fb3-41ea-935a-701e52cad12a",
+      "ok": true,
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\a77f45e3-5fb3-41ea-935a-701e52cad12a\\session.v4.jsonl.zstd",
+      "logBytes": 160709,
+      "frames": 76,
+      "eventCount": 143,
+      "found": true,
+      "expectAt": "latest",
+      "atCreation": {
+        "present": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "missing": [],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "seq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ]
+      },
+      "latest": {
+        "present": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "missing": [],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "seq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ]
+      },
+      "evolution": [
+        {
+          "seq": 12,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        }
+      ],
+      "expected": [
+        "tree-commander",
+        "tree-worker",
+        "session-handoff"
+      ],
+      "missing": [],
+      "skillLoads": [
+        {
+          "seq": 18,
+          "name": "tree-commander"
+        }
+      ],
+      "firstUserMessageSeq": 10,
+      "firstUserMessageHead": "你是任务树 `chglog` 的【中间层指挥官】（commander），leaf_id=`chglog-C1-commander`，tree_id=`chglog`，父节点=`chglog-root`（根会话 65ac7372-b74e-4477-917b-c5de27cf0949）。工作目录 D:\\Codes\\dsh-tree-harness。你这一层必须真干活（建点、派发、收割、逐点验证、汇总），不能只转发。\n\n【身份】你的会话 id = `$env:DSH_SESSIO…"
+    },
+    {
+      "id": "facf69b4-dead-41ca-a648-cf4864e5b930",
+      "ok": true,
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\facf69b4-dead-41ca-a648-cf4864e5b930\\session.v4.jsonl.zstd",
+      "logBytes": 206471,
+      "frames": 86,
+      "eventCount": 169,
+      "found": true,
+      "expectAt": "latest",
+      "atCreation": {
+        "present": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "missing": [],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "seq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ]
+      },
+      "latest": {
+        "present": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "missing": [],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "seq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ]
+      },
+      "evolution": [
+        {
+          "seq": 12,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        }
+      ],
+      "expected": [
+        "tree-commander",
+        "tree-worker",
+        "session-handoff"
+      ],
+      "missing": [],
+      "skillLoads": [
+        {
+          "seq": 18,
+          "name": "tree-worker"
+        }
+      ],
+      "firstUserMessageSeq": 10,
+      "firstUserMessageHead": "你是任务树 `chglog` 的 worker 节点，leaf_id=`chglog-C1a1-facts`，tree_id=`chglog`，你的角色=worker（不许建子节点、不许 tree_plan）。工作目录 D:\\Codes\\dsh-tree-harness。\n\n【唯一交付物】写文件 `C:\\Users\\sir_c\\AppData\\Local\\Temp\\chglog-work-20261111\\C1a1\\facts.md`（目录已建好），UTF-8 编码，正文 ≥…"
+    }
+  ],
+  "summary": {
+    "sessions": 2,
+    "found": 2,
+    "missingSessions": 0,
+    "allExpectedPresent": true,
+    "verdict": "PASS"
+  }
+}

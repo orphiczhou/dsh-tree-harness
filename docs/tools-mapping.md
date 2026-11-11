@@ -1,4 +1,17 @@
-# 工具面整合表（tools-mapping）— S0 定稿
+# 工具面整合表（S0 设计目标 → 实现进度）
+
+> ⚠️ **本表是 S0 设计目标，不是当前工具面契约。** 实际注册的 8 个 `tree_*` 工具及其 action 闭集以 `packages/dsh-tree-engine/index.js` 的 schema 为准（v0.5.0）。已实现的子集：
+> - `tree_plan [create]`
+> - `tree_node [add, get, list, list-all, set-status, set-session]`
+> - `tree_dispatch [start, cancel]`
+> - `tree_report [context, event]`
+> - `tree_status [overview, validate, sessions, harvest]`
+> - `tree_verify [run, dod, adversarial]`
+> - `tree_log [events, drift, heartbeat, communication]`
+> - `tree_maintain [backup, restore, nudge-reset, register-session]`
+>
+> 本表里其余 action（如 `tree_report {action:"drift"}`、`tree_node milestone-*`、`tree_maintain gc`）是设计稿未实现项，照表调用会返回 unknown action。差异由 [audit-tree-system-2026-11-11.md](audit-tree-system-2026-11-11.md) P1-09 记录。
+（tools-mapping）— S0 定稿
 
 | 项 | 值 |
 |---|---|

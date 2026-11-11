@@ -1,0 +1,250 @@
+{
+  "tool": "collect-skills",
+  "generatedAt": "2026-11-11T07:23:52.955Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "expected": [
+    "tree-commander",
+    "tree-worker",
+    "session-handoff"
+  ],
+  "expectAt": "latest",
+  "sessions": [
+    {
+      "id": "8ca5308b-4ae9-476e-a47d-1aaec5bcf22b",
+      "ok": true,
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\\session.v4.jsonl.zstd",
+      "logBytes": 555078,
+      "frames": 210,
+      "eventCount": 384,
+      "found": true,
+      "expectAt": "latest",
+      "atCreation": {
+        "present": [],
+        "missing": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "targets": {
+          "tree-commander": false,
+          "tree-worker": false,
+          "session-handoff": false
+        },
+        "seq": 12,
+        "count": 12,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness"
+        ]
+      },
+      "latest": {
+        "present": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "missing": [],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "seq": 335,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ]
+      },
+      "evolution": [
+        {
+          "seq": 12,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 12,
+          "targets": []
+        },
+        {
+          "seq": 306,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 13,
+          "targets": [
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 314,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 14,
+          "targets": [
+            "tree-commander",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 335,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        }
+      ],
+      "expected": [
+        "tree-commander",
+        "tree-worker",
+        "session-handoff"
+      ],
+      "missing": [],
+      "skillLoads": [],
+      "firstUserMessageSeq": 10,
+      "firstUserMessageHead": "你是 dsh-tree-harness 项目的 E2E 验证工程师（teammate）。工作目录 D:\\Codes\\dsh-tree-harness。共享任务板任务 id：**task-6**（先 team_task_get task-6 再 claim）。\n\n## 背景\n- 正在把 skill 工程化：新增 `session-handoff` skill + `tree-commander`/`tree-worker` skill 迁入插件包，并通过 DSH `@deeps…"
+    },
+    {
+      "id": "dd42494f-8050-428c-be6b-673f0d320a27",
+      "ok": true,
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\dd42494f-8050-428c-be6b-673f0d320a27\\session.v4.jsonl.zstd",
+      "logBytes": 125561,
+      "frames": 29,
+      "eventCount": 64,
+      "found": true,
+      "expectAt": "latest",
+      "atCreation": {
+        "present": [
+          "tree-commander",
+          "session-handoff"
+        ],
+        "missing": [
+          "tree-worker"
+        ],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": false,
+          "session-handoff": true
+        },
+        "seq": 12,
+        "count": 14,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander"
+        ]
+      },
+      "latest": {
+        "present": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "missing": [],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "seq": 31,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ]
+      },
+      "evolution": [
+        {
+          "seq": 12,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 14,
+          "targets": [
+            "tree-commander",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 31,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        }
+      ],
+      "expected": [
+        "tree-commander",
+        "tree-worker",
+        "session-handoff"
+      ],
+      "missing": [],
+      "skillLoads": [
+        {
+          "seq": 18,
+          "name": "tree-commander"
+        }
+      ],
+      "firstUserMessageSeq": 10,
+      "firstUserMessageHead": "把「给 dsh-tree-harness 增补一段 CHANGELOG」拆成三层并派人做完，验证通过再收口。\nYour parent agent id is \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\". Before you finish, send your result to that agent with send_message({ agent_id: \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\", m…"
+    }
+  ],
+  "summary": {
+    "sessions": 2,
+    "found": 2,
+    "missingSessions": 0,
+    "allExpectedPresent": true,
+    "verdict": "PASS"
+  }
+}

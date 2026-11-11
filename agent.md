@@ -29,7 +29,7 @@
 
 ```powershell
 # 测试（bundled node；勿用目录形参 node --test tests —— Node 24 会报 test at tests:1:1 假失败）
-node --test tests/*.test.js            # packages/dsh-tree-engine → 62/62
+node --test tests/*.test.js            # packages/dsh-tree-engine → 67/67（62 引擎 + 4 技能打包 + 1 B1 回归）
 node --test tests/*.test.js            # packages/dsh-meta-loop  → 13/13
 node test/handoff.test.js              # packages/dsh-session-tree → 34/34（宿主半 session_handoff）
 node test/render.test.cjs              # packages/dsh-session-tree → 全绿（参考 133 + 自检 9 + 实时 11）
@@ -40,27 +40,31 @@ node test/provider-conformance.cjs     # 需 rc.2 兼容的 asar 解包 fixture�
 # 活体验证（唯一可编程观测通道；本会话若没有 cordis_inspect，用 spawn 子会话探针）
 cordis_inspect_list / cordis_inspect_query    # host Tool/Service/Config、client providers
 # 或派一个 subagent，让它调用 session_handoff {action:"status"} 并回报原始渲染行
+# Skill 目录验证：spawn 一个新子会话，让它列出自己看到的 Skill 名称（应含 session-handoff / tree-commander / tree-worker）
+#   或解码该子会话日志的 <system-reminder>（user/message 首条含 <available_skills>）
 
 # E2E 断言器（多帧 zstd 解码 + projcache/workspace.json）
 node scripts/e2e/verify-handoff.mjs --source <id> --successor <id> --expect-kind root|sibling [--wait 120000]
+# Skill 驱动 E2E：scripts/skill-e2e/collect-skills.mjs（会话看到的 skill 列表）+ summarize-run.mjs（工具/分层/交接序列）
 
 # 会话树单向发布同步（只写 --target，不执行 git、不 push）
 node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --target <公开插件仓本地 checkout>
 ```
 
 - node 路径：`%USERPROFILE%\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe`
-- `packages/` 位于 profile 的 `hmr.root`（`D:/Codes/dsh-tree-harness/packages`）。**实测（2026-11-11 第三轮）：改了已加载包的宿主半 `index.js` 后，活体工具仍是旧实现；必须对 `include:session-tree` 做一次 `plugin_manager set_plugin enabled:false → true`（或重启 DSH）才加载新代码。客户端半改动刷新页面生效。**
+- `packages/` 位于 profile 的 `hmr.root`（`D:/Codes/dsh-tree-harness/packages`）。**实测（2026-11-11 第三/四轮）：改了已加载包的宿主半 `index.js` 或 bundle patch（含新增 skill provider 行）后，活体仍是旧实现；必须对相应 entry（`include:session-tree` / `include:tree-engine`）做一次 `plugin_manager set_plugin enabled:false → true`（或重启 DSH）才加载新代码。客户端半改动刷新页面生效。**
 - git push 需要凭据：token 从 **User 环境变量 `GH_TOKEN`** 在内存中取用（`[Environment]::GetEnvironmentVariable('GH_TOKEN','User')` + `http.extraheader`），**禁止打印、禁止落盘、禁止写进 remote URL**；GitHub 访问需按 handoff 用 `-c http.proxy=` 等逐命令覆盖失效代理。
 
 ## 0.3 会话交接纪律（上下文接近 50% 时必做）
 
-会话自交接能力自 **v1.2.0** 起并入会话树单包（工具 `session_handoff`，与 `tree_send` 同 bundle；独立包 `packages/dsh-session-handoff/` 已删除；详见 [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md)）：
+会话自交接能力自 **v1.2.0** 起并入会话树单包、**v1.3.0 起随包提供 `session-handoff` Skill**（工具 `session_handoff`，与 `tree_send` 同 bundle；独立包 `packages/dsh-session-handoff/` 已删除；详见 [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md)）：
 
 1. **接近 50% 上下文**（或明显感觉接近上限）时，先调 `session_handoff {action:"status"}` 读真实占用与继承事实；
 2. `context_pct ≥ 50` 时执行 `session_handoff {action:"handoff", summary, next_steps, files, open_questions}` —— 它会写 `HANDOFF-*.md` 到当前工作区，并启动**同层级**接替会话：**同工作区归属 / 同 Agent 预设（工作模式，工具集相同）/ 同权限模式（沙箱+审批）/ 同模型 / 同思考等级**；
 3. 子会话自动走「兄弟」接替（同父层级，出现在父会话下）；根会话走根级接替并被挂进同一侧栏工作区；父不活时降级为「根运行时 + 保留 durable 父血缘」并在返回里显式 `degraded:"parent-inactive"`；
-4. 交接文件属运行时产物（`.gitignore` 已忽略 `HANDOFF-*.md`），需要长期留存的结论请整理进 `docs/` 或 `agent.md`；
-5. 非致命继承失败（预设挂不上/权限写不进/工作区挂载失败）不会打断交接，但会出现在 `warnings[]` 与 `successor.preset_error` / `permission_error` / `workspace.reason` 里——看到就查，别忽略。
+4. **纪律适用于每一层会话**：根会话、tree-engine 的 commander/worker leaf、任意子会话都是 DSH 会话，都必须在 50% 阈值自主交接；tree-engine 内部还有 pct≥42 的竹节自报接力（先按竹节；若会话侧已过 50% 未等到接力则交接），tree skill 里已写明协调规则；
+5. 交接文件属运行时产物（`.gitignore` 已忽略 `HANDOFF-*.md`），需要长期留存的结论请整理进 `docs/` 或 `agent.md`；
+6. 非致命继承失败（预设挂不上/权限写不进/工作区挂载失败）不会打断交接，但会出现在 `warnings[]` 与 `successor.preset_error` / `permission_error` / `workspace.reason` 里——看到就查，别忽略。
 
 ---
 
@@ -80,18 +84,19 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 | **D10** | 2026-11-11 | **新功能：会话树工作区归档/隐藏 + 最近活动排序** | 用户需求：工作区越积越多；工作区可隐藏/归档、按最新会话倒序；「…」菜单可操作已归档会话与已归档工作区；归档后可看/查/召回。规格 = spec B 节；实现 = `packages/dsh-session-tree/client.js` v1.0.4→**1.1.0**，工作区隐藏为**纯客户端 localStorage 状态**（Host 无工作区归档 API） |
 | **D11** | 2026-11-11 | **交接并入 tree 体系 + 同工作区/权限模式/Agent 预设继承修复（v1.2.0）** | 用户原话：「交接插件不要单独做插件，功能合并到 tree 体系里面，树的各个层级，包括根，都能同层级交接」「交接功能有瑕疵，没有定位同工作区。还有交接后的接手会话的权限，工作模式，思考等级，模型等都要和交接出手会话一样。」落地：`session_handoff` host 实现迁入 `packages/dsh-session-tree/index.js`（与 `tree_send` 同 host 半、两次 `ctx.inject`），独立包删除，版本 1.1.0→**1.2.0**。修复：root/degraded 接替会话创建后 `workspaceRegistry.resolveByPath(cwd)`→`Workspace.attachSession`（同工作区归属）；`meta.agentPreset` + `setup(agentCtx,agent)` 内 `agentPresets.mount` + `agent-preset/selected`（工作模式/工具集继承）；`permission/preset`、`sandbox/mode`、`approval/policy`（`source:'delegation'`）在发布前追加（权限模式继承）；模型/思考等级沿用 `agentOptions`。兄弟路径本就由委派继承，零改动。证据：[docs/e2e-handoff-2026-11-11.md](docs/e2e-handoff-2026-11-11.md)（修复前 root FAIL 5/12、修复后 root PASS 14/14 + sibling PASS 12/12） |
 | **D12** | 2026-11-11 | **宿主半热更纪律（实测修正）** | 本机实测：`packages/` 虽在 `hmr.root`，改**已加载包的宿主半 `index.js`** 后活体工具仍跑旧实现（Loader 按包名缓存已导入模块）；必须对该 bundle entry 做一次 disable→enable（`plugin_manager set_plugin`）或重启 DSH，再用活体工具面验收。客户端半仍只需刷新页面。此前「约 25s 热更」的表述仅适用于部分场景/新模块，不再作为承诺 |
+| **D13** | 2026-11-11 | **SKILL 工程化：技能随插件包发布 + 挂 filesystem skill provider（v1.3.0 / tree-engine v0.5.0）** | 用户要求「固化可复用的 skill；tree 体系的 skill 也是插件工程的一部分，要版本迭代」。落地：`packages/dsh-session-tree/skills/session-handoff/SKILL.md`（新建）+ `packages/dsh-tree-engine/skills/tree-commander|tree-worker/SKILL.md`（从仓根迁入并更新）；两个 bundle 的 `cordis.patch.yml` 各增加一条 insert：`@deepseek-ai/dsh-skill-filesystem`（`providerName` 各自唯一、`includeDefaultRoots:false`、`watch:false`、`bundledSkillDir` 经安装包身份解析到包内 `skills/`，archify 同款模式）；`package.json.files` 纳入 `skills`，随包版本发布。三份 skill 均写入**每层会话 50% 自主交接**纪律并与 tree-engine 竹节 pct≥42 协议协调。版本：session-tree 1.2.0→**1.3.0**、tree-engine 0.4.0→**0.5.0**。 |
 
 ---
 
-## 2. 当前状态快照（2026-11-11 第三轮收口）
+## 2. 当前状态快照（2026-11-11 第四轮：SKILL 工程化收口）
 
-- **DSH 桌面**：`0.2.2-rc.1`；宿主 loader 账本 **245** 条（前后未变）；profile bundles **27** 个（移除独立 handoff bundle 后 28→27）
-- **本仓**：public `master`，本轮提交 **`67fa541`**（feat: v1.2.0 合并/继承修复）+ 本 docs 收口提交（`git log -1`）；工作树 clean；remote = `https://github.com/orphiczhou/dsh-tree-harness.git`
-- **公开面**：仓库 https://github.com/orphiczhou/dsh-tree-harness（public / master / MIT / 7 topics）；插件仓 `orphiczhou/dsh-session-tree` **v1.2.0**（已发布：handoff 合并 + 工作区/权限/预设继承修复）、`orphiczhou/dsh-region-probe`；**npm 冻结（D3）**
-- **组件**：`dsh-tree-engine` v0.4.0（8 工具）、`dsh-meta-loop` v0.2.0（未装配）、`dsh-agent-introspect` v0.1.0、`dsh-session-tree` **v1.2.0**（含 `tree_send` + `session_handoff`）、~~`dsh-session-handoff` v0.1.0~~（已并入并删除）
-- **测试**：tree-engine **62/62**、meta-loop **13/13**；session-tree handoff **34/34**、render 全绿（133 + 9 + 11）、style-guard **22/22**、verify-bundle **0 fail**；provider-conformance 依赖 rc.2 兼容 fixture（旧 fixture 会快速失败，非代码回归）
-- **会话树**：**单包** `packages/dsh-session-tree/` **v1.2.0**（host 半 49,740 B：`tree_send` + `session_handoff`；test 4 份）；本机 profile 单包已重载（`include:session-tree` disable→enable），活体 `session_handoff` status 渲染含 `preset=/permission=`（新实现指纹）+ `tree_send` 在线；旧 `include:session-handoff` entry 已从 profile 移除
-- **真机 E2E**：root 路径修复前 FAIL 5/12 → 修复后 **PASS 14/14**（同工作区 `6f48f173…`、权限三元组/Agent 预设/模型/工具数 164=164、首轮读 HANDOFF 并回 READY）；sibling 路径 **PASS 12/12**；见 [docs/e2e-handoff-2026-11-11.md](docs/e2e-handoff-2026-11-11.md)
+- **DSH 桌面**：`0.2.2-rc.1`；profile bundles **27** 个；loader 条目 245→244（第三轮移除独立 handoff bundle）
+- **本仓**：public `master`，第四轮提交见 `git log -1`（feat: SKILL 工程化 + docs）；工作树 clean；remote = `https://github.com/orphiczhou/dsh-tree-harness.git`
+- **公开面**：仓库 https://github.com/orphiczhou/dsh-tree-harness（public / master / MIT / 7 topics）；插件仓 `orphiczhou/dsh-session-tree` **v1.3.0**（已发布：随包 `session-handoff` Skill + skills provider patch 行；main+tag = `1086e9e`，18/18 SHA）、`orphiczhou/dsh-region-probe`；**npm 冻结（D3）**
+- **组件**：`dsh-tree-engine` **v0.5.0**（8 工具 + 随包 tree-commander/tree-worker Skill）、`dsh-meta-loop` v0.2.0（未装配）、`dsh-agent-introspect` v0.1.0、`dsh-session-tree` **v1.3.0**（`tree_send` + `session_handoff` + 随包 `session-handoff` Skill）
+- **测试**：tree-engine **67/67**（62 引擎 + 4 技能打包 + 1 B1 回归）、meta-loop **13/13**；session-tree handoff **34/34**、skills **3/3**、render 全绿（133 + 9 + 11）、style-guard **22/22**、verify-bundle **0 fail**；skill 格式/patch 行检查见 T4/T5 报告；provider-conformance 仍依赖 rc.2 fixture
+- **会话树 / 技能活体**：`include:session-tree`、`include:tree-engine` 均已 disable→enable 重载；活体 `session_handoff status` 含 `preset=/permission=`；**新会话 Skill 目录应含 `session-handoff` / `tree-commander` / `tree-worker`**（T6 真机 E2E 报告 [docs/skill-e2e-2026-11-11.md](docs/skill-e2e-2026-11-11.md) 为准）
+- **真机 E2E（第三轮，交接）**：root 修复前 FAIL 5/12 → 修复后 **PASS 14/14**；sibling **PASS 12/12**；见 [docs/e2e-handoff-2026-11-11.md](docs/e2e-handoff-2026-11-11.md)
 - **未装配**：`@local/dsh-meta-loop`（源码/13 测试/面板均在仓内，按需装载；`/metaloop/` 面板当前不可用）
 - **降级项**：tree-engine `sweep degraded:no-timer`（宿主无 timer 服务 → 收割依赖显式工具调用）
 - **RC2 兼容层**：已在 HEAD 中（DSH 0.2.1-rc.2 起 `subagents.startContinuable` 被移除；见 [docs/defect-2026-10-17-subagents-rc2-api-drift.md](docs/defect-2026-10-17-subagents-rc2-api-drift.md)）；**新增分支尚未补单测**（R6）
@@ -109,6 +114,7 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 | **R7** | 会话自交接（D9） | ✅ 已完成（v0.1.0）→ 已被 R9 取代 | 原 host-only 插件 `packages/dsh-session-handoff/`（`session_handoff` status/handoff，24/24 测试）；已装 profile 并活体验证（兄弟接替 E2E 成功）。**v1.2.0 起并入会话树单包，独立包删除** |
 | **R8** | 会话树工作区归档/隐藏 + 最近活动排序（D10） | ✅ 已完成 | `packages/dsh-session-tree` **v1.1.0**：工作区按最近活动排序（可切 Host 顺序）、工作区隐藏/恢复（localStorage 持久化）、已隐藏工作区三分区态、搜索召回、`…` 菜单整合；`render.test.cjs` **153 PASS / 0 FAIL**（133 gating 全保留 + 26 新增）、style-guard 22/22、verify-bundle OK；**需刷新页面生效**（客户端半） |
 | **R9** | **交接并入 tree 体系 + 同工作区/权限模式/Agent 预设继承修复（D11）** | ✅ 已完成 | `packages/dsh-session-tree` **v1.2.0**：`session_handoff` 并入 host 半；root/degraded 接替会话 `attachSession` 到同一 workspace；`meta.agentPreset` + `setup` 内挂载预设组成；`permission/preset`+`sandbox/mode`+`approval/policy`（`source:'delegation'`）发布前追加；模型/思考等级继续用 `agentOptions`。测试 handoff **34/34**、render 全绿、style-guard 22/22、verify-bundle 0 fail；真机 E2E root **PASS 14/14**、sibling **PASS 12/12**；独立包删除、profile bundle 28→27；发布公开插件仓 v1.2.0（哈希见 §2/§7） |
+| **R10** | **SKILL 工程化：技能随包发布 + skill provider + 全层 50% 交接纪律（D13）** | ✅ 已完成 | session-tree **v1.3.0**（随包 `session-handoff` Skill + `@deepseek-ai/dsh-skill-filesystem` patch 行）；tree-engine **v0.5.0**（tree-commander/tree-worker Skill 迁入包内并更新，含 50% 交接纪律与竹节协议协调）；两 bundle disable→enable 后活体 Skill 目录可发现；极简提示词 E2E（三层分解/逐层干活/中间层交接）见 [docs/skill-e2e-2026-11-11.md](docs/skill-e2e-2026-11-11.md)；整体一致性审计见 [docs/audit-tree-system-2026-11-11.md](docs/audit-tree-system-2026-11-11.md) |
 
 ## 4. 本轮团队与任务板（2026-11-11 第三轮，已收口）
 
@@ -118,6 +124,15 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 | T2 | 测试迁移与扩展（handoff.test.js） | test-engineer | ✅ **34/34**（24 移植 + 10 新增：工作区三态/预设挂载/四类继承事件/preset_error/workingDirectory_error/兄弟不回归）；render 全绿、style-guard 22/22 |
 | T3 | 真机 E2E 取证与断言器 | e2e-verifier | ✅ 修复前 root FAIL 5/12、sibling PASS 12/12；修复后 root **PASS 14/14**、sibling **PASS 12/12**；`scripts/e2e/verify-handoff.mjs` + 5 份 artifacts + 报告 |
 | T4 | profile 切换（移除独立 bundle）+ 发布（插件仓 v1.2.0 / 本仓提交） | **Lead** | ✅ `include:session-handoff` bundle 移除、`include:session-tree` disable→enable 重载；公开插件仓 v1.2.0 同步推送 + tag；本仓提交（哈希见 §2/§7） |
+
+## 4.1 第四轮团队与任务板（2026-11-11 SKILL 工程化，已收口）
+
+| 任务 | 主题 | Owner | 结果 |
+|---|---|---|---|
+| T4 | 固化 skill：`session-handoff` 新建 + `tree-commander`/`tree-worker` 迁入包内并更新 | skill-engineer | ✅ 3 份 SKILL.md（frontmatter name/description/whenToUse + 50% 交接纪律），仓根 `skills/` 移除 |
+| T5 | tree 体系整体一致性审计（代码 vs SKILL/文档/README） | tree-auditor | ✅ `docs/audit-tree-system-2026-11-11.md`（差距清单 + file:line + 修正建议） |
+| T6 | 极简提示词技能驱动 E2E（三层分解 / 逐层干活或分层 / 中间层交接） | skill-e2e | ✅ 基线（skill 未加载）vs 修复后对照；结果见 `docs/skill-e2e-2026-11-11.md` |
+| T7 | patch 行/版本/发布/重载/提交（session-tree v1.3.0、tree-engine v0.5.0） | **Lead** | ✅ 两 bundle 各加 skill-filesystem insert 行；`files` 纳入 skills；disable→enable 两 entry；公开插件仓 v1.3.0 发布；本仓提交 |
 
 ## 5. 发布门禁（不可跳过）
 
@@ -137,6 +152,7 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 5. **npm 冻结**：任何 `npm publish` 动作都视为解冻，需用户显式批准（D3）。
 6. **继承失败被忽略**：交接可能返回 `handed-off` 但 `warnings[]` 非空（例如 `successor.preset_error`、`workspace.reason`）。这类接替会话仍可用但继承不完整；E2E/验收时必须同时看 `successor.agent_preset/permission/workspace` 与 `warnings`，不能只看 `status==='handed-off'`。
 7. **重复注册 / 旧实现遮蔽**：合并期间新旧两个 bundle 可能同时注册 `session_handoff`（工具层会按层遮蔽，不报错）。切换顺序 = 先让合并版可用 → 验证活体指纹 → 再移除旧 bundle；不要只看“工具存在”就认为新实现生效。
+8. **Skill provider 与 Skill 目录**：两个 bundle 的 patch 行都 insert `@deepseek-ai/dsh-skill-filesystem`（`includeDefaultRoots:false`，互不重复默认根）。若该包在组合中不可解析，插件与工具仍工作、只是 Skill 目录缺少条目；若 provider 重复挂载同一目录，目录项可能重复——验收判据 = 新会话 `<available_skills>` 中 `session-handoff`/`tree-commander`/`tree-worker` **各出现一次**。patch 行改动同样受 D12 约束（需 disable→enable）。
 
 ## 7. 变更记录
 
@@ -146,3 +162,4 @@ node scripts/release-plugin.mjs --check --source packages/dsh-session-tree --tar
 - 2026-11-11（功能轮）：实现并验收两个新功能（D9/D10）：**会话自交接**（新插件 `dsh-session-handoff`，文档 [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md)，规格 [docs/features-2026-11-11-spec.md](docs/features-2026-11-11-spec.md)）+ **会话树 v1.1.0**（工作区排序/隐藏/召回）。验收：handoff 24/24；会话树 153 PASS/0 FAIL、style-guard 22/22；tree-engine 62/62、meta-loop 13/13；真机 E2E 兄弟接替成功。`.gitignore` 增 `HANDOFF-*.md`（运行时交接产物不入库）。
 - 2026-11-11（发布）：monorepo master 已推送；**公开插件仓 `orphiczhou/dsh-session-tree` v1.1.0 已同步并推送（`dcf3519`，远端=本地）**；`dsh-session-handoff` 仅本机安装（未对外发布，R7 后续可考虑随仓传播）。
 - 2026-11-11（第三轮）：用户要求「交接并入 tree 体系、各层级同层交接」并指出真机缺陷「未定位同工作区、接手会话权限/工作模式/思考等级/模型未继承」。落地 D11/R9：handoff 并入 `packages/dsh-session-tree` **v1.2.0**（独立包删除），修复工作区归属（`attachSession`）与继承（`meta.agentPreset` + `setup` 挂载 + 权限三元组 `source:'delegation'`）；测试 handoff 34/34、render/style/verify-bundle 全绿；真机 E2E root 14/14 + sibling 12/12；profile bundle 28→27；公开插件仓 v1.2.0 发布（哈希见 §2）。同时记录 D12（宿主半热更实测不生效，需 disable→enable）。
+- 2026-11-11（第四轮）：用户要求「固化可复用 skill；tree 体系 skill 也是插件工程的一部分、要版本迭代；派团队整体检查+更新；极简提示词验证子会话能否按 skill 识别用法、分层分解、每层继续干活/分层、并在 50% 上下文自主交接」。落地 D13/R10：`session-handoff` Skill 新建、`tree-commander`/`tree-worker` 迁入 `packages/dsh-tree-engine/skills/` 并更新（含 50% 交接纪律与竹节协议协调）；两 bundle 各加 `@deepseek-ai/dsh-skill-filesystem` insert 行；版本 session-tree **1.3.0** / tree-engine **0.5.0**；审计报告 + 极简提示词 E2E 报告落盘；公开插件仓 v1.3.0 发布、本仓提交推送。

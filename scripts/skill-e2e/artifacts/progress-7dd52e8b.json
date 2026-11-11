@@ -1,0 +1,364 @@
+{
+  "tool": "summarize-run",
+  "generatedAt": "2026-11-11T07:27:39.958Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "options": {
+    "session": [
+      "7dd52e8b-a3c2-4481-a9da-8ef94b9a093e"
+    ],
+    "childDepth": 2,
+    "scanWorkspace": "same"
+  },
+  "sessions": [
+    {
+      "id": "7dd52e8b-a3c2-4481-a9da-8ef94b9a093e",
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\7dd52e8b-a3c2-4481-a9da-8ef94b9a093e\\session.v4.jsonl.zstd",
+      "workspaceEncoding": "--D-Codes-dsh-tree-harness--",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": "8ca5308b-4ae9-476e-a47d-1aaec5bcf22b",
+        "origin": "subagent",
+        "delegationDepth": 2,
+        "agentPreset": "standard",
+        "createdAt": 1794381865220
+      },
+      "header": {
+        "seq": 14,
+        "config": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        },
+        "toolCount": 158,
+        "headerCount": 1
+      },
+      "eventCount": 48,
+      "firstUserMessage": {
+        "seq": 10,
+        "text": "用最简方式演示：根会话→中间层→执行层三层都能干活，并在中间层交接一次。\nYour parent agent id is \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\". Before you finish, send your result to that agent with send_message({ agent_id: \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\", message: \"<self-contained result>\" }). The parent shares your workspace but does not automatically receive your transcript, tool output, or reasoning. Send earlier messages as well when a finding changes what the parent should do next; sending a message does not end your turn."
+      },
+      "assistantFinal": {
+        "seq": 44,
+        "text": "Now I understand the context well. The session_handoff feature has been implemented and merged into dsh-session-tree v1.2.0. The user now asks for the simplest demonstration of 3 layers (root → middle → execution) all working, with a handoff at the middle layer once. This is a live E2E demonstration of the handoff fix (the root handoff previously had workspace/presets issues; sibling path was correct). Given the lineage: root session ae2d (\"会话交接定位与修复\") → 8ca (middle, title \"你是 dsh-tree-harness 项目的 E2E | ...\", likely spawned by root as the middle layer) → me (execution layer, spawned by middle)…"
+      },
+      "skills": {
+        "found": true,
+        "firstSeq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "evolution": [
+          {
+            "seq": 12,
+            "count": 15,
+            "targets": [
+              "tree-commander",
+              "tree-worker",
+              "session-handoff"
+            ]
+          }
+        ],
+        "loaded": []
+      },
+      "tree": {
+        "plan": [],
+        "nodes": [],
+        "dispatch": [],
+        "reports": [],
+        "verify": [],
+        "status": [],
+        "log": [],
+        "maintain": [],
+        "send": []
+      },
+      "handoff": [],
+      "subagents": [],
+      "toolCounts": {
+        "session_trace": 1,
+        "self_spec": 1,
+        "list_agents": 1,
+        "glob": 1,
+        "session_event_search": 2,
+        "pwsh": 2,
+        "read": 1
+      },
+      "toolSequence": [
+        {
+          "seq": 18,
+          "name": "session_trace",
+          "argsSummary": "{}",
+          "resultHead": "Session 7dd52e8b-a3c2-4481-a9da-8ef94b9a093e — 用最简方式演示：根会话→中 Created: 2026-11-11T07:24:25.220Z Availability: live, persisted Ancestors (nearest first): - 8ca5308b-4ae9-476e-a47d-1aaec5bcf22b — 你是 dsh-…",
+          "resultIsError": false
+        },
+        {
+          "seq": 20,
+          "name": "self_spec",
+          "argsSummary": "{}",
+          "resultHead": "self_spec: session=7dd52e8b model=opencode-go/deepseek-v4.1-flash · perms=danger-full-access/never · sandbox=danger-full-access · cwd=D:\\Codes\\dsh-tree-harness (projcache C:\\Users\\sir_c\\.dsh\\storages\\…",
+          "resultIsError": false
+        },
+        {
+          "seq": 22,
+          "name": "list_agents",
+          "argsSummary": "{\"scope\":\"descendants\"}",
+          "resultHead": "(no subagents)",
+          "resultIsError": false
+        },
+        {
+          "seq": 24,
+          "name": "glob",
+          "argsSummary": "{\"pattern\":\"**/*.md\",\"path\":\"D:\\\\Codes\\\\dsh-tree-harness\"}",
+          "resultHead": "logs\\ref-dsh-session-tree-README.md docs\\frozen-parent-plan\\PLAN-v1.7.md docs\\frozen-parent-plan\\review-report.md docs\\meta-system-argument.md docs\\segment-handoff.md docs\\tools-mapping.md PLAN.md doc…",
+          "resultIsError": false
+        },
+        {
+          "seq": 29,
+          "name": "session_event_search",
+          "argsSummary": "{\"session_id\":\"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\",\"query\":\"最简方式\",\"limit\":\"10\"}",
+          "resultHead": "Error: tool call timed out after 30000ms",
+          "resultIsError": true
+        },
+        {
+          "seq": 31,
+          "name": "session_event_search",
+          "argsSummary": "{\"session_id\":\"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\",\"query\":\"交接\",\"limit\":\"10\"}",
+          "resultHead": "Error: tool call timed out after 30000ms",
+          "resultIsError": true
+        },
+        {
+          "seq": 36,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem C:\\\\Users\\\\sir_c\\\\.dsh\\\\storages -Directory | Select-Object -First 30 Name; Get-ChildItem C:\\\\Users\\\\sir_c\\\\.dsh\\\\storages -Recurse -Filter *8ca5308b* -ErrorAction SilentlyContinue | Select-Obje…",
+          "resultHead": "Name ---- session_projcache",
+          "resultIsError": false
+        },
+        {
+          "seq": 40,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\docs\\\\session-handoff-2026-11-11.md\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\docs\\session-handoff-2026-11-11.md</path> <type>file</type> <content> 1: # 会话自交接 — 设计与交付记录（v0.1.0 独立插件 → v1.2.0 并入会话树） 2: 3: - **日期**：2026-11-11（初版 v0.1.0）+ 同日第二轮（并入会话树…",
+          "resultIsError": false
+        },
+        {
+          "seq": 45,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem C:\\\\Users\\\\sir_c\\\\.dsh -Force | Select-Object Name, Mode; Write-Host '---'; Get-ChildItem C:\\\\Users\\\\sir_c\\\\.dsh -Directory -Force | ForEach-Object { \\\"{0}  ({1} files)\\\" -f $_.FullName, (Get-Ch…",
+          "resultIsError": null
+        }
+      ]
+    }
+  ],
+  "children": [],
+  "layering": {
+    "trees": [],
+    "nodes": [],
+    "maxDepth": -1,
+    "layers": 0,
+    "roles": {},
+    "dispatch": [],
+    "dispatchBySession": {},
+    "doneReports": [],
+    "verifies": [],
+    "handoffs": [],
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": false,
+        "detail": {
+          "trees": []
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": false,
+        "detail": {
+          "maxDepth": -1,
+          "nodeCount": 0
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {}
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {}
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": false,
+        "detail": {
+          "leavesDispatched": []
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": false,
+        "detail": {
+          "count": 0,
+          "successors": []
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": false,
+        "detail": {
+          "handoffInChild": []
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ]
+  },
+  "summary": {
+    "sessions": 1,
+    "roots": 1,
+    "children": 0,
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": false,
+        "detail": {
+          "trees": []
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": false,
+        "detail": {
+          "maxDepth": -1,
+          "nodeCount": 0
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {}
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {}
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": false,
+        "detail": {
+          "leavesDispatched": []
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": false,
+        "detail": {
+          "count": 0,
+          "successors": []
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": false,
+        "detail": {
+          "handoffInChild": []
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ],
+    "passCount": 0,
+    "totalChecks": 10
+  }
+}

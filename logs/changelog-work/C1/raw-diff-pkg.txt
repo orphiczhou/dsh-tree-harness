@@ -1,0 +1,98 @@
+﻿diff --git a/packages/dsh-session-tree/cordis.patch.yml b/packages/dsh-session-tree/cordis.patch.yml
+index 30a1c65..880b09d 100644
+--- a/packages/dsh-session-tree/cordis.patch.yml
++++ b/packages/dsh-session-tree/cordis.patch.yml
+@@ -1,9 +1,15 @@
+ # Patch layer contributed by this bundle.
+ #
+ # Installing the package records it in the profile's `dsh.profile.bundles`; this
+-# file is the ordered layer that bundle then contributes: one Cordis row, which
+-# the Loader imports from this same package (`exports["."]` -> index.js) for the
+-# Host half, while the browser half is fetched through `exports["./client"]`.
++# file is the ordered layer that bundle then contributes. Row 1 is the Host/Client
++# half itself, imported from this same package (`exports["."]` -> index.js for the
++# Host half; the browser half is fetched through `exports["./client"]`).
++#
++# Row 2 mounts the deployment's filesystem Skill provider on this package's
++# bundled `skills/` directory, so an agent can discover how to use the tools from
++# the Skill catalog (same pattern as the archify bundle). The directory is
++# resolved through the installed package identity, never by string-joining a
++# path onto `baseUrl`.
+ #
+ # To turn the plugin off without uninstalling it, disable the `session-tree` row
+ # in the profile (the shipped WorkspaceBrowser at priority 0 takes the seat back
+@@ -11,3 +17,10 @@
+ - insert:
+     - id: session-tree
+       name: '@orphiczhou/dsh-session-tree'
++    - id: session-tree-skills
++      name: '@deepseek-ai/dsh-skill-filesystem'
++      config:
++        providerName: session-tree
++        includeDefaultRoots: false
++        watch: false
++        bundledSkillDir: !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('@orphiczhou/dsh-session-tree/package.json')), 'skills')
+diff --git a/packages/dsh-session-tree/package.json b/packages/dsh-session-tree/package.json
+index 7b86419..ffcfb7b 100644
+--- a/packages/dsh-session-tree/package.json
++++ b/packages/dsh-session-tree/package.json
+@@ -1,8 +1,8 @@
+ {
+   "name": "@orphiczhou/dsh-session-tree",
+-  "version": "1.2.0",
++  "version": "1.3.0",
+   "type": "module",
+-  "description": "Left-sidebar session tree for DeepSeek Harness: every session with its nested subagent descendants, click-through to multi-turn conversations, plus the tree_send tool for messaging any continuable session across the tree and the session_handoff tool for same-level context handoff that inherits workspace, agent preset, permission preset, model and reasoning effort.",
++  "description": "Left-sidebar session tree for DeepSeek Harness: every session with its nested subagent descendants, click-through to multi-turn conversations, plus the tree_send tool for messaging any continuable session across the tree, the session_handoff tool for same-level context handoff (same workspace, agent preset, permission preset, model and reasoning effort), and a bundled session-handoff Skill so agents discover the handoff discipline from the Skill catalog.",
+   "license": "MIT",
+   "author": "orphiczhou",
+   "keywords": [
+@@ -35,6 +35,7 @@
+     "cordis.patch.yml",
+     "icon.svg",
+     "locale",
++    "skills",
+     "README.md",
+     "LICENSE"
+   ],
+diff --git a/packages/dsh-tree-engine/cordis.patch.yml b/packages/dsh-tree-engine/cordis.patch.yml
+index cf7c651..3e5ddd8 100644
+--- a/packages/dsh-tree-engine/cordis.patch.yml
++++ b/packages/dsh-tree-engine/cordis.patch.yml
+@@ -1,3 +1,20 @@
++# Patch layer contributed by this bundle.
++#
++# Row 1 is the Host half (`tree_plan` / `tree_node` / `tree_dispatch` /
++# `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain`).
++#
++# Row 2 mounts the deployment's filesystem Skill provider on this package's
++# bundled `skills/` directory, so commander/worker leaf sessions can discover the
++# decomposition protocol and the 50%-context handoff discipline from the Skill
++# catalog. The directory is resolved through the installed package identity,
++# never by string-joining a path onto `baseUrl`.
+ - insert:
+     - id: tree-engine
+       name: '@local/dsh-tree-engine'
++    - id: tree-engine-skills
++      name: '@deepseek-ai/dsh-skill-filesystem'
++      config:
++        providerName: tree-engine
++        includeDefaultRoots: false
++        watch: false
++        bundledSkillDir: !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('@local/dsh-tree-engine/package.json')), 'skills')
+diff --git a/packages/dsh-tree-engine/package.json b/packages/dsh-tree-engine/package.json
+index 7445892..70ee20b 100644
+--- a/packages/dsh-tree-engine/package.json
++++ b/packages/dsh-tree-engine/package.json
+@@ -1,9 +1,9 @@
+ {
+   "name": "@local/dsh-tree-engine",
+-  "version": "0.4.0",
++  "version": "0.5.0",
+   "private": true,
+   "type": "module",
+-  "description": "Tree task decomposition & execution engine for DSH: plan → dispatch → bamboo-joint relay → harvest → verify. S1 v0.1: engine core + tree_plan/tree_node/tree_report/tree_status host tools.",
++  "description": "Tree task decomposition & execution engine for DSH: plan → dispatch → bamboo-joint relay → harvest → verify, with bundled tree-commander/tree-worker Skills (8 tree_* tools + 50%-context session handoff discipline).",
+   "exports": {
+     ".": "./index.js",
+     "./engine": "./src/engine.js",

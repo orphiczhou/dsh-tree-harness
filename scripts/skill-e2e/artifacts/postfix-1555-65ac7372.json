@@ -1,0 +1,706 @@
+{
+  "tool": "summarize-run",
+  "generatedAt": "2026-11-11T07:55:31.583Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "profileDir": "C:\\Users\\sir_c\\.dsh\\profiles\\desktop",
+  "options": {
+    "session": [
+      "65ac7372-b74e-4477-917b-c5de27cf0949"
+    ],
+    "childDepth": 3,
+    "scanWorkspace": "same"
+  },
+  "sessions": [
+    {
+      "id": "65ac7372-b74e-4477-917b-c5de27cf0949",
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\65ac7372-b74e-4477-917b-c5de27cf0949\\session.v4.jsonl.zstd",
+      "workspaceEncoding": "--D-Codes-dsh-tree-harness--",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": "8ca5308b-4ae9-476e-a47d-1aaec5bcf22b",
+        "origin": "subagent",
+        "delegationDepth": 2,
+        "agentPreset": "standard",
+        "createdAt": 1794383494056
+      },
+      "header": {
+        "seq": 14,
+        "config": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        },
+        "toolCount": 158,
+        "headerCount": 1
+      },
+      "eventCount": 167,
+      "firstUserMessage": {
+        "seq": 10,
+        "text": "把「给 dsh-tree-harness 增补一段 CHANGELOG」拆成三层并派人做完，验证通过再收口。\nYour parent agent id is \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\". Before you finish, send your result to that agent with send_message({ agent_id: \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\", message: \"<self-contained result>\" }). The parent shares your workspace but does not automatically receive your transcript, tool output, or reasoning. Send earlier messages as well when a finding changes what the parent should do next; sending a message does not end your turn."
+      },
+      "assistantFinal": {
+        "seq": 159,
+        "text": "Tree created. Facts: - CHANGELOG absent. - versions as expected. - HEAD 0cbc31e. - 28 status lines (baseline; earlier 26? more changes from other sessions: maybe tchlog writing files, demo). Not crucial. - tree-engine 67/67 currently, session-tree 3/3, handoff 34/34. Now add commander node. Then send parent heads-up. Then dispatch. Commander brief/dod: brief.goal: \"取材+撰写+独立验收：派 C1a1 facts（事实核定）、C1a2 writer（写根 CHANGELOG.md）、C1a3 verify（独立核验 verdict）三个 worker，按依赖串行；逐点 tree_verify PASS 后写 C1/summary.md 并 done。\" dod: \"C1a1/C1a2/C1a3 全 succeeded 且各自 tree_verify PASS；仓库根 CHANGELOG.md 存在（≥200 字符，含 20…"
+      },
+      "skills": {
+        "found": true,
+        "firstSeq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "evolution": [
+          {
+            "seq": 12,
+            "count": 15,
+            "targets": [
+              "tree-commander",
+              "tree-worker",
+              "session-handoff"
+            ]
+          }
+        ],
+        "loaded": [
+          {
+            "seq": 18,
+            "name": "tree-commander"
+          }
+        ]
+      },
+      "tree": {
+        "plan": [
+          {
+            "seq": 151,
+            "tree_id": "chglog",
+            "root_brief": "[object Object]",
+            "root_dod": "[object Object]",
+            "session_id": "65ac7372-b74e-4477-917b-c5de27cf0949",
+            "ok": true
+          }
+        ],
+        "nodes": [
+          {
+            "seq": 70,
+            "action": "list-all",
+            "tree_id": "chlog",
+            "leaf": null,
+            "ok": true,
+            "result": "tree_node: 6 leaves"
+          },
+          {
+            "seq": 72,
+            "action": "list-all",
+            "tree_id": "tchlog",
+            "leaf": null,
+            "ok": true,
+            "result": "tree_node: 6 leaves"
+          },
+          {
+            "seq": 79,
+            "action": "list",
+            "tree_id": "chlog",
+            "leaf": null,
+            "ok": true,
+            "result": "tree_node: 4 leaves"
+          },
+          {
+            "seq": 160,
+            "action": "add",
+            "tree_id": "chglog",
+            "leaf": {
+              "leaf_id": "chglog-C1-commander",
+              "parent": "chglog-root",
+              "path": "C1",
+              "role": "commander",
+              "added_by": "65ac7372-b74e-4477-917b-c5de27cf0949",
+              "taskType": "doc",
+              "brief": {
+                "goal": "取材+撰写+独立验收流水线：在自己 leaf 下派 C1a1 facts（仓库事实核定）、C1a2 writer（写仓库根 CHANGELOG.md）、C1a3 verify（独立核验 verdict）三个 worker，按依赖串行；逐点 tree_verify PASS 后汇总并 done。"
+              },
+              "dod": {
+                "dod": "C1a1/C1a2/C1a3 全 succeeded 且各自 tree_verify PASS；仓库根 CHANGELOG.md 存在（≥200 字符，含 2026-11-11 SKILL 工程化小节与版本/新增/变更/移除/测试/版本说明，无绝对路径/占位符）；仓库内无本轮新增的其他文件改动；%TEMP%\\chglog-work-20261111\\C1\\summary.md 存在（≥300 字符）；C1 自验 PASS 并写 done。"
+              }
+            },
+            "ok": true,
+            "result": "tree_node: chglog-C1-commander status=active · (未派发) ctx=0%"
+          }
+        ],
+        "dispatch": [],
+        "reports": [],
+        "verify": [],
+        "status": [
+          {
+            "seq": 23,
+            "action": "overview",
+            "result": "Error: E_SCHEMA_INVALID: tree_id is required"
+          },
+          {
+            "seq": 63,
+            "action": "overview",
+            "tree_id": "chlog",
+            "result": "tree_status: ok (sweepMode=timer)"
+          },
+          {
+            "seq": 65,
+            "action": "overview",
+            "tree_id": "tchlog",
+            "result": "tree_status: ok (sweepMode=timer)"
+          },
+          {
+            "seq": 77,
+            "action": "validate",
+            "tree_id": "chlog",
+            "result": "tree_status: validate PASS (0 issues)"
+          }
+        ],
+        "log": [],
+        "maintain": [],
+        "send": []
+      },
+      "handoff": [],
+      "subagents": [],
+      "toolCounts": {
+        "skill": 1,
+        "tree_status": 4,
+        "pwsh": 12,
+        "glob": 2,
+        "read": 6,
+        "grep": 3,
+        "tree_node": 4,
+        "tree_plan": 1,
+        "send_message": 1
+      },
+      "toolSequence": [
+        {
+          "seq": 18,
+          "name": "skill",
+          "argsSummary": "{\"name\":\"tree-commander\"}",
+          "resultHead": "<skill_content name=\"tree-commander\"> <skill_resources> Base directory for this skill: D:\\Codes\\dsh-tree-harness\\packages\\dsh-tree-engine\\skills\\tree-commander Resolve relative paths mentioned by this…",
+          "resultIsError": false
+        },
+        {
+          "seq": 23,
+          "name": "tree_status",
+          "argsSummary": "{\"action\":\"overview\"}",
+          "resultHead": "Error: E_SCHEMA_INVALID: tree_id is required",
+          "resultIsError": true
+        },
+        {
+          "seq": 25,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Write-Output \\\"SESSION=$env:DSH_SESSION_ID\\\"; git status --short; Write-Output \\\"---TAGS---\\\"; git tag --sort=-creatordate | Select-Object -First 10; Write-Output \\\"---LOG---\\\"; git log --oneline -15\",\"descri…",
+          "resultHead": "SESSION=65ac7372-b74e-4477-917b-c5de27cf0949 M README.md M agent.md M docs/handoff-2026-11-11.md M docs/publishing.md M docs/session-handoff-2026-11-11.md M docs/tools-mapping.md M packages/dsh-sessio…",
+          "resultIsError": false
+        },
+        {
+          "seq": 29,
+          "name": "glob",
+          "argsSummary": "{\"pattern\":\"**/CHANGELOG*\"}",
+          "resultHead": "No files found",
+          "resultIsError": false
+        },
+        {
+          "seq": 31,
+          "name": "glob",
+          "argsSummary": "{\"pattern\":\"*.md\"}",
+          "resultHead": "logs\\ref-dsh-session-tree-README.md docs\\frozen-parent-plan\\PLAN-v1.7.md docs\\frozen-parent-plan\\review-report.md docs\\meta-system-argument.md docs\\segment-handoff.md PLAN.md docs\\s0-decisions.md docs…",
+          "resultIsError": false
+        },
+        {
+          "seq": 36,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"HANDOFF-8fb77300-20261111-153844.md\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\HANDOFF-8fb77300-20261111-153844.md</path> <type>file</type> <content> 1: # Session handoff — 20261111-153844 2: 3: > Generated by the `session_handoff` tool. Read this…",
+          "resultIsError": false
+        },
+        {
+          "seq": 37,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"logs/changelog-work/C1a1/facts-versions.md\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\logs\\changelog-work\\C1a1\\facts-versions.md</path> <type>file</type> <content> 1: # C1a1 · 版本与发布事实（证据采集） 2: 3: > 采集范围：本仓（`dsh-tree-harness`）；本文件内路径一律相对仓库根。 4: > 采集时间：202…",
+          "resultIsError": false
+        },
+        {
+          "seq": 38,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"logs/changelog-work/C1a2/facts-skillwork.md\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\logs\\changelog-work\\C1a2\\facts-skillwork.md</path> <type>file</type> <content> 1: # C1a2 · 未提交变更事实：SKILL 工程化（skillwork） 2: 3: > 采集范围：工作区 `D:\\Codes\\dsh-tree-harness` 的**…",
+          "resultIsError": false
+        },
+        {
+          "seq": 39,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"demo/c3layer/00-root.md\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\demo\\c3layer\\00-root.md</path> <type>file</type> <content> 1: # 三层最小演示 · 根层记录（root） 2: 3: - 树：`c3demo`（root leaf `c3demo-root`） 4: - 根会话：`7dd52e8b-a3c2-4481-a9da-8ef94b…",
+          "resultIsError": false
+        },
+        {
+          "seq": 47,
+          "name": "grep",
+          "argsSummary": "{\"pattern\":\"treeDirectory|treesDir|stateDir|\\\\.dsh-tree|treeRoot|storageRoot\",\"path\":\"packages/dsh-tree-engine\",\"include\":\"*.js\"}",
+          "resultHead": "No matches found",
+          "resultIsError": false
+        },
+        {
+          "seq": 49,
+          "name": "grep",
+          "argsSummary": "{\"pattern\":\"c3demo|clog|changelog\",\"path\":\"docs\",\"include\":\"*.md\"}",
+          "resultHead": "No matches found",
+          "resultIsError": false
+        },
+        {
+          "seq": 54,
+          "name": "grep",
+          "argsSummary": "{\"pattern\":\"c3demo\"}",
+          "resultHead": "Found 250 of 446 matches demo\\c3layer\\03-handoff-successor.md Line 26: `tree_status {action:\"overview\", tree_id:\"c3demo\"}` → `ok (sweepMode=timer)`；`tree_node list-all` → 3 leaves。 Line 30: | `c3demo-…",
+          "resultIsError": false
+        },
+        {
+          "seq": 56,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem \\\"$env:USERPROFILE\\\\.dsh\\\" -Force | Select-Object Name,Mode; Write-Output \\\"---\\\"; Get-ChildItem \\\"$env:USERPROFILE\\\\.dsh\\\\trees\\\" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 2…",
+          "resultHead": "Name Mode ---- ---- attachments d----- cache d----- dsh-orb d----- dsh-runtimes d----- dsh_orb d----- llm-deepseek d----- mcp d----- profiles d----- sessions d----- skills d----- speech-to-text d-----…",
+          "resultIsError": false
+        },
+        {
+          "seq": 63,
+          "name": "tree_status",
+          "argsSummary": "{\"action\":\"overview\",\"tree_id\":\"chlog\"}",
+          "resultHead": "tree_status: ok (sweepMode=timer)",
+          "resultIsError": false
+        },
+        {
+          "seq": 65,
+          "name": "tree_status",
+          "argsSummary": "{\"action\":\"overview\",\"tree_id\":\"tchlog\"}",
+          "resultHead": "tree_status: ok (sweepMode=timer)",
+          "resultIsError": false
+        },
+        {
+          "seq": 70,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"list-all\",\"tree_id\":\"chlog\"}",
+          "resultHead": "tree_node: 6 leaves",
+          "resultIsError": false
+        },
+        {
+          "seq": 72,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"list-all\",\"tree_id\":\"tchlog\"}",
+          "resultHead": "tree_node: 6 leaves",
+          "resultIsError": false
+        },
+        {
+          "seq": 77,
+          "name": "tree_status",
+          "argsSummary": "{\"action\":\"validate\",\"tree_id\":\"chlog\"}",
+          "resultHead": "tree_status: validate PASS (0 issues)",
+          "resultIsError": false
+        },
+        {
+          "seq": 79,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"list\",\"tree_id\":\"chlog\"}",
+          "resultHead": "tree_node: 4 leaves",
+          "resultIsError": false
+        },
+        {
+          "seq": 84,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Select-String -Path packages\\\\dsh-tree-engine\\\\index.js -Pattern \\\"join\\\\(|storage|\\\\.json|treeDir|baseDir|DSH_\\\" | Select-Object -First 60 | ForEach-Object { \\\"$($_.LineNumber): $($_.Line.Trim())\\\" }\",\"descr…",
+          "resultHead": "5: * - 持久化 = fsStore（<DSH_PROFILE_DIR>/tree-engine-data/，原子写 tmp+rename）； 135: const liveParent = pickLiveAncestorAgent(services, parent) 195: const dataDir = path.join(process.env.DSH_PROFILE_DIR ?? …",
+          "resultIsError": false
+        },
+        {
+          "seq": 88,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem \\\"$env:USERPROFILE\\\\.dsh\\\\storages\\\" -Force | Select-Object Name; Write-Output \\\"---\\\"; Get-ChildItem \\\"$env:USERPROFILE\\\\.dsh\\\\storages\\\" -Recurse -Filter \\\"*tree*\\\" -ErrorAction SilentlyContin…",
+          "resultHead": "Name ---- session_projcache flow_anchor.json nanju.json schedule.json workspace.json ---",
+          "resultIsError": false
+        },
+        {
+          "seq": 95,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Write-Output \\\"PROFILE=$env:DSH_PROFILE_DIR\\\"; Write-Output \\\"HOME=$env:DSH_HOME\\\"; Get-ChildItem \\\"$env:USERPROFILE\\\\.dsh\\\\profiles\\\" -Directory | Select-Object Name; Get-ChildItem \\\"$env:USERPROFILE\\\\.dsh\\\\…",
+          "resultHead": "PROFILE=C:\\Users\\sir_c\\.dsh\\profiles\\desktop HOME=C:\\Users\\sir_c\\.dsh Name ---- acp desktop headless rescue rsitest1 rsitest2 rsitest_g1 rsitest_g2 rsitest_wr sdk sdk-minimal web",
+          "resultIsError": false
+        },
+        {
+          "seq": 102,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem \\\"$env:DSH_PROFILE_DIR\\\\tree-engine-data\\\" -Force | Select-Object Name,Length,LastWriteTime; Write-Output \\\"---\\\"; Get-ChildItem \\\"$env:DSH_PROFILE_DIR\\\\tree-engine-data\\\" -Recurse -Filter \\\"*.j…",
+          "resultHead": "Name Length LastWriteTime ---- ------ ------------- c3demo 2026/11/11 15:52:45 chlog 2026/11/11 15:52:45 floweng 2026/11/11 15:52:45 prj_mw4k 2026/11/11 15:52:45 rsipoc 2026/10/20 13:16:23 tchlog 2026…",
+          "resultIsError": false
+        },
+        {
+          "seq": 109,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem \\\"$env:DSH_PROFILE_DIR\\\\tree-engine-data\\\\chlog\\\" -Force | Select-Object Name,Length; Write-Output \\\"---tchlog---\\\"; Get-ChildItem \\\"$env:DSH_PROFILE_DIR\\\\tree-engine-data\\\\tchlog\\\" -Force | Sel…",
+          "resultHead": "Name Length ---- ------ call-log.jsonl 3344 tree-state.json 23048 ---tchlog--- call-log.jsonl 3872 tree-state.json 22010",
+          "resultIsError": false
+        },
+        {
+          "seq": 116,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"$j = Get-Content \\\"$env:DSH_PROFILE_DIR\\\\tree-engine-data\\\\chlog\\\\tree-state.json\\\" -Raw | ConvertFrom-Json; $j | Get-Member -MemberType NoteProperty | Select-Object Name; Write-Output \\\"---leaves---\\\"; $j.le…",
+          "resultHead": "---leaves--- | parent= | role= | status= | runtime= | sess= | taskType= ---briefs--- ### DOD: [stderr] ConvertFrom-Json : 传入的对象无效，应为“:”或“}”。 (675): {\"schema_version\":2,\"tree_id\":\"chlog\",\"created_at\":\"…",
+          "resultIsError": false
+        },
+        {
+          "seq": 123,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"$ErrorActionPreference='Stop'; $out = \\\"$env:TEMP\\\\tree-summary.json\\\"; node -e \\\"\\nconst fs=require('fs'), path=require('path');\\nconst base=process.env.DSH_PROFILE_DIR;\\nconst res={};\\nfor (const t of ['chl…",
+          "resultHead": "WROTE C:\\Users\\sir_c\\AppData\\Local\\Temp\\tree-summary.json",
+          "resultIsError": false
+        },
+        {
+          "seq": 130,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"C:\\\\Users\\\\sir_c\\\\AppData\\\\Local\\\\Temp\\\\tree-summary.json\"}",
+          "resultHead": "<path>C:\\Users\\sir_c\\AppData\\Local\\Temp\\tree-summary.json</path> <type>file</type> <content> 1: { 2: \"chlog\": { 3: \"tree_id\": \"chlog\", 4: \"created_at\": \"2026-11-11T07:30:24.092Z\", 5: \"leaves\": [ 6: { …",
+          "resultIsError": false
+        },
+        {
+          "seq": 135,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Select-String -Path packages\\\\dsh-tree-engine\\\\index.js -Pattern \\\"artifact-doc|llm-judge|policy_id|policyId|POLICIES|policies\\\" | Select-Object -First 40 | ForEach-Object { \\\"$($_.LineNumber): $($_.Line.Trim…",
+          "resultHead": "72: const dodText = verifier ? verifier.dodPrompt(spec.policyId ?? spec.taskType ?? 'default') : `[DoD] ${JSON.stringify(spec.dod ?? {})}` 609: 'Run verification policies on a node (modes: self-report…",
+          "resultIsError": false
+        },
+        {
+          "seq": 139,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Select-String -Path packages\\\\dsh-tree-engine\\\\src\\\\*.js -Pattern \\\"artifact-doc|llm-judge|self-report|policy\\\" -ErrorAction SilentlyContinue | Select-Object -First 40 | ForEach-Object { \\\"$($_.Filename):$($_…",
+          "resultHead": "adversarial.js:5: * ① 结构检查：verifier.runVerifications(policyId)（artifact/command 等既有模式） adversarial.js:32: * @param {{treeId: string, leafId: string, policyId: string, cwd: string, target: {kind: strin…",
+          "resultIsError": false
+        },
+        {
+          "seq": 146,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"packages/dsh-tree-engine/src/verify.js\",\"limit\":200}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\packages\\dsh-tree-engine\\src\\verify.js</path> <type>file</type> <content> 1: /** 2: * 验证策略层（PLAN §5）：batch-1 self-report/artifact/command + batch-2 llm-judge/composite/…",
+          "resultIsError": false
+        },
+        {
+          "seq": 151,
+          "name": "tree_plan",
+          "argsSummary": "{\"action\":\"create\",\"tree_id\":\"chglog\",\"session_id\":\"65ac7372-b74e-4477-917b-c5de27cf0949\",\"root_brief\":{\"goal\":\"给 dsh-tree-harness 增补一段 CHANGELOG：在仓库根新增 CHANGELOG.md，记录 2026-11-11「SKILL 工程化」轮次（session-tree 1.3.0 / tree-e…",
+          "resultHead": "tree_plan: created tree chglog (root chglog-root)",
+          "resultIsError": false
+        },
+        {
+          "seq": 153,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"$ErrorActionPreference='Continue'; Write-Output \\\"CHANGELOG_EXISTS=$(Test-Path CHANGELOG.md)\\\"; Write-Output \\\"---versions---\\\"; Get-ChildItem packages\\\\*\\\\package.json | ForEach-Object { $j = Get-Content $_.…",
+          "resultHead": "CHANGELOG_EXISTS=False ---versions--- dsh-agent-introspect @local/dsh-agent-introspect 0.1.0 dsh-meta-loop @local/dsh-meta-loop 0.2.0 dsh-session-tree @orphiczhou/dsh-session-tree 1.3.0 dsh-tree-engin…",
+          "resultIsError": false
+        },
+        {
+          "seq": 160,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"add\",\"tree_id\":\"chglog\",\"leaf\":{\"leaf_id\":\"chglog-C1-commander\",\"parent\":\"chglog-root\",\"path\":\"C1\",\"role\":\"commander\",\"added_by\":\"65ac7372-b74e-4477-917b-c5de27cf0949\",\"taskType\":\"doc\",\"brief\":{\"goal\":\"取材+撰写+独…",
+          "resultHead": "tree_node: chglog-C1-commander status=active · (未派发) ctx=0%",
+          "resultIsError": false
+        },
+        {
+          "seq": 162,
+          "name": "send_message",
+          "argsSummary": "{\"agent_id\":\"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\",\"message\":\"进度同步（tree chglog，root 会话 65ac7372-b74e-4477-917b-c5de27cf0949）：\\n\\n【发现】工作区已有两棵同任务的树：\\n- chlog（root dd42494f）：已写 root done——主动让位，未对仓库根做任何写入。\\n- tchlog（root 03a…",
+          "resultHead": "message delivered to agent 8ca5308b-4ae9-476e-a47d-1aaec5bcf22b",
+          "resultIsError": false
+        }
+      ]
+    }
+  ],
+  "children": [],
+  "layering": {
+    "trees": [
+      {
+        "tree_id": "chglog",
+        "root_brief": "[object Object]",
+        "root_dod": "[object Object]",
+        "planSession": "65ac7372-b74e-4477-917b-c5de27cf0949",
+        "seq": 151
+      }
+    ],
+    "nodes": [
+      {
+        "tree_id": "chglog",
+        "leaf_id": "chglog-root",
+        "parent": null,
+        "role": "root",
+        "taskType": "default",
+        "addedBy": "65ac7372-b74e-4477-917b-c5de27cf0949",
+        "seq": 151,
+        "synthesizedFromPlan": true,
+        "depth": 0
+      },
+      {
+        "tree_id": "chglog",
+        "leaf_id": "chglog-C1-commander",
+        "parent": "chglog-root",
+        "role": "commander",
+        "taskType": "doc",
+        "dependencies": [],
+        "addedBy": "65ac7372-b74e-4477-917b-c5de27cf0949",
+        "path": "C1",
+        "seq": 160,
+        "depth": 1
+      }
+    ],
+    "maxDepth": 1,
+    "layers": 2,
+    "roles": {
+      "root": 1,
+      "commander": 1
+    },
+    "dispatch": [],
+    "dispatchBySession": {},
+    "doneReports": [],
+    "verifies": [],
+    "handoffs": [],
+    "treeStates": [
+      {
+        "tree_id": "chglog",
+        "found": true,
+        "path": "C:\\Users\\sir_c\\.dsh\\profiles\\desktop\\tree-engine-data\\chglog\\tree-state.json",
+        "leafCount": 2,
+        "maxDepth": 1,
+        "leaves": [
+          {
+            "leaf_id": "chglog-root",
+            "parent": null,
+            "role": "root",
+            "taskType": null,
+            "status": "active",
+            "runtime": null,
+            "session_id": "65ac7372-b74e-4477-917b-c5de27cf0949",
+            "verification_pass": null,
+            "depth": 0
+          },
+          {
+            "leaf_id": "chglog-C1-commander",
+            "parent": "chglog-root",
+            "role": "commander",
+            "taskType": "doc",
+            "status": "active",
+            "runtime": null,
+            "session_id": null,
+            "verification_pass": null,
+            "depth": 1
+          }
+        ],
+        "eventCount": 0
+      }
+    ],
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": true,
+        "detail": {
+          "trees": [
+            "chglog"
+          ]
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": false,
+        "detail": {
+          "maxDepth": 1,
+          "nodeCount": 2
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {
+            "root": 1,
+            "commander": 1
+          }
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {}
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": false,
+        "detail": {
+          "leavesDispatched": []
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": false,
+        "detail": {
+          "count": 0,
+          "successors": []
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": false,
+        "detail": {
+          "handoffInChild": []
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ]
+  },
+  "summary": {
+    "sessions": 1,
+    "roots": 1,
+    "children": 0,
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": true,
+        "detail": {
+          "trees": [
+            "chglog"
+          ]
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": false,
+        "detail": {
+          "maxDepth": 1,
+          "nodeCount": 2
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {
+            "root": 1,
+            "commander": 1
+          }
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {}
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": false,
+        "detail": {
+          "leavesDispatched": []
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": false,
+        "detail": {
+          "count": 0,
+          "successors": []
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": false,
+        "detail": {
+          "handoffInChild": []
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ],
+    "passCount": 1,
+    "totalChecks": 10
+  }
+}

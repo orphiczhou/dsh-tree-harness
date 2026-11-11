@@ -1,0 +1,259 @@
+{
+  "tool": "collect-skills",
+  "generatedAt": "2026-11-11T07:22:50.054Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "expected": [
+    "tree-commander",
+    "tree-worker",
+    "session-handoff"
+  ],
+  "sessions": [
+    {
+      "id": "8ca5308b-4ae9-476e-a47d-1aaec5bcf22b",
+      "ok": true,
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\\session.v4.jsonl.zstd",
+      "logBytes": 513848,
+      "frames": 184,
+      "eventCount": 340,
+      "found": true,
+      "firstSeq": 12,
+      "firstType": "user/message",
+      "hits": [
+        {
+          "seq": 12,
+          "type": "user/message",
+          "count": 12
+        },
+        {
+          "seq": 306,
+          "type": "user/message",
+          "count": 13
+        },
+        {
+          "seq": 314,
+          "type": "user/message",
+          "count": 14
+        },
+        {
+          "seq": 335,
+          "type": "user/message",
+          "count": 15
+        }
+      ],
+      "skillCount": 15,
+      "names": [
+        "archify",
+        "autoglm-browser-agent",
+        "diagnose-windows-sandbox-acl",
+        "meta-run-intake",
+        "office",
+        "office-docx",
+        "office-export-pdf",
+        "office-pptx",
+        "office-recalculate",
+        "office-render",
+        "office-xlsx",
+        "rsi-harness",
+        "session-handoff",
+        "tree-commander",
+        "tree-worker"
+      ],
+      "expected": [
+        "tree-commander",
+        "tree-worker",
+        "session-handoff"
+      ],
+      "missing": [],
+      "details": {
+        "tree-commander": {
+          "expected": true,
+          "found": true,
+          "firstSeq": 12,
+          "catalogDescription": "把复杂任务拆成多层任务树、派独立子会话执行并逐点验收收口：tree_plan 建树 → tree_node 建 commander/worker 节点（依赖/产物/DoD）→ tree_dispatch 派发（无依赖可并行）→ tree_s…"
+        },
+        "tree-worker": {
+          "expected": true,
+          "found": true,
+          "firstSeq": 12,
+          "catalogDescription": "树节点执行者（worker）：按派发任务书与 DoD 完成一个 leaf 的交付物，用 tree_report 上报 brief_echo/plan/progress/context/done，用自报上下文水位 pct 配合 tree-en…"
+        },
+        "session-handoff": {
+          "expected": true,
+          "found": true,
+          "firstSeq": 12,
+          "catalogDescription": "会话自交接：长任务推进到接近上下文上限（上下文约 50%）时，先 session_handoff {action:\"status\"} 读真实占用与继承事实，再 session_handoff {action:\"handoff\"} 把任务/进…"
+        }
+      },
+      "skillLoads": [],
+      "firstUserMessageSeq": 10,
+      "firstUserMessageHead": "你是 dsh-tree-harness 项目的 E2E 验证工程师（teammate）。工作目录 D:\\Codes\\dsh-tree-harness。共享任务板任务 id：**task-6**（先 team_task_get task-6 再 claim）。\n\n## 背景\n- 正在把 skill 工程化：新增 `session-handoff` skill + `tree-commander`/`tree-worker` skill 迁入插件包，并通过 DSH `@deeps…"
+    },
+    {
+      "id": "dacf6e74-8894-479f-a230-2eb7b6976499",
+      "ok": true,
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\dacf6e74-8894-479f-a230-2eb7b6976499\\session.v4.jsonl.zstd",
+      "logBytes": 530995,
+      "frames": 126,
+      "eventCount": 239,
+      "found": true,
+      "firstSeq": 12,
+      "firstType": "user/message",
+      "hits": [
+        {
+          "seq": 12,
+          "type": "user/message",
+          "count": 12
+        },
+        {
+          "seq": 211,
+          "type": "user/message",
+          "count": 13
+        },
+        {
+          "seq": 217,
+          "type": "user/message",
+          "count": 14
+        },
+        {
+          "seq": 223,
+          "type": "user/message",
+          "count": 15
+        }
+      ],
+      "skillCount": 15,
+      "names": [
+        "archify",
+        "autoglm-browser-agent",
+        "diagnose-windows-sandbox-acl",
+        "meta-run-intake",
+        "office",
+        "office-docx",
+        "office-export-pdf",
+        "office-pptx",
+        "office-recalculate",
+        "office-render",
+        "office-xlsx",
+        "rsi-harness",
+        "session-handoff",
+        "tree-commander",
+        "tree-worker"
+      ],
+      "expected": [
+        "tree-commander",
+        "tree-worker",
+        "session-handoff"
+      ],
+      "missing": [],
+      "details": {
+        "tree-commander": {
+          "expected": true,
+          "found": true,
+          "firstSeq": 12,
+          "catalogDescription": "把复杂任务拆成多层任务树、派独立子会话执行并逐点验收收口：tree_plan 建树 → tree_node 建 commander/worker 节点（依赖/产物/DoD）→ tree_dispatch 派发（无依赖可并行）→ tree_s…"
+        },
+        "tree-worker": {
+          "expected": true,
+          "found": true,
+          "firstSeq": 12,
+          "catalogDescription": "树节点执行者（worker）：按派发任务书与 DoD 完成一个 leaf 的交付物，用 tree_report 上报 brief_echo/plan/progress/context/done，用自报上下文水位 pct 配合 tree-en…"
+        },
+        "session-handoff": {
+          "expected": true,
+          "found": true,
+          "firstSeq": 12,
+          "catalogDescription": "会话自交接：长任务推进到接近上下文上限（上下文约 50%）时，先 session_handoff {action:\"status\"} 读真实占用与继承事实，再 session_handoff {action:\"handoff\"} 把任务/进…"
+        }
+      },
+      "skillLoads": [],
+      "firstUserMessageSeq": 10,
+      "firstUserMessageHead": "你是 dsh-tree-harness 项目的 skill 工程师（teammate）。工作目录 D:\\Codes\\dsh-tree-harness。共享任务板任务 id：**task-4**（先 team_task_get task-4 再 claim）。\n\n## 背景（已核实事实）\n- 会话自交接已并入 `packages/dsh-session-tree` **v1.2.0**：host 半 `index.js` 注册 `tree_send` + `session_ha…"
+    },
+    {
+      "id": "00a0b6f1-ed23-4607-9294-d8fdf192834e",
+      "ok": true,
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\00a0b6f1-ed23-4607-9294-d8fdf192834e\\session.v4.jsonl.zstd",
+      "logBytes": 522934,
+      "frames": 177,
+      "eventCount": 329,
+      "found": true,
+      "firstSeq": 12,
+      "firstType": "user/message",
+      "hits": [
+        {
+          "seq": 12,
+          "type": "user/message",
+          "count": 12
+        },
+        {
+          "seq": 262,
+          "type": "user/message",
+          "count": 13
+        },
+        {
+          "seq": 300,
+          "type": "user/message",
+          "count": 14
+        },
+        {
+          "seq": 322,
+          "type": "user/message",
+          "count": 15
+        }
+      ],
+      "skillCount": 15,
+      "names": [
+        "archify",
+        "autoglm-browser-agent",
+        "diagnose-windows-sandbox-acl",
+        "meta-run-intake",
+        "office",
+        "office-docx",
+        "office-export-pdf",
+        "office-pptx",
+        "office-recalculate",
+        "office-render",
+        "office-xlsx",
+        "rsi-harness",
+        "session-handoff",
+        "tree-commander",
+        "tree-worker"
+      ],
+      "expected": [
+        "tree-commander",
+        "tree-worker",
+        "session-handoff"
+      ],
+      "missing": [],
+      "details": {
+        "tree-commander": {
+          "expected": true,
+          "found": true,
+          "firstSeq": 12,
+          "catalogDescription": "把复杂任务拆成多层任务树、派独立子会话执行并逐点验收收口：tree_plan 建树 → tree_node 建 commander/worker 节点（依赖/产物/DoD）→ tree_dispatch 派发（无依赖可并行）→ tree_s…"
+        },
+        "tree-worker": {
+          "expected": true,
+          "found": true,
+          "firstSeq": 12,
+          "catalogDescription": "树节点执行者（worker）：按派发任务书与 DoD 完成一个 leaf 的交付物，用 tree_report 上报 brief_echo/plan/progress/context/done，用自报上下文水位 pct 配合 tree-en…"
+        },
+        "session-handoff": {
+          "expected": true,
+          "found": true,
+          "firstSeq": 12,
+          "catalogDescription": "会话自交接：长任务推进到接近上下文上限（上下文约 50%）时，先 session_handoff {action:\"status\"} 读真实占用与继承事实，再 session_handoff {action:\"handoff\"} 把任务/进…"
+        }
+      },
+      "skillLoads": [],
+      "firstUserMessageSeq": 10,
+      "firstUserMessageHead": "你是 dsh-tree-harness 项目的独立审计员（teammate）。工作目录 D:\\Codes\\dsh-tree-harness。共享任务板任务 id：**task-5**（先 team_task_get task-5 再 claim）。\n\n## 背景\n- `packages/dsh-tree-engine` v0.4.0：8 个 tree_* 工具（tree_plan/tree_node/tree_dispatch/tree_report/tree_status/…"
+    }
+  ],
+  "summary": {
+    "sessions": 3,
+    "found": 3,
+    "missingSessions": 0,
+    "allExpectedPresent": true,
+    "verdict": "PASS"
+  }
+}

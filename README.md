@@ -16,10 +16,10 @@
 
 | 包 | 版本 | 能力 | 测试 | 当前状态 |
 |---|---|---|---|---|
-| [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.4.0 | 执行层：8 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain`），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准 | **62/62** | ✅ 运行中（本机 desktop profile 已装载） |
+| [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.5.0 | 执行层：8 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain`），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准；**随包 tree-commander/tree-worker Skill** | **67/67** | ✅ 运行中（本机 desktop profile 已装载） |
 | [`packages/dsh-meta-loop`](packages/dsh-meta-loop/) | 0.2.0 | 治理层：六阶段方法轮 + **G1–G11** 机械门禁 + `/metaloop/` Web 面板 + M4 递归触发表 | **13/13** | ⏸ 未装配（不在 profile bundles，按需装载） |
 | [`packages/dsh-agent-introspect`](packages/dsh-agent-introspect/) | 0.1.0 | 自省层：`self_spec` 工具，投影当前会话的 model / permissions / sandbox / cwd / token 用量 | —（无单测） | ✅ 运行中 |
-| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | 1.2.0 | 会话树单包：左栏嵌套会话树 + `tree_send` 跨层级消息工具 + **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设（工作模式）/ 权限模式 / 模型 / 思考等级）；工作区排序 / 隐藏恢复 / 检索召回 | 包内 4 份测试（handoff 34/34、render 全绿、style-guard 22/22、verify-bundle 0 fail） | 🌐 GitHub 公开（**v1.2.0**）、社区市场已收录；**npm 未发布** |
+| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | 1.3.0 | 会话树单包：左栏嵌套会话树 + `tree_send` 跨层级消息工具 + **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设（工作模式）/ 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**（Skill 目录可发现）；工作区排序 / 隐藏恢复 / 检索召回 | 包内 5 份测试（handoff 34/34、render 全绿、style-guard 22/22、verify-bundle 0 fail） | 🌐 GitHub 公开（**v1.3.0**）、社区市场已收录；**npm 未发布** |
 
 状态口径：
 
@@ -85,7 +85,7 @@ plugin_manager({ action: "install_bundle", target: "D:/Codes/dsh-tree-harness/pa
 
 ```powershell
 cd packages/dsh-tree-engine
-node --test tests/*.test.js     # tests 62 / pass 62 / fail 0
+node --test tests/*.test.js     # tests 66 / pass 66 / fail 0（62 引擎 + 4 技能打包 + 1 B1 回归）
 
 cd ../dsh-meta-loop
 node --test tests/*.test.js     # tests 13 / pass 13 / fail 0
@@ -93,11 +93,12 @@ node --test tests/*.test.js     # tests 13 / pass 13 / fail 0
 
 ⚠️ **不要写成 `node --test tests`**：Node 24 会把 `tests` 当文件路径，报 `test at tests:1:1` 的假失败。要机器可读计数加 `--test-reporter=tap`，且**必须放在位置参数之前**（放后面会被静默忽略）。
 
-会话树单包（`packages/dsh-session-tree/`）自带 4 份测试：
+会话树单包（`packages/dsh-session-tree/`）自带 5 份测试：
 
 ```powershell
 cd packages/dsh-session-tree
 node test/handoff.test.js      # 宿主半 session_handoff：34/34（交接层级矩阵/继承/工作区归属/闸门/失败可追溯）
+node test/skills.test.cjs      # 随包 Skill 打包回归：3/3（frontmatter/files/patch 行）
 node test/render.test.cjs      # 确定性夹具渲染检查（133/133 + 夹具自检 9/9 + 实时附加 11/11）
 node test/style-guard.cjs      # 样式注入 / SSR 边界检查：22/22
 node scripts/verify-bundle.mjs # 清单自检：0 fail
@@ -133,25 +134,39 @@ node test/provider-conformance.cjs [asar 解包目录]
 - 所有 DOM 副作用放在 `apply(ctx)` 里；
 - 客户端半热更会**残留旧实例**：用单例注册表 + 令牌仲裁压制，彻底干净仍需刷新一次页面。
 
+### 随包 Skill（SKILL 工程化，v0.5.0 / v1.3.0）
+
+Skill 是插件工程的一部分，与工具同包、同版本、同发布：
+
+| 包 | 随包 Skill | 挂载方式 |
+|---|---|---|
+| `packages/dsh-tree-engine` v0.5.0 | `skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md` | `cordis.patch.yml` 第 2 行 insert `@deepseek-ai/dsh-skill-filesystem`（`providerName: tree-engine`、`includeDefaultRoots:false`、`bundledSkillDir` 经安装包身份解析到包内 `skills/`） |
+| `packages/dsh-session-tree` v1.3.0 | `skills/session-handoff/SKILL.md` | 同模式，`providerName: session-tree` |
+
+- 效果：新会话的 Skill 目录直接出现 `tree-commander` / `tree-worker` / `session-handoff`，模型在**极简提示词**下即可发现「分层分解 / 逐层干活 / 上下文 50% 自主交接」的用法，不需要先把工具名喂给它；真机验证见 [docs/skill-e2e-2026-11-11.md](docs/skill-e2e-2026-11-11.md)。
+- 打包回归：`packages/dsh-tree-engine/tests/skills.test.js`（4 项）与 `packages/dsh-session-tree/test/skills.test.cjs`（3 项）校验 frontmatter、`package.json.files`、patch provider 行与旧路径清理。
+- 发布：会话树单包的 `skills/` 随 `package.json.files` 发布到公开插件仓（v1.3.0，18/18 SHA）；tree-engine 为仓内插件，Skill 随本仓公开。
+- 热更：新增/修改 patch 行受 D12 约束——对相应 bundle entry 做一次 disable→enable 或重启 DSH。
+
 ### Loader 包名缓存（关键机制）
 
 DSH Loader 对**宿主模块按包名缓存**：
 
-- 已装载包的 `index.js` 改动 → 停用/启用、卸载重装、换入口文件路径都**拿不到新代码**，只能重启进程或换新包名（2026-11-11 第二轮实测：改 `packages/dsh-session-tree/index.js` 后，即使该包在 hmr.root 内，活体工具仍是旧实现；对 `include:session-tree` 做一次 disable→enable 后才加载新实现）。
+- 已装载包的 `index.js` 改动 → **单纯保存文件不会重新求值**（即使包在 `hmr.root` 内；2026-11-11 实测：改 `packages/dsh-session-tree/index.js` 后活体工具仍是旧实现）。对相应 bundle 条目做一次 disable→enable（`plugin_manager({action:"set_plugin", target:"include:session-tree", enabled:false})` 再 `enabled:true`；tree-engine 用 `include:tree-engine`）可加载新模块；重启 DSH 同样有效。
 - 新包名没有缓存 → 普通安装即可生效。
-- 本仓 `packages/` 虽位于 profile 的 `hmr.root` 内（本机 `D:/Codes/dsh-tree-harness/packages`），但**不要把 hmr.root 当作宿主半热更保证**：客户端半（`client.js`）刷新页面即生效；宿主半（`index.js`）改动请走 disable→enable 该 bundle 条目（`plugin_manager({action:"set_plugin", target:"include:session-tree", enabled:false})` 再 `enabled:true`）或重启 DSH，并逐条验证活体工具面。
-- 由于缓存按包名生效，把新功能并入**已有**包时不会自动替换已加载的旧宿主半；安装/升级后必须重载该 bundle 条目。
+- 本仓 `packages/` 虽位于 profile 的 `hmr.root` 内（本机 `D:/Codes/dsh-tree-harness/packages`），但**不要把 hmr.root 当作宿主半热更保证**：客户端半（`client.js`）刷新页面即生效；宿主半（`index.js`）与 **bundle patch**（新增/修改 insert 行，例如 Skill provider）改动请走 disable→enable 该 bundle 条目或重启 DSH，并逐条验证活体工具面/Skill 目录。
+- 由于缓存按包名生效，把新功能并入**已有**包时不会自动替换已加载的旧宿主半；安装/升级后必须重载该 bundle 条目（本机实测 disable→enable 有效；其它路径未经实测不要依赖）。
 
 ### 目录结构
 
 ```
 packages/
-  dsh-tree-engine/       执行层：src/ 纯逻辑 + index.js 宿主适配 + tests/（8 个 .test.js + 偏差登记）
+  dsh-tree-engine/       执行层：src/ 纯逻辑 + index.js 宿主适配 + tests/（9 个 .test.js + 偏差登记）
   dsh-meta-loop/         治理层：src/core.js + index.js + client.js + panel/ + tests/
   dsh-agent-introspect/  自省层：index.js（self_spec）
   dsh-session-tree/      会话树单包（发布产物，与公开插件仓同步；含 tree_send + session_handoff）
 docs/                    规约、设计、交接、发布与审计文档
-demo/  logs/  skills/    演示产物、运行日志、SKILL 资产
+demo/  logs/             演示产物、运行日志（SKILL 资产已随包迁入 packages/*/skills/）
 scripts/                 asar-tool / release-plugin（发布同步校验）
 ```
 
@@ -161,10 +176,12 @@ scripts/                 asar-tool / release-plugin（发布同步校验）
 
 | 文档 | 内容 |
 |---|---|
-| [agent.md](agent.md) | **项目代理手册（开工必读）**：角色授权（Lead=指挥官+架构师）、决策 D1–D12、路线图、工程命令、发布门禁与回滚 |
+| [agent.md](agent.md) | **项目代理手册（开工必读）**：角色授权（Lead=指挥官+架构师）、决策 D1–D13、路线图、工程命令、发布门禁与回滚 |
 | [docs/handoff-2026-11-11.md](docs/handoff-2026-11-11.md) | **当前交接**：决策 D1–D7、关键路径、测试/验活命令、发布流程、风险与回滚、下一轮议程 |
-| [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md) | 会话自交接：v0.1.0 设计 + **v1.2.0 并入会话树/继承修复**（工作区、权限模式、Agent 预设、模型/思考等级） |
+| [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md) | 会话自交接：v0.1.0 设计 + **v1.2.0 并入会话树/继承修复 + v1.3.0 随包 Skill**（工作区、权限模式、Agent 预设、模型/思考等级） |
 | [docs/e2e-handoff-2026-11-11.md](docs/e2e-handoff-2026-11-11.md) | 交接真机 E2E 取证：修复前 root FAIL 5/12 基线 → 修复后 root PASS 14/14 / sibling PASS 12/12 |
+| [docs/skill-e2e-2026-11-11.md](docs/skill-e2e-2026-11-11.md) | Skill 工程化真机 E2E：极简提示词 → skill 识别 → 三层分解/逐层干活/中间层 50% 交接（A/B/C 组） |
+| [docs/audit-tree-system-2026-11-11.md](docs/audit-tree-system-2026-11-11.md) | tree 体系一致性审计：4 BLOCK / 12 需修 / 15 建议（file:line 证据 + 修复状态） |
 | [docs/publishing.md](docs/publishing.md) | **发布状态与流程**：GitHub 两仓、社区市场、npm 冻结、版本纪律、公开前检查清单 |
 | [PLAN.md](PLAN.md) | 开发方案（工作版）：范围、接口缝、验证策略层、里程碑 |
 | [docs/engine-spec.md](docs/engine-spec.md) | 引擎行为规约（S0 冻结）：工具面、数据模型、状态机闭集、断言 |

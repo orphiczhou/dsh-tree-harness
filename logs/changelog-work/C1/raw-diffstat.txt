@@ -1,0 +1,14 @@
+﻿ README.md                                  |  9 ++--
+ agent.md                                   | 43 +++++++++++++------
+ docs/handoff-2026-11-11.md                 | 12 +++---
+ docs/publishing.md                         |  4 +-
+ packages/dsh-session-tree/README.md        | 16 ++++++-
+ packages/dsh-session-tree/README.zh.md     | 18 +++++++-
+ packages/dsh-session-tree/cordis.patch.yml | 19 ++++++--
+ packages/dsh-session-tree/package.json     |  5 ++-
+ packages/dsh-tree-engine/README.md         | 10 ++++-
+ packages/dsh-tree-engine/cordis.patch.yml  | 17 ++++++++
+ packages/dsh-tree-engine/package.json      |  4 +-
+ skills/tree-commander/SKILL.md             | 68 -----------------------------
+ skills/tree-worker/SKILL.md                | 69 ------------------------------
+ 13 files changed, 121 insertions(+), 173 deletions(-)

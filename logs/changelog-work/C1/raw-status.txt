@@ -1,0 +1,20 @@
+﻿ M README.md
+ M agent.md
+ M docs/handoff-2026-11-11.md
+ M docs/publishing.md
+ M packages/dsh-session-tree/README.md
+ M packages/dsh-session-tree/README.zh.md
+ M packages/dsh-session-tree/cordis.patch.yml
+ M packages/dsh-session-tree/package.json
+ M packages/dsh-tree-engine/README.md
+ M packages/dsh-tree-engine/cordis.patch.yml
+ M packages/dsh-tree-engine/package.json
+ D skills/tree-commander/SKILL.md
+ D skills/tree-worker/SKILL.md
+?? docs/skill-e2e-2026-11-11.md
+?? logs/changelog-work/
+?? packages/dsh-session-tree/skills/
+?? packages/dsh-session-tree/test/skills.test.cjs
+?? packages/dsh-tree-engine/skills/
+?? packages/dsh-tree-engine/tests/skills.test.js
+?? scripts/skill-e2e/

@@ -1,0 +1,1 @@
+﻿0cbc31e 2026-11-11 docs: v1.2.0 合并/继承修复与真机 E2E 记录（agent.md/publishing/spec/handoff/session-handoff/README + e2e 断言器与 artifacts）

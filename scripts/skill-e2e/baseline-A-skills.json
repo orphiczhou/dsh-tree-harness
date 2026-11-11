@@ -1,0 +1,85 @@
+{
+  "tool": "collect-skills",
+  "generatedAt": "2026-11-11T07:22:34.055Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "expected": [
+    "tree-commander",
+    "tree-worker",
+    "session-handoff"
+  ],
+  "sessions": [
+    {
+      "id": "dd42494f-8050-428c-be6b-673f0d320a27",
+      "ok": false,
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\dd42494f-8050-428c-be6b-673f0d320a27\\session.v4.jsonl.zstd",
+      "logBytes": 64741,
+      "frames": 4,
+      "eventCount": 18,
+      "found": true,
+      "firstSeq": 12,
+      "firstType": "user/message",
+      "hits": [
+        {
+          "seq": 12,
+          "type": "user/message",
+          "count": 14
+        }
+      ],
+      "skillCount": 14,
+      "names": [
+        "archify",
+        "autoglm-browser-agent",
+        "diagnose-windows-sandbox-acl",
+        "meta-run-intake",
+        "office",
+        "office-docx",
+        "office-export-pdf",
+        "office-pptx",
+        "office-recalculate",
+        "office-render",
+        "office-xlsx",
+        "rsi-harness",
+        "session-handoff",
+        "tree-commander"
+      ],
+      "expected": [
+        "tree-commander",
+        "tree-worker",
+        "session-handoff"
+      ],
+      "missing": [
+        "tree-worker"
+      ],
+      "details": {
+        "tree-commander": {
+          "expected": true,
+          "found": true,
+          "firstSeq": 12,
+          "catalogDescription": "把复杂任务拆成多层任务树、派独立子会话执行并逐点验收收口：tree_plan 建树 → tree_node 建 commander/worker 节点（依赖/产物/DoD）→ tree_dispatch 派发（无依赖可并行）→ tree_s…"
+        },
+        "tree-worker": {
+          "expected": true,
+          "found": false,
+          "firstSeq": 12,
+          "catalogDescription": null
+        },
+        "session-handoff": {
+          "expected": true,
+          "found": true,
+          "firstSeq": 12,
+          "catalogDescription": "会话自交接：长任务推进到接近上下文上限（上下文约 50%）时，先 session_handoff {action:\"status\"} 读真实占用与继承事实，再 session_handoff {action:\"handoff\"} 把任务/进…"
+        }
+      },
+      "skillLoads": [],
+      "firstUserMessageSeq": 10,
+      "firstUserMessageHead": "把「给 dsh-tree-harness 增补一段 CHANGELOG」拆成三层并派人做完，验证通过再收口。\nYour parent agent id is \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\". Before you finish, send your result to that agent with send_message({ agent_id: \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\", m…"
+    }
+  ],
+  "summary": {
+    "sessions": 1,
+    "found": 0,
+    "missingSessions": 1,
+    "allExpectedPresent": false,
+    "verdict": "FAIL"
+  }
+}

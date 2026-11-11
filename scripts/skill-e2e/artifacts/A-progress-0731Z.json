@@ -1,0 +1,1109 @@
+{
+  "tool": "summarize-run",
+  "generatedAt": "2026-11-11T07:30:28.657Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "options": {
+    "session": [
+      "03ad2830-c8a0-410e-a1f2-53f4f50c2356"
+    ],
+    "childDepth": 3,
+    "scanWorkspace": "same"
+  },
+  "sessions": [
+    {
+      "id": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\03ad2830-c8a0-410e-a1f2-53f4f50c2356\\session.v4.jsonl.zstd",
+      "workspaceEncoding": "--D-Codes-dsh-tree-harness--",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": "8ca5308b-4ae9-476e-a47d-1aaec5bcf22b",
+        "origin": "subagent",
+        "delegationDepth": 2,
+        "agentPreset": "standard",
+        "createdAt": 1794381865219
+      },
+      "header": {
+        "seq": 14,
+        "config": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        },
+        "toolCount": 158,
+        "headerCount": 1
+      },
+      "eventCount": 151,
+      "firstUserMessage": {
+        "seq": 10,
+        "text": "把「给 dsh-tree-harness 增补一段 CHANGELOG」拆成三层并派人做完，验证通过再收口。\nYour parent agent id is \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\". Before you finish, send your result to that agent with send_message({ agent_id: \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\", message: \"<self-contained result>\" }). The parent shares your workspace but does not automatically receive your transcript, tool output, or reasoning. Send earlier messages as well when a finding changes what the parent should do next; sending a message does not end your turn."
+      },
+      "assistantFinal": {
+        "seq": 147,
+        "text": "sweepMode=timer (not degraded) — interesting; maybe timer exists now. harvest returns no pending segments. C1 is running as a subagent; I'll get notified. Let me end this turn with a concise status to the user? Actually I'm mid-task; a status message is fine. But \"end your turn\" — the harness will resume on subagent completion notification. I should not send a final answer yet. I'll output a brief progress note. Actually, wait: perhaps I can use the wait time productively by drafting the exact CHANGELOG section content myself and giving it to C2? No — C2's worker should write it. My job is to …"
+      },
+      "skills": {
+        "found": true,
+        "firstSeq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "evolution": [
+          {
+            "seq": 12,
+            "count": 15,
+            "targets": [
+              "tree-commander",
+              "tree-worker",
+              "session-handoff"
+            ]
+          }
+        ],
+        "loaded": [
+          {
+            "seq": 18,
+            "name": "tree-commander"
+          }
+        ]
+      },
+      "tree": {
+        "plan": [
+          {
+            "seq": 107,
+            "tree_id": "tchlog",
+            "root_brief": "[object Object]",
+            "root_dod": "[object Object]",
+            "session_id": "03ad2830-c8a0-410e-a1f2-53f4f50c2356"
+          }
+        ],
+        "nodes": [
+          {
+            "seq": 112,
+            "action": "add",
+            "tree_id": "tchlog",
+            "leaf": {
+              "leaf_id": "tchlog-c1-commander",
+              "parent": "tchlog-root",
+              "path": "C1",
+              "role": "commander",
+              "added_by": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+              "taskType": "doc",
+              "brief": {
+                "goal": "事实核定层：查清并交叉校验写入 CHANGELOG 所需的全部事实（各包版本、测试数字与出处、最近提交、未提交变更清单、发布状态），产出 facts-verified.md，供 C2 撰写。"
+              },
+              "dod": {
+                "dod": "logs/changelog-work/c1/facts-verified.md ≥400 字节：含四包名/版本、测试命令与实测数字、≥8 条近期 commit（短 SHA+日期+主题）、未提交变更逐文件清单、发布状态；每条带证据命令或文件路径；两名 worker 的产物已 tree_verify PASS 且内容交叉一致。"
+              }
+            }
+          },
+          {
+            "seq": 114,
+            "action": "add",
+            "tree_id": "tchlog",
+            "leaf": {
+              "leaf_id": "tchlog-c2-commander",
+              "parent": "tchlog-root",
+              "path": "C2",
+              "role": "commander",
+              "added_by": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+              "taskType": "doc",
+              "dependencies": [
+                "tchlog-c1-commander"
+              ],
+              "brief": {
+                "goal": "撰写层：依据 C1 事实写根 CHANGELOG.md（Unreleased 2026-11-11 的 SKILL 工程化小节 + 可核验版本历史摘要），并在根 README 接入变更记录链接。"
+              },
+              "dod": {
+                "dod": "CHANGELOG.md（≥1500 字节）结构完整：标题/约定说明、Unreleased 小节含 Added/Changed/Removed/Tests/Docs、版本历史每条带 commit 短 SHA；版本号与 package.json 完全一致；README 增加指向 CHANGELOG.md 的有效相对链接；两个 worker tree_verify PASS；无 D7 文件引用、无未落实的夸大陈述。"
+              }
+            }
+          },
+          {
+            "seq": 116,
+            "action": "add",
+            "tree_id": "tchlog",
+            "leaf": {
+              "leaf_id": "tchlog-c3-commander",
+              "parent": "tchlog-root",
+              "path": "C3",
+              "role": "commander",
+              "added_by": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+              "taskType": "default",
+              "dependencies": [
+                "tchlog-c2-commander"
+              ],
+              "brief": {
+                "goal": "验证层：对 CHANGELOG.md 与 README 改动做机械验证（测试、链接、版本、SHA、工作区洁净）+ 独立红队复核，给出 PASS/FAIL 与 findings。"
+              },
+              "dod": {
+                "dod": "verify-report.md 含逐项 PASS/FAIL 与原始命令输出摘要（tree-engine 66/66、session-tree skills 3/3、README/CHANGELOG 链接存在、历史 SHA 可解析、版本一致、git status 仅预期文件）；redteam.md 给出独立 PASS/FAIL 与 findings；无任一必须项 FAIL 才算通过；两 worker tree_verify PASS。"
+              }
+            }
+          },
+          {
+            "seq": 121,
+            "action": "add",
+            "tree_id": "tchlog",
+            "leaf": {
+              "added_by": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+              "brief": {
+                "goal": "事实核定层：查清并交叉校验写入 CHANGELOG 所需的全部事实（各包版本、测试数字与出处、最近提交、未提交变更清单、发布状态），产出 facts-verified.md，供 C2 撰写。"
+              },
+              "dod": {
+                "dod": "logs/changelog-work/C1/facts-verified.md ≥400 字节：含四包名/版本、测试命令与实测数字、≥8 条近期 commit（短 SHA+日期+主题）、未提交变更逐文件清单、发布状态；每条带证据命令或文件路径；两名 worker 的产物已 tree_verify PASS 且内容交叉一致。"
+              },
+              "leaf_id": "tchlog-C1-commander",
+              "parent": "tchlog-root",
+              "path": "C1",
+              "role": "commander",
+              "taskType": "doc"
+            }
+          },
+          {
+            "seq": 123,
+            "action": "add",
+            "tree_id": "tchlog",
+            "leaf": {
+              "added_by": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+              "brief": {
+                "goal": "撰写层：依据 C1 事实写根 CHANGELOG.md（Unreleased 2026-11-11 的 SKILL 工程化小节 + 可核验版本历史摘要），并在根 README 接入变更记录链接。"
+              },
+              "dod": {
+                "dod": "CHANGELOG.md（≥1500 字节）结构完整：标题/约定说明、Unreleased 小节含 Added/Changed/Removed/Tests/Docs、版本历史每条带 commit 短 SHA；版本号与 package.json 完全一致；README 增加指向 CHANGELOG.md 的有效相对链接；两个 worker tree_verify PASS；无 D7 文件引用、无未落实的夸大陈述。"
+              },
+              "dependencies": [
+                "tchlog-C1-commander"
+              ],
+              "leaf_id": "tchlog-C2-commander",
+              "parent": "tchlog-root",
+              "path": "C2",
+              "role": "commander",
+              "taskType": "doc"
+            }
+          },
+          {
+            "seq": 125,
+            "action": "add",
+            "tree_id": "tchlog",
+            "leaf": {
+              "added_by": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+              "brief": {
+                "goal": "验证层：对 CHANGELOG.md 与 README 改动做机械验证（测试、链接、版本、SHA、工作区洁净）+ 独立红队复核，给出 PASS/FAIL 与 findings。"
+              },
+              "dod": {
+                "dod": "verify-report.md 含逐项 PASS/FAIL 与原始命令输出摘要（tree-engine 66/66、session-tree skills 3/3、README/CHANGELOG 链接存在、历史 SHA 可解析、版本一致、git status 仅预期文件）；redteam.md 给出独立 PASS/FAIL 与 findings；无任一必须项 FAIL 才算通过；两 worker tree_verify PASS。"
+              },
+              "dependencies": [
+                "tchlog-C2-commander"
+              ],
+              "leaf_id": "tchlog-C3-commander",
+              "parent": "tchlog-root",
+              "path": "C3",
+              "role": "commander",
+              "taskType": "default"
+            }
+          }
+        ],
+        "dispatch": [
+          {
+            "seq": 130,
+            "action": "start",
+            "tree_id": "tchlog",
+            "leaf_id": "tchlog-C1-commander",
+            "result": "tree_dispatch: tchlog-C1-commander → running"
+          }
+        ],
+        "reports": [],
+        "verify": [],
+        "status": [
+          {
+            "seq": 143,
+            "action": "harvest",
+            "tree_id": "tchlog",
+            "result": "tree_status: harvest floweng:∅ | prj_mw4k:∅ | rsipoc:∅ | tchlog:∅ (sweepMode=timer)"
+          }
+        ],
+        "log": [],
+        "maintain": [],
+        "send": []
+      },
+      "handoff": [],
+      "subagents": [],
+      "toolCounts": {
+        "skill": 1,
+        "pwsh": 10,
+        "glob": 1,
+        "grep": 2,
+        "read": 6,
+        "tree_plan": 1,
+        "tree_node": 6,
+        "tree_dispatch": 1,
+        "tree_status": 1
+      },
+      "toolSequence": [
+        {
+          "seq": 18,
+          "name": "skill",
+          "argsSummary": "{\"name\":\"tree-commander\"}",
+          "resultHead": "<skill_content name=\"tree-commander\"> <skill_resources> Base directory for this skill: D:\\Codes\\dsh-tree-harness\\packages\\dsh-tree-engine\\skills\\tree-commander Resolve relative paths mentioned by this…",
+          "resultIsError": false
+        },
+        {
+          "seq": 23,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Write-Output \\\"DSH_SESSION_ID=$env:DSH_SESSION_ID\\\"; Write-Output \\\"PWD=$((Get-Location).Path)\\\"; Get-ChildItem -Force | Select-Object Mode,Length,Name | Format-Table -AutoSize\",\"description\":\"Show session id…",
+          "resultHead": "DSH_SESSION_ID=03ad2830-c8a0-410e-a1f2-53f4f50c2356 PWD=D:\\Codes\\dsh-tree-harness Mode Length Name ---- ------ ---- d--h-- .git d----- demo d----- docs d----- logs d----- packages d----- scripts -a---…",
+          "resultIsError": false
+        },
+        {
+          "seq": 27,
+          "name": "glob",
+          "argsSummary": "{\"pattern\":\"**/CHANGELOG*\"}",
+          "resultHead": "No files found",
+          "resultIsError": false
+        },
+        {
+          "seq": 32,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem packages -Directory | Select-Object Name; Write-Output \\\"---\\\"; Get-Content packages\\\\*/package.json | Select-String -Pattern '\\\"name\\\"|\\\"version\\\"' ; Write-Output \\\"---GIT---\\\"; git log --oneli…",
+          "resultHead": "0cbc31e docs: v1.2.0 合并/继承修复与真机 E2E 记录（agent.md/publishing/spec/handoff/session-handoff/README + e2e 断言器与 artifacts） 67fa541 feat(session-tree): v1.2.0 并入 session_handoff（同层级交接）+ 修复同工作区/权限模式/Agent 预设继…",
+          "resultIsError": false
+        },
+        {
+          "seq": 36,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem docs -Recurse -File -Filter *.md | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace((Get-Location).Path + '\\\\','') }\",\"description\":\"List docs markdown files\"}",
+          "resultHead": "docs\\agspec-report.md docs\\bug-report-dsh-pnpm-exclude.md docs\\defect-2026-10-17-subagents-rc2-api-drift.md docs\\e2e-handoff-2026-11-11.md docs\\e2e-report-2026-10-04.md docs\\e2e3l-audit-2026-10-04.md …",
+          "resultIsError": false
+        },
+        {
+          "seq": 43,
+          "name": "grep",
+          "argsSummary": "{\"pattern\":\"CHANGELOG|变更记录|Change ?log\",\"path\":\".\"}",
+          "resultHead": "Found 17 matches .\\scripts\\skill-e2e\\baseline-A-skills.json Line 75: \"firstUserMessageHead\": \"把「给 dsh-tree-harness 增补一段 CHANGELOG」拆成三层并派人做完，验证通过再收口。\\nYour parent agent id is \\\"8ca5308b-4ae9-476e-a47d-…",
+          "resultIsError": false
+        },
+        {
+          "seq": 45,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-Content docs\\\\handoff-2026-11-11.md -TotalCount 80\",\"description\":\"Read latest handoff head\"}",
+          "resultHead": "# 浜ゆ帴鏂囦欢 鈥?dsh-tree-harness锛?026-11-11锛? > 缁欎笅涓€涓紑鍙戜細璇?/ 鍗忎綔鑰呫€?*鏈枃浠跺彇浠?[handoff-2026-10-14.md](handoff-2026-10-14.md)**锛岃瀹屽嵆鍙帴鎵嬨€?> 蹇収鏃堕棿锛?*2026-11-11 15:00 +08:00**锛堟暟瀛椾负褰撳満瀹炴祴锛涙鍚庡彉鍖栦互娲讳綋璇绘暟 /…",
+          "resultIsError": false
+        },
+        {
+          "seq": 52,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"$files = @('packages\\\\dsh-tree-engine\\\\package.json','packages\\\\dsh-session-tree\\\\package.json','packages\\\\dsh-meta-loop\\\\package.json','packages\\\\dsh-agent-introspect\\\\package.json'); foreach($f in $files){ …",
+          "resultHead": "@local/dsh-tree-engine = 0.5.0 @orphiczhou/dsh-session-tree = 1.3.0 @local/dsh-meta-loop = 0.2.0 @local/dsh-agent-introspect = 0.1.0 ---DIFFSTAT--- README.md | 9 ++-- agent.md | 43 +++++++++++++------…",
+          "resultIsError": false
+        },
+        {
+          "seq": 56,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\docs\\\\skill-e2e-2026-11-11.md\",\"limit\":120}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\docs\\skill-e2e-2026-11-11.md</path> <type>file</type> <content> 1: # skill 工程化 · 极简提示词驱动的分层执行与 50% 交接 E2E（2026-11-11） 2: 3: > 角色：E2E 验证工程师（teammate `skill-e2e`，任务板 task…",
+          "resultIsError": false
+        },
+        {
+          "seq": 61,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"git diff -- packages/dsh-tree-engine/package.json packages/dsh-tree-engine/cordis.patch.yml packages/dsh-session-tree/package.json packages/dsh-session-tree/cordis.patch.yml | Out-String -Width 200\",\"descript…",
+          "resultHead": "diff --git a/packages/dsh-session-tree/cordis.patch.yml b/packages/dsh-session-tree/cordis.patch.yml index 30a1c65..880b09d 100644 --- a/packages/dsh-session-tree/cordis.patch.yml +++ b/packages/dsh-s…",
+          "resultIsError": false
+        },
+        {
+          "seq": 65,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"git diff -- README.md packages/dsh-tree-engine/README.md packages/dsh-session-tree/README.md | Out-String -Width 200\",\"description\":\"Diff README changes\"}",
+          "resultHead": "diff --git a/README.md b/README.md index 0f2ed54..fdd44bb 100644 --- a/README.md +++ b/README.md @@ -16,10 +16,10 @@ | 包 | 版本 | 能力 | 测试 | 当前状态 | |---|---|---|---|---| -| [`packages/dsh-tree-engine`](p…",
+          "resultIsError": false
+        },
+        {
+          "seq": 72,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\.gitignore\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\.gitignore</path> <type>file</type> <content> 1: node_modules/ 2: *.log 3: tree-engine-data/ 4: .asar-tool-out* 5: 6: # 本地机密（公开仓禁止入库） 7: .env 8: .env.* 9: !.env.example…",
+          "resultIsError": false
+        },
+        {
+          "seq": 73,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\README.md\",\"limit\":60}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\README.md</path> <type>file</type> <content> 1: # dsh-tree-harness 2: 3: > **DSH（DeepSeek Harness）树形任务分解执行 Harness + 插件集合**。 4: > A tree-structured task decomposition &…",
+          "resultIsError": false
+        },
+        {
+          "seq": 76,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem logs -Force | Select-Object Mode,Name; Write-Output \\\"---TAGS---\\\"; git tag --sort=-creatordate | Select-Object -First 15; Write-Output \\\"---PLAN-head---\\\"; Get-Content PLAN.md -TotalCount 30\",\"…",
+          "resultHead": "Mode Name ---- ---- -a---- attack-log.json -a---- dsh-host-services.txt -a---- e2e-segment3-report-2026-10-04.md -a---- ref-dsh-session-tree-README.md ---TAGS--- ---PLAN-head--- # dsh-tree-harness 鈥?鏍…",
+          "resultIsError": false
+        },
+        {
+          "seq": 83,
+          "name": "grep",
+          "argsSummary": "{\"path\":\"packages/dsh-tree-engine\",\"pattern\":\"artifact-doc|artifactDoc|\\\\*\\\\*/\\\\*\\\\.md|glob\"}",
+          "resultHead": "Found 30 matches packages/dsh-tree-engine\\index.js Line 203: /** 简易 glob（'*' 与双星展开为段匹配；够 artifact 判定，非全量 minimatch）。 Line 799: verifier = createVerifier({ ports: { glob: hostGlob, readFile: (p) => fsp…",
+          "resultIsError": false
+        },
+        {
+          "seq": 88,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\packages\\\\dsh-tree-engine\\\\index.js\",\"offset\":195,\"limit\":70}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\packages\\dsh-tree-engine\\index.js</path> <type>file</type> <content> 195: const dataDir = path.join(process.env.DSH_PROFILE_DIR ?? process.env.DSH_HOME ?? '.', 'tree-en…",
+          "resultIsError": false
+        },
+        {
+          "seq": 89,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\packages\\\\dsh-tree-engine\\\\src\\\\verify.js\",\"offset\":85,\"limit\":50}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\packages\\dsh-tree-engine\\src\\verify.js</path> <type>file</type> <content> 85: } 86: 87: async function runCheck(v, ctx) { 88: const t0 = Date.now() 89: try { 90: if (v.…",
+          "resultIsError": false
+        },
+        {
+          "seq": 95,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"node --version; Write-Output \\\"---\\\"; Get-Content docs\\\\publishing.md | Select-Object -Skip 155 -First 60 | Out-String -Width 160\",\"description\":\"Check node version and publishing change-log section\"}",
+          "resultHead": "v24.20.0 ---",
+          "resultIsError": false
+        },
+        {
+          "seq": 102,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\docs\\\\publishing.md\",\"offset\":150,\"limit\":60}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\docs\\publishing.md</path> <type>file</type> <content> 150: ### 测试与一致性 151: 152: - [ ] `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **66/66**（62 引擎 + 4 技能打…",
+          "resultIsError": false
+        },
+        {
+          "seq": 107,
+          "name": "tree_plan",
+          "argsSummary": "{\"action\":\"create\",\"tree_id\":\"tchlog\",\"session_id\":\"03ad2830-c8a0-410e-a1f2-53f4f50c2356\",\"root_brief\":{\"goal\":\"给 dsh-tree-harness 增补一段 CHANGELOG：在仓库根新建 CHANGELOG.md（Unreleased 的 SKILL 工程化小节 + 可核验的版本历史摘要），并在根 README 接入变更…",
+          "resultHead": "tree_plan: created tree tchlog (root tchlog-root)",
+          "resultIsError": false
+        },
+        {
+          "seq": 112,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"add\",\"tree_id\":\"tchlog\",\"leaf\":{\"leaf_id\":\"tchlog-c1-commander\",\"parent\":\"tchlog-root\",\"path\":\"C1\",\"role\":\"commander\",\"added_by\":\"03ad2830-c8a0-410e-a1f2-53f4f50c2356\",\"taskType\":\"doc\",\"brief\":{\"goal\":\"事实核定层：查…",
+          "resultHead": "Error: E_NAME_INVALID: leaf_id \"tchlog-c1-commander\" must match /^([a-z][a-z0-9_]{3,7})-(?:([A-Z]\\d*(?:[a-z]\\d*)*)?-)?(\\w+)(?:-(s\\d+|i\\d+))?$/ (prefix-Role-seq[-sN|iN])",
+          "resultIsError": true
+        },
+        {
+          "seq": 114,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"add\",\"tree_id\":\"tchlog\",\"leaf\":{\"leaf_id\":\"tchlog-c2-commander\",\"parent\":\"tchlog-root\",\"path\":\"C2\",\"role\":\"commander\",\"added_by\":\"03ad2830-c8a0-410e-a1f2-53f4f50c2356\",\"taskType\":\"doc\",\"dependencies\":[\"tchlog-…",
+          "resultHead": "Error: E_NAME_INVALID: leaf_id \"tchlog-c2-commander\" must match /^([a-z][a-z0-9_]{3,7})-(?:([A-Z]\\d*(?:[a-z]\\d*)*)?-)?(\\w+)(?:-(s\\d+|i\\d+))?$/ (prefix-Role-seq[-sN|iN])",
+          "resultIsError": true
+        },
+        {
+          "seq": 116,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"add\",\"tree_id\":\"tchlog\",\"leaf\":{\"leaf_id\":\"tchlog-c3-commander\",\"parent\":\"tchlog-root\",\"path\":\"C3\",\"role\":\"commander\",\"added_by\":\"03ad2830-c8a0-410e-a1f2-53f4f50c2356\",\"taskType\":\"default\",\"dependencies\":[\"tch…",
+          "resultHead": "Error: E_NAME_INVALID: leaf_id \"tchlog-c3-commander\" must match /^([a-z][a-z0-9_]{3,7})-(?:([A-Z]\\d*(?:[a-z]\\d*)*)?-)?(\\w+)(?:-(s\\d+|i\\d+))?$/ (prefix-Role-seq[-sN|iN])",
+          "resultIsError": true
+        },
+        {
+          "seq": 121,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"add\",\"leaf\":{\"added_by\":\"03ad2830-c8a0-410e-a1f2-53f4f50c2356\",\"brief\":{\"goal\":\"事实核定层：查清并交叉校验写入 CHANGELOG 所需的全部事实（各包版本、测试数字与出处、最近提交、未提交变更清单、发布状态），产出 facts-verified.md，供 C2 撰写。\"},\"dod\":{\"dod\":\"logs/changelog-wo…",
+          "resultHead": "tree_node: tchlog-C1-commander status=active · (未派发) ctx=0%",
+          "resultIsError": false
+        },
+        {
+          "seq": 123,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"add\",\"leaf\":{\"added_by\":\"03ad2830-c8a0-410e-a1f2-53f4f50c2356\",\"brief\":{\"goal\":\"撰写层：依据 C1 事实写根 CHANGELOG.md（Unreleased 2026-11-11 的 SKILL 工程化小节 + 可核验版本历史摘要），并在根 README 接入变更记录链接。\"},\"dod\":{\"dod\":\"CHANGELOG.md（≥1…",
+          "resultHead": "tree_node: tchlog-C2-commander status=active · (未派发) ctx=0%",
+          "resultIsError": false
+        },
+        {
+          "seq": 125,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"add\",\"leaf\":{\"added_by\":\"03ad2830-c8a0-410e-a1f2-53f4f50c2356\",\"brief\":{\"goal\":\"验证层：对 CHANGELOG.md 与 README 改动做机械验证（测试、链接、版本、SHA、工作区洁净）+ 独立红队复核，给出 PASS/FAIL 与 findings。\"},\"dod\":{\"dod\":\"verify-report.md 含逐项 PAS…",
+          "resultHead": "tree_node: tchlog-C3-commander status=active · (未派发) ctx=0%",
+          "resultIsError": false
+        },
+        {
+          "seq": 130,
+          "name": "tree_dispatch",
+          "argsSummary": "{\"action\":\"start\",\"tree_id\":\"tchlog\",\"leaf_id\":\"tchlog-C1-commander\",\"prompt\":\"你是树 `tchlog` 的 **C1 事实核定指挥官**（leaf `tchlog-C1-commander`），工作区 `D:\\\\Codes\\\\dsh-tree-harness`。总目标：给 dsh-tree-harness 增补一段 CHANGELOG（根 CHANGELOG…",
+          "resultHead": "tree_dispatch: tchlog-C1-commander → running",
+          "resultIsError": false
+        },
+        {
+          "seq": 136,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"git log --format=\\\"%h|%ad|%s\\\" --date=short -12\",\"description\":\"List recent commits with dates\"}",
+          "resultHead": "0cbc31e|2026-11-11|docs: v1.2.0 合并/继承修复与真机 E2E 记录（agent.md/publishing/spec/handoff/session-handoff/README + e2e 断言器与 artifacts） 67fa541|2026-11-11|feat(session-tree): v1.2.0 并入 session_handoff（同层级交接）+…",
+          "resultIsError": false
+        },
+        {
+          "seq": 143,
+          "name": "tree_status",
+          "argsSummary": "{\"action\":\"harvest\",\"tree_id\":\"tchlog\"}",
+          "resultHead": "tree_status: harvest floweng:∅ | prj_mw4k:∅ | rsipoc:∅ | tchlog:∅ (sweepMode=timer)",
+          "resultIsError": false
+        }
+      ]
+    },
+    {
+      "id": "b30ae141-c578-4de4-91c4-f6f9b1bf757b",
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\b30ae141-c578-4de4-91c4-f6f9b1bf757b\\session.v4.jsonl.zstd",
+      "workspaceEncoding": "--D-Codes-dsh-tree-harness--",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+        "origin": "subagent",
+        "delegationDepth": 3,
+        "agentPreset": "standard",
+        "createdAt": 1794382169706
+      },
+      "header": {
+        "seq": 14,
+        "config": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        },
+        "toolCount": 158,
+        "headerCount": 1
+      },
+      "eventCount": 70,
+      "firstUserMessage": {
+        "seq": 10,
+        "text": "你是树 `tchlog` 的 **C1 事实核定指挥官**（leaf `tchlog-C1-commander`），工作区 `D:\\Codes\\dsh-tree-harness`。总目标：给 dsh-tree-harness 增补一段 CHANGELOG（根 CHANGELOG.md + README 链接），你的职责是产出**可核验的事实底稿**，供下游 C2 撰写层使用。\n\n第一步：调用 `skill {name:\"tree-commander\"}` 读协议；读本仓 `agent.md` 只取 D6/D7 纪律与目录约定即可（不要全文背诵）。\n\n**你必须自己建并派发两个 worker（叶子 id 必须逐字一致，注意大写 C）**：\n- `tchlog-C1a1-worker`，path `C1a1`，role `worker`，taskType `doc`\n- `tchlog-C1a2-worker`，path `C1a2`，role `worker`，taskType `doc`\n\n建点参数：`added_by` 用你自己的会话 id（`pwsh` 读 `$env:DSH_SESSION_ID`；不要用我 root 的 id）。然后用 `tree_dispatch {action:\"start\"}` 并行派发两者，把下面的完整任务书写进各自的 `prompt`。派发后周期性 `tree_status {action:\"harvest\"}` 收割（本机无 timer，必须显式 harvest），对 succeeded 的 worker 跑 `tree_verify {action:\"run\", leaf_id:\"tchlog-C1a1-worker\", cwd:\"logs/changelog-work/C1a1\"}`（C1a2 用 `logs/changelog-work/C1a2`）；FAIL 就按其 verdict 重派或让执行者补。\n\n### worker C1a1 任务书：版本与发布事实（产物 `logs/changelog-work/C1a1/facts-versions.md`）\n- 读四个包 `packages/*/package.json`，记录 name/version 精确值（当前工作区应为：@local/dsh-tree-engine 0.5.0、@orphiczhou/dsh-session-tree 1.3.0、@local/dsh-meta-loop 0.2.0、@local/dsh-agent-introspect 0.1.0）。\n- `git log --format=\"%h %ad %s\" --date=short -12` 取近期提交；`git tag` 确认真实 tag 情况（本仓预期无 tag，若为空就写\"无 tag\"）。从 git log 里识别版本节点（如 67fa541/0cbc31e = session-tree v1.2.0 合并与文档、f7048a8 = v1.1.0、67654ed = 单包合并、4089a65 = tree-engine RC2 API 兼容修复、3c1e89d = meta-loop 面板）。\n- 实测并记录计数（命令 + 原始结果行）：`cd packages\\dsh-tree-engine; node --test tests/*.test.js`（预期 66/66 = 62 引擎 + 4 技能）、`cd packages\\dsh-session-tree; node test/skills.test.cjs`（预期 3/3）；可选 `cd packages\\dsh-meta-loop; node --test tests/*.test.js`（13/13）。\n- 读根 `README.md` 组件表、`docs/publishing.md` §6/§7、`docs/skill-e2e-2026-11-11.md`，取\"测试数字/发布状态\"的书面出处：npm 未发布（D3）、GitHub 公开仓 v1.2.0 已发布、市场已收录。\n- 产出 md：表格化，每条事实后面带 `（出处：命令/文件:行）`；最后列\"未能核实/存在冲突\"清单。除自己的产物外**不改任何文件**。\n\n### worker C1a2 任务书：未提交变更事实（产物 `logs/changelog-work/C1a2/facts-skillwork.md`）\n- 用 `git status --short`、`git diff --stat`、`git diff` 逐文件核对当前未提交改动：根 `README.md`、`agent.md`、`docs/publishing.md`、`docs/handoff-2026-11-11.md`、`packages/dsh-tree-engine/{package.json,cordis.patch.yml,README.md}`、`packages/dsh-session-tree/{package.json,cordis.patch.yml,README.md,README.zh.md}`、删除的根 `skills/tree-commander/**` 与 `skills/tree-worker/**`、新增 `packages/dsh-tree-engine/skills/**` + `packages/dsh-session-tree/skills/**`、新增 `packages/*/tests/skills.test.js` 与 `test/skills.test.cjs`、`scripts/skill-e2e/**`、`docs/skill-e2e-2026-11-11.md`。\n- 产出 md：按 Added / Changed / Removed / Tests / Docs 五组列条目；每条写明文件路径 + 一句证据（diff 关键行/命令输出）；标注这些改动**尚未提交（Unreleased）**。若发现无法归类的改动，单列\"其他\"。\n- 除自己的产物外**不改任何文件**。\n\n### 你的收口\n1. 交叉核对两份产物：版本号、测试数字、日期、commit 短 SHA 若冲突，以命令实测/`git log` 为准并在产物里注明。\n2. 写 `logs/changelog-work/C1/facts-verified.md`（≥400 字节）：分节\"版本与发布状态 / 近期提交与版本节点 / 未提交改动（按 Added/Changed/Removed/Tests/Docs）/ 冲突与未核实\"。每条给出证据来源；不要编造日期或 SHA。\n3. 对自己跑 `tree_verify {action:\"run\", leaf_id:\"tchlog-C1-commander\", cwd:\"logs/changelog-work/C1\"}`，然后 `tree_report {action:\"event\", type:\"done\", meta:{summary:\"…\", self_check:[{item,pass,evidence}...]}}`。\n\n约束：不 git 提交、不改 package.json 版本、不碰 D7 排除的隐私截图/asar 摘录文件也不在产物中引用它们；中间产物只写 `logs/changelog-work/` 下。若某项无法完成，done 事件里如实写 blocked 原因，不要静默卡住。\n\n[DoD 验收标准（完成定义，验收器与本文同源）]\n1. 产物文件存在且形状合规\n2. 产出变更摘要\n\n[结算指令] 你是树节点 tchlog/tchlog-C1-commander 的执行者。任务完成（含结论自述与关键产出）后，必须调用工具 tree_report {action:\"event\", tree_id:\"tchlog\", leaf_id:\"tchlog-C1-commander\", type:\"done\", meta:{summary:\"<一句话结论>\"}} 登记完成；失败/无法完成时同样回报 done 并在 summary 写明失败原因。除此之外不得操作树。\nYour parent agent id is \"03ad2830-c8a0-410e-a1f2-53f4f50c2356\". Before you finish, send your result to that agent with send_message({ agent_id: \"03ad2830-c8a0-410e-a1f2-53f4f50c2356\", message: \"<self-contained result>\" }). The parent shares your workspace but does not automatically receive your transcript, tool output, or reasoning. Send earlier messages as well when a finding changes what the parent should do next; sending a message does not end your turn."
+      },
+      "assistantFinal": {
+        "seq": 58,
+        "text": "Workers don't exist. Good. Let me check the other leaves quickly to see whether root and other commanders exist. Not strictly needed. Let me try tree_log events for root maybe. Actually, let me just add my two workers. First prepare the work directories. Let me also plan my own work: 1. Create dirs logs/changelog-work/C1a1, C1a2, C1. 2. Add two worker leaves with added_by = my session id. 3. Dispatch both with full task specs. 4. Meanwhile I can do my own fact gathering (git log, package.json versions, tests) to cross-check. Actually my job is cross-check; I can gather my own evidence in paral…"
+      },
+      "skills": {
+        "found": true,
+        "firstSeq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "evolution": [
+          {
+            "seq": 12,
+            "count": 15,
+            "targets": [
+              "tree-commander",
+              "tree-worker",
+              "session-handoff"
+            ]
+          }
+        ],
+        "loaded": [
+          {
+            "seq": 18,
+            "name": "tree-commander"
+          }
+        ]
+      },
+      "tree": {
+        "plan": [],
+        "nodes": [
+          {
+            "seq": 36,
+            "action": "list-all",
+            "tree_id": "tchlog",
+            "leaf": null
+          },
+          {
+            "seq": 45,
+            "action": "get",
+            "tree_id": "tchlog",
+            "leaf": null,
+            "leaf_id": "tchlog-C1-commander"
+          },
+          {
+            "seq": 52,
+            "action": "get",
+            "tree_id": "tchlog",
+            "leaf": null,
+            "leaf_id": "tchlog-C1a1-worker"
+          },
+          {
+            "seq": 54,
+            "action": "list",
+            "tree_id": "tchlog",
+            "leaf": null
+          },
+          {
+            "seq": 63,
+            "action": "add",
+            "tree_id": "tchlog",
+            "leaf": {
+              "leaf_id": "tchlog-C1a1-worker",
+              "parent": "tchlog-C1-commander",
+              "path": "C1a1",
+              "role": "worker",
+              "added_by": "b30ae141-c578-4de4-91c4-f6f9b1bf757b",
+              "taskType": "doc",
+              "brief": {
+                "goal": "采集版本与发布事实底稿（四个包的 name/version、git log/tag、测试计数实测、README/docs 中的发布状态书面出处），产出 logs/changelog-work/C1a1/facts-versions.md"
+              },
+              "dod": {
+                "dod": "facts-versions.md 存在且 ≥200 字节；四个包 version 精确记录；git log -12 与 tag 实测结果；tree-engine 66/66 与 session-tree 3/3 实测计数带命令与原始行；每条事实标注出处（命令/文件:行）；含未能核实/冲突清单"
+              }
+            }
+          },
+          {
+            "seq": 65,
+            "action": "add",
+            "tree_id": "tchlog",
+            "leaf": {
+              "leaf_id": "tchlog-C1a2-worker",
+              "parent": "tchlog-C1-commander",
+              "path": "C1a2",
+              "role": "worker",
+              "added_by": "b30ae141-c578-4de4-91c4-f6f9b1bf757b",
+              "taskType": "doc",
+              "brief": {
+                "goal": "逐文件核对当前未提交改动并按 Added/Changed/Removed/Tests/Docs 五组归类，产出 logs/changelog-work/C1a2/facts-skillwork.md"
+              },
+              "dod": {
+                "dod": "facts-skillwork.md 存在且 ≥200 字节；五组（Added/Changed/Removed/Tests/Docs）各列条目并写明文件路径+一句 diff/命令证据；标注 Unreleased 未提交；无法归类者单列其他"
+              }
+            }
+          }
+        ],
+        "dispatch": [],
+        "reports": [],
+        "verify": [],
+        "status": [
+          {
+            "seq": 31,
+            "action": "overview",
+            "tree_id": "tchlog",
+            "result": "tree_status: ok (sweepMode=timer)"
+          }
+        ],
+        "log": [
+          {
+            "seq": 47,
+            "action": "communication",
+            "tree_id": "tchlog"
+          }
+        ],
+        "maintain": [],
+        "send": []
+      },
+      "handoff": [],
+      "subagents": [],
+      "toolCounts": {
+        "skill": 1,
+        "pwsh": 4,
+        "tree_status": 1,
+        "tree_node": 6,
+        "tree_log": 1
+      },
+      "toolSequence": [
+        {
+          "seq": 18,
+          "name": "skill",
+          "argsSummary": "{\"name\":\"tree-commander\"}",
+          "resultHead": "<skill_content name=\"tree-commander\"> <skill_resources> Base directory for this skill: D:\\Codes\\dsh-tree-harness\\packages\\dsh-tree-engine\\skills\\tree-commander Resolve relative paths mentioned by this…",
+          "resultIsError": false
+        },
+        {
+          "seq": 20,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Write-Output \\\"SESSION_ID=$env:DSH_SESSION_ID\\\"; Write-Output \\\"CWD=$(Get-Location)\\\"\",\"description\":\"Read session id and cwd\"}",
+          "resultHead": "SESSION_ID=b30ae141-c578-4de4-91c4-f6f9b1bf757b CWD=D:\\Codes\\dsh-tree-harness",
+          "resultIsError": false
+        },
+        {
+          "seq": 27,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-Content agent.md | Select-String -Pattern \\\"D6|D7\\\" -Context 2,6 | Select-Object -First 80\",\"description\":\"Extract D6/D7 rules from agent.md\"}",
+          "resultHead": "| **D4** | 2026-11-11 | License = **MIT** | 涓庣敤鎴峰叾瀹冨叕寮€鎻掍欢浠擄紙dsh-session-tree / dsh-region-probe锛変竴鑷达紱鐗堟潈浜?orphiczhou | | **D5** | 2026-11-11 | 鍏紑鑼冨洿 = **鏈粨搴撳唴瀹规湰韬?* | 浠撳簱澶?`default-workspace/publis…",
+          "resultIsError": false
+        },
+        {
+          "seq": 31,
+          "name": "tree_status",
+          "argsSummary": "{\"action\":\"overview\",\"tree_id\":\"tchlog\"}",
+          "resultHead": "tree_status: ok (sweepMode=timer)",
+          "resultIsError": false
+        },
+        {
+          "seq": 36,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"list-all\",\"tree_id\":\"tchlog\"}",
+          "resultHead": "tree_node: 4 leaves",
+          "resultIsError": false
+        },
+        {
+          "seq": 38,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem -Force | Select-Object -First 40 Name, Mode; Write-Output \\\"---\\\"; git status --short | Select-Object -First 40\",\"description\":\"List workspace root and git status\"}",
+          "resultHead": "Name Mode ---- ---- .git d--h-- demo d----- docs d----- logs d----- packages d----- scripts d----- .gitignore -a---- agent.md -a---- HANDOFF-05d1f920-20261111-140231.md -a---- HANDOFF-897e7f93-2026111…",
+          "resultIsError": false
+        },
+        {
+          "seq": 45,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"get\",\"leaf_id\":\"tchlog-C1-commander\",\"tree_id\":\"tchlog\"}",
+          "resultHead": "tree_node: tchlog-C1-commander status=active · runtime[state=running attempt=1 chain=0 sess=b30ae141] ctx=0%",
+          "resultIsError": false
+        },
+        {
+          "seq": 47,
+          "name": "tree_log",
+          "argsSummary": "{\"action\":\"communication\",\"n\":20,\"tree_id\":\"tchlog\"}",
+          "resultHead": "tree_log: 0 entries",
+          "resultIsError": false
+        },
+        {
+          "seq": 52,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"get\",\"leaf_id\":\"tchlog-C1a1-worker\",\"tree_id\":\"tchlog\"}",
+          "resultHead": "Error: E_LEAF_NOT_FOUND: leaf \"tchlog-C1a1-worker\" not found",
+          "resultIsError": true
+        },
+        {
+          "seq": 54,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"list\",\"tree_id\":\"tchlog\"}",
+          "resultHead": "tree_node: 4 leaves",
+          "resultIsError": false
+        },
+        {
+          "seq": 59,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"New-Item -ItemType Directory -Force -Path logs\\\\changelog-work\\\\C1a1, logs\\\\changelog-work\\\\C1a2, logs\\\\changelog-work\\\\C1 | Out-Null; Get-ChildItem logs\\\\changelog-work | Select-Object Name\",\"description\":\"C…",
+          "resultHead": "Name ---- C1 C1a1 C1a2",
+          "resultIsError": false
+        },
+        {
+          "seq": 63,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"add\",\"tree_id\":\"tchlog\",\"leaf\":{\"leaf_id\":\"tchlog-C1a1-worker\",\"parent\":\"tchlog-C1-commander\",\"path\":\"C1a1\",\"role\":\"worker\",\"added_by\":\"b30ae141-c578-4de4-91c4-f6f9b1bf757b\",\"taskType\":\"doc\",\"brief\":{\"goal\":\"采…",
+          "resultHead": "tree_node: tchlog-C1a1-worker status=pending_brief · (未派发) ctx=0%",
+          "resultIsError": false
+        },
+        {
+          "seq": 65,
+          "name": "tree_node",
+          "argsSummary": "{\"action\":\"add\",\"tree_id\":\"tchlog\",\"leaf\":{\"leaf_id\":\"tchlog-C1a2-worker\",\"parent\":\"tchlog-C1-commander\",\"path\":\"C1a2\",\"role\":\"worker\",\"added_by\":\"b30ae141-c578-4de4-91c4-f6f9b1bf757b\",\"taskType\":\"doc\",\"brief\":{\"goal\":\"逐…",
+          "resultHead": "tree_node: tchlog-C1a2-worker status=pending_brief · (未派发) ctx=0%",
+          "resultIsError": false
+        }
+      ],
+      "discovered": {
+        "depth": 1,
+        "parentId": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+        "via": "parentSession"
+      },
+      "treeAssignment": {
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-C1-commander"
+      }
+    }
+  ],
+  "children": [
+    {
+      "id": "b30ae141-c578-4de4-91c4-f6f9b1bf757b",
+      "parentId": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+      "depth": 1,
+      "assignment": {
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-C1-commander"
+      }
+    }
+  ],
+  "layering": {
+    "trees": [
+      {
+        "tree_id": "tchlog",
+        "root_brief": "[object Object]",
+        "root_dod": "[object Object]",
+        "planSession": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+        "seq": 107
+      }
+    ],
+    "nodes": [
+      {
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-root",
+        "parent": null,
+        "role": "root",
+        "taskType": "default",
+        "addedBy": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+        "seq": 107,
+        "synthesizedFromPlan": true,
+        "depth": 0
+      },
+      {
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-c1-commander",
+        "parent": "tchlog-root",
+        "role": "commander",
+        "taskType": "doc",
+        "dependencies": [],
+        "addedBy": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+        "path": "C1",
+        "seq": 112,
+        "depth": 1
+      },
+      {
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-c2-commander",
+        "parent": "tchlog-root",
+        "role": "commander",
+        "taskType": "doc",
+        "dependencies": [
+          "tchlog-c1-commander"
+        ],
+        "addedBy": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+        "path": "C2",
+        "seq": 114,
+        "depth": 1
+      },
+      {
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-c3-commander",
+        "parent": "tchlog-root",
+        "role": "commander",
+        "taskType": "default",
+        "dependencies": [
+          "tchlog-c2-commander"
+        ],
+        "addedBy": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+        "path": "C3",
+        "seq": 116,
+        "depth": 1
+      },
+      {
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-C1-commander",
+        "parent": "tchlog-root",
+        "role": "commander",
+        "taskType": "doc",
+        "dependencies": [],
+        "addedBy": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+        "path": "C1",
+        "seq": 121,
+        "depth": 1
+      },
+      {
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-C2-commander",
+        "parent": "tchlog-root",
+        "role": "commander",
+        "taskType": "doc",
+        "dependencies": [
+          "tchlog-C1-commander"
+        ],
+        "addedBy": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+        "path": "C2",
+        "seq": 123,
+        "depth": 1
+      },
+      {
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-C3-commander",
+        "parent": "tchlog-root",
+        "role": "commander",
+        "taskType": "default",
+        "dependencies": [
+          "tchlog-C2-commander"
+        ],
+        "addedBy": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+        "path": "C3",
+        "seq": 125,
+        "depth": 1
+      },
+      {
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-C1a1-worker",
+        "parent": "tchlog-C1-commander",
+        "role": "worker",
+        "taskType": "doc",
+        "dependencies": [],
+        "addedBy": "b30ae141-c578-4de4-91c4-f6f9b1bf757b",
+        "path": "C1a1",
+        "seq": 63,
+        "depth": 2
+      },
+      {
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-C1a2-worker",
+        "parent": "tchlog-C1-commander",
+        "role": "worker",
+        "taskType": "doc",
+        "dependencies": [],
+        "addedBy": "b30ae141-c578-4de4-91c4-f6f9b1bf757b",
+        "path": "C1a2",
+        "seq": 65,
+        "depth": 2
+      }
+    ],
+    "maxDepth": 2,
+    "layers": 3,
+    "roles": {
+      "root": 1,
+      "commander": 6,
+      "worker": 2
+    },
+    "dispatch": [
+      {
+        "seq": 130,
+        "action": "start",
+        "tree_id": "tchlog",
+        "leaf_id": "tchlog-C1-commander",
+        "result": "tree_dispatch: tchlog-C1-commander → running",
+        "session": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+        "delegationDepth": 2
+      }
+    ],
+    "dispatchBySession": {
+      "03ad2830-c8a0-410e-a1f2-53f4f50c2356": 1
+    },
+    "doneReports": [],
+    "verifies": [],
+    "handoffs": [],
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": true,
+        "detail": {
+          "trees": [
+            "tchlog"
+          ]
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": true,
+        "detail": {
+          "maxDepth": 2,
+          "nodeCount": 9
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": true,
+        "detail": {
+          "roles": {
+            "root": 1,
+            "commander": 6,
+            "worker": 2
+          }
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {
+            "03ad2830-c8a0-410e-a1f2-53f4f50c2356": 1
+          }
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": true,
+        "detail": {
+          "leavesDispatched": [
+            "tchlog-C1-commander"
+          ]
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": false,
+        "detail": {
+          "count": 0,
+          "successors": []
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": false,
+        "detail": {
+          "handoffInChild": []
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ]
+  },
+  "summary": {
+    "sessions": 2,
+    "roots": 1,
+    "children": 1,
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": true,
+        "detail": {
+          "trees": [
+            "tchlog"
+          ]
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": true,
+        "detail": {
+          "maxDepth": 2,
+          "nodeCount": 9
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": true,
+        "detail": {
+          "roles": {
+            "root": 1,
+            "commander": 6,
+            "worker": 2
+          }
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {
+            "03ad2830-c8a0-410e-a1f2-53f4f50c2356": 1
+          }
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": true,
+        "detail": {
+          "leavesDispatched": [
+            "tchlog-C1-commander"
+          ]
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": false,
+        "detail": {
+          "count": 0,
+          "successors": []
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": false,
+        "detail": {
+          "handoffInChild": []
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ],
+    "passCount": 4,
+    "totalChecks": 10
+  }
+}

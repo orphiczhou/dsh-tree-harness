@@ -1,0 +1,644 @@
+{
+  "tool": "summarize-run",
+  "generatedAt": "2026-11-11T07:55:31.868Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "profileDir": "C:\\Users\\sir_c\\.dsh\\profiles\\desktop",
+  "options": {
+    "session": [
+      "5500503a-751f-483e-814c-a1d2e4c16f9b"
+    ],
+    "childDepth": 3,
+    "scanWorkspace": "same"
+  },
+  "sessions": [
+    {
+      "id": "5500503a-751f-483e-814c-a1d2e4c16f9b",
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\5500503a-751f-483e-814c-a1d2e4c16f9b\\session.v4.jsonl.zstd",
+      "workspaceEncoding": "--D-Codes-dsh-tree-harness--",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": "8ca5308b-4ae9-476e-a47d-1aaec5bcf22b",
+        "origin": "subagent",
+        "delegationDepth": 2,
+        "agentPreset": "standard",
+        "createdAt": 1794383494057
+      },
+      "header": {
+        "seq": 14,
+        "config": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        },
+        "toolCount": 158,
+        "headerCount": 1
+      },
+      "eventCount": 72,
+      "firstUserMessage": {
+        "seq": 10,
+        "text": "用最简方式演示：根会话→中间层→执行层三层都能干活，并在中间层交接一次。\nYour parent agent id is \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\". Before you finish, send your result to that agent with send_message({ agent_id: \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\", message: \"<self-contained result>\" }). The parent shares your workspace but does not automatically receive your transcript, tool output, or reasoning. Send earlier messages as well when a finding changes what the parent should do next; sending a message does not end your turn."
+      },
+      "assistantFinal": {
+        "seq": 68,
+        "text": "I've sent the result. Now I should end my turn. My final text should be brief (it's for the transcript; the parent got the message). But wait — I did handoff at 6.2% with force. The user's demo requirement is satisfied: three layers worked + one middle-layer handoff. The successor ac7c53bf may run and send a message to the root. Should I wait for the successor to confirm? No — the handoff is done; the successor is a sibling that reports to the root. My turn can end. Final answer: brief summary. 已完成中间层任务并回执根会话。三层演示与中间层交接均已跑通： **干活证据（最简、可复核）** | 层 | 干了什么 | 产物 | |---|---|---| | 根 | 派发中间层（本会话）＋收尾汇…"
+      },
+      "skills": {
+        "found": true,
+        "firstSeq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "evolution": [
+          {
+            "seq": 12,
+            "count": 15,
+            "targets": [
+              "tree-commander",
+              "tree-worker",
+              "session-handoff"
+            ]
+          }
+        ],
+        "loaded": []
+      },
+      "tree": {
+        "plan": [],
+        "nodes": [],
+        "dispatch": [],
+        "reports": [],
+        "verify": [],
+        "status": [],
+        "log": [],
+        "maintain": [],
+        "send": []
+      },
+      "handoff": [
+        {
+          "seq": 30,
+          "args": {
+            "action": "status"
+          },
+          "parsed": {
+            "action": "status",
+            "text": "session_handoff status: context=6.2% (threshold 50%) pressure=62398/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue",
+            "status": {
+              "context_pct": 6.2,
+              "context_pct_raw": "6.2",
+              "threshold_pct": 50,
+              "pressure": "62398/1000000",
+              "model": "opencode-go/deepseek-v4.1-flash",
+              "effort": "max",
+              "preset": "standard",
+              "permission": "danger-full-access/danger-full-access/never",
+              "successor_kind": "sibling",
+              "raw": "session_handoff status: context=6.2% (threshold 50%) pressure=62398/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue"
+            },
+            "handoff": null
+          },
+          "result": "session_handoff status: context=6.2% (threshold 50%) pressure=62398/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue"
+        },
+        {
+          "seq": 59,
+          "args": {
+            "action": "handoff",
+            "kind": "sibling",
+            "force": true,
+            "summary": "中间层（会话 5500503a）完成三层演示的中间层工作：收到根会话派发后，中间层自己写入 00-middle.txt（seed=21）；派执行层子会话 1fcc8dae 独立算出 21*2 并写入 01-exec.txt（=42）；中间层回读复核后写入 02-middle-recheck.txt（42+1=43）。现将中间层交棒给同层接替会话（同父级 sibling）：只需读交接文件、确认 02-middle-recheck.txt 内容为 43、向根会话回一行确认，不做任何修改。",
+            "files": [
+              "D:\\Codes\\dsh-tree-harness\\.dsh-demo\\00-middle.txt",
+              "D:\\Codes\\dsh-tree-harness\\.dsh-demo\\01-exec.txt",
+              "D:\\Codes\\dsh-tree-harness\\.dsh-demo\\02-middle-recheck.txt"
+            ],
+            "next_steps": [
+              "读取本交接文件（HANDOFF-*.md）",
+              "确认 D:\\Codes\\dsh-tree-harness\\.dsh-demo\\02-middle-recheck.txt 内容为 middle recheck ok: 42+1=43",
+              "向根会话（父会话）回一行：中间层接替会话已就绪，复核通过 43",
+              "不要修改/创建任何文件，不要派生子代理，完成即止"
+            ],
+            "note": "演示用交接：当前上下文仅 6.2%（低于 50% 门槛），按用户要求「在中间层交接一次」用 force 触发一次真实同层交接；接替会话是同一父会话下的 sibling（同层），继承同模型/同权限/同工作区。交接后本会话不再负责后续汇总，由接替会话确认。"
+          },
+          "parsed": {
+            "action": "handoff",
+            "text": "session_handoff: wrote D:\\Codes\\dsh-tree-harness\\HANDOFF-5500503a-20261111-155445.md; successor ac7c53bf-8e9d-4c13-82ca-8addc320da7a kind=sibling preset=standard inherited=session-route",
+            "status": null,
+            "handoff": {
+              "handoff_path": "D:\\Codes\\dsh-tree-harness\\HANDOFF-5500503a-20261111-155445.md",
+              "successor_id": "ac7c53bf-8e9d-4c13-82ca-8addc320da7a",
+              "kind": "sibling",
+              "preset": "standard",
+              "workspace": null,
+              "inherited": "session-route",
+              "degraded": null
+            }
+          },
+          "result": "session_handoff: wrote D:\\Codes\\dsh-tree-harness\\HANDOFF-5500503a-20261111-155445.md; successor ac7c53bf-8e9d-4c13-82ca-8addc320da7a kind=sibling preset=standard inherited=session-route"
+        }
+      ],
+      "subagents": [
+        {
+          "seq": 24,
+          "tool": "subagent",
+          "description": "Execution layer minimal task",
+          "promptHead": "【执行层最小任务书】你是三层演示（根会话 → 中间层 → 执行层）中的执行层子会话。你独立作业，不要派生子代理。 环境：共享工作区 D:\\Codes\\dsh-tree-harness，你可以使用 pwsh 工具。目录 D:\\Codes\\dsh-tree-harness\\.dsh-demo 可能已存在（不存在就创建）。 只做三步： 1. 用 pwsh 计算 21*2，并把一行内容写入 D:\\Codes\\dsh-tree-harness\\.dsh-demo\\01-exec.txt…",
+          "childId": "1fcc8dae-5745-4b9f-b392-f4e1f9bfe7ba",
+          "resultHead": "started subagent 1fcc8dae-5745-4b9f-b392-f4e1f9bfe7ba"
+        }
+      ],
+      "toolCounts": {
+        "self_spec": 1,
+        "pwsh": 3,
+        "subagent": 1,
+        "session_handoff": 2,
+        "list_agents": 1,
+        "send_message": 1
+      },
+      "toolSequence": [
+        {
+          "seq": 18,
+          "name": "self_spec",
+          "argsSummary": "{}",
+          "resultHead": "self_spec: session=5500503a model=opencode-go/deepseek-v4.1-flash · perms=danger-full-access/never · sandbox=danger-full-access · cwd=D:\\Codes\\dsh-tree-harness (projcache C:\\Users\\sir_c\\.dsh\\storages\\…",
+          "resultIsError": false
+        },
+        {
+          "seq": 20,
+          "name": "pwsh",
+          "argsSummary": "{\"description\":\"Middle layer writes its own artifact\",\"command\":\"$dir = 'D:\\\\Codes\\\\dsh-tree-harness\\\\.dsh-demo'\\nNew-Item -ItemType Directory -Force -Path $dir | Out-Null\\n$seed = 20 + 1\\n\\\"middle layer ok: seed=$seed\\\"…",
+          "resultHead": "DIR=D:\\Codes\\dsh-tree-harness\\.dsh-demo 00-middle.txt --- content --- middle layer ok: seed=21",
+          "resultIsError": false
+        },
+        {
+          "seq": 24,
+          "name": "subagent",
+          "argsSummary": "{\"description\":\"Execution layer minimal task\",\"prompt\":\"【执行层最小任务书】你是三层演示（根会话 → 中间层 → 执行层）中的执行层子会话。你独立作业，不要派生子代理。\\n\\n环境：共享工作区 D:\\\\Codes\\\\dsh-tree-harness，你可以使用 pwsh 工具。目录 D:\\\\Codes\\\\dsh-tree-harness\\\\.dsh-demo 可能已存在（不存在就创…",
+          "resultHead": "started subagent 1fcc8dae-5745-4b9f-b392-f4e1f9bfe7ba",
+          "resultIsError": false
+        },
+        {
+          "seq": 30,
+          "name": "session_handoff",
+          "argsSummary": "{\"action\":\"status\"}",
+          "resultHead": "session_handoff status: context=6.2% (threshold 50%) pressure=62398/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never succ…",
+          "resultIsError": false
+        },
+        {
+          "seq": 35,
+          "name": "list_agents",
+          "argsSummary": "{}",
+          "resultHead": "1fcc8dae-5745-4b9f-b392-f4e1f9bfe7ba [running] — Execution layer minimal task",
+          "resultIsError": false
+        },
+        {
+          "seq": 42,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"$f = 'D:\\\\Codes\\\\dsh-tree-harness\\\\.dsh-demo\\\\01-exec.txt'\\n$deadline = (Get-Date).AddSeconds(100)\\nwhile (-not (Test-Path -LiteralPath $f) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 500 }\\nif…",
+          "resultHead": "EXEC_FILE_PRESENT exec layer ok: 21*2=42",
+          "resultIsError": false
+        },
+        {
+          "seq": 52,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"$dir = 'D:\\\\Codes\\\\dsh-tree-harness\\\\.dsh-demo'\\n$exec = (Get-Content -LiteralPath (Join-Path $dir '01-exec.txt') -Raw).Trim()\\n\\\"EXEC_RAW=$exec\\\"\\n$n = [int]([regex]::Match($exec, '=(\\\\d+)$').Groups[1].Value…",
+          "resultHead": "EXEC_RAW=exec layer ok: 21*2=42 --- dir --- 00-middle.txt 01-exec.txt 02-middle-recheck.txt --- recheck --- middle recheck ok: 42+1=43",
+          "resultIsError": false
+        },
+        {
+          "seq": 59,
+          "name": "session_handoff",
+          "argsSummary": "{\"action\":\"handoff\",\"kind\":\"sibling\",\"force\":true,\"summary\":\"中间层（会话 5500503a）完成三层演示的中间层工作：收到根会话派发后，中间层自己写入 00-middle.txt（seed=21）；派执行层子会话 1fcc8dae 独立算出 21*2 并写入 01-exec.txt（=42）；中间层回读复核后写入 02-middle-recheck.txt（42+1=43）。…",
+          "resultHead": "session_handoff: wrote D:\\Codes\\dsh-tree-harness\\HANDOFF-5500503a-20261111-155445.md; successor ac7c53bf-8e9d-4c13-82ca-8addc320da7a kind=sibling preset=standard inherited=session-route",
+          "resultIsError": false
+        },
+        {
+          "seq": 64,
+          "name": "send_message",
+          "argsSummary": "{\"agent_id\":\"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\",\"message\":\"【中间层 → 根会话 交付回执】三层演示已按\\\"最简方式\\\"跑通，中间层已在末尾交接一次。\\n\\n■ 各层实际干活的证据\\n1) 根层：你的动作＝派发中间层（本会话）＋最终汇总；中间层已按你的派发完成。\\n2) 中间层（本会话 5500503a，model=opencode-go/deepseek-v4.1-fla…",
+          "resultHead": "message delivered to agent 8ca5308b-4ae9-476e-a47d-1aaec5bcf22b",
+          "resultIsError": false
+        }
+      ]
+    },
+    {
+      "id": "1fcc8dae-5745-4b9f-b392-f4e1f9bfe7ba",
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\1fcc8dae-5745-4b9f-b392-f4e1f9bfe7ba\\session.v4.jsonl.zstd",
+      "workspaceEncoding": "--D-Codes-dsh-tree-harness--",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": "5500503a-751f-483e-814c-a1d2e4c16f9b",
+        "origin": "subagent",
+        "delegationDepth": 3,
+        "agentPreset": "standard",
+        "createdAt": 1794383627048
+      },
+      "header": {
+        "seq": 14,
+        "config": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        },
+        "toolCount": 158,
+        "headerCount": 1
+      },
+      "eventCount": 40,
+      "firstUserMessage": {
+        "seq": 10,
+        "text": "【执行层最小任务书】你是三层演示（根会话 → 中间层 → 执行层）中的执行层子会话。你独立作业，不要派生子代理。\n\n环境：共享工作区 D:\\Codes\\dsh-tree-harness，你可以使用 pwsh 工具。目录 D:\\Codes\\dsh-tree-harness\\.dsh-demo 可能已存在（不存在就创建）。\n\n只做三步：\n1. 用 pwsh 计算 21*2，并把一行内容写入 D:\\Codes\\dsh-tree-harness\\.dsh-demo\\01-exec.txt：exec layer ok: 21*2=<计算结果>\n2. 用 pwsh 读回该文件内容，确认写入正确。\n3. 结束后用一句话回报：执行层完成，文件=<绝对路径>，结果=<计算结果>。\n\n纪律：不要做任何其他事——不创建别的文件、不修改其他文件、不派生子代理、不执行无关命令。完成即止。\nYour parent agent id is \"5500503a-751f-483e-814c-a1d2e4c16f9b\". Before you finish, send your result to that agent with send_message({ agent_id: \"5500503a-751f-483e-814c-a1d2e4c16f9b\", message: \"<self-contained result>\" }). The parent shares your workspace but does not automatically receive your transcript, tool output, or reasoning. Send earlier messages as well when a finding changes what the parent should do next; sending a message does not end your turn."
+      },
+      "assistantFinal": {
+        "seq": 36,
+        "text": "执行层完成，文件=D:\\Codes\\dsh-tree-harness\\.dsh-demo\\01-exec.txt，结果=42。"
+      },
+      "skills": {
+        "found": true,
+        "firstSeq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "evolution": [
+          {
+            "seq": 12,
+            "count": 15,
+            "targets": [
+              "tree-commander",
+              "tree-worker",
+              "session-handoff"
+            ]
+          }
+        ],
+        "loaded": []
+      },
+      "tree": {
+        "plan": [],
+        "nodes": [],
+        "dispatch": [],
+        "reports": [],
+        "verify": [],
+        "status": [],
+        "log": [],
+        "maintain": [],
+        "send": []
+      },
+      "handoff": [],
+      "subagents": [],
+      "toolCounts": {
+        "pwsh": 2,
+        "send_message": 1
+      },
+      "toolSequence": [
+        {
+          "seq": 18,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"New-Item -ItemType Directory -Force -Path 'D:\\\\Codes\\\\dsh-tree-harness\\\\.dsh-demo' | Out-Null; $r = 21*2; Set-Content -Path 'D:\\\\Codes\\\\dsh-tree-harness\\\\.dsh-demo\\\\01-exec.txt' -Value \\\"exec layer ok: 21*2=$…",
+          "resultHead": "computed=42",
+          "resultIsError": false
+        },
+        {
+          "seq": 25,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-Content -Path 'D:\\\\Codes\\\\dsh-tree-harness\\\\.dsh-demo\\\\01-exec.txt' -Raw\",\"description\":\"Read back written file content\"}",
+          "resultHead": "exec layer ok: 21*2=42",
+          "resultIsError": false
+        },
+        {
+          "seq": 32,
+          "name": "send_message",
+          "argsSummary": "{\"agent_id\":\"5500503a-751f-483e-814c-a1d2e4c16f9b\",\"message\":\"执行层完成，文件=D:\\\\Codes\\\\dsh-tree-harness\\\\.dsh-demo\\\\01-exec.txt，结果=42（内容已读回确认：exec layer ok: 21*2=42）\"}",
+          "resultHead": "message delivered to agent 5500503a-751f-483e-814c-a1d2e4c16f9b",
+          "resultIsError": false
+        }
+      ],
+      "discovered": {
+        "depth": 1,
+        "parentId": "5500503a-751f-483e-814c-a1d2e4c16f9b",
+        "via": "parentSession"
+      },
+      "treeAssignment": null
+    }
+  ],
+  "children": [
+    {
+      "id": "1fcc8dae-5745-4b9f-b392-f4e1f9bfe7ba",
+      "parentId": "5500503a-751f-483e-814c-a1d2e4c16f9b",
+      "depth": 1,
+      "assignment": null
+    }
+  ],
+  "layering": {
+    "trees": [],
+    "nodes": [],
+    "maxDepth": -1,
+    "layers": 0,
+    "roles": {},
+    "dispatch": [],
+    "dispatchBySession": {},
+    "doneReports": [],
+    "verifies": [],
+    "handoffs": [
+      {
+        "seq": 30,
+        "args": {
+          "action": "status"
+        },
+        "parsed": {
+          "action": "status",
+          "text": "session_handoff status: context=6.2% (threshold 50%) pressure=62398/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue",
+          "status": {
+            "context_pct": 6.2,
+            "context_pct_raw": "6.2",
+            "threshold_pct": 50,
+            "pressure": "62398/1000000",
+            "model": "opencode-go/deepseek-v4.1-flash",
+            "effort": "max",
+            "preset": "standard",
+            "permission": "danger-full-access/danger-full-access/never",
+            "successor_kind": "sibling",
+            "raw": "session_handoff status: context=6.2% (threshold 50%) pressure=62398/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue"
+          },
+          "handoff": null
+        },
+        "result": "session_handoff status: context=6.2% (threshold 50%) pressure=62398/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue",
+        "session": "5500503a-751f-483e-814c-a1d2e4c16f9b",
+        "delegationDepth": 2,
+        "origin": "subagent"
+      },
+      {
+        "seq": 59,
+        "args": {
+          "action": "handoff",
+          "kind": "sibling",
+          "force": true,
+          "summary": "中间层（会话 5500503a）完成三层演示的中间层工作：收到根会话派发后，中间层自己写入 00-middle.txt（seed=21）；派执行层子会话 1fcc8dae 独立算出 21*2 并写入 01-exec.txt（=42）；中间层回读复核后写入 02-middle-recheck.txt（42+1=43）。现将中间层交棒给同层接替会话（同父级 sibling）：只需读交接文件、确认 02-middle-recheck.txt 内容为 43、向根会话回一行确认，不做任何修改。",
+          "files": [
+            "D:\\Codes\\dsh-tree-harness\\.dsh-demo\\00-middle.txt",
+            "D:\\Codes\\dsh-tree-harness\\.dsh-demo\\01-exec.txt",
+            "D:\\Codes\\dsh-tree-harness\\.dsh-demo\\02-middle-recheck.txt"
+          ],
+          "next_steps": [
+            "读取本交接文件（HANDOFF-*.md）",
+            "确认 D:\\Codes\\dsh-tree-harness\\.dsh-demo\\02-middle-recheck.txt 内容为 middle recheck ok: 42+1=43",
+            "向根会话（父会话）回一行：中间层接替会话已就绪，复核通过 43",
+            "不要修改/创建任何文件，不要派生子代理，完成即止"
+          ],
+          "note": "演示用交接：当前上下文仅 6.2%（低于 50% 门槛），按用户要求「在中间层交接一次」用 force 触发一次真实同层交接；接替会话是同一父会话下的 sibling（同层），继承同模型/同权限/同工作区。交接后本会话不再负责后续汇总，由接替会话确认。"
+        },
+        "parsed": {
+          "action": "handoff",
+          "text": "session_handoff: wrote D:\\Codes\\dsh-tree-harness\\HANDOFF-5500503a-20261111-155445.md; successor ac7c53bf-8e9d-4c13-82ca-8addc320da7a kind=sibling preset=standard inherited=session-route",
+          "status": null,
+          "handoff": {
+            "handoff_path": "D:\\Codes\\dsh-tree-harness\\HANDOFF-5500503a-20261111-155445.md",
+            "successor_id": "ac7c53bf-8e9d-4c13-82ca-8addc320da7a",
+            "kind": "sibling",
+            "preset": "standard",
+            "workspace": null,
+            "inherited": "session-route",
+            "degraded": null
+          }
+        },
+        "result": "session_handoff: wrote D:\\Codes\\dsh-tree-harness\\HANDOFF-5500503a-20261111-155445.md; successor ac7c53bf-8e9d-4c13-82ca-8addc320da7a kind=sibling preset=standard inherited=session-route",
+        "session": "5500503a-751f-483e-814c-a1d2e4c16f9b",
+        "delegationDepth": 2,
+        "origin": "subagent"
+      }
+    ],
+    "treeStates": [],
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": false,
+        "detail": {
+          "trees": []
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": false,
+        "detail": {
+          "maxDepth": -1,
+          "nodeCount": 0
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {}
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {}
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": false,
+        "detail": {
+          "leavesDispatched": []
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": true,
+        "detail": {
+          "count": 1,
+          "successors": [
+            "ac7c53bf-8e9d-4c13-82ca-8addc320da7a"
+          ]
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": true,
+        "detail": {
+          "handoffInChild": [
+            {
+              "session": "5500503a-751f-483e-814c-a1d2e4c16f9b",
+              "depth": 2,
+              "kind": "sibling"
+            }
+          ]
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ]
+  },
+  "summary": {
+    "sessions": 2,
+    "roots": 1,
+    "children": 1,
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": false,
+        "detail": {
+          "trees": []
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": false,
+        "detail": {
+          "maxDepth": -1,
+          "nodeCount": 0
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {}
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {}
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": false,
+        "detail": {
+          "leavesDispatched": []
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": true,
+        "detail": {
+          "count": 1,
+          "successors": [
+            "ac7c53bf-8e9d-4c13-82ca-8addc320da7a"
+          ]
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": true,
+        "detail": {
+          "handoffInChild": [
+            {
+              "session": "5500503a-751f-483e-814c-a1d2e4c16f9b",
+              "depth": 2,
+              "kind": "sibling"
+            }
+          ]
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ],
+    "passCount": 2,
+    "totalChecks": 10
+  }
+}

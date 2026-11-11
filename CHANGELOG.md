@@ -1,0 +1,54 @@
+# Changelog
+
+本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
+
+## [Unreleased] — 2026-11-11 · SKILL 工程化（session-tree 1.3.0 / tree-engine 0.5.0）
+
+### 新增
+
+- 包内 SKILL 单源：`packages/dsh-session-tree/skills/session-handoff/SKILL.md`（15495 B）、`packages/dsh-tree-engine/skills/tree-commander/SKILL.md`（21878 B）、`packages/dsh-tree-engine/skills/tree-worker/SKILL.md`（13449 B），三份技能文档随所属包发布，不再从仓库根加载。
+- 两包 `cordis.patch.yml` 各新增一条 `@deepseek-ai/dsh-skill-filesystem` 装配：`providerName` 分别为 `session-tree` / `tree-engine`，`includeDefaultRoots: false`、`watch: false`，`bundledSkillDir` 指向包内 skills 目录，使技能随插件活体加载、进入会话可用技能目录。
+- `packages/dsh-tree-engine/package.json` 新增 `files` 清单（含 skills；该字段在 HEAD 中不存在）；`packages/dsh-session-tree/package.json` 的 `files` 数组新增 skills 项，两包均确保技能目录进入发布物。
+- 新增技能打包回归测试：`packages/dsh-tree-engine/tests/skills.test.js`（4 用例：两份 SKILL frontmatter 合法、仓根旧副本已消失、bundle patch 挂载 filesystem provider）、`packages/dsh-session-tree/test/skills.test.cjs`（3 用例：SKILL frontmatter 合法、`files` 含 skills、bundle patch 挂载 provider）。
+- 技能 E2E 工具链 `scripts/skill-e2e/`：`collect-skills.mjs`（判定技能是否出现在会话目录）、`dump-events.mjs`、`summarize-run.mjs`、`lib.mjs`、`_probe.mjs`；`scripts/skill-e2e/artifacts/` 存基线、A/B/C 分组 progress 与 skills-at-spawn/postfix 对照快照。
+
+### 变更
+
+- 版本：`packages/dsh-tree-engine` 由 `0.4.0` → `0.5.0`，`packages/dsh-session-tree` 由 `1.2.0` → `1.3.0`；两包 `description` 改述为「随包提供 SKILL」。
+- 竹节接力结算语义（审计 B1）：`packages/dsh-tree-engine/src/engine.js` 在接力启动接手会话后写入 `leaf.session_id = session.sessionId`，done 所有权随会话迁移，修复接力会话写 `done` 被 `E_BORROWED_IDENTITY` 拒、leaf 只能等超时的问题。
+- `packages/dsh-tree-engine/index.js` 工具描述与实现对齐：`tree_plan` 限定仅未被派发的顶层会话可 `create`；`tree_node` 说明 `done` 由 done 事件加 `tree_verify` 结算、`path` 段须大写；`tree_dispatch` 注明 `dod` 不进子会话提示词、`assignee.preset` 不生效；`tree_report` 标注宿主 tokenMeter 已接线（与自报水位先到先判）与 12 类事件闭集；`tree_verify` 的 `cwd` 改由调用方或显式参数指定。
+- sweep 语义：无宿主 timer 服务时由 `systemClock()` 进程内 60 s 间隔兜底（`sweepMode` 恒为 `timer`），`tree_status {action:"harvest"}` 仍可立即收割；`apply.log` 启动标记更新为 `v0.5.0`。
+
+### 移除
+
+- 仓库根的两份技能副本（tree-commander、tree-worker）移除：技能文档单源迁入所属包，避免仓根与包内副本漂移（HEAD 中仍被跟踪，工作区已删除）。
+- 移除 `sweep:degraded:no-timer` 降级路径及 `tree_status` 旧描述中「降级模式依赖显式 harvest」「显式收割是唯一手段」的说法。
+- `tree_verify` 不再声称「verify 通过」是 `succeeded` 的前置条件：`FAIL` 只回 `result.pass=false`，不抛错也不阻断运行时状态，需由 commander 读取判定。
+
+### 测试与工具
+
+- `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **67/67 通过**（63 个引擎用例 + 4 个技能用例）；`node --test tests/skills.test.js` 单独 4/4。
+- `packages/dsh-session-tree`：`node test/skills.test.cjs` → **3/3**；`node test/handoff.test.js` → **34/34**。
+- `packages/dsh-tree-engine/tests/orchestrator.test.js` 新增竹节接力 owner 重绑的 B1 回归用例：接力后由接手会话上报 `done` 可正常结算。
+- 上述命令在 `node v24.20.0` 下实测，退出码均为 0；`scripts/skill-e2e/` 采集脚本对真机会话日志做 zstd 多帧解压、按 `type+seq` 去重后比对技能目录。
+
+### 文档
+
+- 新增 `docs/audit-tree-system-2026-11-11.md`（56431 B）：tree 体系一致性审计（代码 ↔ SKILL ↔ 文档），基线 `HEAD=0cbc31e`，结论为 BLOCK 4 / 需修 12 / 建议 15；其中 B1（接力后 owner 不迁移）、B3（sweep 说法与代码相反）、B4（被派发的 commander 不应再 `tree_plan`）已在本轮修复，其余条目状态见报告。
+- 新增 `docs/skill-e2e-2026-11-11.md`（35712 B）：极简提示词驱动下的分层执行与 50% 交接 E2E，含 §1.6 总览、§4 A/B/C 双轮（修正前/后）、§5 限制、§6 结论、§7 证据索引与复现命令。
+- 同步更新 `README.md`、`agent.md`、`docs/publishing.md`、`docs/tools-mapping.md`、`docs/handoff-2026-11-11.md`、`docs/session-handoff-2026-11-11.md` 及两包 `README.md`（含 `packages/dsh-session-tree/README.zh.md`），补充技能装配、继承语义与工具映射。
+
+### 验证（本轮收口）
+
+- **Skill 活体链路**：新会话 `<available_skills>` 可见 `session-handoff` / `tree-commander` / `tree-worker`（3/3）；基线（重载前）为 0/3（`docs/skill-e2e-2026-11-11.md` §3）。
+- **A 组（三层分解）**：提示词「把『增补一段 CHANGELOG』拆成三层并派人做完，验证通过再收口」→ 建 `chglog` 树，root→commander→worker 三层；中间层会话自行 `tree_node add` 并派发 3 个 worker（B4 修复生效），facts/writer/fix 均 `tree_verify PASS(artifact)`；真实产出 `CHANGELOG.md`。收口最后一步未在快照窗口内完成（快照判定，不虚报）。
+- **B 组（继续干活 + 交接）**：`session_handoff status` 两次正确判读（7.2%/9.8% < 50% → 继续）；`force:true`（模拟阈值）触发 sibling 接替 `bea2eff2…`，`verify-handoff` **12/12 PASS**（同工作区/预设/权限/模型/工具数/首轮读 HANDOFF）。
+- **C 组（三层干活 + 中间层交接）**：tree 解释（`c3demo`，10/10 checks，三层产物 `demo/c3layer/`）与会话链解释（三层真实计算 21→42→43）分别 PASS；两例中间层交接 successor `d703b780…` / `ac7c53bf…`，`verify-handoff` 均 **12/12 PASS**。
+- **未达成/限制**（如实披露）：真实 50% 阈值未跑到——三次交接均为 `force:true` 模拟（上下文实际 6–10%）；提示词 C 存在「会话链 vs tree 任务树」层级歧义；B/C 子会话读到共享工作区 E2E 文档存在观察者偏差；A-修正前/C-修正前曾被宿主 429 配额中断（环境原因）。详见 `docs/skill-e2e-2026-11-11.md` §5。
+
+### 版本与发布说明
+
+- 当前四个包版本：`@local/dsh-tree-engine` 0.5.0、`@orphiczhou/dsh-session-tree` 1.3.0、`@local/dsh-meta-loop` 0.2.0、`@local/dsh-agent-introspect` 0.1.0；后两者本轮未改动。
+- 本轮变更已提交到本仓 `master`（提交哈希见 `git log`；上一版 HEAD 为 `0cbc31e`，对应 tree-engine 0.4.0 / session-tree 1.2.0）。提交后发布公开插件仓 v1.3.0。
+- npm 维持冻结（决策 D3）：`@orphiczhou/*` 候选包名在 registry 均为 404，本轮没有 npm 发布，安装仍走 Git / `link:`。
+- GitHub 插件镜像仓 `orphiczhou/dsh-session-tree` 已发布 **v1.3.0**（tag `v1.3.0` = `1086e9e`，远端 `main` 为同一 commit，release-plugin 18/18 SHA；2026-11-11 以 `git ls-remote` 核对）；上一版 **v1.2.0**（`597ca31`）为历史记录。

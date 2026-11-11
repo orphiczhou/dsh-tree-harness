@@ -1,0 +1,14 @@
+﻿0cbc31e 2026-11-11 docs: v1.2.0 合并/继承修复与真机 E2E 记录（agent.md/publishing/spec/handoff/session-handoff/README + e2e 断言器与 artifacts）
+67fa541 2026-11-11 feat(session-tree): v1.2.0 并入 session_handoff（同层级交接）+ 修复同工作区/权限模式/Agent 预设继承
+f2f373d 2026-11-11 docs: 发布 v1.1.0 记录同步（README 组件表 / handoff / publishing / agent）
+f7048a8 2026-11-11 feat(session-tree): v1.1.0 工作区按最近活动排序 + 隐藏/恢复与已隐藏分区 + 归档检索召回
+53bd2c1 2026-11-11 feat(session-handoff): 会话自交接插件（session_handoff status/handoff）+ 架构规格与文档
+61ea250 2026-11-11 docs: 项目代理手册更名为 agent.md（用户指定，D8）+ 重写为开工必读 + 全仓引用同步
+d67915e 2026-11-11 docs(agenda): R2 收口 — 公开仓已推送并核对远端 HEAD；变更记录补全
+366986d 2026-11-11 docs: T3 公开前复扫 A1-A9 全绿（PASS WITH RISKS，可公开推送）
+4062974 2026-11-11 docs: 公开文档包与治理记录；公开前安全排除（决策 D7）
+67654ed 2026-11-11 feat(session-tree): 合并为单包 v1.0.4（方案 B⁺）+ 发布同步脚本 + profile 迁移记录
+3c1e89d 2026-11-11 feat(meta-loop): 面板新增六阶段 SVG 流程图与阶段摘要
+4089a65 2026-11-11 fix(tree-engine): 兼容 DSH 0.2.1-rc.2+ subagents API 漂移（真机派发恢复）
+ca84385 2026-10-14 小债清理：修 tree-engine package.json 乱码 + 移出仓库内陈旧遗留 + 交接 §2 跑测试命令补坑
+5db7b28 2026-10-14 交接：handoff-2026-10-14.md（三插件状态/内部验证接口 cordis_inspect 用法/客户端模块契约与热更残留等 API 血泪/边界清单/任务优先级/可粘贴交接提示词）；旧 handoff 标注被取代；tree-engine package.json 版本对齐 0.4.0

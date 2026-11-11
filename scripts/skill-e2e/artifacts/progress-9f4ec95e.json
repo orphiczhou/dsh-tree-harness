@@ -1,0 +1,504 @@
+{
+  "tool": "summarize-run",
+  "generatedAt": "2026-11-11T07:27:39.810Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "options": {
+    "session": [
+      "9f4ec95e-a6a9-40d8-bd4c-45bf3fad7b20"
+    ],
+    "childDepth": 2,
+    "scanWorkspace": "same"
+  },
+  "sessions": [
+    {
+      "id": "9f4ec95e-a6a9-40d8-bd4c-45bf3fad7b20",
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\9f4ec95e-a6a9-40d8-bd4c-45bf3fad7b20\\session.v4.jsonl.zstd",
+      "workspaceEncoding": "--D-Codes-dsh-tree-harness--",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": "8ca5308b-4ae9-476e-a47d-1aaec5bcf22b",
+        "origin": "subagent",
+        "delegationDepth": 2,
+        "agentPreset": "standard",
+        "createdAt": 1794381865220
+      },
+      "header": {
+        "seq": 14,
+        "config": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        },
+        "toolCount": 158,
+        "headerCount": 1
+      },
+      "eventCount": 105,
+      "firstUserMessage": {
+        "seq": 10,
+        "text": "你现在这层继续分层或者继续干活；上下文到 50% 就自主交接给新会话继续。\nYour parent agent id is \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\". Before you finish, send your result to that agent with send_message({ agent_id: \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\", message: \"<self-contained result>\" }). The parent shares your workspace but does not automatically receive your transcript, tool output, or reasoning. Send earlier messages as well when a finding changes what the parent should do next; sending a message does not end your turn."
+      },
+      "assistantFinal": {
+        "seq": 93,
+        "text": "Tests pass: tree-engine 66/66, skills 3/3, handoff 34/34. Let me also run render/style-guard/verify-bundle? The agent.md says render 133+9+11, style 22/22, verify-bundle 0 fail. Running them gives a more complete independent verification. Render may take ~seconds. Let me run them in parallel. Also inspect the skills frontmatter quickly (loaded skill already shows content; frontmatter not shown). And check whether docs claims match tests. Maybe check `node scripts/verify-bundle.mjs`. Then, I need to decide the handoff. Context now maybe ~9-10%. Wait — should I really force a handoff? Let me rec…"
+      },
+      "skills": {
+        "found": true,
+        "firstSeq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "evolution": [
+          {
+            "seq": 12,
+            "count": 15,
+            "targets": [
+              "tree-commander",
+              "tree-worker",
+              "session-handoff"
+            ]
+          }
+        ],
+        "loaded": [
+          {
+            "seq": 65,
+            "name": "tree-commander"
+          },
+          {
+            "seq": 67,
+            "name": "session-handoff"
+          }
+        ]
+      },
+      "tree": {
+        "plan": [],
+        "nodes": [],
+        "dispatch": [],
+        "reports": [],
+        "verify": [],
+        "status": [],
+        "log": [],
+        "maintain": [],
+        "send": []
+      },
+      "handoff": [
+        {
+          "seq": 56,
+          "args": {
+            "action": "status"
+          },
+          "parsed": {
+            "action": "status",
+            "text": "session_handoff status: context=7.2% (threshold 50%) pressure=71782/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue",
+            "status": {
+              "context_pct": 7.2,
+              "context_pct_raw": "7.2",
+              "threshold_pct": 50,
+              "pressure": "71782/1000000",
+              "model": "opencode-go/deepseek-v4.1-flash",
+              "effort": "max",
+              "preset": "standard",
+              "permission": "danger-full-access/danger-full-access/never",
+              "successor_kind": "sibling",
+              "raw": "session_handoff status: context=7.2% (threshold 50%) pressure=71782/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue"
+            },
+            "handoff": null
+          },
+          "result": "session_handoff status: context=7.2% (threshold 50%) pressure=71782/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue"
+        }
+      ],
+      "subagents": [],
+      "toolCounts": {
+        "pwsh": 10,
+        "self_spec": 1,
+        "read": 4,
+        "session_handoff": 1,
+        "session_trace": 1,
+        "session_event_search": 1,
+        "skill": 2
+      },
+      "toolSequence": [
+        {
+          "seq": 18,
+          "name": "pwsh",
+          "argsSummary": "{\"description\":\"Get working directory and list workspace\",\"command\":\"Get-Location; Get-ChildItem -Force | Select-Object Mode,LastWriteTime,Length,Name | Format-Table -AutoSize\"}",
+          "resultHead": "Path ---- D:\\Codes\\dsh-tree-harness Mode LastWriteTime Length Name ---- ------------- ------ ---- d--h-- 2026/11/11 15:23:37 .git d----- 2026/11/11 12:42:28 demo d----- 2026/11/11 15:24:38 docs d-----…",
+          "resultIsError": false
+        },
+        {
+          "seq": 22,
+          "name": "self_spec",
+          "argsSummary": "{}",
+          "resultHead": "self_spec: session=9f4ec95e model=opencode-go/deepseek-v4.1-flash · perms=danger-full-access/never · sandbox=danger-full-access · cwd=D:\\Codes\\dsh-tree-harness (projcache C:\\Users\\sir_c\\.dsh\\storages\\…",
+          "resultIsError": false
+        },
+        {
+          "seq": 27,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\HANDOFF-897e7f93-20261111-144221.md\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\HANDOFF-897e7f93-20261111-144221.md</path> <type>file</type> <content> 1: # Session handoff — 20261111-144221 2: 3: > Generated by the `session_handoff` tool. Read this…",
+          "resultIsError": false
+        },
+        {
+          "seq": 28,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\HANDOFF-ad490613-20261111-144214.md\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\HANDOFF-ad490613-20261111-144214.md</path> <type>file</type> <content> 1: # Session handoff — 20261111-144214 2: 3: > Generated by the `session_handoff` tool. Read this…",
+          "resultIsError": false
+        },
+        {
+          "seq": 31,
+          "name": "pwsh",
+          "argsSummary": "{\"description\":\"Show git status and recent commits\",\"command\":\"git status --short; Write-Host '---'; git log --oneline -15\"}",
+          "resultHead": "M README.md M agent.md M docs/handoff-2026-11-11.md M docs/publishing.md M packages/dsh-session-tree/README.md M packages/dsh-session-tree/README.zh.md M packages/dsh-session-tree/cordis.patch.yml M p…",
+          "resultIsError": false
+        },
+        {
+          "seq": 38,
+          "name": "pwsh",
+          "argsSummary": "{\"description\":\"Show diff stat and untracked files\",\"command\":\"git diff --stat; Write-Host '--- untracked ---'; git status --porcelain | Where-Object { $_ -match '^\\\\?\\\\?' }\"}",
+          "resultHead": "README.md | 9 ++-- agent.md | 43 +++++++++++++------ docs/handoff-2026-11-11.md | 12 +++--- docs/publishing.md | 4 +- packages/dsh-session-tree/README.md | 16 ++++++- packages/dsh-session-tree/README.…",
+          "resultIsError": false
+        },
+        {
+          "seq": 42,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\agent.md\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\agent.md</path> <type>file</type> <content> 1: # AGENT.MD — dsh-tree-harness 项目代理手册 2: 3: > **所有接手本项目的 AI Agent 的开工必读**，同时是项目**单一事实源**：角色授权 / 决策日志 / 路线图 / 工程约定 / 发布门禁。 …",
+          "resultIsError": false
+        },
+        {
+          "seq": 47,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\docs\\\\skill-e2e-2026-11-11.md\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\docs\\skill-e2e-2026-11-11.md</path> <type>file</type> <content> 1: # skill 工程化 · 极简提示词驱动的分层执行与 50% 交接 E2E（2026-11-11） 2: 3: > 角色：E2E 验证工程师（teammate `skill-e2e`，任务板 task…",
+          "resultIsError": false
+        },
+        {
+          "seq": 49,
+          "name": "pwsh",
+          "argsSummary": "{\"description\":\"List script and package skill files\",\"command\":\"Get-ChildItem -Recurse scripts/skill-e2e, packages/dsh-session-tree/skills, packages/dsh-tree-engine/skills, packages/dsh-session-tree/test, packages/dsh-tr…",
+          "resultHead": "FullName Length LastWriteTime -------- ------ ------------- D:\\Codes\\dsh-tree-harness\\scripts\\skill-e2e\\artifacts 2026/11/11 15:24:34 D:\\Codes\\dsh-tree-harness\\scripts\\skill-e2e\\baseline-A-skills.json…",
+          "resultIsError": false
+        },
+        {
+          "seq": 56,
+          "name": "session_handoff",
+          "argsSummary": "{\"action\":\"status\"}",
+          "resultHead": "session_handoff status: context=7.2% (threshold 50%) pressure=71782/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never succ…",
+          "resultIsError": false
+        },
+        {
+          "seq": 58,
+          "name": "session_trace",
+          "argsSummary": "{}",
+          "resultHead": "Session 9f4ec95e-a6a9-40d8-bd4c-45bf3fad7b20 — 你现在这层继续分层或者继续 Created: 2026-11-11T07:24:25.220Z Availability: live, persisted Ancestors (nearest first): - 8ca5308b-4ae9-476e-a47d-1aaec5bcf22b — 你是 dsh-…",
+          "resultIsError": false
+        },
+        {
+          "seq": 60,
+          "name": "session_event_search",
+          "argsSummary": "{\"query\":\"B 组\",\"session_id\":\"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\"}",
+          "resultHead": "Error: tool call timed out after 30000ms",
+          "resultIsError": true
+        },
+        {
+          "seq": 65,
+          "name": "skill",
+          "argsSummary": "{\"name\":\"tree-commander\"}",
+          "resultHead": "<skill_content name=\"tree-commander\"> <skill_resources> Base directory for this skill: D:\\Codes\\dsh-tree-harness\\packages\\dsh-tree-engine\\skills\\tree-commander Resolve relative paths mentioned by this…",
+          "resultIsError": false
+        },
+        {
+          "seq": 67,
+          "name": "skill",
+          "argsSummary": "{\"name\":\"session-handoff\"}",
+          "resultHead": "<skill_content name=\"session-handoff\"> <skill_resources> Base directory for this skill: D:\\Codes\\dsh-tree-harness\\packages\\dsh-session-tree\\skills\\session-handoff Resolve relative paths mentioned by t…",
+          "resultIsError": false
+        },
+        {
+          "seq": 72,
+          "name": "pwsh",
+          "argsSummary": "{\"description\":\"Inspect gitignore, package metadata, patch lines\",\"command\":\"Get-Content .gitignore; Write-Host '=== session-tree package.json ==='; Get-Content packages/dsh-session-tree/package.json; Write-Host '=== tre…",
+          "resultHead": "node_modules/ *.log tree-engine-data/ .asar-tool-out* # 鏈湴鏈哄瘑锛堝叕寮€浠撶姝㈠叆搴擄級 .env .env.* !.env.example *.pem *.p12 id_rsa* # 浼氳瘽浜ゆ帴鏂囦欢锛坰ession_handoff 鍐欏埌浼氳瘽 cwd锛屽睘杩愯鏃朵骇鐗╋紝涓嶅叆搴擄級 HANDOFF-*.md # 浼氳瘽閬楃…",
+          "resultIsError": false
+        },
+        {
+          "seq": 76,
+          "name": "pwsh",
+          "argsSummary": "{\"description\":\"Check skills test files and logs dir\",\"command\":\"Get-Content packages/dsh-session-tree/test/skills.test.cjs; Write-Host '=== tree-engine skills test ==='; Get-Content packages/dsh-tree-engine/tests/skills…",
+          "resultHead": "/** * Packaging regression tests for the bundled Skill (v1.3.0). * * A Skill that is not in `package.json.files` is not published; a Skill whose * directory is not mounted by the bundle patch is not d…",
+          "resultIsError": false
+        },
+        {
+          "seq": 83,
+          "name": "pwsh",
+          "argsSummary": "{\"description\":\"Run tree-engine test suite with bundled node\",\"workdir\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\packages\\\\dsh-tree-engine\",\"command\":\"$node = \\\"$env:USERPROFILE\\\\.dsh\\\\dsh-runtimes\\\\dsh-primary-runtime\\\\dependencie…",
+          "resultHead": "✔ bundle patch mounts a filesystem Skill provider on the packaged skills/ (1.6906ms) ✔ 迁移闭集：合法迁移放行 (1.6482ms) ✔ 迁移闭集：非法迁移拒绝（done→active 回退 / archived 复活 / segment_pending→done） (1.4391ms) ✔ done 闸 1：无…",
+          "resultIsError": false
+        },
+        {
+          "seq": 87,
+          "name": "pwsh",
+          "argsSummary": "{\"description\":\"Run session-tree skills and handoff tests\",\"workdir\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\packages\\\\dsh-session-tree\",\"command\":\"$node = \\\"$env:USERPROFILE\\\\.dsh\\\\dsh-runtimes\\\\dsh-primary-runtime\\\\dependencies\\…",
+          "resultHead": "=== skills.test.cjs === ✔ skills/session-handoff/SKILL.md exists with valid frontmatter (1.9347ms) ✔ package.json publishes the skills directory (0.7681ms) ✔ bundle patch mounts a filesystem Skill pro…",
+          "resultIsError": false
+        },
+        {
+          "seq": 94,
+          "name": "pwsh",
+          "argsSummary": "{\"description\":\"Run session-tree render, style, bundle checks\",\"workdir\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\packages\\\\dsh-session-tree\",\"command\":\"$node = \\\"$env:USERPROFILE\\\\.dsh\\\\dsh-runtimes\\\\dsh-primary-runtime\\\\dependenc…",
+          "resultHead": "=== render.test.cjs === ==================== 结果 ==================== 数据模式：内置夹具（判定） + 实时会话库（附加，不参与判定） 参考套件对齐断言： 133 / 133 通过（参考套件共 90 项） 夹具/套件自检断言： 9 / 9 通过 实时数据附加检查： 11 / 11 通过 合计失败 0 项 ✅ client.js 渲染…",
+          "resultIsError": false
+        },
+        {
+          "seq": 98,
+          "name": "pwsh",
+          "argsSummary": "{\"description\":\"Check diff hygiene and skill frontmatter\",\"command\":\"git diff --check; Write-Host \\\"DIFF_CHECK_EXIT=$LASTEXITCODE\\\"; Write-Host '=== frontmatter ==='; Get-Content packages/dsh-session-tree/skills/session-…",
+          "resultHead": "DIFF_CHECK_EXIT=0 === frontmatter === --- name: session-handoff description: '浼氳瘽鑷氦鎺ワ細闀夸换鍔℃帹杩涘埌鎺ヨ繎涓婁笅鏂囦笂闄愶紙涓婁笅鏂囩害 50%锛夋椂锛屽厛 session_handoff {action:\"status\"} 璇荤湡瀹炲崰鐢ㄤ笌缁ф壙浜嬪疄锛屽啀 session_handoff {actio…",
+          "resultIsError": false
+        }
+      ]
+    }
+  ],
+  "children": [],
+  "layering": {
+    "trees": [],
+    "nodes": [],
+    "maxDepth": -1,
+    "layers": 0,
+    "roles": {},
+    "dispatch": [],
+    "dispatchBySession": {},
+    "doneReports": [],
+    "verifies": [],
+    "handoffs": [
+      {
+        "seq": 56,
+        "args": {
+          "action": "status"
+        },
+        "parsed": {
+          "action": "status",
+          "text": "session_handoff status: context=7.2% (threshold 50%) pressure=71782/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue",
+          "status": {
+            "context_pct": 7.2,
+            "context_pct_raw": "7.2",
+            "threshold_pct": 50,
+            "pressure": "71782/1000000",
+            "model": "opencode-go/deepseek-v4.1-flash",
+            "effort": "max",
+            "preset": "standard",
+            "permission": "danger-full-access/danger-full-access/never",
+            "successor_kind": "sibling",
+            "raw": "session_handoff status: context=7.2% (threshold 50%) pressure=71782/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue"
+          },
+          "handoff": null
+        },
+        "result": "session_handoff status: context=7.2% (threshold 50%) pressure=71782/1000000 model=opencode-go/deepseek-v4.1-flash effort=max preset=standard permission=danger-full-access/danger-full-access/never successor=sibling next=continue",
+        "session": "9f4ec95e-a6a9-40d8-bd4c-45bf3fad7b20",
+        "delegationDepth": 2,
+        "origin": "subagent"
+      }
+    ],
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": false,
+        "detail": {
+          "trees": []
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": false,
+        "detail": {
+          "maxDepth": -1,
+          "nodeCount": 0
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {}
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {}
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": false,
+        "detail": {
+          "leavesDispatched": []
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": false,
+        "detail": {
+          "count": 0,
+          "successors": []
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": false,
+        "detail": {
+          "handoffInChild": []
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ]
+  },
+  "summary": {
+    "sessions": 1,
+    "roots": 1,
+    "children": 0,
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": false,
+        "detail": {
+          "trees": []
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": false,
+        "detail": {
+          "maxDepth": -1,
+          "nodeCount": 0
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {}
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {}
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": false,
+        "detail": {
+          "leavesDispatched": []
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": false,
+        "detail": {
+          "count": 0,
+          "successors": []
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": false,
+        "detail": {
+          "handoffInChild": []
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ],
+    "passCount": 0,
+    "totalChecks": 10
+  }
+}

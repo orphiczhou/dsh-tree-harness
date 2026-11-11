@@ -1,0 +1,431 @@
+{
+  "tool": "summarize-run",
+  "generatedAt": "2026-11-11T07:27:39.669Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "options": {
+    "session": [
+      "03ad2830-c8a0-410e-a1f2-53f4f50c2356"
+    ],
+    "childDepth": 2,
+    "scanWorkspace": "same"
+  },
+  "sessions": [
+    {
+      "id": "03ad2830-c8a0-410e-a1f2-53f4f50c2356",
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\03ad2830-c8a0-410e-a1f2-53f4f50c2356\\session.v4.jsonl.zstd",
+      "workspaceEncoding": "--D-Codes-dsh-tree-harness--",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": "8ca5308b-4ae9-476e-a47d-1aaec5bcf22b",
+        "origin": "subagent",
+        "delegationDepth": 2,
+        "agentPreset": "standard",
+        "createdAt": 1794381865219
+      },
+      "header": {
+        "seq": 14,
+        "config": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        },
+        "toolCount": 158,
+        "headerCount": 1
+      },
+      "eventCount": 102,
+      "firstUserMessage": {
+        "seq": 10,
+        "text": "把「给 dsh-tree-harness 增补一段 CHANGELOG」拆成三层并派人做完，验证通过再收口。\nYour parent agent id is \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\". Before you finish, send your result to that agent with send_message({ agent_id: \"8ca5308b-4ae9-476e-a47d-1aaec5bcf22b\", message: \"<self-contained result>\" }). The parent shares your workspace but does not automatically receive your transcript, tool output, or reasoning. Send earlier messages as well when a finding changes what the parent should do next; sending a message does not end your turn."
+      },
+      "assistantFinal": {
+        "seq": 94,
+        "text": "`files.sort()[0]` — default JS sort = lexicographic by UTF-16 code units. Absolute paths under cwd; sorting full absolute paths. For cwd = repo root D:\\Codes\\dsh-tree-harness, sorted paths: D:\\...\\CHANGELOG.md (C=67) vs D:\\...\\HANDOFF... (H=72) vs LICENCE (L=76) vs PLAN (P=80), README (R=82), agent.md (a=97), demo... (d=100), docs... (d...). So CHANGELOG.md is first if uppercase-C. If named `CHANGELOG.md`, sorted path ...\\CHANGELOG.md vs ...\\HANDOFF-...md → \"CHANGELOG\" < \"HANDOFF\" (C<H) → yes first. Good: root artifact-doc verification will read CHANGELOG.md. For intermediate md in `logs/chang…"
+      },
+      "skills": {
+        "found": true,
+        "firstSeq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "evolution": [
+          {
+            "seq": 12,
+            "count": 15,
+            "targets": [
+              "tree-commander",
+              "tree-worker",
+              "session-handoff"
+            ]
+          }
+        ],
+        "loaded": [
+          {
+            "seq": 18,
+            "name": "tree-commander"
+          }
+        ]
+      },
+      "tree": {
+        "plan": [],
+        "nodes": [],
+        "dispatch": [],
+        "reports": [],
+        "verify": [],
+        "status": [],
+        "log": [],
+        "maintain": [],
+        "send": []
+      },
+      "handoff": [],
+      "subagents": [],
+      "toolCounts": {
+        "skill": 1,
+        "pwsh": 9,
+        "glob": 1,
+        "grep": 2,
+        "read": 5
+      },
+      "toolSequence": [
+        {
+          "seq": 18,
+          "name": "skill",
+          "argsSummary": "{\"name\":\"tree-commander\"}",
+          "resultHead": "<skill_content name=\"tree-commander\"> <skill_resources> Base directory for this skill: D:\\Codes\\dsh-tree-harness\\packages\\dsh-tree-engine\\skills\\tree-commander Resolve relative paths mentioned by this…",
+          "resultIsError": false
+        },
+        {
+          "seq": 23,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Write-Output \\\"DSH_SESSION_ID=$env:DSH_SESSION_ID\\\"; Write-Output \\\"PWD=$((Get-Location).Path)\\\"; Get-ChildItem -Force | Select-Object Mode,Length,Name | Format-Table -AutoSize\",\"description\":\"Show session id…",
+          "resultHead": "DSH_SESSION_ID=03ad2830-c8a0-410e-a1f2-53f4f50c2356 PWD=D:\\Codes\\dsh-tree-harness Mode Length Name ---- ------ ---- d--h-- .git d----- demo d----- docs d----- logs d----- packages d----- scripts -a---…",
+          "resultIsError": false
+        },
+        {
+          "seq": 27,
+          "name": "glob",
+          "argsSummary": "{\"pattern\":\"**/CHANGELOG*\"}",
+          "resultHead": "No files found",
+          "resultIsError": false
+        },
+        {
+          "seq": 32,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem packages -Directory | Select-Object Name; Write-Output \\\"---\\\"; Get-Content packages\\\\*/package.json | Select-String -Pattern '\\\"name\\\"|\\\"version\\\"' ; Write-Output \\\"---GIT---\\\"; git log --oneli…",
+          "resultHead": "0cbc31e docs: v1.2.0 合并/继承修复与真机 E2E 记录（agent.md/publishing/spec/handoff/session-handoff/README + e2e 断言器与 artifacts） 67fa541 feat(session-tree): v1.2.0 并入 session_handoff（同层级交接）+ 修复同工作区/权限模式/Agent 预设继…",
+          "resultIsError": false
+        },
+        {
+          "seq": 36,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem docs -Recurse -File -Filter *.md | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace((Get-Location).Path + '\\\\','') }\",\"description\":\"List docs markdown files\"}",
+          "resultHead": "docs\\agspec-report.md docs\\bug-report-dsh-pnpm-exclude.md docs\\defect-2026-10-17-subagents-rc2-api-drift.md docs\\e2e-handoff-2026-11-11.md docs\\e2e-report-2026-10-04.md docs\\e2e3l-audit-2026-10-04.md …",
+          "resultIsError": false
+        },
+        {
+          "seq": 43,
+          "name": "grep",
+          "argsSummary": "{\"pattern\":\"CHANGELOG|变更记录|Change ?log\",\"path\":\".\"}",
+          "resultHead": "Found 17 matches .\\scripts\\skill-e2e\\baseline-A-skills.json Line 75: \"firstUserMessageHead\": \"把「给 dsh-tree-harness 增补一段 CHANGELOG」拆成三层并派人做完，验证通过再收口。\\nYour parent agent id is \\\"8ca5308b-4ae9-476e-a47d-…",
+          "resultIsError": false
+        },
+        {
+          "seq": 45,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-Content docs\\\\handoff-2026-11-11.md -TotalCount 80\",\"description\":\"Read latest handoff head\"}",
+          "resultHead": "# 浜ゆ帴鏂囦欢 鈥?dsh-tree-harness锛?026-11-11锛? > 缁欎笅涓€涓紑鍙戜細璇?/ 鍗忎綔鑰呫€?*鏈枃浠跺彇浠?[handoff-2026-10-14.md](handoff-2026-10-14.md)**锛岃瀹屽嵆鍙帴鎵嬨€?> 蹇収鏃堕棿锛?*2026-11-11 15:00 +08:00**锛堟暟瀛椾负褰撳満瀹炴祴锛涙鍚庡彉鍖栦互娲讳綋璇绘暟 /…",
+          "resultIsError": false
+        },
+        {
+          "seq": 52,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"$files = @('packages\\\\dsh-tree-engine\\\\package.json','packages\\\\dsh-session-tree\\\\package.json','packages\\\\dsh-meta-loop\\\\package.json','packages\\\\dsh-agent-introspect\\\\package.json'); foreach($f in $files){ …",
+          "resultHead": "@local/dsh-tree-engine = 0.5.0 @orphiczhou/dsh-session-tree = 1.3.0 @local/dsh-meta-loop = 0.2.0 @local/dsh-agent-introspect = 0.1.0 ---DIFFSTAT--- README.md | 9 ++-- agent.md | 43 +++++++++++++------…",
+          "resultIsError": false
+        },
+        {
+          "seq": 56,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\docs\\\\skill-e2e-2026-11-11.md\",\"limit\":120}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\docs\\skill-e2e-2026-11-11.md</path> <type>file</type> <content> 1: # skill 工程化 · 极简提示词驱动的分层执行与 50% 交接 E2E（2026-11-11） 2: 3: > 角色：E2E 验证工程师（teammate `skill-e2e`，任务板 task…",
+          "resultIsError": false
+        },
+        {
+          "seq": 61,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"git diff -- packages/dsh-tree-engine/package.json packages/dsh-tree-engine/cordis.patch.yml packages/dsh-session-tree/package.json packages/dsh-session-tree/cordis.patch.yml | Out-String -Width 200\",\"descript…",
+          "resultHead": "diff --git a/packages/dsh-session-tree/cordis.patch.yml b/packages/dsh-session-tree/cordis.patch.yml index 30a1c65..880b09d 100644 --- a/packages/dsh-session-tree/cordis.patch.yml +++ b/packages/dsh-s…",
+          "resultIsError": false
+        },
+        {
+          "seq": 65,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"git diff -- README.md packages/dsh-tree-engine/README.md packages/dsh-session-tree/README.md | Out-String -Width 200\",\"description\":\"Diff README changes\"}",
+          "resultHead": "diff --git a/README.md b/README.md index 0f2ed54..fdd44bb 100644 --- a/README.md +++ b/README.md @@ -16,10 +16,10 @@ | 包 | 版本 | 能力 | 测试 | 当前状态 | |---|---|---|---|---| -| [`packages/dsh-tree-engine`](p…",
+          "resultIsError": false
+        },
+        {
+          "seq": 72,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\.gitignore\"}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\.gitignore</path> <type>file</type> <content> 1: node_modules/ 2: *.log 3: tree-engine-data/ 4: .asar-tool-out* 5: 6: # 本地机密（公开仓禁止入库） 7: .env 8: .env.* 9: !.env.example…",
+          "resultIsError": false
+        },
+        {
+          "seq": 73,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\README.md\",\"limit\":60}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\README.md</path> <type>file</type> <content> 1: # dsh-tree-harness 2: 3: > **DSH（DeepSeek Harness）树形任务分解执行 Harness + 插件集合**。 4: > A tree-structured task decomposition &…",
+          "resultIsError": false
+        },
+        {
+          "seq": 76,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"Get-ChildItem logs -Force | Select-Object Mode,Name; Write-Output \\\"---TAGS---\\\"; git tag --sort=-creatordate | Select-Object -First 15; Write-Output \\\"---PLAN-head---\\\"; Get-Content PLAN.md -TotalCount 30\",\"…",
+          "resultHead": "Mode Name ---- ---- -a---- attack-log.json -a---- dsh-host-services.txt -a---- e2e-segment3-report-2026-10-04.md -a---- ref-dsh-session-tree-README.md ---TAGS--- ---PLAN-head--- # dsh-tree-harness 鈥?鏍…",
+          "resultIsError": false
+        },
+        {
+          "seq": 83,
+          "name": "grep",
+          "argsSummary": "{\"path\":\"packages/dsh-tree-engine\",\"pattern\":\"artifact-doc|artifactDoc|\\\\*\\\\*/\\\\*\\\\.md|glob\"}",
+          "resultHead": "Found 30 matches packages/dsh-tree-engine\\index.js Line 203: /** 简易 glob（'*' 与双星展开为段匹配；够 artifact 判定，非全量 minimatch）。 Line 799: verifier = createVerifier({ ports: { glob: hostGlob, readFile: (p) => fsp…",
+          "resultIsError": false
+        },
+        {
+          "seq": 88,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\packages\\\\dsh-tree-engine\\\\index.js\",\"offset\":195,\"limit\":70}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\packages\\dsh-tree-engine\\index.js</path> <type>file</type> <content> 195: const dataDir = path.join(process.env.DSH_PROFILE_DIR ?? process.env.DSH_HOME ?? '.', 'tree-en…",
+          "resultIsError": false
+        },
+        {
+          "seq": 89,
+          "name": "read",
+          "argsSummary": "{\"file_path\":\"D:\\\\Codes\\\\dsh-tree-harness\\\\packages\\\\dsh-tree-engine\\\\src\\\\verify.js\",\"offset\":85,\"limit\":50}",
+          "resultHead": "<path>D:\\Codes\\dsh-tree-harness\\packages\\dsh-tree-engine\\src\\verify.js</path> <type>file</type> <content> 85: } 86: 87: async function runCheck(v, ctx) { 88: const t0 = Date.now() 89: try { 90: if (v.…",
+          "resultIsError": false
+        },
+        {
+          "seq": 95,
+          "name": "pwsh",
+          "argsSummary": "{\"command\":\"node --version; Write-Output \\\"---\\\"; Get-Content docs\\\\publishing.md | Select-Object -Skip 155 -First 60 | Out-String -Width 160\",\"description\":\"Check node version and publishing change-log section\"}",
+          "resultHead": "v24.20.0 ---",
+          "resultIsError": false
+        }
+      ]
+    }
+  ],
+  "children": [],
+  "layering": {
+    "trees": [],
+    "nodes": [],
+    "maxDepth": -1,
+    "layers": 0,
+    "roles": {},
+    "dispatch": [],
+    "dispatchBySession": {},
+    "doneReports": [],
+    "verifies": [],
+    "handoffs": [],
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": false,
+        "detail": {
+          "trees": []
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": false,
+        "detail": {
+          "maxDepth": -1,
+          "nodeCount": 0
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {}
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {}
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": false,
+        "detail": {
+          "leavesDispatched": []
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": false,
+        "detail": {
+          "count": 0,
+          "successors": []
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": false,
+        "detail": {
+          "handoffInChild": []
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ]
+  },
+  "summary": {
+    "sessions": 1,
+    "roots": 1,
+    "children": 0,
+    "checks": [
+      {
+        "id": "tree_plan_created",
+        "label": "运行里建了树（tree_plan create）",
+        "pass": false,
+        "detail": {
+          "trees": []
+        }
+      },
+      {
+        "id": "layer_depth_ge_2",
+        "label": "树深度 ≥2（root→中间层→执行层 = 3 层）",
+        "pass": false,
+        "detail": {
+          "maxDepth": -1,
+          "nodeCount": 0
+        }
+      },
+      {
+        "id": "roles_commander_worker",
+        "label": "存在 commander 与 worker 角色节点",
+        "pass": false,
+        "detail": {
+          "roles": {}
+        }
+      },
+      {
+        "id": "dispatch_from_multiple_layers",
+        "label": "至少两个不同会话执行过 tree_dispatch（每层能继续分层）",
+        "pass": false,
+        "detail": {
+          "dispatchBySession": {}
+        }
+      },
+      {
+        "id": "every_layer_worked",
+        "label": "执行层节点有 done 上报（各层真的干了活）",
+        "pass": false,
+        "detail": {
+          "doneReports": 0,
+          "leavesDone": []
+        }
+      },
+      {
+        "id": "leaf_dispatched_session",
+        "label": "至少一个 leaf 被派发到独立会话",
+        "pass": false,
+        "detail": {
+          "leavesDispatched": []
+        }
+      },
+      {
+        "id": "verify_ran",
+        "label": "有 tree_verify 裁决记录",
+        "pass": false,
+        "detail": {
+          "verifies": 0,
+          "pass": 0
+        }
+      },
+      {
+        "id": "handoff_executed",
+        "label": "有 session_handoff handoff 且拿到 successor",
+        "pass": false,
+        "detail": {
+          "count": 0,
+          "successors": []
+        }
+      },
+      {
+        "id": "handoff_in_non_root_layer",
+        "label": "交接发生在中间层/子层会话（非根层）",
+        "pass": false,
+        "detail": {
+          "handoffInChild": []
+        }
+      },
+      {
+        "id": "context_report_evidence",
+        "label": "有树内上下文自报（tree_report context）",
+        "pass": false,
+        "detail": {
+          "contextReports": 0
+        }
+      }
+    ],
+    "passCount": 0,
+    "totalChecks": 10
+  }
+}
