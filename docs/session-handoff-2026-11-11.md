@@ -1,9 +1,9 @@
-# 会话自交接 — 设计与交付记录（v0.1.0 独立插件 → v1.2.0 并入会话树 → v1.3.3 随包 Skill + 语言跟随）
+# 会话自交接 — 设计与交付记录（v0.1.0 独立插件 → v1.2.0 并入会话树 → v1.3.5 随包 Skill + 语言跟随）
 
-- **日期**：2026-11-11（初版 v0.1.0）+ 第二轮并入会话树 v1.2.0 + 第三/四轮继承修复与随包 Skill（v1.3.0）+ 第五轮语言跟随（v1.3.1）+ 洁净室文档轮（v1.3.2/v1.3.3）
+- **日期**：2026-11-11（初版 v0.1.0）+ 第二轮并入会话树 v1.2.0 + 第三/四轮继承修复与随包 Skill（v1.3.0）+ 第五轮语言跟随（v1.3.1）+ 洁净室文档轮（v1.3.2–v1.3.5）
 - **角色**：handoff-engineer（T-F1 / task-6，v0.1.0）；Lead（第二轮合并与继承修复、后续迭代）
 - **规格来源**：[docs/features-2026-11-11-spec.md](features-2026-11-11-spec.md) **A 节**（Lead 已冻结；本实现照做，未改规格）
-- **状态**：**已并入 `packages/dsh-session-tree` v1.3.3（工具名保持 `session_handoff`）；v1.3.0 起随包提供 `session-handoff` Skill**（Skill 目录可发现，见 [skill-e2e-2026-11-11.md](skill-e2e-2026-11-11.md)）；v1.3.1 起接替提示语跟随 DSH 界面语言；v1.3.3 起 `spawn:false` 干跑不受阈值闸限制。独立包 `packages/dsh-session-handoff` 已删除，本机 profile bundle 已移除；离线测试 41/41、真机 E2E 见 [docs/e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md) 与 [docs/e2e-kickoff-language-2026-11-11.md](e2e-kickoff-language-2026-11-11.md)
+- **状态**：**已并入 `packages/dsh-session-tree` v1.3.5（工具名保持 `session_handoff`）；v1.3.0 起随包提供 `session-handoff` Skill**（Skill 目录可发现，见 [skill-e2e-2026-11-11.md](skill-e2e-2026-11-11.md)）；v1.3.1 起接替提示语跟随 DSH 界面语言；v1.3.3 起 `spawn:false` 干跑不受阈值闸限制。独立包 `packages/dsh-session-handoff` 已删除，本机 profile bundle 已移除；离线测试 41/41、真机 E2E 见 [docs/e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md) 与 [docs/e2e-kickoff-language-2026-11-11.md](e2e-kickoff-language-2026-11-11.md)
 - **写作用域（v0.1.0 轮）**：仅 `packages/dsh-session-handoff/` 与本文档；未执行任何 git 写命令、未安装 bundle、未修改 profile / `agent.md` / 既有 packages
 
 ---

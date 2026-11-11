@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="dsh-tree-harness 项目完整地图：能力地图、分层架构、一次真实流程、机制边界与下一步功能分析（2026-11-11 快照，单文件离线）。">
+<meta name="color-scheme" content="light dark">
+<title>dsh-tree-harness 项目完整地图 · 2026-11-11 快照</title>
+<style>
+/* ============================================================
+   dsh-tree-harness · 单文件项目地图
+   设计：纸感浅色 + 墨色文字 + 青/琥珀/玫红三色标记；暗色跟随系统。
+   全部离线：无外部字体、无外链样式、无脚本、无位图。
+   ============================================================ */
+:root{
+  color-scheme: light dark;
+  --paper:#f6f2e9;
+  --paper-2:#efe9dc;
+  --card:#fffdf8;
+  --card-2:#fbf7ee;
+  --ink:#1e262d;
+  --ink-2:#4c5761;
+  --ink-3:#7a858e;
+  --line:#d9d1c1;
+  --line-strong:#b9ae99;
+  --teal:#0f6b5f;
+  --teal-soft:#dcefe9;
+  --amber:#9a5700;
+  --amber-soft:#f8ead2;
+  --rose:#9c2f4a;
+  --rose-soft:#f7dfe4;
+  --blue:#28557a;
+  --blue-soft:#dfeaf2;
+  --violet:#5b4b8a;
+  --violet-soft:#e8e2f4;
+  --shadow:0 14px 34px rgba(60,48,30,.09);
+  --shadow-sm:0 3px 10px rgba(60,48,30,.07);
+  --radius:16px;
+  --mono:ui-monospace,"Cascadia Code","Cascadia Mono",Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --fig-bg:#fbf7ee;
+  --fig-layer:#f1eadc;
+  --fig-grid:#e7dfd0;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#11171a;
+    --paper-2:#0c1214;
+    --card:#182125;
+    --card-2:#141c1f;
+    --ink:#e9e4d9;
+    --ink-2:#b7b1a4;
+    --ink-3:#8d887c;
+    --line:#2d393e;
+    --line-strong:#4a5a60;
+    --teal:#63cdb7;
+    --teal-soft:#12322d;
+    --amber:#e0a35a;
+    --amber-soft:#352613;
+    --rose:#e58aa0;
+    --rose-soft:#351b23;
+    --blue:#8db9d9;
+    --blue-soft:#152b3a;
+    --violet:#b9a8e6;
+    --violet-soft:#241f38;
+    --shadow:0 18px 40px rgba(0,0,0,.35);
+    --shadow-sm:0 4px 14px rgba(0,0,0,.25);
+    --fig-bg:#141c1f;
+    --fig-layer:#1b2529;
+    --fig-grid:#263338;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:78px}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:15.5px;
+  line-height:1.7;
+  background-image:
+    radial-gradient(900px 460px at 8% -6%, rgba(15,107,95,.10), transparent 62%),
+    radial-gradient(760px 420px at 98% 2%, rgba(154,87,0,.08), transparent 60%),
+    linear-gradient(180deg, var(--paper) 0%, var(--paper) 70%, var(--paper-2) 100%);
+  background-attachment:fixed;
+}
+::selection{background:var(--teal-soft);color:var(--ink)}
+a{color:var(--teal);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--teal);outline-offset:3px;border-radius:6px}
+code,.mono{font-family:var(--mono);font-size:.86em;color:var(--ink-2)}
+p code,li code,td code,.k code{background:var(--card-2);border:1px solid var(--line);border-radius:5px;padding:.08em .36em;word-break:break-word}
+pre{margin:0;overflow:auto;background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+pre code{background:none;border:0;padding:0;font-size:12.7px;line-height:1.72;color:var(--ink);white-space:pre}
+h1,h2,h3,h4{margin:0;line-height:1.28;letter-spacing:-.01em}
+ul,ol{margin:.35em 0;padding-left:1.35em}
+li{margin:.22em 0}
+strong{font-weight:700}
+small,.small{font-size:12.7px}
+.muted{color:var(--ink-3)}
+.skip{position:absolute;left:-9999px;top:0;background:var(--card);padding:10px 14px;border:1px solid var(--line);z-index:100}
+.skip:focus{left:12px;top:12px}
+
+/* ---------- 顶栏 ---------- */
+.topbar{
+  position:sticky;top:0;z-index:60;
+  background:color-mix(in srgb, var(--paper) 86%, transparent);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+@supports not (backdrop-filter: blur(1px)){.topbar{background:var(--paper)}}
+.topbar .wrap{display:flex;align-items:center;gap:16px;height:60px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:14.5px;white-space:nowrap;letter-spacing:.01em}
+.brand .mark{width:24px;height:24px;flex:none;border-radius:7px;background:var(--teal);position:relative;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+.brand .mark::before{content:"";position:absolute;left:11px;top:4px;width:2px;height:16px;background:var(--paper);opacity:.85}
+.brand .mark::after{content:"";position:absolute;left:5px;top:8px;width:14px;height:2px;background:var(--paper);opacity:.85;box-shadow:0 7px 0 var(--paper)}
+.brand span{color:var(--ink-3);font-weight:500;font-size:12.5px}
+nav.navlinks{display:flex;gap:1px;overflow:auto;flex:1;scrollbar-width:none;mask-image:linear-gradient(90deg,#000 92%,transparent)}
+nav.navlinks::-webkit-scrollbar{display:none}
+nav.navlinks a{color:var(--ink-2);padding:7px 9px;border-radius:7px;font-size:12.6px;white-space:nowrap}
+nav.navlinks a:hover{background:var(--card);color:var(--ink);text-decoration:none}
+.snap{display:flex;gap:6px;flex:none;align-items:center}
+.snap b{font-family:var(--mono);font-size:11.5px;font-weight:600;background:var(--ink);color:var(--paper);padding:3px 8px;border-radius:999px;letter-spacing:.01em}
+.snap i{font-style:normal;font-size:11.5px;color:var(--ink-3);border:1px solid var(--line);padding:3px 8px;border-radius:999px;background:var(--card)}
+
+/* ---------- 版心 ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:48px 0 12px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12.4px;letter-spacing:.04em;color:var(--teal);background:var(--teal-soft);border:1px solid color-mix(in srgb,var(--teal) 28%,transparent);padding:5px 11px;border-radius:999px}
+.eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 4px color-mix(in srgb,var(--teal) 14%,transparent)}
+h1.title{font-size:clamp(30px,4.6vw,52px);letter-spacing:-.035em;margin:18px 0 10px;font-weight:820}
+h1.title .thin{font-weight:300;color:var(--ink-2);letter-spacing:-.02em}
+h1.title em{font-style:normal;color:var(--teal)}
+.lede{max-width:900px;color:var(--ink-2);font-size:16.6px;line-height:1.72}
+.lede b{color:var(--ink);font-weight:650}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;font-size:12.2px;color:var(--ink-3)}
+.meta-row span{border:1px solid var(--line);background:var(--card);padding:4px 10px;border-radius:999px}
+.meta-row b{color:var(--ink);font-family:var(--mono);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:16px;font-size:12.4px;color:var(--ink-3)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.fact{background:var(--teal)}
+.dot.demo{background:var(--amber)}
+.dot.rec{background:var(--violet)}
+
+/* ---------- 读者路径 ---------- */
+.paths{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:30px 0 8px}
+.path{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.path::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--teal)}
+.path.dev::before{background:var(--amber)}
+.path.agent::before{background:var(--violet)}
+.path .who{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+.path h3{font-size:16.5px;margin-bottom:6px}
+.path p{font-size:13.4px;color:var(--ink-2);margin:0 0 10px}
+.path ol{font-size:13.2px;margin:0;padding-left:1.25em;color:var(--ink-2)}
+.path ol a{font-weight:600}
+
+/* ---------- 区块 ---------- */
+.section{padding:44px 0 10px;scroll-margin-top:76px}
+.sec-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:8px}
+.sec-num{flex:none;width:40px;height:40px;border-radius:12px;border:1px solid var(--line-strong);background:var(--card);display:grid;place-items:center;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--teal);box-shadow:var(--shadow-sm)}
+.sec-title{font-size:clamp(22px,2.7vw,29px);letter-spacing:-.02em;padding-top:3px}
+.sec-sub{color:var(--ink-3);font-size:13.4px;margin:2px 0 0}
+.sec-body{margin-top:20px}
+.src{font-size:12.2px;color:var(--ink-3);margin-top:10px}
+.src b{color:var(--ink-2);font-weight:600}
+.hr{height:1px;background:linear-gradient(90deg,var(--line-strong),transparent);margin:44px 0 0;opacity:.7}
+
+/* ---------- 通用卡片 ---------- */
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px;box-shadow:var(--shadow-sm)}
+.card h3{font-size:16px;margin-bottom:6px}
+.card h4{font-size:14.5px;margin:14px 0 4px}
+.card p{font-size:13.6px;color:var(--ink-2);margin:.3em 0}
+.card .kicker{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px}
+.card.flat{box-shadow:none}
+.card.tint-teal{background:linear-gradient(180deg,var(--teal-soft),var(--card) 70%);border-color:color-mix(in srgb,var(--teal) 26%,var(--line))}
+.card.tint-amber{background:linear-gradient(180deg,var(--amber-soft),var(--card) 70%);border-color:color-mix(in srgb,var(--amber) 26%,var(--line))}
+.card.tint-violet{background:linear-gradient(180deg,var(--violet-soft),var(--card) 70%);border-color:color-mix(in srgb,var(--violet) 26%,var(--line))}
+.big{font-family:var(--mono);font-size:30px;line-height:1.1;font-weight:700;letter-spacing:-.03em}
+.big small{font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--ink-3);letter-spacing:0}
+
+/* ---------- 提示块 ---------- */
+.callout{border:1px solid var(--line);border-left:4px solid var(--teal);background:var(--card);border-radius:12px;padding:14px 16px;margin:16px 0;box-shadow:var(--shadow-sm)}
+.callout.warn{border-left-color:var(--amber)}
+.callout.risk{border-left-color:var(--rose)}
+.callout.rec{border-left-color:var(--violet)}
+.callout .label{display:inline-block;font-size:11.4px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);margin-bottom:4px}
+.callout.warn .label{color:var(--amber)}
+.callout.risk .label{color:var(--rose)}
+.callout.rec .label{color:var(--violet)}
+.callout p{font-size:13.6px;color:var(--ink-2);margin:.2em 0}
+.callout p:last-child{margin-bottom:0}
+
+/* ---------- 标签 ---------- */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.4px;font-weight:650;letter-spacing:.02em;border-radius:999px;padding:2px 8px;border:1px solid transparent;white-space:nowrap;vertical-align:1px}
+.pill.fact{background:var(--teal-soft);color:var(--teal);border-color:color-mix(in srgb,var(--teal) 26%,transparent)}
+.pill.demo{background:var(--amber-soft);color:var(--amber);border-color:color-mix(in srgb,var(--amber) 26%,transparent)}
+.pill.rec{background:var(--violet-soft);color:var(--violet);border-color:color-mix(in srgb,var(--violet) 26%,transparent)}
+.pill.p0{background:var(--rose-soft);color:var(--rose)}
+.pill.p1{background:var(--amber-soft);color:var(--amber)}
+.pill.p2{background:var(--blue-soft);color:var(--blue)}
+.pill.off{background:var(--card-2);color:var(--ink-3);border-color:var(--line)}
+
+/* ---------- 表格 ---------- */
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow-sm);margin:14px 0}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.2px;line-height:1.55}
+thead th{position:sticky;top:0;background:var(--card-2);text-align:left;font-size:12px;letter-spacing:.04em;color:var(--ink-3);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line-strong);white-space:nowrap;z-index:1}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:color-mix(in srgb,var(--teal-soft) 38%,transparent)}
+td b,th b{color:var(--ink)}
+td.num,th.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td .sub{display:block;font-size:11.8px;color:var(--ink-3);margin-top:2px}
+table.compact{min-width:520px;font-size:12.7px}
+table.compact thead th,table.compact tbody td{padding:8px 10px}
+
+/* ---------- 代码/命令 ---------- */
+.cmd{position:relative;background:var(--card-2);border:1px solid var(--line);border-radius:12px;margin:10px 0}
+.cmd .cap{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line);font-size:11.8px;color:var(--ink-3);font-family:var(--mono)}
+.cmd .cap b{color:var(--ink-2);font-weight:600}
+.cmd pre{border:0;border-radius:0 0 12px 12px;background:transparent}
+
+/* ---------- 步骤 ---------- */
+.steps{list-style:none;counter-reset:step;padding:0;margin:14px 0}
+.steps>li{counter-increment:step;position:relative;padding:0 0 0 44px;margin:0 0 16px}
+.steps>li::before{content:counter(step,decimal-leading-zero);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:9px;background:var(--card);border:1px solid var(--line-strong);display:grid;place-items:center;font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--teal)}
+.steps>li h4{font-size:14.6px;margin:3px 0 4px}
+.steps>li p{font-size:13.4px;color:var(--ink-2);margin:.2em 0}
+
+/* ---------- 图 ---------- */
+.fig{margin:22px 0 24px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:14px 14px 10px;box-shadow:var(--shadow)}
+.fig svg{width:100%;height:auto;display:block;border-radius:10px}
+.fig figcaption{font-size:12.7px;color:var(--ink-3);padding:10px 4px 2px;line-height:1.6}
+.fig figcaption b{color:var(--ink);font-weight:650}
+.fig figcaption .how{color:var(--teal);font-weight:600}
+.fig .figtop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 8px}
+.fig .figtop .name{font-family:var(--mono);font-size:11.6px;color:var(--ink-3)}
+.fig .figtop .tags{display:flex;gap:6px;flex-wrap:wrap}
+/* SVG 主题类（让暗色模式作用于内联图） */
+.fig .s-bg{fill:var(--fig-bg)}
+.fig .s-layer{fill:var(--fig-layer);stroke:var(--fig-grid);stroke-width:1}
+.fig .s-card{fill:var(--card);stroke:var(--line);stroke-width:1}
+.fig .s-card-teal{fill:var(--teal-soft);stroke:var(--teal);stroke-width:1}
+.fig .s-card-amber{fill:var(--amber-soft);stroke:var(--amber);stroke-width:1}
+.fig .s-card-rose{fill:var(--rose-soft);stroke:var(--rose);stroke-width:1}
+.fig .s-card-violet{fill:var(--violet-soft);stroke:var(--violet);stroke-width:1}
+.fig .s-card-blue{fill:var(--blue-soft);stroke:var(--blue);stroke-width:1}
+.fig .s-line{stroke:var(--line-strong);stroke-width:1.3;fill:none}
+.fig .s-dash{stroke:var(--ink-3);stroke-width:1.3;fill:none;stroke-dasharray:5 5}
+.fig .s-arrow{stroke:var(--ink-3);stroke-width:1.4;fill:none}
+.fig .s-arrow-teal{stroke:var(--teal);stroke-width:1.6;fill:none}
+.fig .s-arrow-amber{stroke:var(--amber);stroke-width:1.6;fill:none}
+.fig .s-arrow-rose{stroke:var(--rose);stroke-width:1.6;fill:none}
+.fig .s-head{fill:var(--ink-3)}
+.fig .s-head-teal{fill:var(--teal)}
+.fig .s-head-amber{fill:var(--amber)}
+.fig .s-head-rose{fill:var(--rose)}
+.fig .s-t{fill:var(--ink);font-family:var(--sans)}
+.fig .s-t2{fill:var(--ink-2);font-family:var(--sans)}
+.fig .s-t3{fill:var(--ink-3);font-family:var(--sans)}
+.fig .s-mono{fill:var(--ink-2);font-family:var(--mono)}
+.fig .s-on-teal{fill:var(--teal);font-family:var(--sans);font-weight:700}
+.fig .s-on-amber{fill:var(--amber);font-family:var(--sans);font-weight:700}
+.fig .s-on-rose{fill:var(--rose);font-family:var(--sans);font-weight:700}
+.fig .s-badge{fill:var(--card);stroke:var(--line-strong);stroke-width:1}
+.fig .s-badge-teal{fill:var(--teal);stroke:var(--teal)}
+.fig .s-badge-amber{fill:var(--amber);stroke:var(--amber)}
+.fig .s-badge-rose{fill:var(--rose);stroke:var(--rose)}
+.fig .s-num{fill:var(--paper);font-family:var(--mono);font-size:9.5px;font-weight:700}
+.fig .s-hero{font-family:var(--sans);font-weight:800;fill:var(--ink)}
+.fig .s-hero-sm{font-family:var(--sans);font-weight:700;fill:var(--ink-2)}
+
+/* ---------- 指标条 ---------- */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;box-shadow:var(--shadow-sm)}
+.metric .v{font-family:var(--mono);font-size:24px;font-weight:700;letter-spacing:-.03em;line-height:1.15}
+.metric .l{font-size:12px;color:var(--ink-3);margin-top:3px}
+.metric .n{font-size:11.8px;color:var(--ink-3);margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
+.metric.teal .v{color:var(--teal)}
+.metric.amber .v{color:var(--amber)}
+.metric.rose .v{color:var(--rose)}
+.metric.violet .v{color:var(--violet)}
+
+/* ---------- 双栏定义列表 ---------- */
+.kv{display:grid;grid-template-columns:150px 1fr;gap:0;border-top:1px solid var(--line);margin:10px 0}
+.kv dt{font-family:var(--mono);font-size:12px;color:var(--ink-3);padding:9px 0;border-bottom:1px solid var(--line)}
+.kv dd{margin:0;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.3px;color:var(--ink-2)}
+.kv dd b{color:var(--ink)}
+
+/* ---------- 页脚 ---------- */
+.footer{margin-top:56px;border-top:1px solid var(--line);background:var(--card);padding:26px 0 42px}
+.footer .wrap{display:grid;grid-template-columns:1.4fr 1fr;gap:26px}
+.footer h4{font-size:13.5px;margin-bottom:6px}
+.footer p{font-size:12.6px;color:var(--ink-3);margin:.25em 0}
+.footer .fine{font-size:11.8px;color:var(--ink-3)}
+.totop{font-size:12px;color:var(--ink-3)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1000px){
+  .paths,.grid3,.grid4,.metrics{grid-template-columns:repeat(2,1fr)}
+  .footer .wrap{grid-template-columns:1fr}
+  .snap{display:none}
+}
+@media (max-width:720px){
+  body{font-size:15px}
+  .wrap{padding:0 16px}
+  .hero{padding-top:34px}
+  .paths,.grid2,.grid3,.grid4,.metrics{grid-template-columns:1fr}
+  .topbar .wrap{height:54px;gap:10px}
+  .brand{font-size:13px}
+  .brand span{display:none}
+  nav.navlinks{gap:0}
+  nav.navlinks a{font-size:11.4px;padding:6px 6px}
+  .fig{overflow-x:auto;overscroll-behavior-x:contain}
+  .fig svg{min-width:860px}
+  .sec-head{gap:10px}
+  .sec-num{width:34px;height:34px;border-radius:10px;font-size:12px}
+  .kv{grid-template-columns:1fr}
+  .kv dt{padding-bottom:0;border-bottom:0}
+  .kv dd{padding-top:2px}
+}
+@media print{
+  .topbar,nav.navlinks,.totop{display:none}
+  body{background:#fff;color:#111;font-size:10.5pt}
+  .card,.fig,.tablewrap,.metric,.callout{box-shadow:none;break-inside:avoid}
+  .section{padding-top:18px}
+  a{color:#111;text-decoration:underline}
+  .fig{margin:10px 0}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="mark" aria-hidden="true"></span>dsh-tree-harness <span>项目地图</span></div>
+    <nav class="navlinks" aria-label="章节导航">
+      <a href="#tldr">三句话</a>
+      <a href="#five">5 分钟</a>
+      <a href="#cap">能力</a>
+      <a href="#arch">架构</a>
+      <a href="#flow">走查</a>
+      <a href="#mech">机制</a>
+      <a href="#quality">质量</a>
+      <a href="#limits">边界</a>
+      <a href="#next">下一步</a>
+      <a href="#appendix">附录</a>
+    </nav>
+    <div class="snap" aria-label="版本快照">
+      <b>v1.3.5</b><i>1fb9193</i>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+
+    <header class="hero" id="top">
+      <div class="eyebrow">DSH 插件集合 · 单文件离线地图 · 2026-11-11 快照</div>
+      <h1 class="title">一棵会<span class="thin">生长</span>的<em>任务树</em></h1>
+      <p class="lede">
+        这不是一个插件，而是围绕「<b>把长任务拆成树、让每一层都真的有人干、干完还能验收和接力</b>」的一组 DSH 包与规约：
+        执行层 <b>tree-engine</b> 提供 8 个 <code>tree_*</code> 工具，会话树单包 <b>session-tree</b> 提供可见的侧栏树、跨层通信与 50% 交接，
+        外加未装配的治理层 <b>meta-loop</b>、自省层 <b>introspect</b>，以及 3 份随包 Skill。
+      </p>
+      <div class="meta-row">
+        <span>会话树 <b>v1.3.5</b> · 公开仓 <b>1fb9193</b> · 18/18 SHA</span>
+        <span>tree-engine <b>v0.5.1</b></span>
+        <span>本仓 master <b>ebeeaea</b></span>
+        <span>MIT · npm 冻结（D3）</span>
+        <span>9 张手写 SVG · 0 外链</span>
+      </div>
+      <div class="legend" aria-label="图例">
+        <span><i class="dot fact"></i><b>事实</b>：仓库文件 / 实测输出</span>
+        <span><i class="dot demo"></i><b>示意</b>：为可读性重排的命令或 UI 形态</span>
+        <span><i class="dot rec"></i><b>建议</b>：本文的分析，不是仓库承诺</span>
+      </div>
+      <p class="small muted" style="margin:10px 0 0">图序（按概念而非出现顺序）：<b>1</b> 架构 · <b>2</b> 工具面 · <b>3</b> 会话树 · <b>4</b> 状态机 · <b>5</b> 42/50 · <b>6</b> 时序 · <b>7</b> 时间线 · <b>8</b> 发布 · <b>9</b> 优先级</p>
+    </header>
+
+    <section class="paths" id="read" aria-label="三种读者路径">
+      <article class="path">
+        <div class="who">Reader A · 普通用户</div>
+        <h3>我想知道它能帮我干什么</h3>
+        <p>按「问题 → 上手 → 边界」走，不碰源码。</p>
+        <ol>
+          <li><a href="#tldr">§1 三句话看懂</a></li>
+          <li><a href="#five">§2 5 分钟上手</a></li>
+          <li><a href="#cap">§3 能力地图</a></li>
+          <li><a href="#flow">§5 一次真实走查</a></li>
+          <li><a href="#limits">§8 边界与坑</a></li>
+        </ol>
+      </article>
+      <article class="path dev">
+        <div class="who">Reader B · 开发者</div>
+        <h3>我要改它 / 判断它靠不靠谱</h3>
+        <p>先看分层与接口，再看状态机、验证与发布门禁。</p>
+        <ol>
+          <li><a href="#arch">§4 架构拆解</a></li>
+          <li><a href="#mech">§6 机制深挖</a></li>
+          <li><a href="#quality">§7 质量与发布</a></li>
+          <li><a href="#limits">§8 已知缺陷与旧数字</a></li>
+          <li><a href="#sources">§10 事实来源清单</a></li>
+        </ol>
+      </article>
+      <article class="path agent">
+        <div class="who">Reader C · AI Agent</div>
+        <h3>我要按它的协议干活</h3>
+        <p>工具面、所有权、阈值与失败语义优先；不要凭常识补动作。</p>
+        <ol>
+          <li><a href="#cap">§3 工具面地图</a></li>
+          <li><a href="#flow">§5 命令与返回</a></li>
+          <li><a href="#mech">§6 owner / 42 / 50 / 语言</a></li>
+          <li><a href="#limits">§8 不要踩的坑</a></li>
+          <li><a href="#next">§9 下一步边界</a></li>
+        </ol>
+      </article>
+    </section>
+
+    <div class="hr"></div>
+
+    <!-- ============================================================
+         §1 三句话看懂
+         ============================================================ -->
+    <section class="section" id="tldr">
+      <div class="sec-head">
+        <div class="sec-num">01</div>
+        <div>
+          <h2 class="sec-title">三句话看懂</h2>
+          <p class="sec-sub">What / Why / How —— 先建立一张心智图，再看细节。</p>
+        </div>
+      </div>
+      <div class="sec-body">
+        <div class="grid3">
+          <article class="card tint-teal">
+            <div class="kicker">01 · 是什么</div>
+            <h3>DSH 上的「树形任务执行 Harness」</h3>
+            <p>它不是单个插件，而是一组围绕树形分解的 DSH 包：执行层 <b>tree-engine</b>（8 个工具 + 竹节接力）、会话树单包 <b>session-tree</b>（侧栏树 + <code>tree_send</code> + <code>session_handoff</code>）、治理层 <b>meta-loop</b>（未装配）、自省层 <b>introspect</b>（<code>self_spec</code>）。</p>
+            <p class="src"><b>事实</b>：根 <code>README.md</code> 包表；各包 <code>package.json</code>。</p>
+          </article>
+          <article class="card tint-amber">
+            <div class="kicker">02 · 解决什么</div>
+            <h3>长任务装不下、子会话看不见、分层后收不了口</h3>
+            <p>单会话上下文有限；DSH 默认侧栏把 <code>origin:'subagent'</code> 的行藏起来，跨层/兄弟会话也没有内置通信路径；任务拆下去后，若没有账本、所有权与验收，就会「派了但不知道干到哪」。</p>
+            <p class="src"><b>事实</b>：<code>docs/session-handoff-2026-11-11.md</code> §0.1；<code>packages/dsh-session-tree/README.zh.md</code>「为什么」。</p>
+          </article>
+          <article class="card tint-violet">
+            <div class="kicker">03 · 怎么用</div>
+            <h3>装两个 bundle → 新会话 → 一句话拆树</h3>
+            <p>profile 里 <code>link:</code> 两个包并 <code>pnpm install</code>，对 bundle 做一次 disable→enable；<b>新开</b>会话即可看到 3 个 Skill。然后说「把这个任务拆成三层并派人做，验证通过再收口」，模型按 Skill 调工具。</p>
+            <p class="src"><b>事实</b>：<code>docs/skills-usage.md</code> §2–§4；D12 热更纪律。</p>
+          </article>
+        </div>
+
+        <div class="callout">
+          <span class="label">一句话</span>
+          <p><b>树是账本，会话是执行体。</b>任务分解成 <code>leaf</code>（账本行），每个 leaf 派一个真实 DSH 子会话去干；上下文到 42% 时引擎给同一个 leaf 换会话（竹节），到 50% 时任意会话可同层接替（handoff）——两种接力，都不丢任务书。</p>
+        </div>
+
+        <div class="grid2" style="margin-top:16px">
+          <article class="card flat">
+            <h3>它不是什么</h3>
+            <ul>
+              <li><b>不是新的 Agent 框架</b>：没有自己的模型/运行时，只通过宿主 <code>ctx</code> 用 DSH 原生服务。</li>
+              <li><b>不是自动项目管理器</b>：模型仍是决策者；工具提供账本、闸门与可观测性。</li>
+              <li><b>不是 npm 包</b>：<code>@orphiczhou/*</code> 四个候选名在 registry 均 404，安装只走 Git / <code>link:</code>（D3）。</li>
+              <li><b>不是零配置</b>：装 bundle、重载宿主半、<b>新开会话</b>，三步缺一不可。</li>
+            </ul>
+          </article>
+          <article class="card flat">
+            <h3>四个组件，三种状态</h3>
+            <div class="tablewrap" style="margin:8px 0 0">
+              <table class="compact">
+                <thead><tr><th>包</th><th>版本</th><th>状态</th><th>一句话</th></tr></thead>
+                <tbody>
+                  <tr><td><code>dsh-tree-engine</code></td><td class="num">0.5.1</td><td><span class="pill fact">运行中</span></td><td>8 个 tree 工具 + 竹节 + 验证</td></tr>
+                  <tr><td><code>dsh-session-tree</code></td><td class="num">1.3.5</td><td><span class="pill fact">公开镜像</span></td><td>侧栏树 + tree_send + handoff + Skill</td></tr>
+                  <tr><td><code>dsh-meta-loop</code></td><td class="num">0.2.0</td><td><span class="pill off">未装配</span></td><td>六阶段方法轮 + /metaloop/ 面板</td></tr>
+                  <tr><td><code>dsh-agent-introspect</code></td><td class="num">0.1.0</td><td><span class="pill fact">运行中</span></td><td><code>self_spec</code> 自省</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="src">来源：根 <code>README.md</code> §组件与状态；<code>agent.md</code> §2；各包 <code>package.json</code>。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <div class="hr"></div>
+
+    <!-- ============================================================
+         §2 5 分钟看懂
+         ============================================================ -->
+    <section class="section" id="five">
+      <div class="sec-head">
+        <div class="sec-num">02</div>
+        <div>
+          <h2 class="sec-title">5 分钟看懂：五个关键词 + 六步上手</h2>
+          <p class="sec-sub">不读源码也能建立正确预期；每张卡都给出「最容易误解的点」。</p>
+        </div>
+      </div>
+      <div class="sec-body">
+        <div class="grid3">
+          <article class="card">
+            <div class="kicker">Keyword 01</div>
+            <h3>DSH / bundle</h3>
+            <p>DSH（DeepSeek Harness）是插件宿主。一个 <b>bundle</b> 由宿主半（<code>index.js</code>）和可选的客户端半（<code>client.js</code>）组成；<code>cordis.patch.yml</code> 决定它向 profile 贡献哪些行。</p>
+            <p><b>易误解</b>：改了 <code>index.js</code> 保存后工具就变——不会，Loader 按包名缓存宿主模块，必须 disable→enable。</p>
+          </article>
+          <article class="card">
+            <div class="kicker">Keyword 02</div>
+            <h3>会话树</h3>
+            <p>把 DSH 左栏换成一棵可展开的树：每个会话下面挂它的 subagent 后代，<b>任意深度</b>；可按工作区分组、隐藏/恢复、搜索、按最近活动排序。</p>
+            <p><b>易误解</b>：树只解决「看得见」；跨层发消息要靠 <code>tree_send</code>，接替要靠 <code>session_handoff</code>。</p>
+          </article>
+          <article class="card">
+            <div class="kicker">Keyword 03</div>
+            <h3>leaf / 任务树</h3>
+            <p><code>leaf</code> 是账本里的一行（不是会话本身）：有 <code>leaf_id</code>、<code>parent</code>、<code>role</code>、<code>runtime</code>、<code>events</code>、<code>verification</code>。三层上限：root → commander → worker，worker 不能有子节点。</p>
+            <p><b>易误解</b>：leaf 的 <code>session_id</code> 可以换（竹节/重派），账本不换。</p>
+          </article>
+          <article class="card">
+            <div class="kicker">Keyword 04</div>
+            <h3>竹节 · 42%</h3>
+            <p>worker 用 <code>tree_report {action:"context", pct}</code> 自报水位；<code>pct ≥ 42</code> 时引擎在同一个 leaf 上换一个新会话接手，旧会话先 interrupt，任务书/简报跟着走。</p>
+            <p><b>易误解</b>：这是<b>引擎自动</b>的；不等于 50% 的会话交接，也不改 <code>attempt</code>。</p>
+          </article>
+          <article class="card">
+            <div class="kicker">Keyword 05</div>
+            <h3>交接 · 50%</h3>
+            <p>任意层会话在上下文约 50% 时，<code>session_handoff</code> 写一份 <code>HANDOFF-*.md</code>，并启动<b>同层级</b>接替会话：子会话→同父兄弟，根→新根（或父不活时降级根并标 <code>degraded</code>）。</p>
+            <p><b>易误解</b>：交接<b>不</b>自动迁移 tree leaf 的 owner；接替会话要写 done，需先 <code>set-session</code> 重绑。</p>
+          </article>
+          <article class="card tint-teal">
+            <div class="kicker">One screen</div>
+            <h3>两种接力，先竹节后交接</h3>
+            <p>竹节是<b>引擎对 leaf</b> 的换棒（更早、自动、保任务树）；交接是<b>会话对会话</b>的接替（更晚、手动/纪律、保会话层级）。</p>
+            <p>协调规则：<b>先按竹节</b>；已经 50% 还没等到竹节（链满 frozen、简报回收失败、已不是 running owner）→ 立即交接，并在 <code>tree_report progress</code> 留痕。</p>
+          </article>
+        </div>
+
+        <h3 style="margin:26px 0 4px">最小上手：六步</h3>
+        <p class="muted small">以下为开发态 <code>link:</code> 安装；只想用会话树可跳过 tree-engine（见 §8 边界）。</p>
+        <ol class="steps">
+          <li>
+            <h4>把两个包 link 进 profile</h4>
+            <p>编辑 <code>%USERPROFILE%\.dsh\profiles\desktop\package.json</code>，在 <code>dsh.profile.bundles</code> 与 <code>dependencies</code> 中各加两项；改前先备份。</p>
+            <div class="cmd"><div class="cap"><b>jsonc</b> · profile/package.json（示例，按本机路径改）</div><pre><code>{
+  "dsh": { "profile": { "bundles": [
+    "@local/dsh-tree-engine",
+    "@local/dsh-agent-introspect",
+    "@orphiczhou/dsh-session-tree"
+  ] } },
+  "dependencies": {
+    "@local/dsh-tree-engine": "link:D:/Codes/dsh-tree-harness/packages/dsh-tree-engine",
+    "@local/dsh-agent-introspect": "link:D:/Codes/dsh-tree-harness/packages/dsh-agent-introspect",
+    "@orphiczhou/dsh-session-tree": "link:D:/Codes/dsh-tree-harness/packages/dsh-session-tree"
+  }
+}</code></pre></div>
+          </li>
+          <li>
+            <h4>在 profile 目录跑一次 pnpm install</h4>
+            <p>用 DSH 自带 runtime 的 pnpm，不要另装 Node。</p>
+            <div class="cmd"><div class="cap"><b>powershell</b></div><pre><code>node "$env:USERPROFILE\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\pnpm\bin\pnpm.cjs" install</code></pre></div>
+          </li>
+          <li>
+            <h4>重载宿主半（关键）</h4>
+            <p>新增/修改 <code>index.js</code> 或 <code>cordis.patch.yml</code> 后，对相应 bundle entry 做一次 disable→enable；只保存文件不会重新求值。</p>
+            <div class="cmd"><div class="cap"><b>tool</b> · 两个 entry 各做一次</div><pre><code>plugin_manager {action:"set_plugin", target:"include:session-tree", enabled:false}
+plugin_manager {action:"set_plugin", target:"include:session-tree", enabled:true}
+plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:false}
+plugin_manager {action:"set_plugin", target:"include:tree-engine", enabled:true}</code></pre></div>
+          </li>
+          <li>
+            <h4>新开一个会话，确认 Skill 目录</h4>
+            <p>Skill 目录在<b>会话启动时</b>注入；旧会话不会刷新。新会话应能看到 <code>session-handoff</code>、<code>tree-commander</code>、<code>tree-worker</code>。</p>
+          </li>
+          <li>
+            <h4>用一句话触发，不点名工具</h4>
+            <div class="cmd"><div class="cap"><b>prompt</b></div><pre><code>把这个任务拆成三层并派人做，验证通过再收口：
+给仓库补一段 CHANGELOG，要求测试全绿、有 Unreleased 段。</code></pre></div>
+          </li>
+          <li>
+            <h4>看树、看证据、再收口</h4>
+            <p>根会话应调 <code>tree_plan</code> / <code>tree_node</code> / <code>tree_dispatch</code>；执行者用 <code>tree_report</code> 上报；验收用 <code>tree_verify</code>；<code>tree_status validate</code> 应为 0 issues。</p>
+          </li>
+        </ol>
+
+        <h3 style="margin:26px 0 8px">30 秒自检：装好了吗？</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>检查项</th><th>期望</th><th>不满足时先查</th></tr></thead>
+            <tbody>
+              <tr><td>工具面</td><td>能看到 <code>tree_send</code>、<code>session_handoff</code>、8 个 <code>tree_*</code></td><td>bundle 是否启用；<code>include:session-tree</code> / <code>include:tree-engine</code> 是否重载</td></tr>
+              <tr><td>Skill 目录</td><td>3 个 Skill 各出现一次</td><td>是否<b>新开</b>会话；profile 是否有 <code>@deepseek-ai/dsh-skill-filesystem</code>（DSH 内置）</td></tr>
+              <tr><td>会话树</td><td>左栏出现嵌套会话；<code>SessionTree</code> provider 在线</td><td>客户端半是否加载；刷新页面一次</td></tr>
+              <tr><td>交接</td><td><code>session_handoff {action:"status"}</code> 渲染行含 <code>threshold 50%</code>、<code>preset=</code>、<code>permission=</code>、<code>lang=</code></td><td>是否旧实现遮蔽（移除旧 bundle）；是否宿主半未重载</td></tr>
+              <tr><td>引擎</td><td><code>tree_status {action:"validate"}</code> 可调用；<code>sweepMode=timer</code></td><td>tree-engine 是否启用；<code>apply.log</code> 尾部是否有 <code>engine ready</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="src"><b>事实来源</b>：<code>README.md</code> §快速开始/验证运行；<code>docs/skills-usage.md</code> §2–§3；<code>agent.md</code> D12；<code>packages/dsh-session-tree/README.zh.md</code>「确认装好了」。</p>
+
+        <div class="callout warn">
+          <span class="label">第一次用最容易误判的三件事</span>
+          <p>① 新会话直接 <code>handoff</code> 被 <code>below-threshold</code> 拒——<b>这是预期</b>，说明工具已挂上；想看完整路径加 <code>force:true</code>，只想写文件用 <code>spawn:false</code>（干跑不被阈值闸拦）。</p>
+          <p>② 5 分钟内第二次交接被 <code>recent-handoff</code> 拒——<b>防重复闸</b>，不是故障；确需立刻再写才用 <code>force:true</code>。</p>
+          <p>③ Skill 目录里没有三个 Skill——先确认是不是<b>旧会话</b>；目录只在会话启动时注入。</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="hr"></div>
+
+    <!-- ============================================================
+         §3 能力地图
+         ============================================================ -->
+    <section class="section" id="cap">
+      <div class="sec-head">
+        <div class="sec-num">03</div>
+        <div>
+          <h2 class="sec-title">能力地图：看、通、干、接</h2>
+          <p class="sec-sub">十来个工具不算多，但要分清「谁提供、管哪一层、边界在哪」。</p>
+        </div>
+      </div>
+      <div class="sec-body">
+
+        <div class="metrics">
+          <div class="metric teal"><div class="v">10</div><div class="l">宿主工具</div><div class="n">8 个 tree_* + tree_send + session_handoff</div></div>
+          <div class="metric amber"><div class="v">3</div><div class="l">随包 Skill</div><div class="n">tree-commander / tree-worker / session-handoff</div></div>
+          <div class="metric violet"><div class="v">3</div><div class="l">层级上限</div><div class="n">root → commander → worker（worker 无子节点）</div></div>
+          <div class="metric rose"><div class="v">2</div><div class="l">接力机制</div><div class="n">竹节 42%（同 leaf）/ 交接 50%（同层会话）</div></div>
+        </div>
+
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th style="width:14%">能力</th><th style="width:18%">入口</th><th style="width:38%">能做什么</th><th style="width:30%">关键边界（别误解）</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>侧栏会话树</b></td>
+                <td><code>client.js</code><br><span class="sub"><code>SessionTree</code> provider</span></td>
+                <td>把左栏换成嵌套树：任意深度展开、点节点打开会话；按宿主 workspace 分组；工作区排序（最近活动 / Host 顺序）、隐藏/恢复、搜索召回、已归档会话三态。</td>
+                <td>工作区归属看 <code>workspace.sessionIds</code>，<b>不是 cwd</b>；排序/隐藏是客户端 <code>localStorage</code> 视图状态；客户端半改动刷新页面生效。</td>
+              </tr>
+              <tr>
+                <td><b><code>tree_send</code></b></td>
+                <td>session-tree 宿主半</td>
+                <td>给树里<b>任意</b>可续聊子会话投递消息，包括既不是直接父、也不是直接子的<b>兄弟</b>；<code>delivery</code> 可选 <code>steer</code>（最近步边界）或 <code>queue</code>（下一轮）。</td>
+                <td>按目标的<b>持久化父地址</b>授权，所以直接父会话必须活着、目标必须 continuable；只返回受理，不等待回复。</td>
+              </tr>
+              <tr>
+                <td><b><code>session_handoff</code></b></td>
+                <td>session-tree 宿主半</td>
+                <td><code>status</code> 读上下文占用/路由/预设/权限/工作区/接替方案；<code>handoff</code> 写 <code>HANDOFF-*.md</code> 并启动<b>同层级</b>接替会话，继承 cwd/工作区/Agent 预设/权限模式/模型/思考等级。</td>
+                <td>阈值缺省 50%；5 分钟防重复；<code>spawn:false</code> 只写文件（不被阈值闸拦）；提示语只做 <code>zh</code>/<code>en</code>，其它语言回退英文。</td>
+              </tr>
+              <tr>
+                <td><b>8 个 <code>tree_*</code></b></td>
+                <td>tree-engine 宿主半</td>
+                <td>建树、建 commander/worker、依赖编排、派发/取消、上下文自报、事件、收割、验证（6 模式 + 对抗式）、日志、备份/恢复/登记。</td>
+                <td>action 是<b>闭集</b>（见图 2）；<code>tree_verify</code> FAIL <b>不阻断</b> <code>succeeded</code>；<code>set-status done</code> 在工具面打不通（里程碑无写入命令）。</td>
+              </tr>
+              <tr>
+                <td><b>3 个随包 Skill</b></td>
+                <td><code>@deepseek-ai/dsh-skill-filesystem</code><br><span class="sub">由两包 patch 第 2 行挂载</span></td>
+                <td>把「怎么拆三层 / 怎么当 worker / 50% 怎么交接」写进会话可发现的 Skill 目录；极简提示词即可触发，不必先喂工具名。</td>
+                <td>目录在<b>会话启动时</b>注入，旧会话不刷新；patch 行改动需 disable→enable；缺 provider 时工具仍可用，只是少目录项。</td>
+              </tr>
+              <tr>
+                <td><b><code>self_spec</code></b></td>
+                <td>agent-introspect 宿主半</td>
+                <td>投影当前会话的 model、permissions、sandbox、cwd、token 用量；给 AI Agent 判断「我在什么权限/模型下干活」。</td>
+                <td>effort 与温度<b>显式不可读</b>；只读投影，不改会话。</td>
+              </tr>
+              <tr>
+                <td><b>活体观测</b></td>
+                <td><code>cordis_inspect_list</code><br><code>cordis_inspect_query</code></td>
+                <td>列 provider、查 host Tool / Service / Config 与 client provider；验收「工具是否真的注册」的唯一可编程通道。</td>
+                <td>只读；依赖宿主开权限；活体读数可能受 Loader 缓存影响（旧实现仍在线）。</td>
+              </tr>
+              <tr>
+                <td><b>竹节接力</b></td>
+                <td>tree-engine <code>sweep</code></td>
+                <td>worker 自报 <code>pct ≥ 42</code>（或宿主 tokenMeter 先到）→ 旧会话出 K1–K5 简报 → 先 interrupt 后 start 新会话 → <b>同一 leaf</b> 继续，owner 重绑给接手会话。</td>
+                <td>仅非 root；<code>active</code> 时才置 <code>segment_pending</code>；链长 5 → <code>runtime.state=frozen</code>；<code>attempt</code> 不变（不是重试）。</td>
+              </tr>
+              <tr>
+                <td><b>验证策略</b></td>
+                <td><code>src/verify.js</code> + ports</td>
+                <td>六种模式：<code>self-report</code> / <code>artifact</code> / <code>command</code> / <code>llm-judge</code> / <code>composite</code> / <code>human</code>；按 <code>leaf.taskType</code> 路由到策略模板，DoD 在派发时前置注入。</td>
+                <td><code>llm-judge</code> 宿主端口未装配时 fail-closed；<code>human</code> 在 <code>approval=never</code> 下降级 <code>frozen</code> 待裁；FAIL 只落账，不替 commander 做决定。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="src"><b>事实来源</b>：<code>packages/dsh-session-tree/README.zh.md</code>「功能」；<code>packages/dsh-tree-engine/index.js</code> 工具 schema；<code>src/verify.js</code>；<code>docs/skills-usage.md</code> §8。</p>
+
+        <figure class="fig" id="fig-tools">
+          <div class="figtop">
+            <span class="name">figure-02 · tool-surface</span>
+            <div class="tags"><span class="pill fact">事实</span><span class="pill demo">示意布局</span></div>
+          </div>
+          <svg viewBox="0 0 1120 600" role="img" aria-labelledby="fig-tools-title">
+            <title id="fig-tools-title">十个宿主工具与 action 闭集</title>
+            <desc>左侧为 tree-engine 的 8 个工具及其 action 闭集，右侧为 session-tree 的 tree_send 与 session_handoff，底部标注未装配的 meta_loop 与自省工具。</desc>
+            <defs>
+              <marker id="f2-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L8,4 L0,8 z" class="s-head"/>
+              </marker>
+            </defs>
+            <rect class="s-bg" x="0" y="0" width="1120" height="600" rx="14"/>
+            <text class="s-hero" x="32" y="38" font-size="20">工具面：8 + 2</text>
+            <text class="s-t3" x="176" y="38" font-size="12.5">宿主半注册；action 闭集以 <tspan class="s-mono">index.js</tspan> schema 为准</text>
+
+            <rect class="s-layer" x="24" y="54" width="756" height="492" rx="12"/>
+            <text class="s-on-teal" x="44" y="80" font-size="13">tree-engine v0.5.1 · 8 tools</text>
+            <text class="s-t3" x="264" y="80" font-size="11.5">执行层 · 账本 + 派发 + 验证 + 竹节</text>
+
+            <!-- cards row 1 -->
+            <rect class="s-card" x="44" y="96" width="348" height="98" rx="10"/>
+            <text class="s-mono" x="60" y="118" font-size="10">01 · 规划</text>
+            <text class="s-hero-sm" x="60" y="140" font-size="15">tree_plan</text>
+            <text class="s-t2" x="60" y="162" font-size="11.5">create</text>
+            <text class="s-t3" x="60" y="181" font-size="10.5">建树；root leaf 自动创建；仅未被派发的根会话可 create</text>
+
+            <rect class="s-card" x="404" y="96" width="348" height="98" rx="10"/>
+            <text class="s-mono" x="420" y="118" font-size="10">02 · 节点</text>
+            <text class="s-hero-sm" x="420" y="140" font-size="15">tree_node</text>
+            <text class="s-t2" x="420" y="162" font-size="10.8">add · get · list · list-all · set-status · set-session</text>
+            <text class="s-t3" x="420" y="181" font-size="10.5">建 commander/worker；依赖、taskType、owner 重绑</text>
+
+            <!-- cards row 2 -->
+            <rect class="s-card" x="44" y="202" width="348" height="98" rx="10"/>
+            <text class="s-mono" x="60" y="224" font-size="10">03 · 派发</text>
+            <text class="s-hero-sm" x="60" y="246" font-size="15">tree_dispatch</text>
+            <text class="s-t2" x="60" y="268" font-size="11.5">start · cancel</text>
+            <text class="s-t3" x="60" y="287" font-size="10.5">转 continuable 子会话；依赖闸；cancel 先到者生效</text>
+
+            <rect class="s-card" x="404" y="202" width="348" height="98" rx="10"/>
+            <text class="s-mono" x="420" y="224" font-size="10">04 · 上报</text>
+            <text class="s-hero-sm" x="420" y="246" font-size="15">tree_report</text>
+            <text class="s-t2" x="420" y="268" font-size="11.5">context · event</text>
+            <text class="s-t3" x="420" y="287" font-size="10.5">12 类事件闭集；pct 整数 0–100；done 仅 owner 可写</text>
+
+            <!-- cards row 3 -->
+            <rect class="s-card" x="44" y="308" width="348" height="98" rx="10"/>
+            <text class="s-mono" x="60" y="330" font-size="10">05 · 查询</text>
+            <text class="s-hero-sm" x="60" y="352" font-size="15">tree_status</text>
+            <text class="s-t2" x="60" y="374" font-size="11.5">overview · validate · sessions · harvest</text>
+            <text class="s-t3" x="60" y="393" font-size="10.5">收割可立即触发；定时 sweep 仍在后台</text>
+
+            <rect class="s-card" x="404" y="308" width="348" height="98" rx="10"/>
+            <text class="s-mono" x="420" y="330" font-size="10">06 · 验证</text>
+            <text class="s-hero-sm" x="420" y="352" font-size="15">tree_verify</text>
+            <text class="s-t2" x="420" y="374" font-size="11.5">run · dod · adversarial</text>
+            <text class="s-t3" x="420" y="393" font-size="10.5">六模式；FAIL 返回 pass=false，不抛错、不阻断 succeeded</text>
+
+            <!-- cards row 4 -->
+            <rect class="s-card" x="44" y="414" width="348" height="98" rx="10"/>
+            <text class="s-mono" x="60" y="436" font-size="10">07 · 日志</text>
+            <text class="s-hero-sm" x="60" y="458" font-size="15">tree_log</text>
+            <text class="s-t2" x="60" y="480" font-size="11.5">events · drift · heartbeat · communication</text>
+            <text class="s-t3" x="60" y="499" font-size="10.5">四类日志只读；drift/heartbeat 只查不写</text>
+
+            <rect class="s-card" x="404" y="414" width="348" height="98" rx="10"/>
+            <text class="s-mono" x="420" y="436" font-size="10">08 · 维护</text>
+            <text class="s-hero-sm" x="420" y="458" font-size="15">tree_maintain</text>
+            <text class="s-t2" x="420" y="480" font-size="11.5">backup · restore · nudge-reset · register-session</text>
+            <text class="s-t3" x="420" y="499" font-size="10.5">备份轮转 10；restore 校验 tree_id；gc 未实现</text>
+
+            <!-- right panel -->
+            <rect class="s-layer" x="792" y="54" width="304" height="492" rx="12"/>
+            <text class="s-on-amber" x="812" y="80" font-size="13">session-tree v1.3.5</text>
+            <text class="s-t3" x="812" y="98" font-size="11.5">会话层 · 树视图 + 通信 + 交接</text>
+
+            <rect class="s-card-amber" x="808" y="112" width="272" height="126" rx="10"/>
+            <text class="s-mono" x="824" y="134" font-size="10">TOOL 09</text>
+            <text class="s-hero-sm" x="824" y="156" font-size="16">tree_send</text>
+            <text class="s-t2" x="824" y="178" font-size="10.8">target · message · delivery · parent</text>
+            <text class="s-t3" x="824" y="197" font-size="10.5">跨层/兄弟消息；按持久化父地址授权</text>
+            <text class="s-t3" x="824" y="214" font-size="10.5">只返回受理；父必须活着、目标可续聊</text>
+
+            <rect class="s-card-amber" x="808" y="250" width="272" height="196" rx="10"/>
+            <text class="s-mono" x="824" y="272" font-size="10">TOOL 10</text>
+            <text class="s-hero-sm" x="824" y="294" font-size="16">session_handoff</text>
+            <text class="s-t2" x="824" y="316" font-size="10.8">status · handoff</text>
+            <text class="s-t2" x="824" y="334" font-size="10.8">kind: root · sibling · auto</text>
+            <text class="s-t3" x="824" y="353" font-size="10.5">阈值 50%；5 分钟防重复；force 双绕</text>
+            <text class="s-t3" x="824" y="370" font-size="10.5">spawn:false = 只写文件（不受阈值闸拦）</text>
+            <text class="s-t3" x="824" y="387" font-size="10.5">继承：cwd / workspace / preset / 权限 / 模型</text>
+            <text class="s-t3" x="824" y="404" font-size="10.5">提示语跟随界面语言 zh / en</text>
+            <text class="s-t3" x="824" y="421" font-size="10.5">不迁移 tree leaf owner（需 set-session）</text>
+            <text class="s-t3" x="824" y="438" font-size="10.5">根接替挂同一侧栏工作区</text>
+
+            <text class="s-t3" x="812" y="478" font-size="11">随包 Skill（同一 patch 第 2 行挂载）</text>
+            <rect class="s-badge" x="808" y="490" width="84" height="26" rx="13"/>
+            <text class="s-t2" x="850" y="507" font-size="9.6" text-anchor="middle">tree-commander</text>
+            <rect class="s-badge" x="898" y="490" width="78" height="26" rx="13"/>
+            <text class="s-t2" x="937" y="507" font-size="9.6" text-anchor="middle">tree-worker</text>
+            <rect class="s-badge" x="982" y="490" width="88" height="26" rx="13"/>
+            <text class="s-t2" x="1026" y="507" font-size="9.6" text-anchor="middle">session-handoff</text>
+
+            <text class="s-t3" x="32" y="578" font-size="11.5">另：<tspan class="s-mono">self_spec</tspan>（agent-introspect，v0.1.0，运行中）；<tspan class="s-mono">meta_loop</tspan>（meta-loop，v0.2.0，未装配）——不计入 10 个。</text>
+          </svg>
+          <figcaption><b>图 2 · 工具面地图</b>。<span class="how">怎么读：</span>左边 8 个是「任务树账本」，右边 2 个是「会话层能力」；每张卡第二行是该工具<b>真正支持</b>的 action——不在卡片里的 action 会返回 unknown action，<code>docs/tools-mapping.md</code> 里的 <code>drift</code> / <code>milestone-*</code> / <code>gc</code> 等仍在设计稿里。</figcaption>
+        </figure>
+
+        <figure class="fig" id="fig-tree">
+          <div class="figtop">
+            <span class="name">figure-03 · session-tree</span>
+            <div class="tags"><span class="pill fact">事实</span><span class="pill demo">示意布局</span></div>
+          </div>
+          <svg viewBox="0 0 1120 540" role="img" aria-labelledby="fig-tree-title">
+            <title id="fig-tree-title">会话树三层结构与跨层通信</title>
+            <desc>根会话派发 commander，commander 派发 worker；虚线表示同层交接与跨层 tree_send；底部说明 leaf 是账本行、会话是可替换执行体。</desc>
+            <defs>
+              <marker id="f3-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
+              <marker id="f3-arrow-amber" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head-amber"/></marker>
+              <marker id="f3-arrow-violet" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
+            </defs>
+            <rect class="s-bg" x="0" y="0" width="1120" height="540" rx="14"/>
+            <text class="s-hero" x="32" y="36" font-size="19">会话树：三层 + 两条接力</text>
+            <text class="s-t3" x="300" y="36" font-size="12">实线 = 派发 / 上报；虚线 = 同层交接或跨层消息</text>
+
+            <!-- depth rail -->
+            <line class="s-dash" x1="60" y1="86" x2="60" y2="404"/>
+            <text class="s-t3" x="70" y="106" font-size="10.5">depth 0 · root</text>
+            <text class="s-t3" x="70" y="226" font-size="10.5">depth 1 · commander</text>
+            <text class="s-t3" x="70" y="376" font-size="10.5">depth 2 · worker</text>
+
+            <!-- root -->
+            <rect class="s-card-teal" x="420" y="64" width="280" height="66" rx="12"/>
+            <text class="s-on-teal" x="438" y="88" font-size="10.5">ROOT SESSION</text>
+            <text class="s-hero-sm" x="438" y="110" font-size="15">根会话 · chglog-root</text>
+            <text class="s-t3" x="438" y="126" font-size="10.5">建树 + 收口；root leaf 由 tree_id 派生</text>
+
+            <!-- commander -->
+            <rect class="s-card" x="410" y="178" width="300" height="72" rx="12"/>
+            <text class="s-mono" x="428" y="200" font-size="10">COMMANDER · C1</text>
+            <text class="s-hero-sm" x="428" y="222" font-size="15">中间层会话 · chglog-C1-commander</text>
+            <text class="s-t3" x="428" y="239" font-size="10.5">自建 worker、派发、收割；<tspan class="s-mono">taskType=doc</tspan></text>
+
+            <!-- workers -->
+            <rect class="s-card" x="150" y="318" width="220" height="74" rx="12"/>
+            <text class="s-mono" x="166" y="340" font-size="10">WORKER · C1a1</text>
+            <text class="s-hero-sm" x="166" y="362" font-size="14">facts</text>
+            <text class="s-t3" x="166" y="379" font-size="10.5">自报 pct；到 42% 被竹节换会话</text>
+
+            <rect class="s-card" x="430" y="318" width="220" height="74" rx="12"/>
+            <text class="s-mono" x="446" y="340" font-size="10">WORKER · C1a2</text>
+            <text class="s-hero-sm" x="446" y="362" font-size="14">writer</text>
+            <text class="s-t3" x="446" y="379" font-size="10.5">按 DoD 交付；verify PASS 后 done</text>
+
+            <rect class="s-card" x="710" y="318" width="220" height="74" rx="12"/>
+            <text class="s-mono" x="726" y="340" font-size="10">WORKER · C1a3</text>
+            <text class="s-hero-sm" x="726" y="362" font-size="14">verify</text>
+            <text class="s-t3" x="726" y="379" font-size="10.5">独立验收；FAIL→修复→复审</text>
+
+            <rect class="s-card" x="956" y="332" width="118" height="48" rx="10" stroke-dasharray="4 4"/>
+            <text class="s-t3" x="1015" y="353" font-size="10.5" text-anchor="middle">… 最多</text>
+            <text class="s-t3" x="1015" y="368" font-size="10.5" text-anchor="middle">3 层</text>
+
+            <!-- sibling handoff -->
+            <rect class="s-card-amber" x="800" y="178" width="250" height="72" rx="12" stroke-dasharray="5 4"/>
+            <text class="s-on-amber" x="818" y="200" font-size="10">SIBLING · HANDOFF</text>
+            <text class="s-hero-sm" x="818" y="222" font-size="13.5">同父兄弟接替会话</text>
+            <text class="s-t3" x="818" y="239" font-size="10.5">同层；继承预设/权限/模型</text>
+
+            <!-- root successor -->
+            <rect class="s-card-amber" x="800" y="64" width="250" height="66" rx="12" stroke-dasharray="5 4"/>
+            <text class="s-on-amber" x="818" y="88" font-size="10">ROOT SUCCESSOR</text>
+            <text class="s-hero-sm" x="818" y="110" font-size="13.5">根接替会话</text>
+            <text class="s-t3" x="818" y="126" font-size="10.5">挂同一侧栏 workspace</text>
+
+            <!-- arrows -->
+            <line class="s-arrow" x1="560" y1="130" x2="560" y2="176" marker-end="url(#f3-arrow)"/>
+            <text class="s-t3" x="572" y="158" font-size="10">tree_dispatch</text>
+
+            <line class="s-arrow" x1="520" y1="250" x2="260" y2="316" marker-end="url(#f3-arrow)"/>
+            <line class="s-arrow" x1="560" y1="250" x2="540" y2="316" marker-end="url(#f3-arrow)"/>
+            <line class="s-arrow" x1="600" y1="250" x2="820" y2="316" marker-end="url(#f3-arrow)"/>
+            <text class="s-t3" x="566" y="294" font-size="10">tree_dispatch ↓</text>
+            <text class="s-t3" x="566" y="308" font-size="10">↑ tree_report</text>
+
+            <line class="s-arrow-amber" x1="710" y1="214" x2="798" y2="214" marker-end="url(#f3-arrow-amber)" stroke-dasharray="5 4"/>
+            <text class="s-t3" x="714" y="206" font-size="9.8">50% handoff</text>
+
+            <line class="s-arrow-amber" x1="680" y1="96" x2="798" y2="96" marker-end="url(#f3-arrow-amber)" stroke-dasharray="5 4"/>
+            <text class="s-t3" x="690" y="88" font-size="9.8">root 接替</text>
+
+            <path class="s-dash" d="M370,388 C520,470 700,470 800,250" stroke-dasharray="4 5" marker-end="url(#f3-arrow-violet)"/>
+            <text class="s-t3" x="530" y="462" font-size="10">tree_send：跨层 / 兄弟，按持久化父地址授权</text>
+
+            <!-- legend -->
+            <rect class="s-layer" x="32" y="486" width="1056" height="40" rx="10"/>
+            <text class="s-t2" x="48" y="511" font-size="10.8"><tspan class="s-mono">leaf</tspan> = 账本行（leaf_id / parent / role / status / runtime / events / verification）　　<tspan class="s-mono">会话</tspan> = 可替换执行体（竹节/交接换会话，不换 leaf）　　深度 ≤ 3</text>
+          </svg>
+          <figcaption><b>图 3 · 一棵树长什么样</b>。<span class="how">怎么读：</span>先看纵向——root 只建树和收口，commander 真正拆活，worker 干活；再看横向虚线——50% 交接把 commander 换成同父兄弟，根会话换成新根；<code>tree_send</code> 则允许跳过父子邻接直接给树里任意可续聊会话发消息。<b>关键：leaf 是账本，不是会话</b>，所以换会话不等于换任务。</figcaption>
+        </figure>
+
+        <div class="grid2">
+          <article class="card">
+            <h3>能力组合：三种典型用法</h3>
+            <ul>
+              <li><b>单线长任务</b>：root 建树 → 一个 commander → 一个 worker；worker 42% 竹节换会话，继续同一 leaf。</li>
+              <li><b>并行多 worker</b>：commander 建 3–6 个无依赖 worker，<code>tree_dispatch</code> 并行；<code>tree_status harvest</code> 收割，逐点 verify。</li>
+              <li><b>三层验收</b>：worker 自报 → commander 跑 <code>tree_verify</code> → 读 <code>result.pass</code> 再收口；root 最后 <code>validate</code>。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>能力不是「越多越好」</h3>
+            <p>tree-engine 的 <code>tree_*</code> 只负责<b>任务账本与执行编排</b>；会话生命周期（创建/fork/列表）仍走 DSH 原生 <code>subagents</code>，跨会话消息也可用内置 <code>send_message</code>（但只覆盖直接父子）。</p>
+            <p>meta-loop 虽在仓内，但<b>不在 profile bundles</b>，<code>/metaloop/</code> 面板与胶囊入口当前不可用；不要把它算进「已装配能力」。</p>
+            <p class="src"><b>事实</b>：<code>README.md</code> §已知边界 1；<code>docs/tools-mapping.md</code> §4。</p>
+          </article>
+        </div>
+
+      </div>
+    </section>
+
+    <div class="hr"></div>
+
+    <!-- ============================================================
+         §4 架构拆解
+         ============================================================ -->
+    <section class="section" id="arch">
+      <div class="sec-head">
+        <div class="sec-num">04</div>
+        <div>
+          <h2 class="sec-title">架构拆解：四层、两半、一条缝</h2>
+          <p class="sec-sub">看懂「谁调用谁」比记住文件名重要；这张图也解释了为什么它能离线测试。</p>
+        </div>
+      </div>
+      <div class="sec-body">
+        <p>整个方案可以压缩成四层：<b>DSH 宿主</b>提供会话/工具/定时器；<b>profile</b> 决定装哪些 bundle；<b>插件宿主半</b>把 DSH 服务翻译成工具与端口；<b>纯逻辑</b>负责状态机、护栏、验证与竹节。<b>客户端半</b>是旁路，只负责左栏那棵树。</p>
+
+        <figure class="fig" id="fig-arch">
+          <div class="figtop">
+            <span class="name">figure-01 · layered-architecture</span>
+            <div class="tags"><span class="pill fact">事实</span><span class="pill demo">示意布局</span></div>
+          </div>
+          <svg viewBox="0 0 1120 690" role="img" aria-labelledby="fig-arch-title">
+            <title id="fig-arch-title">系统全景：DSH 宿主、profile、插件两半、纯逻辑与持久化</title>
+            <desc>五层结构：宿主服务、profile bundle 与 patch、宿主半工具、纯逻辑与端口、持久化产物；右侧标注客户端半与数据流方向。</desc>
+            <defs>
+              <marker id="f1-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
+              <marker id="f1-arrow-teal" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head-teal"/></marker>
+            </defs>
+            <rect class="s-bg" x="0" y="0" width="1120" height="690" rx="14"/>
+            <text class="s-hero" x="32" y="36" font-size="19">系统全景：从 DSH 服务到一棵树</text>
+            <text class="s-t3" x="330" y="36" font-size="12">实线 = 装配/调用；虚线 = 客户端半；所有代码零 npm 依赖</text>
+
+            <!-- L0 -->
+            <rect class="s-layer" x="24" y="54" width="1072" height="94" rx="12"/>
+            <text class="s-on-teal" x="44" y="76" font-size="12">L0 · DSH 宿主（桌面 0.2.2-rc.1）</text>
+            <text class="s-t3" x="300" y="76" font-size="10.5">Cordis 插件宿主 + Web GUI；提供以下原生服务</text>
+
+            <rect class="s-card" x="40" y="86" width="180" height="46" rx="8"/>
+            <text class="s-t2" x="130" y="105" font-size="11.5" text-anchor="middle">Loader</text>
+            <text class="s-t3" x="130" y="121" font-size="9.5" text-anchor="middle">bundle / patch / 缓存</text>
+
+            <rect class="s-card" x="232" y="86" width="140" height="46" rx="8"/>
+            <text class="s-t2" x="302" y="105" font-size="11.5" text-anchor="middle">tools</text>
+            <text class="s-t3" x="302" y="121" font-size="9.5" text-anchor="middle">工具注册 / exec</text>
+
+            <rect class="s-card" x="384" y="86" width="180" height="46" rx="8"/>
+            <text class="s-t2" x="474" y="105" font-size="11.5" text-anchor="middle">subagents · agents</text>
+            <text class="s-t3" x="474" y="121" font-size="9.5" text-anchor="middle">子会话 / 根会话</text>
+
+            <rect class="s-card" x="576" y="86" width="250" height="46" rx="8"/>
+            <text class="s-t2" x="701" y="105" font-size="11.5" text-anchor="middle">sessionQuery · tokenMeter · timer · storage</text>
+            <text class="s-t3" x="701" y="121" font-size="9.5" text-anchor="middle">读会话 / 量压力 / 定时 / 持久化</text>
+
+            <rect class="s-card" x="838" y="86" width="230" height="46" rx="8"/>
+            <text class="s-t2" x="953" y="105" font-size="11.5" text-anchor="middle">Web GUI · 侧栏</text>
+            <text class="s-t3" x="953" y="121" font-size="9.5" text-anchor="middle">client bundle 的宿主</text>
+
+            <!-- L1 -->
+            <rect class="s-layer" x="24" y="166" width="1072" height="88" rx="12"/>
+            <text class="s-on-teal" x="44" y="188" font-size="12">L1 · profile（27 bundles）</text>
+            <text class="s-t3" x="250" y="188" font-size="10.5">安装方式：Git / link:；bundle 顺序 = 装载顺序</text>
+
+            <rect class="s-card" x="40" y="198" width="300" height="44" rx="8"/>
+            <text class="s-mono" x="56" y="216" font-size="10.5">profile/package.json</text>
+            <text class="s-t3" x="56" y="232" font-size="9.8">dsh.profile.bundles + dependencies（link:）</text>
+
+            <rect class="s-card" x="352" y="198" width="400" height="44" rx="8"/>
+            <text class="s-mono" x="368" y="216" font-size="10.5">cordis.patch.yml</text>
+            <text class="s-t3" x="368" y="232" font-size="9.8">两个 tree 包各 2 行 insert：bundle 行 + filesystem Skill provider 行</text>
+
+            <rect class="s-badge-teal" x="770" y="202" width="92" height="22" rx="11"/>
+            <text class="s-num" x="816" y="217" font-size="9" text-anchor="middle">session-tree</text>
+            <rect class="s-badge" x="868" y="202" width="76" height="22" rx="11"/>
+            <text class="s-t2" x="906" y="217" font-size="9" text-anchor="middle">tree-engine</text>
+            <rect class="s-badge" x="950" y="202" width="76" height="22" rx="11"/>
+            <text class="s-t2" x="988" y="217" font-size="9" text-anchor="middle">introspect</text>
+            <rect class="s-badge" x="1032" y="202" width="56" height="22" rx="11" stroke-dasharray="3 3"/>
+            <text class="s-t3" x="1060" y="217" font-size="8.6" text-anchor="middle">meta-loop</text>
+            <text class="s-t3" x="770" y="238" font-size="9.2">实心 = 已装配；虚线 = 未装配</text>
+
+            <!-- L2 -->
+            <rect class="s-layer" x="24" y="270" width="1072" height="150" rx="12"/>
+            <text class="s-on-teal" x="44" y="292" font-size="12">L2 · 插件宿主半（index.js）</text>
+            <text class="s-t3" x="300" y="292" font-size="10.5">只做「翻译 + 注册 + 端口注入」，不把业务逻辑写进 DSH API</text>
+
+            <rect class="s-card-teal" x="40" y="302" width="310" height="106" rx="10"/>
+            <text class="s-on-teal" x="56" y="324" font-size="10">session-tree v1.3.5</text>
+            <text class="s-hero-sm" x="56" y="346" font-size="13.5">tree_send · session_handoff</text>
+            <text class="s-t3" x="56" y="365" font-size="10.2">client.js：侧栏树 / 工作区分组 / 搜索</text>
+            <text class="s-t3" x="56" y="382" font-size="10.2">locale：zh / en 界面语言</text>
+            <text class="s-t3" x="56" y="399" font-size="10.2">skills/session-handoff/SKILL.md</text>
+
+            <rect class="s-card-teal" x="362" y="302" width="400" height="106" rx="10"/>
+            <text class="s-on-teal" x="378" y="324" font-size="10">tree-engine v0.5.1</text>
+            <text class="s-hero-sm" x="378" y="346" font-size="13.5">8 个 tree_* 工具 + sweep + ports</text>
+            <text class="s-t3" x="378" y="365" font-size="10.2">ports：dispatch / interrupt / readSession / glob / exec / judge</text>
+            <text class="s-t3" x="378" y="382" font-size="10.2">sweep：超时、收割、竹节自动接力</text>
+            <text class="s-t3" x="378" y="399" font-size="10.2">skills/tree-commander · tree-worker</text>
+
+            <rect class="s-card" x="774" y="302" width="180" height="106" rx="10" stroke-dasharray="5 4"/>
+            <text class="s-t3" x="790" y="324" font-size="10">meta-loop v0.2.0</text>
+            <text class="s-mono" x="790" y="346" font-size="12">meta_loop</text>
+            <text class="s-t3" x="790" y="365" font-size="10.2">六阶段 + 门禁</text>
+            <text class="s-t3" x="790" y="382" font-size="10.2">/metaloop/ 面板</text>
+            <text class="s-t3" x="790" y="399" font-size="10.2">未装配，不在 bundles</text>
+
+            <rect class="s-card" x="966" y="302" width="120" height="106" rx="10"/>
+            <text class="s-t3" x="980" y="324" font-size="10">introspect</text>
+            <text class="s-mono" x="980" y="346" font-size="12">self_spec</text>
+            <text class="s-t3" x="980" y="365" font-size="10.2">model / 权限 /</text>
+            <text class="s-t3" x="980" y="381" font-size="10.2">sandbox / cwd /</text>
+            <text class="s-t3" x="980" y="397" font-size="10.2">token 投影</text>
+
+            <!-- L3 -->
+            <rect class="s-layer" x="24" y="436" width="1072" height="104" rx="12"/>
+            <text class="s-on-teal" x="44" y="458" font-size="12">L3 · 纯逻辑（可离线测试）</text>
+            <rect class="s-card" x="40" y="468" width="1046" height="58" rx="9"/>
+            <text class="s-mono" x="56" y="487" font-size="10.2">engine.js · state.js · guards.js · verify.js · adversarial.js · queue.js · clock.js · config.js · store.js</text>
+            <text class="s-t3" x="56" y="504" font-size="10.2">session-tree：facts / status / successor plan / spawn / workspace / permission / language</text>
+            <text class="s-t3" x="56" y="519" font-size="10.2">纪律：不 import 任何 <tspan class="s-mono">@deepseek-ai/*</tspan>；副作用一律走注入端口（测试用假时钟/假 store/假会话）</text>
+
+            <!-- L4 -->
+            <rect class="s-layer" x="24" y="556" width="1072" height="96" rx="12"/>
+            <text class="s-on-teal" x="44" y="578" font-size="12">L4 · 持久化与产物</text>
+            <rect class="s-card" x="40" y="588" width="290" height="50" rx="8"/>
+            <text class="s-mono" x="56" y="607" font-size="10.5">tree-engine-data/&lt;tree_id&gt;/</text>
+            <text class="s-t3" x="56" y="623" font-size="9.8">tree-state.json · backups/ · apply.log</text>
+
+            <rect class="s-card" x="342" y="588" width="230" height="50" rx="8"/>
+            <text class="s-mono" x="358" y="607" font-size="10.5">HANDOFF-*.md</text>
+            <text class="s-t3" x="358" y="623" font-size="9.8">写在工作区 cwd；运行时产物</text>
+
+            <rect class="s-card" x="584" y="588" width="240" height="50" rx="8"/>
+            <text class="s-mono" x="600" y="607" font-size="10.5">session logs (.zstd)</text>
+            <text class="s-t3" x="600" y="623" font-size="9.8">E2E 断言器解码首条消息 / 工具序列</text>
+
+            <rect class="s-card" x="836" y="588" width="250" height="50" rx="8"/>
+            <text class="s-mono" x="852" y="607" font-size="10.5">profile 配置</text>
+            <text class="s-t3" x="852" y="623" font-size="9.8">package.json · cordis.patch.yml · workspace.json</text>
+
+            <!-- arrows -->
+            <line class="s-arrow-teal" x1="560" y1="148" x2="560" y2="164" marker-end="url(#f1-arrow-teal)"/>
+            <line class="s-arrow-teal" x1="560" y1="254" x2="560" y2="268" marker-end="url(#f1-arrow-teal)"/>
+            <line class="s-arrow-teal" x1="560" y1="420" x2="560" y2="434" marker-end="url(#f1-arrow-teal)"/>
+            <line class="s-arrow-teal" x1="560" y1="540" x2="560" y2="554" marker-end="url(#f1-arrow-teal)"/>
+
+            <text class="s-t3" x="574" y="160" font-size="9.5">装载</text>
+            <text class="s-t3" x="574" y="266" font-size="9.5">注册</text>
+            <text class="s-t3" x="574" y="432" font-size="9.5">调用</text>
+            <text class="s-t3" x="574" y="552" font-size="9.5">落盘</text>
+
+            <text class="s-t3" x="32" y="676" font-size="10.8">数据流：模型调用工具 → 宿主半 → <tspan class="s-mono">engine.call()</tspan> → 原子写 → sweep/收割 → 验证落账 → 面板/E2E 读取。客户端半只读会话 store，不写树账本。</text>
+          </svg>
+          <figcaption><b>图 1 · 系统全景</b>。<span class="how">怎么读：</span>从上往下看「服务 → 装配 → 工具 → 逻辑 → 落盘」；<b>纯逻辑层没有任何 DSH import</b>，所以 67 项引擎测试可以离线跑；<b>客户端半</b>只画树、不改账本，因此它坏了不会影响工具与竹节。</figcaption>
+        </figure>
+
+        <div class="grid2">
+          <article class="card">
+            <h3>宿主半 / 客户端半：一张对照表</h3>
+            <div class="tablewrap" style="margin:8px 0 0">
+              <table class="compact">
+                <thead><tr><th>维度</th><th>宿主半</th><th>客户端半</th></tr></thead>
+                <tbody>
+                  <tr><td>入口</td><td><code>exports["."]</code> → <code>index.js</code></td><td><code>exports["./client"]</code> → <code>client.js</code></td></tr>
+                  <tr><td>声明</td><td><code>dsh.bundle.patch</code></td><td><code>dsh.client</code>（<code>platform:"web"</code>）</td></tr>
+                  <tr><td>装载</td><td>patch <code>insert</code> 行 → Loader import</td><td><code>window.__ModuleLoader__.load()</code></td></tr>
+                  <tr><td>职责</td><td>注册工具 / 注入服务 / 挂 Skill provider</td><td>侧栏 DOM / 工作区分组 / 菜单</td></tr>
+                  <tr><td>热更</td><td>disable→enable 或重启 DSH</td><td>刷新页面</td></tr>
+                  <tr><td>失败半径</td><td>工具缺失或协议不符</td><td>界面半边不渲染；宿主半仍工作</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="src"><b>事实</b>：根 <code>README.md</code> §宿主半/客户端半；<code>docs/handoff-2026-10-14.md</code> §5 客户端契约。</p>
+          </article>
+
+          <article class="card">
+            <h3>「一条缝」：ports 与 skill provider</h3>
+            <p>引擎把宿主能力收束成几个端口：派发、取消、读会话、glob、执行命令、judge。生产装配接 DSH 服务，测试装配接假实现——这是它能同时做到「深逻辑」与「离线 67 项」的原因。</p>
+            <p>Skill 则走另一条装配：两个 tree 包各在自己的 patch 第 2 行 insert <code>@deepseek-ai/dsh-skill-filesystem</code>，<code>bundledSkillDir</code> 经<b>安装包身份</b>解析到包内 <code>skills/</code>，不字符串拼 <code>baseUrl</code>。</p>
+            <div class="cmd"><div class="cap"><b>yaml</b> · cordis.patch.yml（节选，真实结构）</div><pre><code>- insert:
+    - id: tree-engine
+      name: '@local/dsh-tree-engine'
+    - id: tree-engine-skills
+      name: '@deepseek-ai/dsh-skill-filesystem'
+      config:
+        providerName: tree-engine
+        includeDefaultRoots: false
+        watch: false
+        bundledSkillDir: !!js process.getBuiltinModule('node:path')
+          .join(/* 经 require.resolve(package.json) 定位 */, 'skills')</code></pre></div>
+            <p class="src"><b>事实</b>：<code>packages/dsh-tree-engine/cordis.patch.yml</code>；<code>docs/skills-usage.md</code> §1。</p>
+          </article>
+        </div>
+
+        <div class="callout">
+          <span class="label">为什么强调「零依赖」</span>
+          <p>四个包都不 <code>import</code> 任何 <code>@deepseek-ai/*</code> 包，只通过宿主 <code>ctx</code> 取服务。好处是测试不需要装载 DSH；代价是 <b>DSH API 漂移</b>时要自己补兼容层——RC2 的 <code>startContinuable</code> 移除就是一次实例，当前兼容层已运行但<b>缺单测</b>。</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="hr"></div>
+
+    <!-- ============================================================
+         §5 一次真实流程走查
+         ============================================================ -->
+    <section class="section" id="flow">
+      <div class="sec-head">
+        <div class="sec-num">05</div>
+        <div>
+          <h2 class="sec-title">一次真实流程走查：从一句话到 0 issues</h2>
+          <p class="sec-sub">以 2026-11-11 A 组真机树 <code>chglog</code> 为骨架；命令/返回做了可读化重排，数值与结构来自报告。</p>
+        </div>
+      </div>
+      <div class="sec-body">
+        <p>目标：给仓库补一段 CHANGELOG。根会话建树并派一个中间层 commander，commander 再建 6 个 worker；其中一个 worker 的产物被独立验收判 <b>FAIL</b>（HEAD 断言在提交后失真），修复后复审 <b>PASS</b>，最终 7 个非 root 节点全部 <code>succeeded</code>、<code>tree_status validate</code> 为 <b>PASS (0 issues)</b>。</p>
+
+        <figure class="fig" id="fig-seq">
+          <div class="figtop">
+            <span class="name">figure-06 · sequence</span>
+            <div class="tags"><span class="pill fact">事实骨架</span><span class="pill demo">命令/返回为示意重排</span></div>
+          </div>
+          <svg viewBox="0 0 1120 700" role="img" aria-labelledby="fig-seq-title">
+            <title id="fig-seq-title">一次三层任务树的时序</title>
+            <desc>根会话、commander、worker、引擎、验证器五条生命线；展示建树、派发、42% 竹节、done、harvest、verify 与最终 validate。</desc>
+            <defs>
+              <marker id="f6-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
+              <marker id="f6-arrow-teal" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head-teal"/></marker>
+              <marker id="f6-arrow-amber" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head-amber"/></marker>
+            </defs>
+            <rect class="s-bg" x="0" y="0" width="1120" height="700" rx="14"/>
+            <text class="s-hero" x="32" y="36" font-size="19">时序：建树 → 派发 → 竹节 → 验证 → 收口</text>
+            <text class="s-t3" x="420" y="36" font-size="11.5">实线 = 调用；虚线 = 引擎内部/接力；编号对应下方表格</text>
+
+            <!-- lifelines -->
+            <rect class="s-card-teal" x="38" y="56" width="144" height="46" rx="9"/>
+            <text class="s-on-teal" x="110" y="76" font-size="10" text-anchor="middle">ROOT</text>
+            <text class="s-t2" x="110" y="92" font-size="10.5" text-anchor="middle">根会话</text>
+
+            <rect class="s-card" x="278" y="56" width="144" height="46" rx="9"/>
+            <text class="s-mono" x="350" y="76" font-size="10" text-anchor="middle">COMMANDER</text>
+            <text class="s-t2" x="350" y="92" font-size="10.5" text-anchor="middle">C1 中间层</text>
+
+            <rect class="s-card" x="528" y="56" width="144" height="46" rx="9"/>
+            <text class="s-mono" x="600" y="76" font-size="10" text-anchor="middle">WORKER</text>
+            <text class="s-t2" x="600" y="92" font-size="10.5" text-anchor="middle">C1a1</text>
+
+            <rect class="s-card" x="768" y="56" width="144" height="46" rx="9"/>
+            <text class="s-mono" x="840" y="76" font-size="10" text-anchor="middle">ENGINE</text>
+            <text class="s-t2" x="840" y="92" font-size="10.5" text-anchor="middle">账本 + sweep</text>
+
+            <rect class="s-card" x="958" y="56" width="144" height="46" rx="9"/>
+            <text class="s-mono" x="1030" y="76" font-size="10" text-anchor="middle">VERIFIER</text>
+            <text class="s-t2" x="1030" y="92" font-size="10.5" text-anchor="middle">策略 / 端口</text>
+
+            <line class="s-dash" x1="110" y1="102" x2="110" y2="636"/>
+            <line class="s-dash" x1="350" y1="102" x2="350" y2="636"/>
+            <line class="s-dash" x1="600" y1="102" x2="600" y2="636"/>
+            <line class="s-dash" x1="840" y1="102" x2="840" y2="636"/>
+            <line class="s-dash" x1="1030" y1="102" x2="1030" y2="636"/>
+
+            <!-- 1 -->
+            <circle class="s-badge-teal" cx="110" cy="140" r="10"/>
+            <text class="s-num" x="110" y="144" text-anchor="middle">1</text>
+            <line class="s-arrow-teal" x1="120" y1="140" x2="828" y2="140" marker-end="url(#f6-arrow-teal)"/>
+            <text class="s-t2" x="150" y="133" font-size="10.5">tree_plan create chglog</text>
+            <text class="s-t3" x="700" y="133" font-size="9.5">→ root leaf 自动建</text>
+
+            <!-- 2 -->
+            <circle class="s-badge-teal" cx="110" cy="178" r="10"/>
+            <text class="s-num" x="110" y="182" text-anchor="middle">2</text>
+            <line class="s-arrow-teal" x1="120" y1="178" x2="828" y2="178" marker-end="url(#f6-arrow-teal)"/>
+            <text class="s-t2" x="150" y="171" font-size="10.5">tree_node add C1-commander</text>
+            <text class="s-t3" x="700" y="171" font-size="9.5">taskType=doc</text>
+
+            <!-- 3 -->
+            <circle class="s-badge-teal" cx="110" cy="216" r="10"/>
+            <text class="s-num" x="110" y="220" text-anchor="middle">3</text>
+            <line class="s-arrow" x1="120" y1="216" x2="338" y2="216" marker-end="url(#f6-arrow)"/>
+            <text class="s-t2" x="150" y="209" font-size="10.5">tree_dispatch start C1</text>
+            <text class="s-t3" x="420" y="209" font-size="9.5">→ 新 commander 会话</text>
+
+            <!-- 4 -->
+            <circle cx="350" cy="254" r="10" class="s-badge"/>
+            <text class="s-num" x="350" y="258" text-anchor="middle" fill="var(--ink)">4</text>
+            <line class="s-arrow" x1="360" y1="254" x2="828" y2="254" marker-end="url(#f6-arrow)"/>
+            <text class="s-t2" x="390" y="247" font-size="10.5">tree_node add ×6（C1a1…C1a6）</text>
+            <text class="s-t3" x="700" y="247" font-size="9.5">worker，无依赖</text>
+
+            <!-- 5 -->
+            <circle cx="350" cy="292" r="10" class="s-badge"/>
+            <text class="s-num" x="350" y="296" text-anchor="middle" fill="var(--ink)">5</text>
+            <line class="s-arrow" x1="360" y1="292" x2="588" y2="292" marker-end="url(#f6-arrow)"/>
+            <text class="s-t2" x="390" y="285" font-size="10.5">tree_dispatch start C1a1</text>
+
+            <!-- 6 -->
+            <circle cx="600" cy="330" r="10" class="s-badge"/>
+            <text class="s-num" x="600" y="334" text-anchor="middle" fill="var(--ink)">6</text>
+            <line class="s-arrow" x1="610" y1="330" x2="828" y2="330" marker-end="url(#f6-arrow)"/>
+            <text class="s-t2" x="640" y="323" font-size="10.5">tree_report context pct=42</text>
+            <text class="s-t3" x="640" y="342" font-size="9.5">整数 0–100；引擎/宿主测量先到先判</text>
+
+            <!-- 7 -->
+            <circle cx="840" cy="368" r="10" class="s-badge-amber"/>
+            <text class="s-num" x="840" y="372" text-anchor="middle">7</text>
+            <line class="s-arrow-amber" x1="830" y1="368" x2="612" y2="368" marker-end="url(#f6-arrow-amber)" stroke-dasharray="5 4"/>
+            <text class="s-t2" x="650" y="361" font-size="10.5">bamboo：简报 → interrupt → 新会话</text>
+            <text class="s-t3" x="650" y="380" font-size="9.5">同一 leaf；owner 重绑；attempt 不变</text>
+
+            <!-- 8 -->
+            <circle cx="600" cy="406" r="10" class="s-badge"/>
+            <text class="s-num" x="600" y="410" text-anchor="middle" fill="var(--ink)">8</text>
+            <line class="s-arrow" x1="610" y1="406" x2="828" y2="406" marker-end="url(#f6-arrow)"/>
+            <text class="s-t2" x="640" y="399" font-size="10.5">tree_report done（owner）</text>
+            <text class="s-t3" x="640" y="418" font-size="9.5">→ runtime.state = succeeded</text>
+
+            <!-- 9 -->
+            <circle cx="350" cy="444" r="10" class="s-badge"/>
+            <text class="s-num" x="350" y="448" text-anchor="middle" fill="var(--ink)">9</text>
+            <line class="s-arrow" x1="360" y1="444" x2="828" y2="444" marker-end="url(#f6-arrow)"/>
+            <text class="s-t2" x="390" y="437" font-size="10.5">tree_status harvest</text>
+            <text class="s-t3" x="700" y="437" font-size="9.5">sweepMode=timer</text>
+
+            <!-- 10 -->
+            <circle cx="350" cy="482" r="10" class="s-badge"/>
+            <text class="s-num" x="350" y="486" text-anchor="middle" fill="var(--ink)">10</text>
+            <line class="s-arrow" x1="360" y1="482" x2="1018" y2="482" marker-end="url(#f6-arrow)"/>
+            <text class="s-t2" x="390" y="475" font-size="10.5">tree_verify run（按 taskType 路由）</text>
+            <text class="s-t3" x="700" y="494" font-size="9.5">artifact / command / judge …</text>
+
+            <!-- 11 -->
+            <circle cx="1030" cy="520" r="10" class="s-badge"/>
+            <text class="s-num" x="1030" y="524" text-anchor="middle" fill="var(--ink)">11</text>
+            <line class="s-arrow" x1="1020" y1="520" x2="362" y2="520" marker-end="url(#f6-arrow)"/>
+            <text class="s-t2" x="390" y="513" font-size="10.5">PASS / FAIL + findings（FAIL 不抛错）</text>
+            <text class="s-t3" x="390" y="532" font-size="9.5">commander 必须读 result.pass 再收口</text>
+
+            <!-- 12 -->
+            <circle cx="110" cy="558" r="10" class="s-badge-teal"/>
+            <text class="s-num" x="110" y="562" text-anchor="middle">12</text>
+            <line class="s-arrow-teal" x1="120" y1="558" x2="828" y2="558" marker-end="url(#f6-arrow-teal)"/>
+            <text class="s-t2" x="150" y="551" font-size="10.5">tree_status validate</text>
+            <text class="s-t3" x="700" y="551" font-size="9.5">目标：PASS (0 issues)</text>
+
+            <!-- side notes -->
+            <rect class="s-layer" x="38" y="590" width="1044" height="46" rx="9"/>
+            <text class="s-t2" x="54" y="609" font-size="10.2">支线 A：commander 到 50% → <tspan class="s-mono">session_handoff</tspan> → 同父兄弟；真机 <tspan class="s-mono">verify-handoff</tspan> 12/12 PASS（B/C 组，force 模拟）。</text>
+            <text class="s-t2" x="54" y="626" font-size="10.2">支线 B：worker 42% 已由竹节接手 → 不再做会话交接；若 50% 仍没等到竹节，立即交接并在 <tspan class="s-mono">tree_report progress</tspan> 留痕。</text>
+          </svg>
+          <figcaption><b>图 6 · 一次三层任务树时序</b>。<span class="how">怎么读：</span>1–5 是「把树建起来并派人」；6–7 是「同 leaf 换会话」；8–9 是「自己报完成 + 引擎收割」；10–11 是「别人验收」；12 是「根会话做最终一致性校验」。注意 <b>verify 的 FAIL 不会自动拦住 succeeded</b>，所以 11 到 12 之间必须有 commander 的判断。</figcaption>
+        </figure>
+
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th style="width:5%" class="num">#</th><th style="width:12%">谁</th><th style="width:44%">调用</th><th style="width:39%">可见返回 / 证据</th></tr></thead>
+            <tbody>
+              <tr><td class="num">1</td><td>根会话</td><td><code>tree_plan {action:"create", tree_id:"chglog", session_id:"&lt;uuid&gt;", root_brief:{goal:"补齐 CHANGELOG"}, root_dod:{dod:"测试全绿 + Unreleased 段"}}</code></td><td><code>tree_plan: created tree chglog (root chglog-root)</code><br><span class="sub">tree_id 4–8 字符，小写无连字符</span></td></tr>
+              <tr><td class="num">2</td><td>根会话</td><td><code>tree_node {action:"add", tree_id:"chglog", leaf:{leaf_id:"chglog-C1-commander", parent:"chglog-root", path:"C1", role:"commander", added_by:"&lt;root&gt;", taskType:"doc"}}</code></td><td><code>tree_node: chglog-C1-commander status=pending_brief · (未派发) ctx=0%</code></td></tr>
+              <tr><td class="num">3</td><td>根会话</td><td><code>tree_dispatch {action:"start", tree_id:"chglog", leaf_id:"chglog-C1-commander", prompt:"作为 C1 指挥官：拆出 facts/写作/验收 worker，派发并收口。"}</code></td><td><code>tree_dispatch: chglog-C1-commander → running</code><br><span class="sub">依赖未满足会 E_DEPENDENCY_NOT_MET</span></td></tr>
+              <tr><td class="num">4</td><td>commander</td><td><code>tree_node {action:"add", … parent:"chglog-C1-commander", leaf_id:"chglog-C1a1-facts", role:"worker", taskType:"research"}</code></td><td>若再 <code>tree_plan create</code> 同 id → <code>E_DUPLICATE_LEAF</code>；自拟新 id → 静默分裂</td></tr>
+              <tr><td class="num">5</td><td>commander</td><td><code>tree_dispatch {action:"start", leaf_id:"chglog-C1a1-facts", prompt:"…"}</code></td><td>子会话收到「任务书 + 策略 DoD + 结算指令」；<code>dod</code> 参数不改变验收标准</td></tr>
+              <tr><td class="num">6</td><td>worker</td><td><code>tree_report {action:"context", tree_id:"chglog", leaf_id:"chglog-C1a1-facts", pct:42}</code></td><td><code>tree_report: ok (chglog-C1a1-facts)</code><br><span class="sub"><code>pct</code> 必须是整数；42 为 DSH 缺省阈值</span></td></tr>
+              <tr><td class="num">7</td><td>引擎</td><td><code>sweep</code> 检测到 <code>pct ≥ 42</code> → 发 K1–K5 简报指令 → interrupt 旧会话 → start 新会话</td><td><code>tree_status harvest</code> 可见 <code>bamboo(ok)</code>；owner 重绑，新会话可写 done</td></tr>
+              <tr><td class="num">8</td><td>owner</td><td><code>tree_report {action:"event", type:"done", meta:{summary, self_check}}</code></td><td><code>runtime.state = succeeded</code>；事件 12 类闭集，done 仅 owner 可写</td></tr>
+              <tr><td class="num">9</td><td>commander</td><td><code>tree_status {action:"harvest", tree_id:"chglog"}</code></td><td>立即触发一轮 sweep；后台仍有 60s 定时；<code>sweepMode=timer</code></td></tr>
+              <tr><td class="num">10</td><td>commander</td><td><code>tree_verify {action:"run", tree_id:"chglog", leaf_id:"chglog-C1a1-facts"}</code></td><td><code>tree_verify: PASS (artifact)</code> 或 <code>FAIL</code>；裁决落 <code>leaf.verification</code></td></tr>
+              <tr><td class="num">11</td><td>verifier</td><td>按策略执行 <code>self-report</code> / <code>artifact</code> / <code>command</code> / <code>judge</code> / <code>composite</code> / <code>human</code></td><td>FAIL 返回 <code>{result:{pass:false}}</code>，<b>不抛错</b>；真实 A 组出现 <code>VERDICT: FAIL → 修复 → PASS</code></td></tr>
+              <tr><td class="num">12</td><td>根会话</td><td><code>tree_status {action:"validate", tree_id:"chglog"}</code></td><td><code>tree_status: validate PASS (0 issues)</code>；A 组最终 7 个非 root 节点全 succeeded</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="src"><b>事实来源</b>：<code>docs/skill-e2e-2026-11-11.md</code> §4 A 组（修正后 <code>chglog</code>：root + commander + 6 worker，maxDepth=2，7 个非 root 节点 succeeded，validate 0 issues，真实 FAIL→PASS）；<code>docs/skills-usage.md</code> §5；<code>packages/dsh-tree-engine/index.js</code> 工具描述。<b>示意</b>：命令参数与单行返回为可读化重排，ID/摘要做了简化。</p>
+
+        <div class="grid2">
+          <article class="card tint-amber">
+            <h3>支线 1：worker 到 42% —— 竹节</h3>
+            <p>引擎内部完成「测量 → 交棒指令 → 简报回收 → interrupt → start → 落账」。新会话拿到角色预设 + 原任务书 + 简报全文 + DoD；<code>leaf.session_id</code> 重绑给新会话，所以新会话能写 <code>done</code>。</p>
+            <p><b>不是</b>重试：<code>attempt</code> 不变；<b>不是</b>新 leaf：树结构不变；链长上限 5，超限 <code>frozen</code>。</p>
+          </article>
+          <article class="card tint-amber">
+            <h3>支线 2：commander 到 50% —— 交接</h3>
+            <p><code>session_handoff</code> 先写 <code>HANDOFF-*.md</code>，再启动同父兄弟；接替会话继承 cwd / 工作区归属 / Agent 预设 / 权限模式 / 模型 / 思考等级，首条消息跟随界面语言。</p>
+            <p><b>树账本不会自动迁移</b>：交接只发生在会话层，<code>leaf.session_id</code> 仍是旧会话；接替会话若要写 done，需由 leaf 的 creator/上级 <code>tree_node set-session</code> 重绑。</p>
+          </article>
+        </div>
+
+        <div class="callout risk">
+          <span class="label">别把「成功路径」当全部</span>
+          <p>A 组能跑通，但报告也写明了限制：三次交接全部用 <code>force:true</code> 模拟，<b>真实 50% 阈值没有跑到</b>；其中一次中间层 attempt1 在收尾前约 30 分钟超时，靠 attempt2 续跑才收口；C 组修正前还遇到宿主 429 配额中断。这些是「真机证据」的一部分，不应被 7/7 succeeded 的摘要盖住。</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="hr"></div>
+
+    <!-- ============================================================
+         §6 机制深挖
+         ============================================================ -->
+    <section class="section" id="mech">
+      <div class="sec-head">
+        <div class="sec-num">06</div>
+        <div>
+          <h2 class="sec-title">机制深挖：继承、所有权、阈值、语言、热更</h2>
+          <p class="sec-sub">这一节最接近「协议」；如果只看一段，建议看 6.3 的 owner 表和 6.4 的阈值表。</p>
+        </div>
+      </div>
+      <div class="sec-body">
+
+        <h3>6.1 交接继承矩阵：接替会话到底继承什么</h3>
+        <p>「工作模式」= <b>Agent preset</b>（决定组成/工具集）；「权限」= <b>permission preset</b>（sandbox + approval 捆绑）。两者是不同服务，必须分别继承。</p>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>层级 / 创建方式</th><th>工作目录</th><th>侧栏工作区</th><th>Agent 预设</th><th>权限模式</th><th>模型 / 思考等级</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>root</b><br><span class="sub"><code>agents.create</code> + 发布前 <code>setup</code></span></td>
+                <td><code>meta.cwd</code> + <code>workingDirectory.set</code></td>
+                <td>创建后 <code>workspaceRegistry</code><br><code>.resolveByPath(cwd)</code> → <code>Workspace.attachSession</code></td>
+                <td><code>meta.agentPreset</code> + <code>setup</code> 内 <code>agentPresets.mount</code> + <code>agent-preset/selected</code></td>
+                <td><code>setup</code> 内追加 <code>permission/preset</code>、<code>sandbox/mode</code>、<code>approval/policy</code>，<b>必须在发布前</b></td>
+                <td><code>agentOptions</code> 原样携带 <code>provider/model/</code><br><code>reasoningEffort/maxTokens</code></td>
+              </tr>
+              <tr>
+                <td><b>sibling</b><span class="sub"><code>subagents.</code></span><span class="sub"><code>startActivation</code></span><span class="sub"><code>provider:"spawn"</code></span></td>
+                <td><code>request.cwd</code></td>
+                <td>不需要：侧栏渲染在父会话下、与源同层</td>
+                <td>委派自动继承父组成（不额外传 <code>agentPreset</code>）</td>
+                <td>委派自动继承（<code>source:"delegation"</code>）</td>
+                <td><code>request.agentOptions</code> 原样携带</td>
+              </tr>
+              <tr>
+                <td><b>degraded root</b><br><span class="sub">子会话但父已不活</span></td>
+                <td>同上</td>
+                <td>同上</td>
+                <td>同上</td>
+                <td>同上</td>
+                <td>同上；返回显式 <code>degraded:"parent-inactive"</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="src"><b>事实来源</b>：<code>docs/session-handoff-2026-11-11.md</code> §0.2–§0.3；<code>packages/dsh-session-tree/index.js</code> 的 <code>spawnSuccessor</code>。真机验证：root <b>14/14</b>、sibling <b>12/12</b>（<code>docs/e2e-handoff-2026-11-11.md</code>）；B/C 组 <code>verify-handoff</code> 各 <b>12/12</b>。</p>
+
+        <h3 style="margin-top:30px">6.2 两套接力：42% 与 50% 不是一回事</h3>
+
+        <figure class="fig" id="fig-threshold">
+          <div class="figtop">
+            <span class="name">figure-05 · two-relays</span>
+            <div class="tags"><span class="pill fact">事实</span><span class="pill demo">流程示意</span></div>
+          </div>
+          <svg viewBox="0 0 1120 470" role="img" aria-labelledby="fig-threshold-title">
+            <title id="fig-threshold-title">竹节 42% 与会话交接 50% 的流程对比</title>
+            <desc>上排为 tree-engine 的竹节：自报 42% 后同一 leaf 换会话；下排为 session-handoff：50% 后写交接文件并启动同层级新会话。</desc>
+            <defs>
+              <marker id="f5-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
+              <marker id="f5-arrow-amber" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head-amber"/></marker>
+            </defs>
+            <rect class="s-bg" x="0" y="0" width="1120" height="470" rx="14"/>
+            <text class="s-hero" x="32" y="36" font-size="19">两种接力：同一 leaf 换会话 vs 同层会话接替</text>
+
+            <!-- bamboo lane -->
+            <rect class="s-layer" x="24" y="56" width="1072" height="160" rx="12"/>
+            <rect class="s-card-teal" x="40" y="72" width="210" height="128" rx="10"/>
+            <text class="s-on-teal" x="56" y="94" font-size="10.5">竹节 · tree-engine</text>
+            <text class="s-hero-sm" x="56" y="118" font-size="19">42%</text>
+            <text class="s-t3" x="56" y="138" font-size="10.5">同一 leaf，换执行会话</text>
+            <text class="s-t3" x="56" y="155" font-size="10.5">引擎自动；先 interrupt 后 start</text>
+            <text class="s-t3" x="56" y="172" font-size="10.5">owner 重绑；attempt 不变</text>
+            <text class="s-t3" x="56" y="189" font-size="10.5">链长 5 → frozen</text>
+
+            <rect class="s-card" x="280" y="82" width="140" height="96" rx="9"/>
+            <text class="s-mono" x="292" y="102" font-size="9.5">STEP 1</text>
+            <text class="s-t2" x="292" y="120" font-size="10.5">worker 自报</text>
+            <text class="s-t3" x="292" y="137" font-size="9.5">tree_report</text>
+            <text class="s-t3" x="292" y="152" font-size="9.5">{action:"context",</text>
+            <text class="s-t3" x="292" y="167" font-size="9.5">pct:42}</text>
+
+            <rect class="s-card" x="444" y="82" width="140" height="96" rx="9"/>
+            <text class="s-mono" x="456" y="102" font-size="9.5">STEP 2</text>
+            <text class="s-t2" x="456" y="120" font-size="10.5">sweep 触发</text>
+            <text class="s-t3" x="456" y="137" font-size="9.5">≥ 阈值且非 root</text>
+            <text class="s-t3" x="456" y="152" font-size="9.5">leaf 置</text>
+            <text class="s-t3" x="456" y="167" font-size="9.5">segment_pending</text>
+
+            <rect class="s-card" x="608" y="82" width="140" height="96" rx="9"/>
+            <text class="s-mono" x="620" y="102" font-size="9.5">STEP 3</text>
+            <text class="s-t2" x="620" y="120" font-size="10.5">旧会话出简报</text>
+            <text class="s-t3" x="620" y="137" font-size="9.5">K1–K5 结构</text>
+            <text class="s-t3" x="620" y="152" font-size="9.5">进度 / 发现 /</text>
+            <text class="s-t3" x="620" y="167" font-size="9.5">未完成 / 指针</text>
+
+            <rect class="s-card" x="772" y="82" width="140" height="96" rx="9"/>
+            <text class="s-mono" x="784" y="102" font-size="9.5">STEP 4</text>
+            <text class="s-t2" x="784" y="120" font-size="10.5">先 interrupt</text>
+            <text class="s-t3" x="784" y="137" font-size="9.5">释放并发名额</text>
+            <text class="s-t3" x="784" y="152" font-size="9.5">再 start 新会话</text>
+            <text class="s-t3" x="784" y="167" font-size="9.5">防瞬时双占用</text>
+
+            <rect class="s-card-teal" x="936" y="82" width="144" height="96" rx="9"/>
+            <text class="s-mono" x="948" y="102" font-size="9.5">STEP 5</text>
+            <text class="s-t2" x="948" y="120" font-size="10.5">接手继续</text>
+            <text class="s-t3" x="948" y="137" font-size="9.5">leaf 不变</text>
+            <text class="s-t3" x="948" y="152" font-size="9.5">owner 重绑</text>
+            <text class="s-t3" x="948" y="167" font-size="9.5">可正常写 done</text>
+
+            <line class="s-arrow" x1="420" y1="130" x2="442" y2="130" marker-end="url(#f5-arrow)"/>
+            <line class="s-arrow" x1="584" y1="130" x2="606" y2="130" marker-end="url(#f5-arrow)"/>
+            <line class="s-arrow" x1="748" y1="130" x2="770" y2="130" marker-end="url(#f5-arrow)"/>
+            <line class="s-arrow" x1="912" y1="130" x2="934" y2="130" marker-end="url(#f5-arrow)"/>
+
+            <!-- divider -->
+            <text class="s-t2" x="32" y="240" font-size="11.5">协调规则：<tspan class="s-on-teal">先按竹节</tspan>——同一 leaf 已被新会话接手，就不必再做会话交接；若已到 50% 仍没等到竹节，才立即交接。</text>
+
+            <!-- handoff lane -->
+            <rect class="s-layer" x="24" y="254" width="1072" height="160" rx="12"/>
+            <rect class="s-card-amber" x="40" y="270" width="210" height="128" rx="10"/>
+            <text class="s-on-amber" x="56" y="292" font-size="10.5">交接 · session-tree</text>
+            <text class="s-hero-sm" x="56" y="316" font-size="19">50%</text>
+            <text class="s-t3" x="56" y="336" font-size="10.5">任意层会话，同层接替</text>
+            <text class="s-t3" x="56" y="353" font-size="10.5">写 HANDOFF-*.md</text>
+            <text class="s-t3" x="56" y="370" font-size="10.5">子→同父兄弟；根→新根</text>
+            <text class="s-t3" x="56" y="387" font-size="10.5">5 分钟防重复</text>
+
+            <rect class="s-card" x="280" y="280" width="140" height="96" rx="9"/>
+            <text class="s-mono" x="292" y="300" font-size="9.5">STEP 1</text>
+            <text class="s-t2" x="292" y="318" font-size="10.5">读占用</text>
+            <text class="s-t3" x="292" y="335" font-size="9.5">action:"status"</text>
+            <text class="s-t3" x="292" y="350" font-size="9.5">context_pct ≥ 50</text>
+            <text class="s-t3" x="292" y="365" font-size="9.5">只读，无副作用</text>
+
+            <rect class="s-card" x="444" y="280" width="140" height="96" rx="9"/>
+            <text class="s-mono" x="456" y="300" font-size="9.5">STEP 2</text>
+            <text class="s-t2" x="456" y="318" font-size="10.5">过闸</text>
+            <text class="s-t3" x="456" y="335" font-size="9.5">低于阈值 → 拒</text>
+            <text class="s-t3" x="456" y="350" font-size="9.5">5 分钟内重复 → 拒</text>
+            <text class="s-t3" x="456" y="365" font-size="9.5">spawn:false 免阈值闸</text>
+
+            <rect class="s-card" x="608" y="280" width="140" height="96" rx="9"/>
+            <text class="s-mono" x="620" y="300" font-size="9.5">STEP 3</text>
+            <text class="s-t2" x="620" y="318" font-size="10.5">先写文件</text>
+            <text class="s-t3" x="620" y="335" font-size="9.5">HANDOFF-&lt;id&gt;-</text>
+            <text class="s-t3" x="620" y="350" font-size="9.5">&lt;时间&gt;.md</text>
+            <text class="s-t3" x="620" y="365" font-size="9.5">文件失败 = 整体报错</text>
+
+            <rect class="s-card" x="772" y="280" width="140" height="104" rx="9"/>
+            <text class="s-mono" x="784" y="300" font-size="9.5">STEP 4</text>
+            <text class="s-t2" x="784" y="318" font-size="10.5">启动接替</text>
+            <text class="s-t3" x="784" y="335" font-size="9.5">子会话→同父兄弟</text>
+            <text class="s-t3" x="784" y="350" font-size="9.5">根→新根</text>
+            <text class="s-t3" x="784" y="365" font-size="9.2">父不活→降级</text>
+            <text class="s-t3" x="784" y="379" font-size="9.2">标 degraded</text>
+
+            <rect class="s-card-amber" x="936" y="280" width="144" height="96" rx="9"/>
+            <text class="s-mono" x="948" y="300" font-size="9.5">STEP 5</text>
+            <text class="s-t2" x="948" y="318" font-size="10.5">接替者读文件</text>
+            <text class="s-t3" x="948" y="335" font-size="9.5">首条提示含绝对路径</text>
+            <text class="s-t3" x="948" y="350" font-size="9.5">语言跟随界面</text>
+            <text class="s-t3" x="948" y="365" font-size="9.5">不迁移 leaf owner</text>
+
+            <line class="s-arrow-amber" x1="420" y1="328" x2="442" y2="328" marker-end="url(#f5-arrow-amber)"/>
+            <line class="s-arrow-amber" x1="584" y1="328" x2="606" y2="328" marker-end="url(#f5-arrow-amber)"/>
+            <line class="s-arrow-amber" x1="748" y1="328" x2="770" y2="328" marker-end="url(#f5-arrow-amber)"/>
+            <line class="s-arrow-amber" x1="912" y1="328" x2="934" y2="328" marker-end="url(#f5-arrow-amber)"/>
+
+            <text class="s-t3" x="32" y="440" font-size="10.5">阈值：竹节 DSH 缺省 42（可被 <tspan class="s-mono">TREE_ENGINE_CONFIG.ctx_segment_threshold</tspan> / <tspan class="s-mono">bambooThresholdPct</tspan> 覆盖）；交接缺省 50（<tspan class="s-mono">threshold_pct</tspan> 可覆盖）。</text>
+          </svg>
+          <figcaption><b>图 5 · 42% 与 50% 对比</b>。<span class="how">怎么读：</span>上面是「引擎换棒」——早、自动、保树；下面是「会话接替」——晚、带文件、保层级。两者都换会话，<b>都不换 leaf</b>；但只有竹节会自动重绑 owner，交接需要 <code>set-session</code> 才让接替者写 done。</figcaption>
+        </figure>
+
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th style="width:16%">维度</th><th style="width:42%">竹节（tree-engine）</th><th style="width:42%">会话交接（session-tree）</th></tr></thead>
+            <tbody>
+              <tr><td>触发</td><td>worker <code>tree_report {action:"context", pct≥42}</code>，或宿主 <code>tokenMeter</code> 测量先到</td><td>任意会话 <code>session_handoff {action:"status"}</code> 读到 <code>context_pct ≥ 50</code>，由模型/用户发起</td></tr>
+              <tr><td>范围</td><td><b>同一个 leaf</b> 换执行会话；树结构、任务书不变</td><td><b>同一层级</b>换会话：子→同父兄弟；根→新根</td></tr>
+              <tr><td>产物</td><td>K1–K5 简报注入新会话提示词；<code>runtime.segmentChain</code> 追加</td><td><code>HANDOFF-*.md</code> 落工作区；首条提示让接替者先读</td></tr>
+              <tr><td>owner</td><td>接力成功后 <code>leaf.session_id</code> 重绑给接手会话（v0.5.0 起）</td><td><b>不自动迁移</b>；需 leaf 的 creator/上级 <code>tree_node set-session</code></td></tr>
+              <tr><td>阈值/上限</td><td>缺省 42；链长上限 5，超限 <code>frozen</code>；<code>attempt</code> 不变</td><td>缺省 50；5 分钟防重复；<code>force</code> 可双绕；<code>spawn:false</code> 只写文件</td></tr>
+              <tr><td>失败语义</td><td>简报缺失 → <code>no-handoff-summary</code> 降级接手；超时/取消先到者生效</td><td>文件写失败 → 整体报错；spawn 失败 → 保留文件 + <code>spawn_error</code></td></tr>
+              <tr><td>协调</td><td colspan="2"><b>先按竹节</b>：已换棒就不必再交接；50% 仍没等到竹节（链满 frozen / 简报回收失败 / 已不是 running owner）→ 立即交接，并在 <code>tree_report progress</code> 留痕。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="src"><b>事实来源</b>：<code>docs/segment-handoff.md</code> §4；<code>packages/dsh-tree-engine/src/engine.js</code> <code>set-context</code>/<code>bambooRelay</code>；<code>packages/dsh-session-tree/index.js</code> 阈值与防重复；<code>docs/skills-usage.md</code> §8。</p>
+
+        <h3 style="margin-top:30px">6.3 所有权：谁能写 done，谁不能</h3>
+        <div class="grid2">
+          <article class="card">
+            <h3>三次「绑定」</h3>
+            <div class="tablewrap" style="margin:8px 0 0">
+              <table class="compact">
+                <thead><tr><th>时机</th><th>leaf.session_id</th><th>后果</th></tr></thead>
+                <tbody>
+                  <tr><td><code>tree_dispatch start</code></td><td>绑为执行者会话</td><td>执行者可写 <code>done</code></td></tr>
+                  <tr><td>竹节接力成功</td><td>重绑为接手会话</td><td>接手者可写 <code>done</code>（v0.5.0 修复）</td></tr>
+                  <tr><td><code>session_handoff</code></td><td><b>不变</b></td><td>接替者写 <code>done</code> 会被 <code>E_BORROWED_IDENTITY</code> 拒</td></tr>
+                  <tr><td><code>tree_node set-session</code></td><td>由 leaf 的 creator/上级重绑</td><td>交接后恢复写 done 的合法路径</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="src"><b>事实</b>：<code>src/engine.js</code> dispatch/bamboo/set-session；<code>tree-commander</code> SKILL §1.3/§3.3。旧版 B1 缺陷已在 v0.5.0 修复并加回归测试。</p>
+          </article>
+          <article class="card">
+            <h3>为什么「done 只给 owner」</h3>
+            <p>如果 commander 能代写 worker 的 done，验收就退化成自证。引擎因此把 done 事件的所有权钉在 <code>leaf.session_id</code> 上；<code>set-status</code> 则放宽到 owner / creator / root（用于剪枝、归档）。</p>
+            <p>但注意边界：<code>set-context</code>、<code>set-verification</code>、非 done 的 <code>event:append</code>、<code>dispatch:cancel</code> 目前在引擎侧<b>没有统一的 caller 校验</b>（审计 P1-05）；「借身份全拒」的旧表述不成立，见 §8。</p>
+          </article>
+        </div>
+
+        <h3 style="margin-top:30px">6.4 阈值、防重复与干跑：三道闸的顺序</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th style="width:18%">场景</th><th style="width:38%">会发生什么</th><th style="width:44%">是否预期 / 怎么处理</th></tr></thead>
+            <tbody>
+              <tr><td>新会话直接 <code>handoff</code></td><td><code>below-threshold</code>，返回 <code>context_pct</code> 与 <code>threshold_pct</code>，<b>不写文件</b></td><td><b>预期</b>：证明工具已挂载。想看完整路径加 <code>force:true</code>；只想写文件用 <code>spawn:false</code></td></tr>
+              <tr><td><code>spawn:false</code>，低于 50%</td><td>阈值闸被 <code>fileOnly</code> 绕过；写 <code>HANDOFF-*.md</code>，<code>status="file-only"</code>，不启动会话</td><td><b>预期</b>：v1.3.3 起的行为；防重复闸仍生效</td></tr>
+              <tr><td>5 分钟内第二次 <code>handoff</code></td><td><code>recent-handoff</code>，返回上次时间与文件路径</td><td><b>预期</b>：防重复；确需再写才 <code>force:true</code></td></tr>
+              <tr><td>交接时 spawn 失败</td><td>文件已保留；返回 <code>handoff_path</code> + <code>spawn_error</code>，<code>successor="unavailable"</code></td><td>不是「没写成」：文件在；修好服务后用 <code>force:true</code> 重试（否则可能撞防重复）</td></tr>
+              <tr><td>继承部分失败</td><td><code>status="handed-off"</code> 仍成立；<code>warnings[]</code> 非空，<code>successor.preset_error</code> / <code>permission_error</code> / <code>workspace.reason</code> 暴露</td><td>接替会话可用但继承不完整；验收必须同时看 <code>warnings</code>，不能只看 <code>status</code></td></tr>
+              <tr><td>pct 不可得</td><td>带 <code>warnings</code> 继续，不臆造百分比；阈值闸无法评估</td><td>看 <code>context_pct="unavailable"</code>，不要当成 0%</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top:30px">6.5 接替提示语的语言：三级解析</h3>
+        <ol class="steps">
+          <li><h4>活体 Loader 的 <code>locale</code> 条目</h4><p><code>services.get("loader").resolve("locale").options.config.preference</code>；volatile 引用经 <code>get()</code> 展开；按包名 <code>@deepseek-ai/dsh-client-locale</code> 兜底查嵌套条目。</p></li>
+          <li><h4>profile 配置文件</h4><p><code>cordis.patch.yml</code> / <code>cordis.yml</code> 中 <code>locale</code> 条目的 <code>preference</code>；优先 <code>DSH_PROFILE_DIR</code>，宿主未导出该变量时用 <code>process.cwd()</code>（实测宿主 cwd 就是 profile 目录）。</p></li>
+          <li><h4>英文回退</h4><p><code>zh*</code> → <code>zh</code>；<code>en*</code> → <code>en</code>；其它已存语言（ja/es/fr/de/ru/pt…）与无偏好 → <code>en</code>。每次 <code>status</code>/<code>handoff</code> 重新解析，不缓存。</p></li>
+        </ol>
+        <p class="src"><b>事实来源</b>：<code>docs/e2e-kickoff-language-2026-11-11.md</code> §1–§3；<code>CHANGELOG.md</code> 1.3.1 的「已知边界」。真机：修复前 <code>lang=en</code> → 修复后 <code>lang=zh</code> 且接替首条中文 PASS。</p>
+
+        <h3 style="margin-top:30px">6.6 热更与 Skill 注入：什么时候必须重载/新开会话</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th style="width:26%">你改了什么</th><th style="width:34%">生效方式</th><th style="width:40%">原因 / 验收</th></tr></thead>
+            <tbody>
+              <tr><td><code>client.js</code>（侧栏）</td><td>刷新页面</td><td>客户端半由浏览器加载；热更可能残留旧实例，刷新最干净</td></tr>
+              <tr><td><code>index.js</code>（宿主半）</td><td>对 bundle entry <b>disable→enable</b>，或重启 DSH</td><td>Loader 按包名缓存已导入宿主模块；只保存文件不会重新求值（D12）</td></tr>
+              <tr><td><code>cordis.patch.yml</code>（新增/改 insert 行）</td><td>对 bundle entry disable→enable</td><td>patch 是装载期层；新增 Skill provider 行也走这条</td></tr>
+              <tr><td><code>skills/*/SKILL.md</code> 正文</td><td><b>下一次新会话</b>直接读到</td><td>目录在会话启动时注入；旧会话不刷新；目录描述可能热更新，但正文按需读取</td></tr>
+              <tr><td>profile <code>package.json</code>（bundles/dependencies）</td><td><code>pnpm install</code> + 重载/重启</td><td>新增包走新包名无缓存；并入已有包名则仍需重载</td></tr>
+              <tr><td>版本号</td><td>bump + 发布同步</td><td>市场按 <code>package.json.version</code> 判断更新（D6）；不 bump = 假更新</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <span class="label">Skill 从 patch 行进会话目录的路径</span>
+          <p>① 两个 tree 包的 <code>cordis.patch.yml</code> 第 2 行 insert <code>@deepseek-ai/dsh-skill-filesystem</code>（<code>providerName</code> 唯一、<code>includeDefaultRoots:false</code>）→ ② <code>bundledSkillDir</code> 经 <code>require.resolve(pkg/package.json)</code> 定位包内 <code>skills/</code> → ③ 宿主挂载 provider → ④ <b>新会话启动</b>时把目录写进 <code>&lt;available_skills&gt;</code> → ⑤ 模型按意图命中或 <code>skill {name}</code> 加载正文。</p>
+        </div>
+
+        <h3 style="margin-top:30px">6.7 两套状态：leaf.status 与 runtime.state</h3>
+
+        <figure class="fig" id="fig-state">
+          <div class="figtop">
+            <span class="name">figure-04 · lifecycle</span>
+            <div class="tags"><span class="pill fact">事实</span><span class="pill demo">简化示意</span></div>
+          </div>
+          <svg viewBox="0 0 1120 580" role="img" aria-labelledby="fig-state-title">
+            <title id="fig-state-title">leaf.status 与 runtime.state 两套状态机</title>
+            <desc>上轨是账本状态 active/pending_brief/segment_pending/done/pruned/archived；下轨是运行态 pending/running/succeeded/timeout/cancelled/frozen。两轨不同步，收口看 runtime。</desc>
+            <defs>
+              <marker id="f4-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
+              <marker id="f4-arrow-amber" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head-amber"/></marker>
+            </defs>
+            <rect class="s-bg" x="0" y="0" width="1120" height="580" rx="14"/>
+            <text class="s-hero" x="32" y="36" font-size="19">两套状态：一个账本，一个执行体</text>
+            <text class="s-t3" x="360" y="36" font-size="11.5">同一时刻可能「status=pending_brief，runtime=succeeded」——以 runtime 收口</text>
+
+            <!-- lane A -->
+            <rect class="s-layer" x="24" y="54" width="1072" height="200" rx="12"/>
+            <text class="s-on-teal" x="44" y="78" font-size="12">A · leaf.status（闭集 6 值）</text>
+            <text class="s-t3" x="260" y="78" font-size="10.5">账本状态；由 set-status / 竹节触发；观察与查询用</text>
+
+            <rect class="s-card" x="70" y="128" width="150" height="48" rx="9"/>
+            <text class="s-t2" x="145" y="149" font-size="10.5" text-anchor="middle">pending_brief</text>
+            <text class="s-t3" x="145" y="165" font-size="9.2" text-anchor="middle">已建点，未开工</text>
+
+            <rect class="s-card-teal" x="270" y="128" width="130" height="48" rx="9"/>
+            <text class="s-t2" x="335" y="149" font-size="10.5" text-anchor="middle">active</text>
+            <text class="s-t3" x="335" y="165" font-size="9.2" text-anchor="middle">可执行</text>
+
+            <rect class="s-card-amber" x="270" y="88" width="130" height="36" rx="9"/>
+            <text class="s-t2" x="335" y="105" font-size="10" text-anchor="middle">segment_pending</text>
+            <text class="s-t3" x="335" y="118" font-size="8.6" text-anchor="middle">竹节交接中</text>
+
+            <rect class="s-card-teal" x="500" y="128" width="110" height="48" rx="9"/>
+            <text class="s-t2" x="555" y="149" font-size="10.5" text-anchor="middle">done</text>
+            <text class="s-t3" x="555" y="165" font-size="9.2" text-anchor="middle">已验收</text>
+
+            <rect class="s-card" x="690" y="128" width="120" height="48" rx="9"/>
+            <text class="s-t2" x="750" y="149" font-size="10.5" text-anchor="middle">archived</text>
+            <text class="s-t3" x="750" y="165" font-size="9.2" text-anchor="middle">归档</text>
+
+            <rect class="s-card" x="690" y="190" width="120" height="42" rx="9"/>
+            <text class="s-t2" x="750" y="208" font-size="10.5" text-anchor="middle">pruned</text>
+            <text class="s-t3" x="750" y="223" font-size="9.2" text-anchor="middle">剪枝（级联后代）</text>
+
+            <line class="s-arrow" x1="220" y1="152" x2="268" y2="152" marker-end="url(#f4-arrow)"/>
+            <line class="s-dash" x1="335" y1="124" x2="335" y2="128"/>
+            <line class="s-arrow" x1="400" y1="152" x2="498" y2="152" marker-end="url(#f4-arrow)"/>
+            <line class="s-arrow" x1="610" y1="146" x2="688" y2="146" marker-end="url(#f4-arrow)"/>
+            <line class="s-arrow" x1="610" y1="162" x2="688" y2="204" marker-end="url(#f4-arrow)"/>
+            <line class="s-arrow-amber" x1="360" y1="176" x2="688" y2="204" marker-end="url(#f4-arrow-amber)" stroke-dasharray="4 4"/>
+
+            <text class="s-t3" x="442" y="108" font-size="9.2">竹节触发（仅 active）</text>
+            <text class="s-t3" x="442" y="240" font-size="9.2">active → pruned / archived（虚线）</text>
+            <text class="s-t3" x="820" y="140" font-size="9.2">done 之后只能 pruned / archived</text>
+
+            <!-- lane B -->
+            <rect class="s-layer" x="24" y="274" width="1072" height="240" rx="12"/>
+            <text class="s-on-teal" x="44" y="298" font-size="12">B · runtime.state（执行体）</text>
+            <text class="s-t3" x="250" y="298" font-size="10.5">调度状态；由 dispatch / sweep / 竹节 / cancel 改变；收口看它</text>
+
+            <rect class="s-card" x="80" y="360" width="120" height="50" rx="9"/>
+            <text class="s-t2" x="140" y="382" font-size="10.5" text-anchor="middle">pending</text>
+            <text class="s-t3" x="140" y="398" font-size="9.2" text-anchor="middle">已建 runtime</text>
+
+            <rect class="s-card-teal" x="270" y="360" width="140" height="50" rx="9"/>
+            <text class="s-t2" x="340" y="382" font-size="10.5" text-anchor="middle">running</text>
+            <text class="s-t3" x="340" y="398" font-size="9.2" text-anchor="middle">会话在干活</text>
+
+            <rect class="s-card" x="560" y="288" width="160" height="38" rx="8"/>
+            <text class="s-t2" x="640" y="312" font-size="10.5" text-anchor="middle">succeeded</text>
+            <rect class="s-card" x="560" y="332" width="160" height="38" rx="8"/>
+            <text class="s-t2" x="640" y="356" font-size="10.5" text-anchor="middle">timeout</text>
+            <rect class="s-card" x="560" y="376" width="160" height="38" rx="8"/>
+            <text class="s-t2" x="640" y="400" font-size="10.5" text-anchor="middle">cancelled</text>
+            <rect class="s-card-amber" x="560" y="420" width="160" height="38" rx="8"/>
+            <text class="s-t2" x="640" y="444" font-size="10.5" text-anchor="middle">frozen</text>
+
+            <line class="s-arrow" x1="200" y1="385" x2="268" y2="385" marker-end="url(#f4-arrow)"/>
+            <line class="s-arrow" x1="410" y1="375" x2="558" y2="310" marker-end="url(#f4-arrow)"/>
+            <line class="s-arrow" x1="410" y1="385" x2="558" y2="351" marker-end="url(#f4-arrow)"/>
+            <line class="s-arrow" x1="410" y1="395" x2="558" y2="395" marker-end="url(#f4-arrow)"/>
+            <line class="s-arrow-amber" x1="410" y1="405" x2="558" y2="439" marker-end="url(#f4-arrow-amber)"/>
+
+            <text class="s-t3" x="80" y="500" font-size="9.6">出边：succeeded（done 回流，仅 running）· timeout（硬截止）· cancelled（cancel 先到者）· frozen（链长 5 / 异常）</text>
+
+            <rect class="s-layer" x="780" y="332" width="296" height="150" rx="10"/>
+            <text class="s-on-rose" x="796" y="354" font-size="10.5">收口判据（别混）</text>
+            <text class="s-t3" x="796" y="374" font-size="9.8">① runtime=succeeded 才代表节点完成</text>
+            <text class="s-t3" x="796" y="391" font-size="9.8">② status 可能仍是 pending_brief / active</text>
+            <text class="s-t3" x="796" y="408" font-size="9.8">③ tree_verify FAIL 不阻断 succeeded</text>
+            <text class="s-t3" x="796" y="425" font-size="9.8">④ set-status done 在工具面打不通</text>
+            <text class="s-t3" x="796" y="442" font-size="9.8">⑤ failed 仅出现在注释，当前无赋值路径</text>
+            <text class="s-t3" x="796" y="459" font-size="9.8">⑥ 竹节在 running 内部换会话，不改状态</text>
+
+            <text class="s-t3" x="32" y="552" font-size="10.5">status 闭集：active / done / pruned / archived / segment_pending / pending_brief；runtime 实际出现：pending / running / succeeded / timeout / cancelled / frozen（设计中的 failed 当前无赋值路径）。</text>
+          </svg>
+          <figcaption><b>图 4 · leaf 生命周期</b>。<span class="how">怎么读：</span>上面是「账本怎么记」，下面是「执行体怎么跑」。实线是主路径；虚线是允许但少见的旁路。真正决定「这个节点算不算完成」的是 <b>runtime.state</b>，不是 <code>leaf.status</code>——这也是真机里最容易误读的一处。</figcaption>
+        </figure>
+
+        <div class="callout warn">
+          <span class="label">状态机的三个诚实边界</span>
+          <p>① <code>done</code> 不是绝对终态：仍可转 <code>pruned</code> / <code>archived</code>，但不能回 <code>active</code>。<br>
+          ② <code>set-status done</code> 在工具面不可达：它要求 milestones 非空且全 <code>audit_pass</code>，而工具面没有 milestone 写入 action；正常收口走「done 事件 → runtime.succeeded」。<br>
+          ③ <code>failed</code> 在 runtime 设计里存在，但当前代码没有赋值路径；不要把它当作可等待的终态。</p>
+        </div>
+
+      </div>
+    </section>
+
+    <div class="hr"></div>
+
+    <!-- ============================================================
+         §7 质量与发布
+         ============================================================ -->
+    <section class="section" id="quality">
+      <div class="sec-head">
+        <div class="sec-num">07</div>
+        <div>
+          <h2 class="sec-title">质量与发布：先绿，再 bump，再逐字节同步</h2>
+          <p class="sec-sub">这套项目的发布纪律比功能更值得看：18 文件 SHA 一致、三轮洁净室、npm 刻意冻结。</p>
+        </div>
+      </div>
+      <div class="sec-body">
+
+        <div class="metrics">
+          <div class="metric teal"><div class="v">67/67</div><div class="l">tree-engine</div><div class="n">62 引擎 + 4 技能打包 + 1 B1 回归</div></div>
+          <div class="metric amber"><div class="v">41/41</div><div class="l">session-tree handoff</div><div class="n">继承/工作区/闸门/语言/干跑</div></div>
+          <div class="metric violet"><div class="v">3/3</div><div class="l">随包 Skill 打包</div><div class="n">frontmatter / files / patch 行</div></div>
+          <div class="metric rose"><div class="v">18/18</div><div class="l">发布 SHA</div><div class="n">v1.3.5 = 1fb9193（main + tag）</div></div>
+        </div>
+
+        <h3>7.1 测试矩阵：哪些是「全绿」，哪些是「有环境依赖」</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th style="width:22%">对象</th><th style="width:34%">命令</th><th style="width:16%">结果</th><th style="width:28%">依赖 / 备注</th></tr></thead>
+            <tbody>
+              <tr><td><code>dsh-tree-engine</code></td><td><code>node --test tests/*.test.js</code></td><td><b>67/67</b></td><td>纯逻辑 + 假时钟/假 store；<code>--test-reporter=tap</code> 要放在位置参数前</td></tr>
+              <tr><td><code>dsh-meta-loop</code></td><td><code>node --test tests/*.test.js</code></td><td><b>13/13</b></td><td>治理层；<b>未装配</b>，测试仍可跑</td></tr>
+              <tr><td><code>session-tree</code> handoff</td><td><code>node test/handoff.test.js</code></td><td><b>41/41</b></td><td>mock 四类服务；含语言跟随 6 例 + <code>spawn:false</code> 干跑</td></tr>
+              <tr><td><code>session-tree</code> skills</td><td><code>node test/skills.test.cjs</code></td><td><b>3/3</b></td><td>frontmatter / <code>package.json.files</code> / patch provider 行</td></tr>
+              <tr><td><code>session-tree</code> render</td><td><code>node test/render.test.cjs</code></td><td><b>全绿</b><br><span class="sub">133/133 + 9/9 + 11/11</span></td><td>确定性夹具渲染；客户端半的 DOM 契约</td></tr>
+              <tr><td><code>session-tree</code> style</td><td><code>node test/style-guard.cjs</code></td><td><b>22/22</b></td><td>样式注入 / SSR 边界</td></tr>
+              <tr><td><code>session-tree</code> bundle</td><td><code>node scripts/verify-bundle.mjs</code></td><td><b>0 fail</b></td><td>发布物清单自检</td></tr>
+              <tr><td><code>provider-conformance</code></td><td><code>node test/provider-conformance.cjs [asar 解包目录]</code></td><td><b>29/29</b><span class="sub">需 rc.2 兼容 fixture</span></td><td>默认读 <code>%TEMP%\dsh-asar-inspect\out</code>；缺目录 ENOENT；DSH 0.2.2-rc.1 布局漂移</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="src"><b>实测</b>：2026-11-11 本会话复跑 <code>tree-engine</code> <b>67/67</b>、<code>handoff</code> <b>41/41</b>、<code>skills</code> <b>3/3</b>，退出码均为 0；其余数字采信仓库报告。<b>注意</b>：不要写 <code>node --test tests</code>——Node 24 会把目录当文件路径，报 <code>test at tests:1:1</code> 的假失败。</p>
+
+        <figure class="fig" id="fig-release">
+          <div class="figtop">
+            <span class="name">figure-08 · release-pipeline</span>
+            <div class="tags"><span class="pill fact">事实</span><span class="pill demo">流程示意</span></div>
+          </div>
+          <svg viewBox="0 0 1120 440" role="img" aria-labelledby="fig-release-title">
+            <title id="fig-release-title">测试、版本、发布同步与洁净室流水线</title>
+            <desc>六个阶段：测试全绿、按 D6 bump、release-plugin 逐字节同步、公开仓 main+tag、市场与 npm 策略、三轮洁净室评审；下方有失败回环与三轮结果。</desc>
+            <defs>
+              <marker id="f8-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
+              <marker id="f8-arrow-teal" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head-teal"/></marker>
+            </defs>
+            <rect class="s-bg" x="0" y="0" width="1120" height="440" rx="14"/>
+            <text class="s-hero" x="32" y="36" font-size="19">从测试到发布：一条不许跳过的链</text>
+
+            <!-- 6 stages -->
+            <rect class="s-card" x="30" y="70" width="160" height="170" rx="11"/>
+            <text class="s-mono" x="46" y="92" font-size="9.5">STAGE 1</text>
+            <text class="s-hero-sm" x="46" y="114" font-size="13.5">测试全绿</text>
+            <text class="s-t3" x="46" y="134" font-size="9.8">67 / 41 / 3</text>
+            <text class="s-t3" x="46" y="150" font-size="9.8">22 / 0 fail</text>
+            <text class="s-t3" x="46" y="166" font-size="9.8">29/29 需 fixture</text>
+            <text class="s-t3" x="46" y="182" font-size="9.8">命令失败即停</text>
+            <rect class="s-badge-teal" x="46" y="204" width="76" height="20" rx="10"/>
+            <text class="s-num" x="84" y="218" font-size="8.6" text-anchor="middle">exit 0</text>
+
+            <rect class="s-card" x="210" y="70" width="160" height="170" rx="11"/>
+            <text class="s-mono" x="226" y="92" font-size="9.5">STAGE 2</text>
+            <text class="s-hero-sm" x="226" y="114" font-size="13.5">版本纪律</text>
+            <text class="s-t3" x="226" y="134" font-size="9.8">有内容变化</text>
+            <text class="s-t3" x="226" y="150" font-size="9.8">必须 bump</text>
+            <text class="s-t3" x="226" y="166" font-size="9.8">无变化不造</text>
+            <text class="s-t3" x="226" y="182" font-size="9.8">假版本</text>
+            <rect class="s-badge" x="226" y="204" width="92" height="20" rx="10"/>
+            <text class="s-t2" x="272" y="218" font-size="8.6" text-anchor="middle">D6 · semver</text>
+
+            <rect class="s-card" x="390" y="70" width="160" height="170" rx="11"/>
+            <text class="s-mono" x="406" y="92" font-size="9.5">STAGE 3</text>
+            <text class="s-hero-sm" x="406" y="114" font-size="13.5">同步</text>
+            <text class="s-t3" x="406" y="134" font-size="9.8">release-plugin</text>
+            <text class="s-t3" x="406" y="150" font-size="9.8">只写 target</text>
+            <text class="s-t3" x="406" y="166" font-size="9.8">逐文件 SHA-256</text>
+            <text class="s-t3" x="406" y="182" font-size="9.8">禁止手工双写</text>
+            <rect class="s-badge" x="406" y="204" width="92" height="20" rx="10"/>
+            <text class="s-t2" x="452" y="218" font-size="8.6" text-anchor="middle">18/18 SHA</text>
+
+            <rect class="s-card" x="570" y="70" width="160" height="170" rx="11"/>
+            <text class="s-mono" x="586" y="92" font-size="9.5">STAGE 4</text>
+            <text class="s-hero-sm" x="586" y="114" font-size="13.5">公开仓发布</text>
+            <text class="s-t3" x="586" y="134" font-size="9.8">main + tag</text>
+            <text class="s-t3" x="586" y="150" font-size="9.8">v1.3.5 = 1fb9193</text>
+            <text class="s-t3" x="586" y="166" font-size="9.8">远端 HEAD = 本地</text>
+            <text class="s-t3" x="586" y="182" font-size="9.8">npm 仍冻结</text>
+            <rect class="s-badge-teal" x="586" y="204" width="76" height="20" rx="10"/>
+            <text class="s-num" x="624" y="218" font-size="8.6" text-anchor="middle">push</text>
+
+            <rect class="s-card" x="750" y="70" width="160" height="170" rx="11"/>
+            <text class="s-mono" x="766" y="92" font-size="9.5">STAGE 5</text>
+            <text class="s-hero-sm" x="766" y="114" font-size="13.5">市场 / npm</text>
+            <text class="s-t3" x="766" y="134" font-size="9.8">market 按 version</text>
+            <text class="s-t3" x="766" y="150" font-size="9.8">判断更新</text>
+            <text class="s-t3" x="766" y="166" font-size="9.8">npm 冻结 D3</text>
+            <text class="s-t3" x="766" y="182" font-size="9.8">解冻需所有者批准</text>
+            <rect class="s-badge" x="766" y="204" width="104" height="20" rx="10"/>
+            <text class="s-t2" x="818" y="218" font-size="8.6" text-anchor="middle">browse-only</text>
+
+            <rect class="s-card" x="930" y="70" width="160" height="170" rx="11"/>
+            <text class="s-mono" x="946" y="92" font-size="9.5">STAGE 6</text>
+            <text class="s-hero-sm" x="946" y="114" font-size="13.5">洁净室</text>
+            <text class="s-t3" x="946" y="134" font-size="9.8">独立子会话</text>
+            <text class="s-t3" x="946" y="150" font-size="9.8">干净上下文</text>
+            <text class="s-t3" x="946" y="166" font-size="9.8">只读 GitHub 实际内容</text>
+            <text class="s-t3" x="946" y="182" font-size="9.8">三轮：缺口→复核→PASS</text>
+            <rect class="s-badge-teal" x="946" y="204" width="76" height="20" rx="10"/>
+            <text class="s-num" x="984" y="218" font-size="8.6" text-anchor="middle">PASS</text>
+
+            <line class="s-arrow" x1="190" y1="152" x2="208" y2="152" marker-end="url(#f8-arrow)"/>
+            <line class="s-arrow" x1="370" y1="152" x2="388" y2="152" marker-end="url(#f8-arrow)"/>
+            <line class="s-arrow" x1="550" y1="152" x2="568" y2="152" marker-end="url(#f8-arrow)"/>
+            <line class="s-arrow" x1="730" y1="152" x2="748" y2="152" marker-end="url(#f8-arrow)"/>
+            <line class="s-arrow" x1="910" y1="152" x2="928" y2="152" marker-end="url(#f8-arrow)"/>
+
+            <path class="s-dash" d="M1010,240 C1010,300 940,300 900,300 C300,300 160,300 110,264" marker-end="url(#f8-arrow-teal)"/>
+            <text class="s-t3" x="420" y="276" font-size="10.2">评审/测试发现 → 修复 → bump → 重跑（不是「发完再说」）</text>
+
+            <!-- cleanroom inset -->
+            <rect class="s-layer" x="30" y="316" width="1060" height="92" rx="11"/>
+            <text class="s-on-teal" x="48" y="338" font-size="11">洁净室三轮（2026-11-11）</text>
+            <rect class="s-card" x="48" y="350" width="310" height="44" rx="8"/>
+            <text class="s-t2" x="62" y="368" font-size="10.2">第 1 轮 · 12 缺口 G1–G12 + 4 P1</text>
+            <text class="s-t3" x="62" y="384" font-size="9.4">→ v1.3.2 文档补全</text>
+            <rect class="s-card" x="374" y="350" width="330" height="44" rx="8"/>
+            <text class="s-t2" x="388" y="368" font-size="10.2">第 2 轮 · 12/12 确认修复 + N1–N7</text>
+            <text class="s-t3" x="388" y="384" font-size="9.4">→ v1.3.3 行为修正（spawn:false）</text>
+            <rect class="s-card-teal" x="720" y="350" width="350" height="44" rx="8"/>
+            <text class="s-on-teal" x="734" y="368" font-size="10.2">第 3 轮 · PASS</text>
+            <text class="s-t3" x="734" y="384" font-size="9.4">5 分钟路径 5/5；收尾 → v1.3.5 = 1fb9193</text>
+          </svg>
+          <figcaption><b>图 8 · 测试 → 发布 → 洁净室</b>。<span class="how">怎么读：</span>左到右是正常发布链，下方虚线是失败回环。最值得抄的不是某个脚本，而是三个硬约束：<b>测试先绿</b>、<b>有内容变化必须 bump</b>、<b>逐字节 SHA 对齐后才推送</b>。</figcaption>
+        </figure>
+
+        <h3 style="margin-top:30px">7.2 版本纪律与发布记录</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>版本</th><th>日期</th><th>主题</th><th class="num">提交</th><th class="num">SHA 一致</th><th>备注</th></tr></thead>
+            <tbody>
+              <tr><td>session-tree 1.1.0</td><td>2026-11-11</td><td>工作区排序 / 隐藏 / 召回</td><td class="num">dcf3519</td><td class="num">15/15</td><td>客户端半；刷新页面生效</td></tr>
+              <tr><td>session-tree 1.2.0</td><td>2026-11-11</td><td>交接并入 + 同工作区/预设/权限继承修复</td><td class="num">597ca31</td><td class="num">16/16</td><td>独立 handoff 包删除</td></tr>
+              <tr><td>session-tree 1.3.0</td><td>2026-11-11</td><td>随包 <code>session-handoff</code> Skill + skill provider patch</td><td class="num">1086e9e</td><td class="num">18/18</td><td>tree-engine 0.5.0 同步</td></tr>
+              <tr><td>session-tree 1.3.1</td><td>2026-11-11</td><td>接替提示语跟随界面语言（zh/en）</td><td class="num">c257d61</td><td class="num">18/18</td><td>真机 en→zh PASS</td></tr>
+              <tr><td>session-tree 1.3.2</td><td>2026-11-11</td><td>Skill 使用文档补全（洁净室一轮）</td><td class="num">c1541e5</td><td class="num">18/18</td><td>G1–G12 修订</td></tr>
+              <tr><td>session-tree 1.3.3</td><td>2026-11-11</td><td><code>spawn:false</code> 干跑绕过阈值闸 + N1–N7</td><td class="num">cce2975</td><td class="num">18/18</td><td>handoff 41/41</td></tr>
+              <tr><td>session-tree 1.3.4</td><td>2026-11-11</td><td>R1-B/R2-B 文档债清扫</td><td class="num">f784c6e</td><td class="num">18/18</td><td>无代码行为变化</td></tr>
+              <tr><td><b>session-tree 1.3.5</b></td><td>2026-11-11</td><td>第三轮洁净室 PASS 收尾</td><td class="num"><b>1fb9193</b></td><td class="num">18/18</td><td>当前公开镜像；main + tag</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="src"><b>事实来源</b>：<code>docs/publishing.md</code> §3/§5；<code>docs/skill-cleanroom-2026-11-11.md</code>；<code>CHANGELOG.md</code>。本仓 master 最新为 <code>ebeeaea</code>（docs: cleanroom round-3 PASS + final v1.3.5 publish record）。</p>
+
+        <div class="grid2">
+          <article class="card tint-teal">
+            <h3>发布脚本的护栏（值得复用）</h3>
+            <ul>
+              <li>只写 <code>--target</code>，不运行任何 git（不 add/commit/push/tag）</li>
+              <li>不 bump 版本、不改 <code>package.json</code>：内容变化必须先在源包 bump</li>
+              <li>逐文件 SHA-256 复读比对，报告 <code>files/match/mismatch/missing/extra</code></li>
+              <li>拒绝 source=target、拒绝同步进源的子/父目录、拒绝包名不一致（除非 <code>--force</code>）</li>
+              <li>退出码：0 = 全部一致；1 = 用法错误/目标被拒/任一文件缺失或不一致</li>
+            </ul>
+          </article>
+          <article class="card tint-amber">
+            <h3>为什么 npm 冻结（D3）</h3>
+            <p>Git 安装已够用；npm token / 2FA / CI 是额外凭据面；不发 npm 就不存在「npm 版本 ≠ GitHub 版本」的双源漂移。</p>
+            <p>四个 <code>@orphiczhou/*</code> 候选名在 registry 均 <b>404</b>。解冻不是技术动作，是项目所有者的显式决策：要先定包名、版本/tag 策略、凭据归属、文档切换、预发布演练、registry 元数据核对，缺一不可。</p>
+          </article>
+        </div>
+
+        <div class="callout warn">
+          <span class="label">测试数字也会「过期」</span>
+          <p>仓库里同时存在 66/66（审计基线 v0.5.0）、67/67（当前 v0.5.1）、34/34（v1.2.0 时代 handoff）、40/40（v1.3.1）、41/41（v1.3.3+）等口径。判断当前值要以<b>当前 <code>package.json</code> + 实测命令</b>为准；本页统一采用 2026-11-11 的 <b>67/67 / 41/41 / 3/3</b>。</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="hr"></div>
+
+    <!-- ============================================================
+         §8 边界与坑
+         ============================================================ -->
+    <section class="section" id="limits">
+      <div class="sec-head">
+        <div class="sec-num">08</div>
+        <div>
+          <h2 class="sec-title">边界与坑：诚实清单</h2>
+          <p class="sec-sub">这一节按「会不会让你误判」排序；每条都给出当前处理方式，不粉饰。</p>
+        </div>
+      </div>
+      <div class="sec-body">
+
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th style="width:5%" class="num">#</th><th style="width:24%">边界 / 坑</th><th style="width:37%">实际影响</th><th style="width:34%">当前处理 / 绕法</th></tr></thead>
+            <tbody>
+              <tr><td class="num">1</td><td><b>npm 冻结（D3）</b></td><td>不能 <code>npm install</code>；四个候选名 registry 404；市场条目是 browse-only，按 Git 安装</td><td>用 Git URL 或 <code>link:</code>；解冻需所有者显式批准（条件见 <code>docs/publishing.md</code> §4）</td></tr>
+              <tr><td class="num">2</td><td><b>meta-loop 未装配</b></td><td><code>/metaloop/</code> 面板与胶囊入口当前不可用；不在 profile bundles</td><td>源码/测试/面板都在仓内；装载即加载，但需先决定是否进 bundles，并跑 <code>live-panel-check.mjs</code></td></tr>
+              <tr><td class="num">3</td><td><b>provider-conformance 依赖 asar fixture</b></td><td>默认目录不存在 → ENOENT；DSH 0.2.2-rc.1 把 schema 引擎拆到 shared chunk，旧启发式拿不到 29/29</td><td>需要 rc.2 兼容的解包 fixture（逐字节 shipped chunk）；这是测试环境依赖，不是包内容缺陷</td></tr>
+              <tr><td class="num">4</td><td><b><code>docs/tools-mapping.md</code> 是设计稿</b></td><td>表里的 <code>tree_report drift</code>、<code>tree_node milestone-*</code>、<code>tree_maintain gc</code> 等<b>未实现</b>；照表调会 unknown action</td><td>以 <code>index.js</code> schema 为准；本页图 2 只列已实现 action</td></tr>
+              <tr><td class="num">5</td><td><b>市场只认 version</b></td><td>改了代码但不 bump，market 不刷新，等于发假更新；无内容变化乱 bump 又制造假版本</td><td>D6：有内容变化必须 bump；<code>version = GitHub tag = package.json.version</code></td></tr>
+              <tr><td class="num">6</td><td><b>宿主半按包名缓存</b></td><td>改 <code>index.js</code> / patch 行后，活体仍是旧实现；<code>hmr.root</code> 不保证宿主半重载</td><td>对相应 entry disable→enable，或重启 DSH；客户端半只刷新页面</td></tr>
+              <tr><td class="num">7</td><td><b>Skill 目录在会话启动时注入</b></td><td>改完 patch 行后，旧会话看不到新 Skill；只改 <code>SKILL.md</code> 正文也可能要新会话才读</td><td><b>新开会话</b>验收；目录项应各出现一次（重复挂载会重复）</td></tr>
+              <tr><td class="num">8</td><td><b><code>set-status done</code> 工具面不可达</b></td><td>它要求 milestones 非空且全 <code>audit_pass</code>，但工具面没有 milestone 写入 action</td><td>正常收口：<code>done</code> 事件 → <code>runtime.succeeded</code>；<code>status</code> 只作观察，不要反复试 set-status</td></tr>
+              <tr><td class="num">9</td><td><b><code>tree_verify</code> FAIL 不阻断 succeeded</b></td><td>verify 只落账 <code>leaf.verification</code> 并返回 <code>result.pass=false</code>，不会自动拦住节点完成</td><td>commander 必须<b>读</b> <code>result.pass</code> 再决定收口；这是协议纪律，不是引擎硬闸</td></tr>
+              <tr><td class="num">10</td><td><b>leaf.status 与 runtime 脱节</b></td><td>runtime 已 <code>succeeded</code>，status 可能仍 <code>pending_brief</code>/<code>active</code>；观察者易误读</td><td>收口看 <code>runtime.state</code>；status 只用于列表/剪枝/归档</td></tr>
+              <tr><td class="num">11</td><td><b>artifact 验证取首个匹配</b></td><td><code>**/*.md</code> 按字典序取第一个，可能命中 <code>node_modules</code> 里的 md；<code>minSize</code> 比较的是字符数，不是字节</td><td>显式传产物路径/策略；或在 leaf 产物目录内验证（未修）</td></tr>
+              <tr><td class="num">12</td><td><b>会话预算漏计竹节接力</b></td><td><code>max_sessions=50</code> 只统计 <code>leaf.session_id</code> + <code>leaf.segment_chain</code> + registry；竹节写的是 <code>runtime.segmentChain</code>，高频接力时上限不成立</td><td>已知实现边界（审计 P1-06）；不要把 50 当作严格上限</td></tr>
+              <tr><td class="num">13</td><td><b>caller 校验不完整</b></td><td><code>set-context</code> / <code>set-verification</code> / 非 done <code>event</code> / <code>dispatch:cancel</code> / <code>verify run</code> 无统一所有权校验，worker 可改他人水位/裁决</td><td>审计 P1-05；当前靠协议纪律，补护栏列在 §9 P1</td></tr>
+              <tr><td class="num">14</td><td><b>交接不迁移 leaf owner</b></td><td>接替会话写 done → <code>E_BORROWED_IDENTITY</code></td><td>由 leaf 的 creator/上级 <code>tree_node set-session</code> 重绑；或旧会话交棒前先写 done</td></tr>
+              <tr><td class="num">15</td><td><b><code>tree_maintain gc</code> 未实现</b></td><td><code>tree-engine-data/</code> 下历史 smoke/e2e 树只能手工清理</td><td>用 backup 先留档，再手工删目录；或列入下一轮功能</td></tr>
+              <tr><td class="num">16</td><td><b>真实 50% 阈值未跑到</b></td><td>B/C 组三次交接均 <code>force:true</code> 模拟；「机制成立、阈值真实性部分」</td><td>需要一次不 force 的自然 50% 演练；否则只能说阈值逻辑与闸门被验证，不是真实压力验证</td></tr>
+              <tr><td class="num">17</td><td><b>语言只做 zh/en</b></td><td>ja/es/fr/de/ru/pt 等已存语言回退英文；中文提示后可能跟英文框架后缀</td><td>可接受的回退；要扩展需同步更新断言脚本</td></tr>
+              <tr><td class="num">18</td><td><b>RC2 兼容层缺单测</b></td><td><code>startContinuable</code> / <code>startActivation</code> 双形探测分支未被 67 项覆盖</td><td>补测列为 R6；宿主升级前先用 <code>cordis_inspect_query</code> 读方法表</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="src"><b>事实来源</b>：<code>README.md</code> §已知边界；<code>docs/handoff-2026-11-11.md</code> §7；<code>docs/audit-tree-system-2026-11-11.md</code> §3–§4；<code>docs/merge-session-tree-2026-11-11.md</code> §5；<code>docs/skill-e2e-2026-11-11.md</code> §5。</p>
+
+        <h3 style="margin-top:30px">8.1 制作本图时发现的文档不一致</h3>
+        <p>以下均为<b>只读核对</b>发现，本图未修改仓库任何文件；建议后续做一次「版本数字清扫」。</p>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th style="width:26%">位置</th><th style="width:34%">文中写法</th><th style="width:40%">当前事实 / 建议</th></tr></thead>
+            <tbody>
+              <tr><td><code>README.md</code> 包表（session-tree 行）</td><td>「GitHub 公开（<b>v1.3.3</b>）」</td><td>当前公开镜像 <b>v1.3.5 = 1fb9193</b>；该单元格是旧数字，应改 v1.3.5（同表其他位置已是 v1.3.5）</td></tr>
+              <tr><td><code>docs/handoff-2026-11-11.md</code> §9 交接提示词</td><td>「会话树单包 … <b>v1.3.3</b>」</td><td>同文件 §1 已写 v1.3.5；提示词是旧版本，照抄会误判</td></tr>
+              <tr><td><code>docs/handoff-2026-11-11.md</code> §1 vs <code>agent.md</code> §2</td><td>宿主 loader 账本 <b>245</b> 条 vs <b>244</b> 条</td><td>两份快照相差 1；属时序差异，引用时标注「当时快照」或省略该数字</td></tr>
+              <tr><td><code>docs/session-handoff-2026-11-11.md</code> 标题/状态</td><td>「v1.3.3」为主</td><td>当前包是 v1.3.5；该文是设计/交付记录，建议标题加「历史快照」或补 1.3.4/1.3.5</td></tr>
+              <tr><td><code>docs/skills-usage.md</code> §9 版本差异速查</td><td>只列到 <b>1.3.3</b></td><td>文档头写「v1.3.5 及以上」，版本矩阵缺 1.3.4/1.3.5（两版均无行为变化，可一句带过）</td></tr>
+              <tr><td><code>docs/audit-tree-system-2026-11-11.md</code> §1</td><td>tree-engine <b>66/66</b>、v0.5.0 基线</td><td>当前 v0.5.1 / <b>67/67</b>；审计结论仍有效，但测试数字是历史快照</td></tr>
+              <tr><td><code>docs/engine-spec.md</code> §1/§3</td><td>「33 工具」「源缺省 85」「16 文件」</td><td>这是<b>上游源引擎</b>的 S0 规约，不是本仓 8 工具/42% 的现状；两套数字不要混用</td></tr>
+              <tr><td><code>packages/dsh-tree-engine/README.md</code> v0.3 节</td><td>「register-session（旁路登记幂等）」</td><td>代码对重复登记直接 <code>E_SCHEMA_INVALID</code>（注释口径是「幂等拒绝重复计」）；工具描述仍写 idempotent（审计 P1-07）</td></tr>
+              <tr><td><code>README.md</code> 包表 vs §跑测试</td><td>「包内 5 份测试」vs「6 个测试入口」</td><td>实际 <code>test/</code> 下 5 个测试文件 + <code>scripts/verify-bundle.mjs</code> 1 个入口；两种说法指代不同，建议统一为「5 个测试文件 + 1 个清单自检」</td></tr>
+              <tr><td><code>README.md</code> 文档索引 vs <code>docs/handoff-2026-11-11.md</code></td><td>仍标「当前交接」</td><td>该文正文混有 v1.3.2/v1.3.3 残留；建议标注「历史交接，版本数字以包 package.json 为准」</td></tr>
+              <tr><td>meta-loop 文档口径</td><td>根 README/agent 写 <b>G1–G11</b>；<code>docs/meta-loop-design.md</code> 写「12 条 G-*」</td><td>门禁数量口径不一；本页只写「G1–G11（README 口径）」，不展开具体规则</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout risk">
+          <span class="label">示意 vs 事实</span>
+          <p>本页<b>没有截图</b>。所有「界面」只以文字/框图示意；所有命令返回都是<b>可读化重排</b>，字段名来自真实 schema，具体 ID、百分比、路径、单行渲染会随会话变化。带 <span class="pill fact">事实</span> 的段落有仓库文件或实测输出支撑；带 <span class="pill demo">示意</span> 的只表达结构；带 <span class="pill rec">建议</span> 的是分析，不是仓库承诺。</p>
+        </div>
+
+      </div>
+    </section>
+
+    <div class="hr"></div>
+
+    <!-- ============================================================
+         §9 下一步功能分析
+         ============================================================ -->
+    <section class="section" id="next">
+      <div class="sec-head">
+        <div class="sec-num">09</div>
+        <div>
+          <h2 class="sec-title">下一步功能分析：先补「可信」，再补「好用」</h2>
+          <p class="sec-sub">以下是分析建议，不是仓库承诺；优先级按「影响 × 实现成本 × 依赖」定性判断。</p>
+        </div>
+      </div>
+      <div class="sec-body">
+        <p>当前功能面已经够用，真正的短板在<b>三处</b>：装不上/看不见（诊断）、写面不够严（完整性）、治理层没装配（能力闲置）。因此建议的顺序不是「继续加工具」，而是先把这三处补齐，再谈可视化与多语言。</p>
+
+        <figure class="fig" id="fig-priority">
+          <div class="figtop">
+            <span class="name">figure-09 · priority-matrix</span>
+            <div class="tags"><span class="pill rec">建议</span></div>
+          </div>
+          <svg viewBox="0 0 1120 520" role="img" aria-labelledby="fig-priority-title">
+            <title id="fig-priority-title">下一步候选功能的优先级矩阵</title>
+            <desc>横轴为实现成本，纵轴为价值；四个象限分别先做、计划、顺手、暂缓；气泡为候选功能。</desc>
+            <defs>
+              <marker id="f9-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
+            </defs>
+            <rect class="s-bg" x="0" y="0" width="1120" height="520" rx="14"/>
+            <text class="s-hero" x="32" y="36" font-size="19">优先级矩阵（定性）</text>
+            <text class="s-t3" x="300" y="36" font-size="11.5">越靠左上越先做；右下角是「现在别做」</text>
+
+            <!-- quadrants -->
+            <rect x="90" y="60" width="480" height="180" fill="var(--teal-soft)" opacity=".55"/>
+            <rect x="570" y="60" width="480" height="180" fill="var(--amber-soft)" opacity=".55"/>
+            <rect x="90" y="240" width="480" height="180" fill="var(--blue-soft)" opacity=".45"/>
+            <rect x="570" y="240" width="480" height="180" fill="var(--fig-layer)" opacity=".7"/>
+
+            <line class="s-line" x1="90" y1="240" x2="1050" y2="240"/>
+            <line class="s-line" x1="570" y1="60" x2="570" y2="420"/>
+            <rect x="90" y="60" width="960" height="360" fill="none" stroke="var(--line-strong)" stroke-width="1.2"/>
+
+            <text class="s-on-teal" x="106" y="84" font-size="11">先做 · 高价值 / 低成本</text>
+            <text class="s-on-amber" x="586" y="84" font-size="11">计划 · 高价值 / 高成本</text>
+            <text class="s-t3" x="106" y="264" font-size="11">顺手 · 低价值 / 低成本</text>
+            <text class="s-t3" x="586" y="264" font-size="11">暂缓 · 低价值 / 高成本</text>
+
+            <!-- axis labels -->
+            <text class="s-t3" x="1000" y="452" font-size="10.5">实现成本 →</text>
+            <text class="s-t3" x="62" y="90" font-size="10.5" transform="rotate(-90 62 90)">价值 →</text>
+
+            <!-- bubbles -->
+            <circle cx="300" cy="150" r="9" fill="var(--teal)"/>
+            <text class="s-t2" x="316" y="154" font-size="10.5">doctor 自检</text>
+
+            <circle cx="455" cy="190" r="9" fill="var(--teal)"/>
+            <text class="s-t2" x="471" y="194" font-size="10.5">写面护栏</text>
+
+            <circle cx="250" cy="300" r="9" fill="var(--blue)"/>
+            <text class="s-t2" x="266" y="304" font-size="10.5">预算计入竹节</text>
+
+            <circle cx="700" cy="150" r="9" fill="var(--amber)"/>
+            <text class="s-t2" x="716" y="154" font-size="10.5">meta-loop 装配</text>
+
+            <circle cx="900" cy="120" r="9" fill="var(--amber)"/>
+            <text class="s-t2" x="916" y="124" font-size="10.5">树面板（只读）</text>
+
+            <circle cx="690" cy="300" r="9" fill="var(--blue)"/>
+            <text class="s-t2" x="706" y="304" font-size="10.5">conformance fixture</text>
+
+            <circle cx="470" cy="330" r="9" fill="var(--blue)"/>
+            <text class="s-t2" x="486" y="334" font-size="10.5">RC2 单测</text>
+
+            <circle cx="360" cy="360" r="9" fill="var(--blue)"/>
+            <text class="s-t2" x="376" y="364" font-size="10.5">artifact 路径</text>
+
+            <circle cx="200" cy="385" r="9" fill="var(--ink-3)"/>
+            <text class="s-t2" x="216" y="389" font-size="10.5">gc</text>
+
+            <circle cx="560" cy="400" r="9" fill="var(--ink-3)"/>
+            <text class="s-t2" x="576" y="404" font-size="10.5">schema 生成文档</text>
+
+            <circle cx="850" cy="360" r="9" fill="var(--amber)"/>
+            <text class="s-t2" x="866" y="364" font-size="10.5">真实 50% 演练</text>
+
+            <circle cx="880" cy="400" r="9" fill="var(--rose)"/>
+            <text class="s-t2" x="864" y="404" font-size="10.5" text-anchor="end">npm 解冻（冻结）</text>
+
+            <text class="s-t3" x="90" y="492" font-size="10.2">注：气泡位置是定性判断；「成本」含调研、实现、测试、文档与发布，不含等待用户决策的时间。</text>
+          </svg>
+          <figcaption><b>图 9 · 下一步优先级</b>。<span class="how">怎么读：</span>先做左上角（doctor、护栏），再排右上角（meta-loop、树面板），左下角顺手做（预算、gc），右下角明确暂缓（npm 解冻、大改状态机）。这张图不替代下表：每个候选的验收方式在表里。</figcaption>
+        </figure>
+
+        <h3>9.1 候选功能表</h3>
+        <div class="tablewrap">
+          <table class="compact">
+            <thead><tr><th style="width:4%" class="num">#</th><th style="width:17%">功能</th><th style="width:22%">解决什么问题</th><th style="width:9%">价值</th><th style="width:9%">成本</th><th style="width:22%">风险 / 依赖</th><th style="width:7%">优先级</th><th style="width:10%">验收</th></tr></thead>
+            <tbody>
+              <tr><td class="num">1</td><td><b>安装/运行自检 <code>doctor</code></b></td><td>「工具没出现 / Skill 没有 / 树是旧的」只能靠人猜；D12 缓存、Skill 注入时机、provider 缺失都很难自查</td><td>高</td><td>低–中</td><td>只读；不能改 profile；要区分「未装」「未重载」「旧会话」「provider 缺失」「版本漂移」</td><td><span class="pill p0">P0</span></td><td>故障注入 4 类均给出可执行 hint；正常环境 0 fail</td></tr>
+              <tr><td class="num">2</td><td><b>写面护栏补全</b></td><td><code>set-context</code>/<code>set-verification</code>/非 done event/取消/verify 无统一 caller 校验，worker 可改他人水位或裁决</td><td>高</td><td>中</td><td>可能破坏旧 E2E 的宽松假设；竹节 owner 重绑后规则要兼容；需同步 SKILL 护栏表</td><td><span class="pill p1">P1</span></td><td>每个写操作有负例测试；67/67 与 A 组 7/7 不回归</td></tr>
+              <tr><td class="num">3</td><td><b>会话预算纳入竹节链</b></td><td><code>max_sessions=50</code> 漏计 <code>runtime.segmentChain</code>，高频接力时护栏数字失真</td><td>中</td><td>低</td><td>需同时改 <code>guards.js</code>、<code>validate</code>、文档口径；不要把「预算拒绝」误判成竹节故障</td><td><span class="pill p1">P1</span></td><td>接力 N 次后计数正确；超限拒绝；单测覆盖</td></tr>
+              <tr><td class="num">4</td><td><b>meta-loop 装配与验活</b></td><td>治理层源码/测试/面板都在，但不在 profile bundles，能力闲置</td><td>高</td><td>低–中</td><td>client half 与面板可能冲突；bundle 顺序；改 profile 需备份；它只读 tree-state，不能写引擎</td><td><span class="pill p1">P1</span></td><td>面板 12/12；13/13；可回滚</td></tr>
+              <tr><td class="num">5</td><td><b>provider-conformance rc.2 fixture</b></td><td>29/29 依赖 asar 解包布局；DSH 0.2.2-rc.1 shared chunk 让旧启发式失败</td><td>中</td><td>中</td><td>fixture 易随版本漂移；不能把 ENOENT 当代码失败；需记录 fixture 来源与校验</td><td><span class="pill p1">P1</span></td><td>按文档步骤得到 29/29；缺 fixture 时错误信息明确</td></tr>
+              <tr><td class="num">6</td><td><b>RC2 兼容层单测</b></td><td>双形探测分支（<code>startContinuable</code>/<code>startActivation</code>）未被 67 项覆盖；宿主升级时风险高</td><td>中</td><td>低</td><td>需要 mock 两种服务形状；不要为了测兼容层引入宿主依赖</td><td><span class="pill p1">P1</span></td><td>3 分支有测试；总数 67→70</td></tr>
+              <tr><td class="num">7</td><td><b>artifact 验证路径修复</b></td><td><code>**/*.md</code> 首个匹配可能命中 <code>node_modules</code>；<code>minSize</code> 是字符数不是字节</td><td>中</td><td>低–中</td><td>改默认行为可能影响现有 E2E；需要「显式产物路径」与「排除 node_modules」两种模式</td><td><span class="pill p2">P2</span></td><td>新增 2 条测试；真实 E2E 产物不误判</td></tr>
+              <tr><td class="num">8</td><td><b><code>tree_maintain gc</code></b></td><td>历史 smoke/e2e 树只能手工清理；<code>tree-engine-data</code> 膨胀</td><td>中</td><td>低</td><td>删除不可逆；必须先 backup；只对 pruned/archived 开放；dry-run 默认</td><td><span class="pill p2">P2</span></td><td>dry-run 列出候选；真实删除前有 backup；拒绝 active/done</td></tr>
+              <tr><td class="num">9</td><td><b>tools-mapping 从 schema 生成</b></td><td>设计稿与实现 action 不一致，照表调用会 unknown action</td><td>中</td><td>低</td><td>生成器需读 <code>index.js</code> 或导出 schema；避免手写第二真源</td><td><span class="pill p2">P2</span></td><td>生成表与 8 工具 schema 逐项一致；CI 检查未实现 action</td></tr>
+              <tr><td class="num">10</td><td><b>leaf.status 与 runtime 同步</b></td><td>status 可能停在 <code>pending_brief</code>/<code>active</code>，观察者误读</td><td>中</td><td>中</td><td>动状态机风险高；可能影响 set-status/剪枝/归档；优先做「派生展示」而不是改真源</td><td><span class="pill p2">P2</span></td><td>列表/渲染以 runtime 为准；仍保留 status 语义；回归全绿</td></tr>
+              <tr><td class="num">11</td><td><b>真实 50% 自然演练</b></td><td>B/C 组三次交接全是 <code>force</code> 模拟；阈值真实性未验证</td><td>中</td><td>高（token）</td><td>需要长会话与配额；可能撞 429；不应为了触发而灌水</td><td><span class="pill p2">P2</span></td><td>不 force 的 <code>status</code> ≥50% → handoff；<code>verify-handoff</code> 12/12</td></tr>
+              <tr><td class="num">12</td><td><b>只读树面板</b></td><td>目前只有 <code>tree_status overview</code> 文本；看不到 runtime/verification 的全局视图</td><td>高</td><td>高</td><td>新客户端半、路由、权限；只读边界要写死；不要复制引擎状态</td><td><span class="pill p2">P2</span></td><td>只读；不新增写接口；数据来自 tree-state/事件</td></tr>
+              <tr><td class="num">13</td><td><b>多语言 kickoff</b></td><td>只有 zh/en；ja/es/fr/de/ru/pt 回退英文</td><td>低</td><td>中</td><td>需要同步更新语言验收脚本与文档；收益有限</td><td><span class="pill p2">P2</span></td><td>按 locale 选择提示语；回退测试；文档矩阵更新</td></tr>
+              <tr><td class="num">14</td><td><b>npm 解冻</b></td><td>npm 安装缺失；市场只支持 Git/browse</td><td>低–中</td><td>高（决策+凭据）</td><td>D3 需所有者批准；token/2FA/CI 新攻击面；双源漂移</td><td><span class="pill off">暂缓</span></td><td>不是代码任务：先过 <code>publishing.md</code> §4 六项条件</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top:30px">9.2 推荐先做的三个（展开）</h3>
+
+        <article class="card tint-teal" style="margin:14px 0">
+          <div class="kicker">推荐 A · P0 · 0.5–1 天</div>
+          <h3><code>doctor</code>：把「为什么没生效」变成一条命令</h3>
+          <p><b>目标</b>：用户/支持者不再靠猜「是没装、没重载、旧会话，还是缺 provider」。</p>
+          <p><b>方案</b>：先做只读脚本 <code>scripts/doctor.mjs</code>（不改宿主），输出人类可读表 + <code>--json</code>。检查项：① profile <code>package.json</code> 的 bundles/dependencies 是否有两个 tree 包；② <code>cordis.patch.yml</code> 是否有两条 bundle insert 与两条 skill provider insert；③ 包版本与公开 tag 是否漂移（离线时跳过）；④ <code>tree-engine-data/apply.log</code> 是否有 <code>engine ready</code> 与当前版本；⑤ 通过 <code>cordis_inspect</code>（若可用）确认 <code>tree_send</code>/<code>session_handoff</code>/8 工具是否注册；⑥ Skill provider 是否可解析（读 patch 与包内 <code>skills/</code>）；⑦ 给出「下一步做什么」的命令，而不是只报错。</p>
+          <p><b>风险/依赖</b>：只读；不能自动改 profile（改配置必须用户确认）；Windows 路径与编码要小心；「宿主服务不可用」与「未装配」必须区分，避免误报。</p>
+          <p><b>验收</b>：构造 4 种故障（缺 bundle、缺 provider、patch 未重载、旧会话）分别给出不同 hint；正常环境 0 fail；<code>--json</code> 可被 CI 消费。</p>
+        </article>
+
+        <article class="card tint-amber" style="margin:14px 0">
+          <div class="kicker">推荐 B · P1 · 1–2 天</div>
+          <h3>写面护栏：把「谁能改这一行」写进引擎</h3>
+          <p><b>目标</b>：消除审计 P1-05 的越权写面，让「worker 只能改自己的水位/事件/裁决」成为代码事实，而不是 Skill 里的口号。</p>
+          <p><b>方案</b>：在 <code>src/guards.js</code> 增加统一的 <code>assertLeafWriter(caller, leaf, op)</code>：<code>set-context</code> 允许 owner 或祖先 commander；<code>event</code> 非 done 允许 owner；<code>set-verification</code> 允许 commander/root 或显式 verify caller；<code>dispatch:cancel</code> 允许 parent/creator；<code>verify run</code> 允许 commander。每个命令补负例测试；同步 <code>tree-worker</code>/<code>tree-commander</code> 的护栏表。</p>
+          <p><b>风险/依赖</b>：旧 E2E 可能依赖宽松路径；竹节 owner 重绑后规则要按「当前 owner」判断；root 信任锚要保留例外；不要误伤 <code>set-session</code> 的 creator 语义。</p>
+          <p><b>验收</b>：5 个写操作各有「非授权 → 拒」与「授权 → 通过」测试；67/67 不回归；A 组真机 7/7 succeeded 仍成立；SKILL/README 与实现一致。</p>
+        </article>
+
+        <article class="card tint-violet" style="margin:14px 0">
+          <div class="kicker">推荐 C · P1 · 0.5 天</div>
+          <h3>meta-loop 装配：把「已在仓里」变成「真的能用」</h3>
+          <p><b>目标</b>：治理层不再是一个只在源码里的包；用户能看到 <code>/metaloop/</code> 面板，跑通六阶段与门禁。</p>
+          <p><b>方案</b>：在 profile 备份后加入 <code>@local/dsh-meta-loop</code> 依赖与 bundle；<code>pnpm install</code>；对 <code>include:meta-loop</code> disable→enable；跑 <code>node --test tests/*.test.js</code>（13/13）与 <code>node scripts/live-panel-check.mjs</code>（12 项）；验证面板与胶囊入口；把回滚步骤写进 <code>docs/</code>。</p>
+          <p><b>风险/依赖</b>：client half 与现有侧栏可能冲突；bundle 顺序影响装载；面板同源路由；meta-loop 只读 tree-state，不能写引擎状态；如果决定长期不装配，也应把「未装配」写进 README，而不是让用户以为坏了。</p>
+          <p><b>验收</b>：<code>/metaloop/</code> 可打开且 12 项断言全过；13/13；装配后 tree-engine 的 8 工具与 session-tree 的 2 工具仍在线；回滚 3 步可复现。</p>
+        </article>
+
+        <h3 style="margin-top:30px">9.3 不建议现在做</h3>
+        <div class="grid2">
+          <article class="card">
+            <h3>六件「看起来该做」但先别做</h3>
+            <ul>
+              <li><b>npm 解冻</b>：不是代码任务，是所有者决策 + 凭据面 + 双源漂移；先过 <code>publishing.md</code> §4 六项。</li>
+              <li><b>大改 leaf 状态机</b>：status/runtime 双轨虽绕，但已有一套工作绕法；动真源风险高于收益，先做「派生展示」。</li>
+              <li><b>全量多语言</b>：zh/en 覆盖了主要用户；ja/es/fr/de/ru/pt 的收益低，维护断言成本高。</li>
+              <li><b>自动修改用户 profile</b>：安装/重载必须保留人工确认；<code>doctor</code> 只能建议，不能代改。</li>
+              <li><b>引入外部依赖/框架</b>：零 <code>@deepseek-ai/*</code> 依赖是它能离线测试、快速适配的核心优势。</li>
+              <li><b>用「自动通过」替代验收纪律</b>：<code>tree_verify</code> 已明确不阻断 succeeded，再自动化裁决只会制造假绿。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>建议节奏（按退出条件，不按日期）</h3>
+            <div class="tablewrap" style="margin:8px 0 0">
+              <table class="compact">
+                <thead><tr><th>波次</th><th>内容</th><th>退出条件</th></tr></thead>
+                <tbody>
+                  <tr><td><b>Wave 1</b></td><td>doctor + 写面护栏 + 预算计入竹节</td><td>4 类故障可诊断；负例测试齐；67/67 + A 组不回归</td></tr>
+                  <tr><td><b>Wave 2</b></td><td>meta-loop 装配 + conformance fixture + RC2 单测</td><td>面板 12/12；29/29 可复现；兼容层 3 分支有测试</td></tr>
+                  <tr><td><b>Wave 3</b></td><td>artifact 路径 + gc + schema 生成文档 + 真实 50% 演练</td><td>产物不误判；删除可回滚；文档无 unknown action；自然阈值 PASS</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="src"><b>建议依据</b>：<code>docs/audit-tree-system-2026-11-11.md</code> P1-05/P1-06/P1-07；<code>README.md</code> 已知边界；<code>docs/skill-e2e-2026-11-11.md</code> §5；<code>docs/publishing.md</code> §4。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <div class="hr"></div>
+
+    <!-- ============================================================
+         §10 附录
+         ============================================================ -->
+    <section class="section" id="appendix">
+      <div class="sec-head">
+        <div class="sec-num">10</div>
+        <div>
+          <h2 class="sec-title">附录：术语、时间线、事实来源</h2>
+          <p class="sec-sub">给需要引用/复核的人：每个数字都尽量能指回文件或实测。</p>
+        </div>
+      </div>
+      <div class="sec-body">
+
+        <h3 id="glossary">10.1 术语表</h3>
+        <div class="tablewrap">
+          <table class="compact">
+            <thead><tr><th style="width:18%">术语</th><th style="width:82%">一句话解释</th></tr></thead>
+            <tbody>
+              <tr><td><b>DSH</b></td><td>DeepSeek Harness，带 Cordis 插件宿主与 Web GUI 的桌面运行时；本项目的运行底座。</td></tr>
+              <tr><td><b>bundle</b></td><td>一个可安装的插件包，由宿主半、可选客户端半与 <code>cordis.patch.yml</code> 组成。</td></tr>
+              <tr><td><b>patch row</b></td><td><code>cordis.patch.yml</code> 里的 <code>insert</code> 行；决定 bundle 向 profile 贡献哪个模块/服务。</td></tr>
+              <tr><td><b>宿主半 / 客户端半</b></td><td>宿主半跑在 DSH 进程里，注册工具/服务；客户端半跑在浏览器，负责侧栏 UI。</td></tr>
+              <tr><td><b>leaf</b></td><td>任务树账本里的一行：<code>leaf_id</code>、parent、role、status、runtime、events、verification。</td></tr>
+              <tr><td><b>tree / task tree</b></td><td>一棵任务树；<code>tree_id</code> 4–8 字符小写；root leaf 自动创建。</td></tr>
+              <tr><td><b>commander / worker</b></td><td>中间层指挥官（可再建子节点）与执行者（不能有子节点）；深度上限 3。</td></tr>
+              <tr><td><b>owner</b></td><td><code>leaf.session_id</code> 当前指向的会话；只有 owner 能写 <code>done</code> 事件。</td></tr>
+              <tr><td><b>竹节 / bamboo</b></td><td>同一 leaf 上换执行会话的机制，缺省阈值 42%；任务书/简报随会话走，leaf 不变。</td></tr>
+              <tr><td><b>handoff</b></td><td>会话级同层接替：写 <code>HANDOFF-*.md</code>，启动同父兄弟或新根；不换 leaf。</td></tr>
+              <tr><td><b>taskType / DoD</b></td><td>节点任务类型（research/question/doc/code-change/default）与「完成定义」；决定验证策略与注入文本。</td></tr>
+              <tr><td><b>adversarial</b></td><td>对抗式验证：结构检查 + 异族红队攻击 + FAIL 回注修复，最多 3 轮。</td></tr>
+              <tr><td><b>cleanroom</b></td><td>洁净室评审：独立子会话、干净上下文、只读 GitHub 实际内容，多轮找缺口。</td></tr>
+              <tr><td><b>18/18 SHA</b></td><td>发布同步脚本对 18 个文件逐个 SHA-256 比对，全部一致才允许推送。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="timeline" style="margin-top:30px">10.2 版本时间线（全部发生在 2026-11-11）</h3>
+        <figure class="fig" id="fig-timeline">
+          <div class="figtop">
+            <span class="name">figure-07 · timeline</span>
+            <div class="tags"><span class="pill fact">事实</span><span class="pill demo">时间线示意图</span></div>
+          </div>
+          <svg viewBox="0 0 1120 430" role="img" aria-labelledby="fig-timeline-title">
+            <title id="fig-timeline-title">session-tree 与 tree-engine 的版本演进</title>
+            <desc>上轨为 session-tree 从 1.0.4 到 1.3.5 的功能演进；下轨为 tree-engine 从 0.4.0 到 0.5.1，以及 meta-loop/introspect 的版本。</desc>
+            <defs>
+              <marker id="f7-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="s-head"/></marker>
+            </defs>
+            <rect class="s-bg" x="0" y="0" width="1120" height="430" rx="14"/>
+            <text class="s-hero" x="32" y="36" font-size="19">版本演进：一天之内从 1.0.4 到 1.3.5</text>
+            <text class="s-t3" x="470" y="36" font-size="11.5">1.3.2 / 1.3.4 为文档版，无代码行为变化</text>
+
+            <!-- lane 1 -->
+            <rect class="s-layer" x="24" y="58" width="1072" height="132" rx="11"/>
+            <text class="s-on-teal" x="42" y="80" font-size="11.5">session-tree（公开镜像）</text>
+            <line class="s-line" x1="70" y1="118" x2="1060" y2="118" marker-end="url(#f7-arrow)"/>
+
+            <!-- points: 9 -->
+            <circle cx="90" cy="118" r="6" class="s-badge-teal"/>
+            <text class="s-mono" x="90" y="145" font-size="9.5" text-anchor="middle">1.0.4</text>
+            <text class="s-t3" x="90" y="104" font-size="9.2" text-anchor="middle">迁入单包</text>
+
+            <circle cx="200" cy="118" r="6" class="s-badge-teal"/>
+            <text class="s-mono" x="200" y="145" font-size="9.5" text-anchor="middle">1.1.0</text>
+            <text class="s-t3" x="200" y="104" font-size="9.2" text-anchor="middle">排序/隐藏</text>
+
+            <circle cx="310" cy="118" r="6" class="s-badge-teal"/>
+            <text class="s-mono" x="310" y="145" font-size="9.5" text-anchor="middle">1.2.0</text>
+            <text class="s-t3" x="310" y="104" font-size="9.2" text-anchor="middle">handoff 并入</text>
+
+            <circle cx="420" cy="118" r="6" class="s-badge-teal"/>
+            <text class="s-mono" x="420" y="145" font-size="9.5" text-anchor="middle">1.3.0</text>
+            <text class="s-t3" x="420" y="104" font-size="9.2" text-anchor="middle">随包 Skill</text>
+
+            <circle cx="530" cy="118" r="6" class="s-badge-teal"/>
+            <text class="s-mono" x="530" y="145" font-size="9.5" text-anchor="middle">1.3.1</text>
+            <text class="s-t3" x="530" y="104" font-size="9.2" text-anchor="middle">语言 zh/en</text>
+
+            <circle cx="640" cy="118" r="5" class="s-badge"/>
+            <text class="s-mono" x="640" y="145" font-size="9.5" text-anchor="middle">1.3.2</text>
+            <text class="s-t3" x="640" y="104" font-size="9.2" text-anchor="middle">文档</text>
+
+            <circle cx="750" cy="118" r="6" class="s-badge-teal"/>
+            <text class="s-mono" x="750" y="145" font-size="9.5" text-anchor="middle">1.3.3</text>
+            <text class="s-t3" x="750" y="104" font-size="9.2" text-anchor="middle">干跑修正</text>
+
+            <circle cx="860" cy="118" r="5" class="s-badge"/>
+            <text class="s-mono" x="860" y="145" font-size="9.5" text-anchor="middle">1.3.4</text>
+            <text class="s-t3" x="860" y="104" font-size="9.2" text-anchor="middle">文档</text>
+
+            <circle cx="980" cy="118" r="8" class="s-badge-teal"/>
+            <text class="s-mono" x="980" y="145" font-size="10" text-anchor="middle">1.3.5</text>
+            <text class="s-on-teal" x="980" y="104" font-size="9.6" text-anchor="middle">洁净室 PASS</text>
+
+            <!-- lane 2 -->
+            <rect class="s-layer" x="24" y="206" width="1072" height="150" rx="11"/>
+            <text class="s-on-teal" x="42" y="228" font-size="11.5">tree-engine / meta-loop / introspect</text>
+            <line class="s-line" x1="70" y1="272" x2="700" y2="272" marker-end="url(#f7-arrow)"/>
+
+            <circle cx="150" cy="272" r="6" class="s-badge-teal"/>
+            <text class="s-mono" x="150" y="297" font-size="9.5" text-anchor="middle">0.4.0</text>
+            <text class="s-t3" x="150" y="258" font-size="9.2" text-anchor="middle">对抗式验证</text>
+
+            <circle cx="360" cy="272" r="6" class="s-badge-teal"/>
+            <text class="s-mono" x="360" y="297" font-size="9.5" text-anchor="middle">0.5.0</text>
+            <text class="s-t3" x="360" y="258" font-size="9.2" text-anchor="middle">B1 修复 + 随包 Skill</text>
+
+            <circle cx="570" cy="272" r="7" class="s-badge-teal"/>
+            <text class="s-mono" x="570" y="297" font-size="9.8" text-anchor="middle">0.5.1</text>
+            <text class="s-t3" x="570" y="258" font-size="9.2" text-anchor="middle">SKILL 勘误（当前）</text>
+
+            <rect class="s-card" x="720" y="240" width="160" height="58" rx="8"/>
+            <text class="s-mono" x="736" y="258" font-size="9.8">meta-loop 0.2.0</text>
+            <text class="s-t3" x="736" y="274" font-size="9.2">六阶段 + 面板</text>
+            <text class="s-t3" x="736" y="289" font-size="9.2">未装配</text>
+
+            <rect class="s-card" x="896" y="240" width="180" height="58" rx="8"/>
+            <text class="s-mono" x="912" y="258" font-size="9.8">introspect 0.1.0</text>
+            <text class="s-t3" x="912" y="274" font-size="9.2">self_spec 自省</text>
+            <text class="s-t3" x="912" y="289" font-size="9.2">运行中</text>
+
+            <text class="s-t3" x="42" y="330" font-size="10.2">注：session-tree 的版本号同时是公开插件仓的 tag；tree-engine 未单独发仓，版本只在本仓 <tspan class="s-mono">package.json</tspan> 维护。</text>
+            <text class="s-t3" x="42" y="347" font-size="10.2">所有日期均为 2026-11-11（北京时间）；更早的 1.0.x 历史见公开插件仓 tags 与本仓 <tspan class="s-mono">docs/publishing.md</tspan>。</text>
+
+            <text class="s-t3" x="32" y="402" font-size="10.5">读法：先看 session-tree 上轨的「能力拐点」（1.2.0 合并、1.3.0 Skill、1.3.1 语言、1.3.3 干跑），再看 tree-engine 下轨的两次修复（0.5.0 B1、0.5.1 勘误）。</text>
+          </svg>
+          <figcaption><b>图 7 · 版本演进</b>。<span class="how">怎么读：</span>上轨是「会话树/交接」的能力拐点，下轨是「执行引擎」的修复拐点。注意 1.3.2/1.3.4 只是文档版——这也是为什么本页把「有内容变化必须 bump」单独写成一条纪律：版本号本身是市场判断更新的唯一信号。</figcaption>
+        </figure>
+
+        <div class="tablewrap">
+          <table class="compact">
+            <thead><tr><th>包</th><th>当前版本</th><th>状态</th><th>公开位置</th><th>测试</th></tr></thead>
+            <tbody>
+              <tr><td><code>dsh-tree-engine</code></td><td class="num">0.5.1</td><td><span class="pill fact">运行中</span></td><td>随本仓公开（未单独发仓）</td><td><b>67/67</b></td></tr>
+              <tr><td><code>dsh-session-tree</code></td><td class="num">1.3.5</td><td><span class="pill fact">公开镜像</span></td><td><code>orphiczhou/dsh-session-tree</code> · tag <code>v1.3.5</code> · <code>1fb9193</code></td><td>41/41 + 3/3 + 22/22 + 0 fail</td></tr>
+              <tr><td><code>dsh-meta-loop</code></td><td class="num">0.2.0</td><td><span class="pill off">未装配</span></td><td>随本仓公开</td><td><b>13/13</b></td></tr>
+              <tr><td><code>dsh-agent-introspect</code></td><td class="num">0.1.0</td><td><span class="pill fact">运行中</span></td><td>随本仓公开</td><td>无单测</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="sources" style="margin-top:30px">10.3 事实来源清单</h3>
+        <p>本页所有版本号、测试数、阈值与工具名均来自以下文件（2026-11-11 快照）；「本会话实测」为本次制作时的真实命令输出。</p>
+        <div class="tablewrap">
+          <table class="compact">
+            <thead><tr><th style="width:34%">仓库相对路径</th><th style="width:48%">用来核对什么</th><th style="width:18%">快照 / 注意</th></tr></thead>
+            <tbody>
+              <tr><td><code>README.md</code></td><td>包表、快速开始、随包 Skill、已知边界、文档索引</td><td>2026-11-11；个别旧数字见 §8.1</td></tr>
+              <tr><td><code>agent.md</code></td><td>角色、D1–D15、R1–R12、状态快照、任务板、发布门禁</td><td>最后更新 2026-11-11（第七轮）</td></tr>
+              <tr><td><code>docs/skills-usage.md</code></td><td>三个 Skill 的触发、参数、样例、42% vs 50%、排障</td><td>适用 v1.3.5 / v0.5.1</td></tr>
+              <tr><td><code>docs/handoff-2026-11-11.md</code></td><td>当前交接、关键路径、测试/验活、风险与下一轮议程</td><td>快照 15:00；§9 有旧版本号</td></tr>
+              <tr><td><code>docs/session-handoff-2026-11-11.md</code></td><td>交接设计、继承矩阵、闸门顺序、语言解析、防重复</td><td>设计/交付记录，含 v0.1.0 历史</td></tr>
+              <tr><td><code>docs/engine-spec.md</code></td><td><b>上游源引擎</b>的 S0 行为规约（33 工具、85 阈值）</td><td>不是本仓 8 工具/42% 的现状</td></tr>
+              <tr><td><code>docs/tools-mapping.md</code></td><td>8 工具与 33 源工具的映射、设计 action 集</td><td><b>设计稿</b>，含未实现 action</td></tr>
+              <tr><td><code>docs/segment-handoff.md</code></td><td>竹节阈值 42、链长 5、先 interrupt 后 start、K1–K5</td><td>2026-10-04 设计备忘</td></tr>
+              <tr><td><code>docs/audit-tree-system-2026-11-11.md</code></td><td>4 BLOCK / 12 需修 / 15 建议；P1-05/06/07 等</td><td>v0.5.0 基线（66/66）</td></tr>
+              <tr><td><code>docs/skill-e2e-2026-11-11.md</code></td><td>A/B/C 真机证据、7 节点 succeeded、FAIL→PASS、12/12 继承断言</td><td>2026-11-11；含 429 限制</td></tr>
+              <tr><td><code>docs/e2e-handoff-2026-11-11.md</code></td><td>root 14/14、sibling 12/12；工作区/预设/权限继承</td><td>2026-11-11</td></tr>
+              <tr><td><code>docs/e2e-kickoff-language-2026-11-11.md</code></td><td>语言解析优先级；修复前 en → 修复后 zh PASS</td><td>2026-11-11</td></tr>
+              <tr><td><code>docs/publishing.md</code></td><td>GitHub 两仓、市场、npm 冻结、版本纪律、发布脚本护栏</td><td>快照 15:00；tag 链</td></tr>
+              <tr><td><code>docs/skill-cleanroom-2026-11-11.md</code></td><td>三轮洁净室：G1–G12、N1–N7、第三轮 PASS</td><td>2026-11-11</td></tr>
+              <tr><td><code>docs/merge-session-tree-2026-11-11.md</code></td><td>§5 provider-conformance 的 rc.2 fixture 限制</td><td>2026-11-11</td></tr>
+              <tr><td><code>CHANGELOG.md</code></td><td>1.3.1–1.3.5 的变更与验证；1.3.0 的 Unreleased 段</td><td>2026-11-11</td></tr>
+              <tr><td><code>packages/*/package.json</code></td><td>版本、<code>files</code>、<code>exports</code>、<code>dsh.bundle/client</code></td><td>当前工作树</td></tr>
+              <tr><td><code>packages/dsh-tree-engine/index.js</code></td><td>8 工具 schema、action 闭集、工具描述</td><td>v0.5.1</td></tr>
+              <tr><td><code>packages/dsh-tree-engine/src/*.js</code></td><td>状态机、护栏、验证策略、竹节、时钟、配置</td><td>当前工作树</td></tr>
+              <tr><td><code>packages/dsh-session-tree/index.js</code></td><td><code>tree_send</code>/<code>session_handoff</code> schema、继承、语言、闸门</td><td>v1.3.5</td></tr>
+              <tr><td><code>packages/dsh-session-tree/README.zh.md</code></td><td>侧栏树、工作区、<code>tree_send</code>、交接继承、安装/排障</td><td>v1.3.5</td></tr>
+              <tr><td><code>packages/*/cordis.patch.yml</code></td><td>两行 insert：bundle + <code>dsh-skill-filesystem</code></td><td>当前工作树</td></tr>
+              <tr><td><code>git log</code> / <code>git status</code></td><td>本仓 master <code>ebeeaea</code>；工作树 clean；无 tag</td><td>2026-11-11 实测</td></tr>
+              <tr><td><b>本会话实测</b></td><td><code>tree-engine</code> 67/67、<code>handoff</code> 41/41、<code>skills</code> 3/3，退出码 0</td><td>2026-11-11</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <span class="label">引用建议</span>
+          <p>写文档/汇报时，优先引用<b>包内 <code>package.json</code></b>（版本）与<b>实测命令</b>（测试数）；引用 <code>docs/</code> 时请带上「快照日期」，因为本项目在 2026-11-11 一天内迭代了 5 个 session-tree 版本，旧文档里的 34/34、40/40、66/66、v1.3.3 都曾是正确的历史值。</p>
+        </div>
+
+      </div>
+    </section>
+
+    <p class="totop"><a href="#top">↑ 回到顶部</a></p>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div>
+      <h4>关于这份地图</h4>
+      <p>生成方式：由独立子会话 <code>bd97e78b-7a81-4cf4-8566-5706160712c2</code>（DSH 会话树体系「项目完整地图 + 能力/架构展示 + 下一步功能分析」任务）在 <b>2026-11-11</b> 只读扫描仓库后手写；单文件、完全离线、无脚本、无外链资源。</p>
+      <p>事实与示意分离：带 <span class="pill fact">事实</span> 的内容有仓库文件或本会话实测支撑；带 <span class="pill demo">示意</span> 的是为可读性重排的布局/命令返回；带 <span class="pill rec">建议</span> 的是分析，不代表仓库承诺。</p>
+      <p class="fine">本页未修改仓库其它文件；版本号、测试数、hash 均以 2026-11-11 快照为准。若与此后的 <code>package.json</code> / <code>git log</code> 冲突，以后者为准。</p>
+    </div>
+    <div>
+      <h4>源码与镜像（纯文本，不作为资源加载）</h4>
+      <p class="mono fine">github.com/orphiczhou/dsh-tree-harness</p>
+      <p class="mono fine">github.com/orphiczhou/dsh-session-tree（tag v1.3.5 = 1fb9193）</p>
+      <h4 style="margin-top:14px">快照</h4>
+      <p class="fine">session-tree v1.3.5 · 1fb9193 · 18/18 SHA<br>tree-engine v0.5.1 · meta-loop v0.2.0（未装配）· introspect v0.1.0<br>本仓 master ebeeaea · MIT · npm 冻结（D3）</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

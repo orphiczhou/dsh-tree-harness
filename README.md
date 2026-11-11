@@ -17,9 +17,9 @@
 | 包 | 版本 | 能力 | 测试 | 当前状态 |
 |---|---|---|---|---|
 | [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.5.1 | 执行层：8 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain`），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准；**随包 tree-commander/tree-worker Skill** | **67/67** | ✅ 运行中（本机 desktop profile 已装载） |
-| [`packages/dsh-meta-loop`](packages/dsh-meta-loop/) | 0.2.0 | 治理层：六阶段方法轮 + **G1–G11** 机械门禁 + `/metaloop/` Web 面板 + M4 递归触发表 | **13/13** | ⏸ 未装配（不在 profile bundles，按需装载） |
+| [`packages/dsh-meta-loop`](packages/dsh-meta-loop/) | 0.2.0 | 治理层：六阶段方法轮 + **12 条 G-*** 机械门禁 + `/metaloop/` Web 面板 + M4 递归触发表 | **13/13** | ⏸ 未装配（不在 profile bundles，按需装载） |
 | [`packages/dsh-agent-introspect`](packages/dsh-agent-introspect/) | 0.1.0 | 自省层：`self_spec` 工具，投影当前会话的 model / permissions / sandbox / cwd / token 用量 | —（无单测） | ✅ 运行中 |
-| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.3.5** | 会话树单包：左栏嵌套会话树 + `tree_send` 跨层级消息工具 + **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回 | 包内 5 份测试（handoff **41/41**、render 全绿、style-guard 22/22、verify-bundle 0 fail） | 🌐 GitHub 公开（**v1.3.3**）、社区市场已收录；**npm 未发布** |
+| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.3.5** | 会话树单包：左栏嵌套会话树 + `tree_send` 跨层级消息工具 + **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回 | 包内 6 个测试入口（handoff **41/41**、render 全绿、style-guard 22/22、verify-bundle 0 fail） | 🌐 GitHub 公开（**v1.3.5**）、社区市场已收录；**npm 未发布** |
 
 状态口径：
 
@@ -181,10 +181,11 @@ scripts/                 asar-tool / release-plugin（发布同步校验）
 | [agent.md](agent.md) | **项目代理手册（开工必读）**：角色授权（Lead=指挥官+架构师）、决策 D1–D14、路线图、工程命令、发布门禁与回滚 |
 | [docs/handoff-2026-11-11.md](docs/handoff-2026-11-11.md) | **当前交接**：决策 D1–D7、关键路径、测试/验活命令、发布流程、风险与回滚、下一轮议程 |
 | [docs/skills-usage.md](docs/skills-usage.md) | **随包 Skill 完整使用指南**：三个 Skill 的安装/发现/最小提示词/三层任务树/50% 交接/语言/排障/索引（GitHub 用户入口） |
-| [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md) | 会话自交接：v0.1.0 设计 + **v1.2.0 并入会话树/继承修复 + v1.3.0 随包 Skill + v1.3.1 语言跟随** |
+| [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md) | 会话自交接：v0.1.0 设计 + **v1.2.0 并入会话树/继承修复 + v1.3.0 随包 Skill + v1.3.1 语言跟随 + v1.3.5 洁净室收口** |
 | [docs/e2e-handoff-2026-11-11.md](docs/e2e-handoff-2026-11-11.md) | 交接真机 E2E 取证：修复前 root FAIL 5/12 基线 → 修复后 root PASS 14/14 / sibling PASS 12/12 |
 | [docs/e2e-kickoff-language-2026-11-11.md](docs/e2e-kickoff-language-2026-11-11.md) | 接替提示语语言真机 E2E：修复前 `lang=en` 基线 → v1.3.1 `lang=zh` + 接替首条中文 PASS |
-| [docs/skill-cleanroom-2026-11-11.md](docs/skill-cleanroom-2026-11-11.md) | Skill 文档洁净室多轮评审：独立子会话对 GitHub 用户材料的第一/二轮检查与修订记录 |
+| [docs/skill-cleanroom-2026-11-11.md](docs/skill-cleanroom-2026-11-11.md) | Skill 文档洁净室多轮评审：独立子会话对 GitHub 用户材料的第一/二/三轮检查与修订记录 |
+| [docs/project-map-2026-11-11.html](docs/project-map-2026-11-11.html) | **项目完整地图（单文件 HTML）**：图文混合讲清会话树体系的能力/架构/真机流程/机制/边界，并分析下一步功能（离线可看，9 张内联 SVG） |
 | [docs/skill-e2e-2026-11-11.md](docs/skill-e2e-2026-11-11.md) | Skill 工程化真机 E2E：极简提示词 → skill 识别 → 三层分解/逐层干活/中间层 50% 交接（A/B/C 组） |
 | [docs/audit-tree-system-2026-11-11.md](docs/audit-tree-system-2026-11-11.md) | tree 体系一致性审计：4 BLOCK / 12 需修 / 15 建议（file:line 证据 + 修复状态） |
 | [docs/publishing.md](docs/publishing.md) | **发布状态与流程**：GitHub 两仓、社区市场、npm 冻结、版本纪律、公开前检查清单 |

@@ -22,7 +22,7 @@
 
 - **工具面（全量 8 个）**：tree_plan / tree_node / tree_dispatch / tree_report / tree_status / **tree_verify** / **tree_log** / **tree_maintain**。
 - **验证策略层第一批**（src/verify.js）：self-report / artifact（glob+minSize+regex+jsonSchema）/ command（退出码+超时硬杀=verdict fail）；策略装载期校验（未知 mode/缺 glob/run → 报错含键名不静默）；DoD 前置注入生成器（与验证器同模板）；AND 短路；端口 fail-closed。
-- **核心命令补齐**：event:list、drift:append/list（三层纠偏枚举）、heartbeat:append/tail（哨兵巡逻）、communication:log/list（外部通信可观测，防心跳误判冻结）、nudge:reset、tree:register-session（旁路登记幂等）、backup/restore（状态内快照×10，恢复前快照+tree_id 匹配校验；文件级随 storageDomain 适配）。
+- **核心命令补齐**：event:list、drift:append/list（三层纠偏枚举）、heartbeat:append/tail（哨兵巡逻）、communication:log/list（外部通信可观测，防心跳误判冻结）、nudge:reset、tree:register-session（旁路登记；重复登记以 E_SCHEMA_INVALID 拒绝，调用方按已存在处理）、backup/restore（状态内快照×10，恢复前快照+tree_id 匹配校验；文件级随 storageDomain 适配）。
 - **测试**：**40 项全绿**。
 
 ## v0.3.1 增量（S1 第四批）：差分金标准落地

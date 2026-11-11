@@ -259,7 +259,9 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
   - **1.3.0**：随包 `session-handoff` Skill + skill provider patch 行（此前无 Skill）；
   - **1.3.1**：接替提示语跟随 DSH 界面语言（zh/en；`lang=` + `interface_language`）；
   - **1.3.2**：Skill 使用文档补全（样例/参数表/冒烟/排障/英文触发词）；
-  - **1.3.3**：`spawn:false` 干跑不再被阈值闸拦；文档路径与样例修正。
+  - **1.3.3**：`spawn:false` 干跑不再被阈值闸拦；文档路径与样例修正；
+  - **1.3.4**：洁净室文档债清扫（语言验收表述、set-session 主体、英文触发词、版本矩阵）；
+  - **1.3.5**：SKILL 补 `spawn:false` 例外说明；README root→grandchild 措辞修正（当前版本）。
 - 升级包后：宿主半/patch 有变化 → disable→enable；只改 Skill 正文 → 新会话直接读到。
 - 会话树公开插件仓：`orphiczhou/dsh-session-tree`（tag = 版本号）；本仓 `packages/dsh-session-tree` 是唯一源码事实源。
 
