@@ -2,6 +2,13 @@
 
 树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/architecture/engine-spec.md](../../docs/architecture/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 9 个工具 schema 为准（[docs/architecture/tools-mapping.md](../../docs/architecture/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
 
+## v0.7.0 增量：Wave 2 引擎完整性（预算计竹节链 / RC2 兼容层单测 / root 会话 id 兼容）
+
+- **W2.1 会话预算计入竹节链**（`src/guards.js`）：`sessionBudget` 计数集合并入 `leaf.runtime.segmentChain`（竹节接力产生的历史会话；此前只统计 `leaf.session_id` + `leaf.segment_chain` + `session_registry`，高频接力的树会漏计、`max_sessions` 护栏失效）。`findSessionConflict` 与 `engine.js` 的 `validate()` 同步纳入 `runtime.segmentChain`，并按归一化 id 去重——同一会话跨 `leaf.session_id` / `leaf.segment_chain` / `runtime.segmentChain` / `session_registry` 只算一次。
+- **W2.3 RC2 兼容层单测**（新增 `src/compat.js`）：把宿主 `subagents` 服务的双形探测（legacy `startContinuable` / 现役 rc.2 `startActivation` / 两形都缺 fail-closed）与 interrupt authority 候选顺序抽成**纯逻辑模块**（无宿主服务、无 IO、无 `@deepseek-ai/*` 依赖），`index.js` 只做装配，legacy 优先语义冻结。新增 `tests/compat.test.js`（11 例：两形返回形状解析 / 探测优先级 / interrupt 候选顺序 / 负例）。
+- **W2.6 root 会话 id 兼容**（`src/guards.js` + `src/engine.js`）：DSH 根/主会话的 `DSH_SESSION_ID` 带 `session-` 前缀，而 dispatch 返回的 childId 是裸 UUID。修复前 `tree_plan` 传真实 id 即 `E_INVALID_UUID_STRICT`，root 信任锚比较（`root.session_id` 裸 UUID vs caller 带前缀）永不等值导致 root 写权退化、skills 指导的「裸 UUID」写法会 `E_BORROWED_IDENTITY`。现在引擎**写入侧归一化存储（裸 UUID 规范形）、比较侧归一化比较**（`normalizeSessionId` / `sameSession`，历史 state 里带前缀旧值同样兼容）；UUID v4 严格性不放宽（归一化后仍严格校验）。新增 `tests/identity.test.js`（10 例）。
+- **测试**：新增 `tests/budget.test.js`（7 例）。全量 `node --test tests/*.test.js` = **112/112**（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 11 compat + 10 identity + 7 budget）。
+
 ## v0.6.0 增量：只读自检工具 `tree_doctor`（第 9 个工具）
 
 - **新增只读自检工具 `tree_doctor`**（`src/doctor.js` 纯逻辑 + `index.js` 注册）：用户反馈「工具 / Skill 没出现」时不再靠猜——一次调用给出 7 项结构化检查与修复提示。**零写副作用**：只读文件与 `store.read/list`，树不变式校验复用引擎 `validate`（经 `engine.table.validate` 直调，不落 call-log），不写任何树状态/日志。

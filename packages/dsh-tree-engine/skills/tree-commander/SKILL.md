@@ -4,18 +4,18 @@ description: '把复杂任务拆成多层任务树、派独立子会话执行并
 whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；任务可拆成可独立验证的中间产物；需要依赖拓扑（先 A 后 B）或并行推进；需要验收证据而不是一句「做完了」；任务长到单个会话装不下（要配合会话交接）；用户说「拆三层」「派人做」「多层分解」「任务树」「并行做」「分派子任务」「派一队人」「做完验收收口」「继续干，快到上限就交接」「根会话→中间层→执行层」「三层都能干活」「演示三层」。English speakers may say: split this into three layers, build the tree, dispatch workers, parallelize, verify and close the tree.'
 ---
 
-# tree-commander SKILL（DSH 版 v2.0，随 tree-engine v0.5.1 分发）
+# tree-commander SKILL（DSH 版 v2.1，随 tree-engine v0.7.0 分发）
 
 > 你是树节点的指挥官（commander）。与"脚本执行者"的根本区别：**你拿到的只有目标，没有结构**——
 > 分解成几个子节点、串行还是并行、谁依赖谁、各自什么 taskType，**全部由你自主决定**。
-> 引擎（8 个 `tree_*` 工具）只提供护栏与账本，不预设形状。每个被派发的 leaf 都是**独立 DSH 会话**。
+> 引擎（9 个 `tree_*` 工具）只提供护栏与账本，不预设形状。每个被派发的 leaf 都是**独立 DSH 会话**。
 
 ## 0. 你是谁 / 环境事实
 
-- 你的会话 id：`$env:DSH_SESSION_ID`（本机实测为裸 UUID v4，如 `dacf6e74-8894-479f-a230-2eb7b6976499`）。它同时是你 leaf 的 owner 与你子节点的 `added_by`。
+- 你的会话 id：`$env:DSH_SESSION_ID`。**形态因会话层级而异**：DSH 根/主会话实测带 `session-` 前缀（如 `session-ae8a…`），dispatch 出的子会话是裸 UUID v4（如 `dacf6e74-…`）。tree-engine **v0.7.0 起引擎归一化**（剥 `session-` 前缀、存储裸 UUID 规范形），两种形态都可原样传——**不要手工截前缀或拼前缀**。它同时是你 leaf 的 owner 与你子节点的 `added_by`。
 - 派发你时任务书已给出 tree_id、你的 leaf_id、目标（brief）、DoD；完成时按结算指令 `tree_report {action:"event", type:"done"}` 收尾。
 - 嵌套深度 ≤3：**root → commander → worker**。worker 不能有子节点（引擎硬拦），再加层会 `E_DEPTH_EXCEEDED`。
-- 8 个工具与 action 闭集（**不要发明 action**）：
+- 9 个工具与 action 闭集（**不要发明 action**）：
 
 | 工具 | action | 用途 |
 |---|---|---|
@@ -27,6 +27,7 @@ whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；�
 | `tree_verify` | `run` / `dod` / `adversarial` | 跑验证 / 看 DoD / 异族红队对抗验证 |
 | `tree_log` | `events` / `drift` / `heartbeat` / `communication` | 查日志（只读） |
 | `tree_maintain` | `backup` / `restore` / `nudge-reset` / `register-session` | 维护，一般不用 |
+| `tree_doctor` | `run` | 只读自检（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env` 七项；FAIL 不 throw） |
 
 ## 1. 自主分解流程（拿到目标后）
 
@@ -68,7 +69,7 @@ whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；�
 ```
 
 - `tree_id`：4–8 字符、小写字母开头、只含 `[a-z0-9_]`、无连字符（否则 `E_NAME_INVALID`）。
-- **强烈建议传 `session_id`**：不传则 root leaf 没有 owner，root 的信任锚/SET 权限会退化。它必须是严格 UUID v4（裸 uuid，**不能带 `session-` 前缀**，否则 `E_INVALID_UUID_STRICT`）——直接用 `$env:DSH_SESSION_ID`。
+- **强烈建议传 `session_id`**：不传则 root leaf 没有 owner，root 的信任锚/SET 权限会退化。v0.7.0 起可接受带 `session-` 前缀的形态（引擎归一化为裸 UUID 后仍严格校验 v4；非法 UUID 照旧 `E_INVALID_UUID_STRICT`）——直接用 `$env:DSH_SESSION_ID`，不要手工截前缀。
 
 每个子任务一次 `tree_node add`（commander 层）：
 
@@ -110,7 +111,7 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
 ```
 
 - **命名规则**：`<tree_id>-<path 段>-<name>`；`path` 段必须以**大写字母开头**（如 `C1`、`C1a1`；不能写成 `review1`），`path` 字段必须**逐字等于** leaf_id 里的路径段；可带 `-sN`/`-iN` 后缀。不写 `path` 时不校验 path。违反命名 → `E_NAME_INVALID`（helpTopic `naming_convention`）；path 与 leaf_id 不一致 → `E_SCHEMA_INVALID`（helpTopic `how_to_init`）。
-- `added_by` 必须等于引擎提取的调用者 id（本机实测 = 裸 `$env:DSH_SESSION_ID`，**不要加 `session-` 前缀**；否则 `E_BORROWED_IDENTITY`）。
+- `added_by` 必须等于引擎提取的调用者 id（v0.7.0 起按**归一化**比较：`session-` 前缀与裸 UUID 视为同一会话，可原样传 `$env:DSH_SESSION_ID`；不同会话仍 `E_BORROWED_IDENTITY`）。
 - 角色闭集：`commander` / `worker`（root 只由 tree_plan 创建，`auditor` 也可建但不做执行主力）。
 - worker 初始状态 `pending_brief`；commander/auditor 初始 `active`。
 
@@ -163,7 +164,7 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
 | 嵌套深度 | 3 | `E_DEPTH_EXCEEDED` |
 | 单 leaf 竹节链长 | 5 → `frozen` 待裁决 | 工具面表现 `runtime.state=frozen` |
 
-- 注：`max_sessions` 预算**不含**竹节接力产生的 `runtime.segmentChain`（已知实现边界）——高频接力的树可能看起来超限而引擎不拦。
+- 注：v0.7.0 起 `max_sessions` 预算**计入**竹节接力产生的 `leaf.runtime.segmentChain`（W2.1 修复）——高频接力的树按真实会话数计费，超限即拦。
 - 可用 `TREE_ENGINE_CONFIG`（JSON）覆盖护栏/编排键：`node_budget` / `max_sessions` / `max_subagent_spawn_per_leaf` / `commander_max_depth` / `ctx_segment_threshold` / `segment_max_chain_length` / `nodeTimeoutMs` / `sweepIntervalMs` / `graceMs` / `bambooThresholdPct`。非法配置会让插件**装载失败**（报错含键名），不是静默回退。
 
 ## 3. 上下文 50% 自主交接（必读；每一层会话都要会）
@@ -208,7 +209,7 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
        "meta": { "handoff": { "session_id": "<接替会话 id>", "handoff_path": "<HANDOFF 绝对路径>", "reason": "context-50" } } }
      ```
   2. 若你是**子节点指挥官**：把新会话 id + 交接路径上报你的上级（progress/blocked 事件；直接父会话用原生 `send_message`，跨层（兄弟/越级）才用 `tree_send`——目标父会话须活着），请求上级决定：
-     - `tree_node {action:"set-session", tree_id, leaf_id, session_id:"<接替会话 id>"}` 重绑 owner（set-session 仅 leaf 的 creator/`added_by` 可调，且要求 strict UUID v4——DSH 会话 id 是裸 UUID v4，可用；若报 `E_BORROWED_IDENTITY`，先核对你的 `added_by` 与调用者 id 形态是否一致）；或
+     - `tree_node {action:"set-session", tree_id, leaf_id, session_id:"<接替会话 id>"}` 重绑 owner（set-session 仅 leaf 的 creator/`added_by` 可调；v0.7.0 起 `session-` 前缀与裸 UUID 都接受并归一化存储；若报 `E_BORROWED_IDENTITY`，先核对 `added_by` 是否为同一会话）；或
      - `tree_dispatch {action:"cancel"}` → `start` 重派（attempt+1，绑定新执行者）。
   3. 若你是 **root 会话**：你的上级就是用户/Lead——把「leaf owner 仍是旧会话」写进交接文件与回报，由用户决定重派或新建节点。
 - 不要假设引擎会自动把新会话变成 leaf owner；也不要自己冒充新会话写 done。
@@ -244,7 +245,7 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
 | `E_MAX_SESSIONS` / `E_NODE_BUDGET_EXCEEDED` / `E_SUBAGENT_BUDGET_EXCEEDED` | 预算护栏满：收口/剪枝后再建 |
 | `E_PORTS_NOT_WIRED` / `E_PORTS_PROTOCOL` | 宿主编排端口不可用：如实上报，不要伪造子会话 |
 | `E_STATUS_TRANSITION_INVALID` | 状态机不允许该迁移（看 allowed 列表） |
-| `E_INVALID_UUID_STRICT` | session_id 必须是严格 UUID v4（`session-` 前缀串会被拒） |
+| `E_INVALID_UUID_STRICT` | session_id 归一化后必须是严格 UUID v4（v0.7.0 起接受可选 `session-` 前缀；非 UUID 仍拒） |
 
 ## 6. 一图流
 

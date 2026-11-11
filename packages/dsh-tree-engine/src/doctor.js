@@ -1,5 +1,5 @@
 /**
- * tree_doctor 后端（v0.6.0，第 9 个工具的唯一逻辑层）。
+ * tree_doctor 后端（v0.6.0 引入，v0.7.0 起随包版本迭代；第 9 个工具的唯一逻辑层）。
  *
  * 背景：用户反馈「工具 / Skill 没出现」时只能靠猜（未安装、未重载、旧会话、缺 skill
  * provider、版本漂移、树数据异常）。tree_doctor 把这条排查链固化成一次只读调用。
@@ -117,7 +117,7 @@ function checkToolCount(toolNames) {
     extra.length ? `多 ${extra.join('/')}` : '',
     dup.length ? `重复 ${dup.join('/')}` : '',
   ].filter(Boolean).join('；')
-  return check('tool-count', FAIL, `${detail}${problems ? `：${problems}` : ''}`, 'v0.5.x 只有 8 个工具：确认包为 v0.6.0，并对 include:tree-engine 做 disable→enable（Loader 按包名缓存宿主模块）')
+  return check('tool-count', FAIL, `${detail}${problems ? `：${problems}` : ''}`, 'v0.5.x 只有 8 个工具：确认包为 v0.7.0，并对 include:tree-engine 做 disable→enable（Loader 按包名缓存宿主模块）')
 }
 
 /** c. skills：两份 SKILL.md 存在且 frontmatter name 对应；patch 挂载 skill provider。 */
@@ -148,7 +148,7 @@ function checkSkills(pkgDir) {
     }
   }
   if (problems.length) {
-    return check('skills', FAIL, problems.join('；'), 'Skill 目录随包发布：缺文件/缺 provider 时重装 @local/dsh-tree-engine（v0.6.0）并 disable→enable include:tree-engine；Skill 只在**新会话**装载，旧会话看不到属预期')
+    return check('skills', FAIL, problems.join('；'), 'Skill 目录随包发布：缺文件/缺 provider 时重装 @local/dsh-tree-engine（v0.7.0）并 disable→enable include:tree-engine；Skill 只在**新会话**装载，旧会话看不到属预期')
   }
   return check('skills', PASS, `${ok.join(' · ')}（Skill 由新会话装载：旧会话里看不到新 Skill 不是故障）`)
 }

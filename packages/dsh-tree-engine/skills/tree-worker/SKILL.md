@@ -4,15 +4,15 @@ description: '树节点执行者（worker）：按派发任务书与 DoD 完成�
 whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / DoD / 结算指令；用户说「按任务书干」「执行这个节点」「干完结算」「自报进度」「继续干，快到上限就交接」「上下文 50% 就交接」；你是树的执行层，需要知道能做什么/不能做什么、竹节协议和 50% 自主交接规则时。'
 ---
 
-# tree-worker SKILL（DSH 版 v2.0，随 tree-engine v0.5.1 分发）
+# tree-worker SKILL（DSH 版 v2.1，随 tree-engine v0.7.0 分发）
 
-> 你是被派发到树节点的**执行者（worker）**。树侧只依赖 tree-engine 的 8 个工具（实际只需 `tree_report` 上报）；
+> 你是被派发到树节点的**执行者（worker）**。树侧只依赖 tree-engine 的 9 个工具（实际只需 `tree_report` 上报）；
 > 你的工作面很窄：**干活 + 用 `tree_report` 上报 + 到点交接**。不要碰树的结构。
 
 ## 0. 你是谁 / 环境事实
 
 - 你的指挥官（commander）创建了 leaf 并派发任务书（prompt + DoD 验收标准 + 结算指令）。
-- 你的**会话 id** = 环境变量 `$env:DSH_SESSION_ID`（本机实测为裸 UUID v4）。**首次派发**时它已被绑定为该 leaf 的 owner（`leaf.session_id`）；若你是竹节接力产生的新会话，v0.5.0 起 owner 已重绑给你（旧版本/异常路径的兜底见 §4.3）。
+- 你的**会话 id** = 环境变量 `$env:DSH_SESSION_ID`（形态因层级而异：根/主会话带 `session-` 前缀，被派发子会话为裸 UUID v4；tree-engine v0.7.0 起按归一化比较，两种形态都可用）。**首次派发**时它已被绑定为该 leaf 的 owner（`leaf.session_id`）；若你是竹节接力产生的新会话，v0.5.0 起 owner 已重绑给你（旧版本/异常路径的兜底见 §4.3）。
 - 你的节点标识：`tree_id` 与 `leaf_id`（结算指令里给出）。
 - 你是**被派发的独立 DSH 会话**：有自己的上下文窗口；你的 leaf 初始状态可能是 `pending_brief`，这是正常的。
 - 你能用的工具（工具面）：
@@ -83,7 +83,7 @@ whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / Do
 | worker 不能有子节点 | 对 worker 调 `tree_node add` 建子节点会被拒：`E_SCHEMA_INVALID` |
 | 状态迁移闭集 | `pending_brief→active→…→done`；done 需先有 done 事件 + 里程碑全过（**工具面无法完成 set-status done**——没有里程碑写入命令；结算以 `runtime.succeeded` 为准）；非法迁移 `E_STATUS_TRANSITION_INVALID` |
 | 事件 ts 单调 | 早于上一条的时间戳被拒（相等放行）：`E_TS_NOT_MONOTONIC` |
-| 预算护栏 | 树会话 >50 `E_MAX_SESSIONS`（**不含**竹节接力会话，见 commander §2 脚注）；未收口 leaf（`active`+`segment_pending`+`pending_brief`）>20 `E_NODE_BUDGET_EXCEEDED` |
+| 预算护栏 | 树会话 >50 `E_MAX_SESSIONS`（v0.7.0 起**计入**竹节接力会话，见 commander §2 脚注）；未收口 leaf（`active`+`segment_pending`+`pending_brief`）>20 `E_NODE_BUDGET_EXCEEDED` |
 | 深度 ≤3 | root→commander→worker，再加层 `E_DEPTH_EXCEEDED` |
 
 **协议纪律（引擎不拦，但别做）**：

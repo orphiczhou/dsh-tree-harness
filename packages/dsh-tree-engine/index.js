@@ -21,6 +21,11 @@ import { fsStore } from './src/store.js'
 import { systemClock } from './src/clock.js'
 import { configFromEnv } from './src/config.js'
 import { runDoctor } from './src/doctor.js'
+// W2.3（2026-11-12）：RC2 兼容层双形探测抽成纯逻辑模块（src/compat.js），此处只做装配。
+import {
+  buildInterruptAuthorities, detectInterruptMechanism, detectStartMechanism,
+  NO_START_MECHANISM_MESSAGE, resolveActivationResult, resolveContinuableResult,
+} from './src/compat.js'
 import path from 'node:path'
 import { promises as fsp } from 'node:fs'
 import { spawn } from 'node:child_process'
@@ -312,31 +317,25 @@ async function startChildSession(services, { provider, label, parent, promptText
     ...(agentOptions ? { agentOptions } : {}),
   }
   const signal = new AbortController().signal
-  if (typeof services.subagents?.startContinuable === 'function') {
+  // W2.3：探测/结果解析统一走 src/compat.js（legacy 优先语义冻结，单测覆盖三分支）
+  const mechanism = detectStartMechanism(services?.subagents)
+  if (mechanism === 'legacy') {
     const r = await services.subagents.startContinuable({ provider, label, signal, request })
-    const sessionId = r?.childId ?? r?.sessionId ?? r?.session?.id
-    if (!sessionId) throw new Error(`unrecognized startContinuable result: ${JSON.stringify(r).slice(0, 200)}`)
-    return sessionId
+    return resolveContinuableResult(r)
   }
-  if (typeof services.subagents?.startActivation === 'function') {
+  if (mechanism === 'activation') {
     const r = await services.subagents.startActivation({ provider, label, request, signal, delivery: 'parent' })
-    const sessionId = r?.childId ?? r?.sessionId
-    if (!sessionId) throw new Error(`unrecognized startActivation result: ${JSON.stringify(r).slice(0, 200)}`)
-    return sessionId
+    return resolveActivationResult(r)
   }
-  throw new Error('host subagents service exposes neither startContinuable nor startActivation')
+  throw new Error(NO_START_MECHANISM_MESSAGE)
 }
 
-/** 中断会话：按现役 authority 形状逐候选尝试（ancestor 活 Agent → user 父地址 → legacy parent 形状）。 */
+/** 中断会话：按现役 authority 形状逐候选尝试（ancestor 活 Agent → user 父地址 → legacy parent 形状）。
+ *  W2.3：候选构造抽到 src/compat.js（顺序冻结、单测覆盖）；逐候选 try/catch 保持原语义。 */
 function interruptChildCompat(services, sessionId, parentSessionId) {
-  if (typeof services.subagents?.interrupt !== 'function') return
-  const authorities = []
+  if (detectInterruptMechanism(services?.subagents) === 'none') return
   const liveAncestor = parentSessionId ? pickLiveAncestorAgent(services, parentSessionId) : undefined
-  if (liveAncestor) authorities.push({ kind: 'ancestor', agent: liveAncestor })
-  if (parentSessionId) {
-    authorities.push({ kind: 'user', parentSessionId })
-    authorities.push({ kind: 'parent', parentSessionId })
-  }
+  const authorities = buildInterruptAuthorities({ parentSessionId, liveAncestorAgent: liveAncestor })
   let lastError = null
   for (const authority of authorities) {
     try {
@@ -805,7 +804,7 @@ export function apply(ctx) {
   /** 文件自诊断（Loader 缓存下唯一可靠观测通道）：apply 全程留痕 + 全程容错。 */
   const diagPath = path.join(dataDir, 'apply.log')
   const diag = (msg) => { try { fsp.mkdir(path.dirname(diagPath), { recursive: true }).then(() => fsp.appendFile(diagPath, `${new Date().toISOString()} ${msg}\n`)).catch(() => {}) } catch {} }
-  diag(`apply() entered (v0.6.0); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
+  diag(`apply() entered (v0.7.0); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
   try {
     ctx.inject(['tools', 'subagents', 'sessionQuery'], (scoped) => {
       try {
@@ -851,7 +850,7 @@ export function apply(ctx) {
           try { services.tools.register(tool); okCount += 1; diag(`register OK: ${tool.name}`) }
           catch (e) { diag(`register FAILED: ${tool.name}: ${e?.message ?? e}`) }
         }
-        console.log(`[tree-engine] v0.6.0 registered ${okCount}/${TOOLS.length} tools (fs persistence @ ${dataDir}; sweepMode=${sweepMode})`)
+        console.log(`[tree-engine] v0.7.0 registered ${okCount}/${TOOLS.length} tools (fs persistence @ ${dataDir}; sweepMode=${sweepMode})`)
         diag(`apply complete: ${okCount}/${TOOLS.length} registered`)
       } catch (e) {
         diag(`inject callback THREW: ${e?.stack ?? e}`)

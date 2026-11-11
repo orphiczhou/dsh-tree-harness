@@ -11,7 +11,7 @@ import {
   treeError,
 } from './state.js'
 import {
-  DEFAULT_GUARDS, isStrictUuidV4, sessionBudget, activeLeafBudget, spawnBudget,
+  DEFAULT_GUARDS, isStrictUuidV4, normalizeSessionId, sameSession, sessionBudget, activeLeafBudget, spawnBudget,
   assertCallerIs, assertLeafWriter, findSessionConflict,
 } from './guards.js'
 import { enqueue } from './queue.js'
@@ -49,7 +49,10 @@ export function createEngine(opts) {
 
   // ── init ─────────────────────────────────────────────
   async function init(args) {
-    const [treeId, rootBrief, rootDod, sessionId, auditMeta] = args
+    const [treeId, rootBrief, rootDod, sessionIdRaw, auditMeta] = args
+    // W2.6（2026-11-12）：会话 id 归一化——root/主会话 DSH_SESSION_ID 带 `session-` 前缀，
+    // state 一律存归一化裸 UUID 规范形（校验仍严格 v4）。
+    const sessionId = normalizeSessionId(sessionIdRaw ?? null)
     return withTree(treeId, async (existing) => {
       if (existing) treeError('E_DUPLICATE_LEAF', `tree "${treeId}" already initialized`)
       const rootLeafId = `${treeId}-root`
@@ -84,7 +87,10 @@ export function createEngine(opts) {
     return withTree(treeId, async (state) => {
       if (!state) treeError('E_TREE_NOT_FOUND', `tree "${treeId}" not found`)
       if (!leaf || typeof leaf !== 'object') treeError('E_SCHEMA_INVALID', 'leaf object required')
-      const { leaf_id, session_id, parent, path: leafPath, role, added_by } = leaf
+      const { leaf_id, session_id: rawSessionId, parent, path: leafPath, role, added_by: rawAddedBy } = leaf
+      // W2.6：会话 id / 创建者 id 归一化后再校验/存储（调用方传 `session-` 前缀形态也可）
+      const session_id = rawSessionId == null ? rawSessionId : normalizeSessionId(rawSessionId)
+      const added_by = normalizeSessionId(rawAddedBy)
       if (!leaf_id) treeError('E_SCHEMA_INVALID', 'leaf_id is required')
       if (!LEAF_NAME_RE.test(leaf_id)) {
         treeError('E_NAME_INVALID', `leaf_id "${leaf_id}" must match ${String(LEAF_NAME_RE)} (prefix-Role-seq[-sN|iN])`, 'naming_convention')
@@ -191,7 +197,8 @@ export function createEngine(opts) {
 
   // ── set-session ──────────────────────────────────────
   async function setSession(args, caller) {
-    const [treeId, leafId, sessionId] = args
+    const [treeId, leafId, sessionIdRaw] = args
+    const sessionId = normalizeSessionId(sessionIdRaw)
     return withTree(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       // 仅 creator（added_by）可重绑 owner；root 例外未开（P1-05 矩阵，不扩大写面）
@@ -286,7 +293,9 @@ export function createEngine(opts) {
 
   // ── segment append（竹节接力登记，全树唯一）───────────
   async function segmentAppend(args) {
-    const [treeId, leafId, newSessionId] = args
+    const [treeId, leafId, newSessionIdRaw] = args
+    // W2.6：竹节接力会话 id 归一化（带 `session-` 前缀也可登记）
+    const newSessionId = normalizeSessionId(newSessionIdRaw)
     return withTree(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       if (!isStrictUuidV4(newSessionId)) treeError('E_INVALID_UUID_STRICT', `new_session_id "${newSessionId}" must be strict UUID v4`)
@@ -333,15 +342,16 @@ export function createEngine(opts) {
     return withTree(treeId, async (state) => {
       const issues = []
       const seen = new Map()
+      // W2.1 + W2.6：会话唯一性按归一化比较，且 runtime.segmentChain（竹节接力历史）纳入校验
+      const noteSid = (leaf, sid, where) => {
+        const norm = normalizeSessionId(sid)
+        if (seen.has(norm)) issues.push({ type: 'session_duplicate', leaf_id: leaf.leaf_id, detail: `${where} duplicates ${seen.get(norm)}` })
+        else seen.set(norm, leaf.leaf_id)
+      }
       for (const leaf of Object.values(state.leaves)) {
-        if (leaf.session_id) {
-          if (seen.has(leaf.session_id)) issues.push({ type: 'session_duplicate', leaf_id: leaf.leaf_id, detail: `duplicates ${seen.get(leaf.session_id)}` })
-          else seen.set(leaf.session_id, leaf.leaf_id)
-        }
-        for (const sid of leaf.segment_chain ?? []) {
-          if (seen.has(sid)) issues.push({ type: 'session_duplicate', leaf_id: leaf.leaf_id, detail: `segment_chain duplicates ${seen.get(sid)}` })
-          else seen.set(sid, leaf.leaf_id)
-        }
+        if (leaf.session_id) noteSid(leaf, leaf.session_id, 'session_id')
+        for (const sid of leaf.segment_chain ?? []) noteSid(leaf, sid, 'segment_chain')
+        for (const sid of leaf.runtime?.segmentChain ?? []) noteSid(leaf, sid, 'runtime.segmentChain')
         if (leaf.parent && !state.leaves[leaf.parent]) issues.push({ type: 'parent_missing', leaf_id: leaf.leaf_id, detail: `parent "${leaf.parent}" not found` })
         if (leaf.status === 'done') {
           if (!(leaf.events ?? []).some((e) => e.type === 'done')) issues.push({ type: 'status_event_mismatch', leaf_id: leaf.leaf_id, detail: 'status=done but no done event' })
@@ -656,7 +666,8 @@ export function createEngine(opts) {
       // 定位 target leaf（leaves.session_id / segment_chain / registry）
       let targetLeafId = null
       for (const l of Object.values(state.leaves)) {
-        if (l.session_id === targetSessionId || (l.segment_chain ?? []).includes(targetSessionId)) { targetLeafId = l.leaf_id; break }
+        // W2.6：target 归一化比较（带 `session-` 前缀也可定位 leaf）
+        if (sameSession(l.session_id, targetSessionId) || (l.segment_chain ?? []).some((sid) => sameSession(sid, targetSessionId))) { targetLeafId = l.leaf_id; break }
       }
       if (!targetLeafId && state.session_registry?.[targetSessionId]?.leaf_id) targetLeafId = state.session_registry[targetSessionId].leaf_id
       const entry = { ts: nowIso(clock), from: caller ?? null, target_session_id: targetSessionId, direction, ...(note ? { note } : {}), ...(targetLeafId ? { leaf_id: targetLeafId } : {}) }
@@ -695,7 +706,9 @@ export function createEngine(opts) {
   }
 
   async function registerSession(args) {
-    const [treeId, sessionId, source, caller] = args
+    const [treeId, sessionIdRaw, source, caller] = args
+    // W2.6：登记会话 id 归一化（带 `session-` 前缀也可）
+    const sessionId = normalizeSessionId(sessionIdRaw)
     return withTree(treeId, async (state) => {
       if (!isStrictUuidV4(sessionId)) treeError('E_INVALID_UUID_STRICT', `session_id "${sessionId}" must be strict UUID v4`)
       const conflict = findSessionConflict(state, sessionId)
