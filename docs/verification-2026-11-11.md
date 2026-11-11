@@ -96,7 +96,7 @@ git status --porcelain=v1 -b; git rev-list --all --count; git rev-parse HEAD; gi
 - 分支 `master`；**无 git remote**（`git remote -v` 空）
 - commit 数 **26**（`git rev-list --all --count`）
 - HEAD `2cb2d17af13ab995c5260cb694e99d391d52b78e`
-- 工作树状态：已修改 `.gitignore`、`README.md`、`packages/dsh-meta-loop/panel/index.html`、`packages/dsh-tree-engine/index.js`；未跟踪 `agenda.md`、`docs/defect-2026-10-17-subagents-rc2-api-drift.md`、`docs/project-restart-brief-2026-11-11.html` 以及 T1/T4 产出（验证过程中陆续落盘，见 1.3）
+- 工作树状态：已修改 `.gitignore`、`README.md`、`packages/dsh-meta-loop/panel/index.html`、`packages/dsh-tree-engine/index.js`；未跟踪 `agent.md`、`docs/defect-2026-10-17-subagents-rc2-api-drift.md`、`docs/project-restart-brief-2026-11-11.html` 以及 T1/T4 产出（验证过程中陆续落盘，见 1.3）
 
 ### 1.2 验证环境
 
@@ -119,7 +119,7 @@ node --version   # bundled node
 | 工作树扫描 #1 | 12:36:13 | 96 | 18 | 114 |
 | 工作树扫描 #2（终轮） | 12:38:30 | 96 | 21 | 117 |
 
-- 未跟踪文件在验证期间持续增加：T1 `packages/dsh-session-tree/`（15 文件）、T4 `LICENSE`/`docs/handoff-2026-11-11.md`、T1 `scripts/release-plugin.mjs`、`agenda.md`、2 份 docs —— **均已纳入扫描**。
+- 未跟踪文件在验证期间持续增加：T1 `packages/dsh-session-tree/`（15 文件）、T4 `LICENSE`/`docs/handoff-2026-11-11.md`、T1 `scripts/release-plugin.mjs`、`agent.md`、2 份 docs —— **均已纳入扫描**。
 - 文本文件按 UTF-8 逐行扫描；3 个受跟踪 PNG 单独做**字节级**扫描（见 2.2）；受跟踪文件中**无 UTF-16 BOM 文件**（实测 0）。
 - 被 git 忽略的文件实际存在数：**0**（`git status --ignored --porcelain` 无 `!!` 条目）。
 - 未纳入：本报告自身（写入时不存在；按设计不含密钥/隐私值）；验证之后新产生的改动（以附录 A 复扫为准）。
@@ -279,7 +279,7 @@ $node = "$env:USERPROFILE\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\nod
 | `packages/dsh-meta-loop` | 12:36:52 — 12:36:53 | 13 | **13** | 0 | **0** | 229.78 ms |
 
 - node：`v24.21.0`
-- 运行对象是**当前工作树（含未提交改动）**，与 `agenda.md` §2 的「62/62、13/13」一致。
+- 运行对象是**当前工作树（含未提交改动）**，与 `agent.md` §2 的「62/62、13/13」一致。
 - 结论：**测试基线通过**（无 fail / 无 cancelled / 无 skipped）。
 - **最终 HEAD 复扫（2026-11-11 12:45:32，HEAD `4062974`，工作树 clean）**：tree-engine **62/62 exit 0**、meta-loop **13/13 exit 0**——与重写前一致，代码改动已随 4 个 commit 入库后仍全绿。
 
@@ -340,7 +340,7 @@ git hash-object -- <src>/<rel>; git hash-object -- <dst>/<rel>
 
 - **`SessionTree` ✓ 在线**（提供 `snapshot`：rows/groupCount/rowCount）
 - **`Regions` ✓ 在线**（提供 `outline`/`snapshot`/`failures`）
-- **`meta-loop-ui` ✗ 不在线**（与 `agenda.md` §2「meta-loop 未装配」一致；非发布阻塞）
+- **`meta-loop-ui` ✗ 不在线**（与 `agent.md` §2「meta-loop 未装配」一致；非发布阻塞）
 - 另有 `meta-adapter-ui`、`nanju-ui` 两个已装配插件 provider（与本次发布无直接关系，仅记录环境事实）
 
 ### 7.2 宿主 Config 目录总量
@@ -350,7 +350,7 @@ cordis_inspect_query platform=host provider=Config method=listConfigs input={"li
 → entries[0].id="include", name="cordis:include", total=248, nextOffset=1
 ```
 
-- **total = 248**（与 `agenda.md` §2 的「宿主 loader 账本 248 条」一致），时间 12:37:31+08:00。
+- **total = 248**（与 `agent.md` §2 的「宿主 loader 账本 248 条」一致），时间 12:37:31+08:00。
 
 ### 7.3 宿主 subagents Service 方法表（RC2 契约核对）
 
@@ -370,7 +370,7 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 
 ### 7.4 DSH 桌面版本
 
-`D:\DSHarness\DeepSeek Harness.exe` → FileVersion **0.2.2-rc.1**（ProductVersion 0.2.2.0），与 `agenda.md` §2 一致。
+`D:\DSHarness\DeepSeek Harness.exe` → FileVersion **0.2.2-rc.1**（ProductVersion 0.2.2.0），与 `agent.md` §2 一致。
 
 ---
 
@@ -386,7 +386,7 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 | R6 | INFO | `meta-loop-ui` client provider 未装配（agenda 已记录） | 属装配状态而非发布缺陷；本报告仅记录活体事实 |
 | R7 | — | ~~历史清除尚未执行~~ **已关闭（2026-11-11 12:44 完成）** | 附录 A 全绿；旧 HEAD/对象/refs 全部不可达 |
 | R8 | INFO | `.git/refs/original/` 为 filter-branch 留下的**空目录**（0 条 refs；`for-each-ref` 只有 `refs/heads/master`；无对象泄漏） | 纯装饰性残留，不影响 push（push 只传对象与 refs）；可选 `Remove-Item .git/refs/original` 清理 |
-| R9 | INFO | `git log -p` 正文出现已删除文件名（附录 A3 的 42 条正文命中） | 全部来自 `agenda.md` D7 说明、`demo/agspec/w2-source.md` 移除说明、本报告与 commit message——**属 D7 透明记录，不是内容泄漏**；文件内容/对象均为 0 |
+| R9 | INFO | `git log -p` 正文出现已删除文件名（附录 A3 的 42 条正文命中） | 全部来自 `agent.md` D7 说明、`demo/agspec/w2-source.md` 移除说明、本报告与 commit message——**属 D7 透明记录，不是内容泄漏**；文件内容/对象均为 0 |
 
 ---
 
@@ -413,7 +413,7 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 **结论：A1–A9（含补充 A3b/A3c/A10）全部通过 → §0.1 升级为 PASS WITH RISKS，可 push。**
 
 **说明（独立判读）**：
-① **A3 的语义口径**：`git log -p` 正文出现文件名字符串 ≠ 文件存在。实测**文件头命中 0**（7 个文件从未作为 diff 的 a/b 路径出现）、**对象路径命中 0**、**逐路径提交 0**，证明旧文件内容已不在历史；42 条正文命中全部是**文档对「已移除文件」的名称说明**（`agenda.md` D7、`demo/agspec/w2-source.md` 移除说明、本报告 §0.2/§0.3、`docs/handoff-2026-10-14.md` 对 asar 文件的说明，以及 `.gitignore` 新增行的 commit 上下文），**非内容泄漏**（R9）。
+① **A3 的语义口径**：`git log -p` 正文出现文件名字符串 ≠ 文件存在。实测**文件头命中 0**（7 个文件从未作为 diff 的 a/b 路径出现）、**对象路径命中 0**、**逐路径提交 0**，证明旧文件内容已不在历史；42 条正文命中全部是**文档对「已移除文件」的名称说明**（`agent.md` D7、`demo/agspec/w2-source.md` 移除说明、本报告 §0.2/§0.3、`docs/handoff-2026-10-14.md` 对 asar 文件的说明，以及 `.gitignore` 新增行的 commit 上下文），**非内容泄漏**（R9）。
 ② **保留的分析笔记**：`demo/agspec/w2-source.md` 仍含对这些第三方源码的**分析笔记**（D2 公开范围）；源码全文文件已不在树/历史。该笔记是否保留由 Lead 决定，不属本门禁。
 ③ **残留装饰**：`.git/refs/original/` 为空目录（0 refs、无对象），不构成泄漏（R8）。
 ④ **本报告更新不影响结论**：v1.2 修改仅新增文字（把附录 A 从 PENDING 填为 PASS），**不新增/删除任何文件路径**；本报告内容已做同套密钥自扫（0 命中）。因此 A1–A5/A9 的结构性结论对「提交本报告后的新 HEAD」同样成立；唯一变化是 HEAD 会因该 docs-only commit 再前进一格。
@@ -434,7 +434,7 @@ cordis_inspect_query platform=host provider=Service method=listService input={"s
 
 | 时间（+08:00） | 项 | 结果 |
 |---|---|---|
-| 12:35:32 | 开始验证（读 agenda.md：D2 全部公开 + 密钥例外） | — |
+| 12:35:32 | 开始验证（读 agent.md：D2 全部公开 + 密钥例外） | — |
 | 12:35:39 | 仓库基线：26 commits / HEAD 2cb2d17 / 无 remote | 记录 |
 | 12:35:56 | `git ls-files` / 大文件 / `.git` 体积 | 96 文件 / 3.01 MB / 0 个 >2MB / .git 3.80 MB |
 | 12:36:13—12:36:14 | **工作树密钥扫描 #1**（114 文件） | 1 良性命中，0 真实密钥 |

@@ -163,7 +163,7 @@ node scripts/release-plugin.mjs --target <public-repo-checkout>
 
 - **不改包内容、不 bump 版本**：保持 `@orphiczhou/dsh-session-tree@1.0.4`（D6；避免 market 误判更新）；
 - **不删除旧包目录**：`default-workspace/dsh-session-tree/`、`default-workspace/dsh-session-tree-tools/` 原样保留；
-- **不动本仓其它内容**：`packages/` 下其它包、根 `README.md`、`LICENSE`、`agenda.md`、`.gitignore`、他人未提交的改动一律不碰；
+- **不动本仓其它内容**：`packages/` 下其它包、根 `README.md`、`LICENSE`、`agent.md`、`.gitignore`、他人未提交的改动一律不碰；
 - **不执行任何 git 写命令**（add/commit/push/reset/checkout 由 Lead 独占）；
 - **不发布 npm**（D3 冻结）。
 

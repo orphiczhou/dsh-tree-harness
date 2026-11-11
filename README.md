@@ -7,7 +7,7 @@
 
 - 许可证：**MIT**（见 [LICENSE](LICENSE)）
 - 状态与测试数字为 **2026-11-11 实测快照**（各包 `package.json` 版本为准）
-- 公开范围：**仓库内资料公开**（公开前已排除隐私截图与第三方源码，见 [agenda.md](agenda.md) 决策 D7）
+- 公开范围：**仓库内资料公开**（公开前已排除隐私截图与第三方源码，见 [agent.md](agent.md) 决策 D7）
 - 代码零 npm 依赖：不 import 任何 `@deepseek-ai/*` 包，仅通过宿主 `ctx` 使用 DSH 原生服务（`subagents` / `timer` / `storage` / `tools` / `sessionQuery` 等）
 
 ---
@@ -158,6 +158,7 @@ scripts/                 asar-tool / release-plugin（发布同步校验）
 
 | 文档 | 内容 |
 |---|---|
+| [agent.md](agent.md) | **项目代理手册（开工必读）**：角色授权（Lead=指挥官+架构师）、决策 D1–D8、路线图、工程命令、发布门禁与回滚 |
 | [docs/handoff-2026-11-11.md](docs/handoff-2026-11-11.md) | **当前交接**：决策 D1–D7、关键路径、测试/验活命令、发布流程、风险与回滚、下一轮议程 |
 | [docs/publishing.md](docs/publishing.md) | **发布状态与流程**：GitHub 两仓、社区市场、npm 冻结、版本纪律、公开前检查清单 |
 | [PLAN.md](PLAN.md) | 开发方案（工作版）：范围、接口缝、验证策略层、里程碑 |
