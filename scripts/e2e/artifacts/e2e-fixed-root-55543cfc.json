@@ -1,0 +1,422 @@
+{
+  "tool": "verify-handoff",
+  "generatedAt": "2026-11-11T06:42:58.275Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "options": {
+    "source": "ad490613-6461-4115-95d9-95c9a82e3992",
+    "successor": "session-55543cfc-a255-443c-8184-743658384c53",
+    "expectKind": "root",
+    "expectPermissionPreset": "danger-full-access",
+    "expectAgentPreset": "standard"
+  },
+  "paths": {
+    "sourceLog": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\ad490613-6461-4115-95d9-95c9a82e3992\\session.v4.jsonl.zstd",
+    "successorLog": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\session-55543cfc-a255-443c-8184-743658384c53\\session.v4.jsonl.zstd",
+    "workspaceRegistry": "C:\\Users\\sir_c\\.dsh\\storages\\workspace.json",
+    "sourceProjcache": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\ad490613-6461-4115-95d9-95c9a82e3992.json",
+    "successorProjcache": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\session-55543cfc-a255-443c-8184-743658384c53.json"
+  },
+  "sessions": {
+    "source": {
+      "id": "ad490613-6461-4115-95d9-95c9a82e3992",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": "session-ae2d557b-209c-480d-ae29-bbe857abfc60",
+        "origin": "subagent",
+        "delegationDepth": 1,
+        "agentPreset": "standard",
+        "createdAt": 1794378908799,
+        "isSeeded": false
+      },
+      "firstFrame": {
+        "permissionPreset": {
+          "preset": "danger-full-access"
+        },
+        "sandboxMode": {
+          "mode": "danger-full-access",
+          "source": "delegation"
+        },
+        "approvalPolicy": {
+          "policy": "never",
+          "source": "delegation"
+        }
+      },
+      "lastFrame": {
+        "permissionPreset": {
+          "preset": "danger-full-access"
+        },
+        "sandboxMode": {
+          "mode": "danger-full-access",
+          "source": "delegation"
+        },
+        "approvalPolicy": {
+          "policy": "never",
+          "source": "delegation"
+        }
+      },
+      "projcache": {
+        "found": true,
+        "path": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\ad490613-6461-4115-95d9-95c9a82e3992.json",
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "permissions": {
+          "preset": "danger-full-access",
+          "sandbox": "danger-full-access",
+          "approval": "never",
+          "seeded": false
+        },
+        "agentPreset": "standard",
+        "modelSelection": {
+          "lastUsed": {
+            "provider": "opencode-go",
+            "model": "deepseek-v4.1-flash",
+            "reasoningEffort": "max"
+          },
+          "pending": null
+        },
+        "workingDirectory": "D:\\Codes\\dsh-tree-harness"
+      },
+      "firstHeader": {
+        "seq": 14,
+        "config": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        },
+        "toolCount": 164
+      },
+      "lastHeader": {
+        "seq": 118,
+        "config": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        },
+        "toolCount": 164
+      },
+      "headerCount": 2,
+      "eventCount": 184
+    },
+    "successor": {
+      "id": "session-55543cfc-a255-443c-8184-743658384c53",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": null,
+        "origin": null,
+        "delegationDepth": 0,
+        "agentPreset": "standard",
+        "createdAt": 1794379334724,
+        "isSeeded": false
+      },
+      "firstFrame": {
+        "permissionPreset": {
+          "preset": "danger-full-access"
+        },
+        "sandboxMode": {
+          "mode": "danger-full-access",
+          "source": "delegation"
+        },
+        "approvalPolicy": {
+          "policy": "never",
+          "source": "delegation"
+        }
+      },
+      "projcache": {
+        "found": true,
+        "path": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\session-55543cfc-a255-443c-8184-743658384c53.json",
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "permissions": {
+          "preset": "danger-full-access",
+          "sandbox": "danger-full-access",
+          "approval": "never",
+          "seeded": false
+        },
+        "agentPreset": "standard",
+        "modelSelection": {
+          "lastUsed": {
+            "provider": "opencode-go",
+            "model": "deepseek-v4.1-flash",
+            "reasoningEffort": "max"
+          },
+          "pending": null
+        },
+        "workingDirectory": "D:\\Codes\\dsh-tree-harness"
+      },
+      "firstHeader": {
+        "seq": 14,
+        "config": {
+          "maxTokens": 384000,
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max"
+        },
+        "toolCount": 164
+      },
+      "eventCount": 29,
+      "firstUserMessage": "You are the successor session for ad490613-6461-4115-95d9-95c9a82e3992, which handed off because its context budget is nearly full.\n\nFirst read the handoff file at: D:\\Codes\\dsh-tree-harness\\HANDOFF-ad490613-20261111-144214.md\n\nIt records the task, current status, decisions, changed files, next steps and open questions.\nThen continue advancing the work from its next steps: do not redo work the handoff records\nas done, keep the same working directory and model/effort, and begin by stating in one short\nparagraph what you will do next.",
+      "handoffPrompt": {
+        "isHandoffPrompt": true,
+        "namedSource": "ad490613-6461-4115-95d9-95c9a82e3992",
+        "handoffFileMentioned": "D:\\Codes\\dsh-tree-harness\\HANDOFF-ad490613-20261111-144214.md"
+      },
+      "readEvidence": {
+        "strong": [
+          {
+            "kind": "tool_call",
+            "tool": "read",
+            "seq": 19,
+            "file": "D:\\Codes\\dsh-tree-harness\\HANDOFF-ad490613-20261111-144214.md"
+          },
+          {
+            "kind": "tool_result",
+            "seq": 20,
+            "head": "<path>D:\\Codes\\dsh-tree-harness\\HANDOFF-ad490613-20261111-144214.md</path>\n<type>file</type>\n<content>\n1: # Session handoff — 20261111-144214\n2: \n3: > Generated by the `session_handoff` tool. Read thi"
+          }
+        ],
+        "weak": [],
+        "basename": "HANDOFF-ad490613-20261111-144214.md"
+      }
+    }
+  },
+  "workspace": {
+    "registryFound": true,
+    "sourceWorkspaces": [],
+    "successorWorkspaces": [
+      {
+        "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+        "path": "D:\\Codes\\dsh-tree-harness"
+      }
+    ],
+    "workspacesWithSuccessorCwd": [
+      {
+        "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+        "path": "D:\\Codes\\dsh-tree-harness"
+      }
+    ],
+    "archivedSessionIdsContainsSuccessor": false
+  },
+  "assertions": [
+    {
+      "id": "cwd_match",
+      "label": "successor cwd 与源相同",
+      "pass": true,
+      "expected": "D:\\Codes\\dsh-tree-harness",
+      "actual": "D:\\Codes\\dsh-tree-harness",
+      "detail": {
+        "sourceProjcacheWorkingDirectory": "D:\\Codes\\dsh-tree-harness",
+        "successorProjcacheWorkingDirectory": "D:\\Codes\\dsh-tree-harness"
+      }
+    },
+    {
+      "id": "workspace_attribution",
+      "label": "successor 归属源 workspace（分组可见）",
+      "pass": true,
+      "expected": {
+        "workspaceWithCwd": {
+          "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+          "path": "D:\\Codes\\dsh-tree-harness"
+        },
+        "sessionIdsContainsSuccessor": true
+      },
+      "actual": {
+        "successor": [
+          {
+            "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+            "path": "D:\\Codes\\dsh-tree-harness"
+          }
+        ],
+        "workspacesWithSamePath": [
+          {
+            "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+            "path": "D:\\Codes\\dsh-tree-harness"
+          }
+        ]
+      },
+      "detail": {
+        "successorWorkspaces": [
+          {
+            "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+            "path": "D:\\Codes\\dsh-tree-harness",
+            "title": "dsh-tree-harness"
+          }
+        ],
+        "sourceWorkspaces": []
+      }
+    },
+    {
+      "id": "first_frame_permission_preset",
+      "label": "successor 首帧 permission/preset == 源生效权限预设",
+      "pass": true,
+      "expected": "danger-full-access",
+      "actual": "danger-full-access",
+      "detail": {
+        "sourceFromProjcache": "danger-full-access",
+        "sourceFromLogLastEvent": "danger-full-access",
+        "sourceFirstFrame": "danger-full-access"
+      }
+    },
+    {
+      "id": "first_frame_sandbox_mode",
+      "label": "successor 首帧 sandbox/mode == 源生效 sandbox 模式",
+      "pass": true,
+      "expected": "danger-full-access",
+      "actual": "danger-full-access",
+      "detail": {
+        "sourceFromProjcache": "danger-full-access",
+        "sourceFromLogLastEvent": "danger-full-access",
+        "sourceFirstFrame": "danger-full-access"
+      }
+    },
+    {
+      "id": "first_frame_approval_policy",
+      "label": "successor 首帧 approval/policy == 源生效审批策略",
+      "pass": true,
+      "expected": "never",
+      "actual": "never",
+      "detail": {
+        "sourceFromProjcache": "never",
+        "sourceFromLogLastEvent": "never",
+        "sourceFirstFrame": "never"
+      }
+    },
+    {
+      "id": "agent_preset",
+      "label": "successor agentPreset == 源 agentPreset",
+      "pass": true,
+      "expected": "standard",
+      "actual": "standard",
+      "detail": {
+        "sourceSessionEvent": "standard",
+        "sourceProjcache": "standard",
+        "successorSessionEvent": "standard",
+        "successorProjcache": "standard"
+      }
+    },
+    {
+      "id": "header_config",
+      "label": "request/header config（provider/model/reasoningEffort/maxTokens）与源相等",
+      "pass": true,
+      "expected": {
+        "provider": "opencode-go",
+        "model": "deepseek-v4.1-flash",
+        "reasoningEffort": "max",
+        "maxTokens": 384000
+      },
+      "actual": {
+        "provider": "opencode-go",
+        "model": "deepseek-v4.1-flash",
+        "reasoningEffort": "max",
+        "maxTokens": 384000
+      },
+      "detail": {
+        "sourceHeaderSeq": 118,
+        "successorHeaderSeq": 14,
+        "diffs": [],
+        "sourceFirstHeaderConfig": {
+          "provider": "opencode-go",
+          "model": "deepseek-v4.1-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 384000
+        }
+      }
+    },
+    {
+      "id": "tools_count",
+      "label": "successor 首帧 tools 数量 == 源最近一帧 tools 数量",
+      "pass": true,
+      "expected": 164,
+      "actual": 164,
+      "detail": {
+        "sourceHeaderSeq": 118,
+        "successorHeaderSeq": 14,
+        "missingInSuccessorCount": 0,
+        "extraInSuccessorCount": 0,
+        "missingInSuccessor": [],
+        "extraInSuccessor": []
+      }
+    },
+    {
+      "id": "handoff_prompt_present",
+      "label": "successor 首轮 user/message 是交接提示（含 handoff 文件路径）",
+      "pass": true,
+      "expected": {
+        "isHandoffPrompt": true,
+        "handoffFile": "HANDOFF-*.md"
+      },
+      "actual": {
+        "isHandoffPrompt": true,
+        "handoffFile": "D:\\Codes\\dsh-tree-harness\\HANDOFF-ad490613-20261111-144214.md",
+        "firstUserSeq": 10,
+        "textHead": "You are the successor session for ad490613-6461-4115-95d9-95c9a82e3992, which handed off because its context budget is nearly full.\n\nFirst read the handoff file at: D:\\Codes\\dsh-tree-harness\\HANDOFF-a"
+      }
+    },
+    {
+      "id": "handoff_prompt_names_source",
+      "label": "交接提示点名的源会话 == --source（防止配对错误）",
+      "pass": true,
+      "expected": "ad490613-6461-4115-95d9-95c9a82e3992",
+      "actual": "ad490613-6461-4115-95d9-95c9a82e3992",
+      "detail": {
+        "normalized": {
+          "named": "ad490613-6461-4115-95d9-95c9a82e3992",
+          "expected": "ad490613-6461-4115-95d9-95c9a82e3992"
+        }
+      }
+    },
+    {
+      "id": "handoff_file_read",
+      "label": "successor 首轮确有读取 HANDOFF 文件的证据（read 调用 / 含文件内容的 tool/result）",
+      "pass": true,
+      "expected": ">=1 条强证据",
+      "actual": 2,
+      "detail": {
+        "strong": [
+          {
+            "kind": "tool_call",
+            "tool": "read",
+            "seq": 19,
+            "file": "D:\\Codes\\dsh-tree-harness\\HANDOFF-ad490613-20261111-144214.md"
+          },
+          {
+            "kind": "tool_result",
+            "seq": 20,
+            "head": "<path>D:\\Codes\\dsh-tree-harness\\HANDOFF-ad490613-20261111-144214.md</path>\n<type>file</type>\n<content>\n1: # Session handoff — 20261111-144214\n2: \n3: > Generated by the `session_handoff` tool. Read thi"
+          }
+        ],
+        "weakClaims": [],
+        "basename": "HANDOFF-ad490613-20261111-144214.md"
+      }
+    },
+    {
+      "id": "successor_kind",
+      "label": "successor 接替类型 == root",
+      "pass": true,
+      "expected": "root",
+      "actual": {
+        "parentSession": null,
+        "delegationDepth": 0
+      }
+    },
+    {
+      "id": "expected_permission_preset",
+      "label": "successor 首帧 permission/preset == danger-full-access（显式期望）",
+      "pass": true,
+      "expected": "danger-full-access",
+      "actual": "danger-full-access"
+    },
+    {
+      "id": "expected_agent_preset",
+      "label": "successor agentPreset == standard（显式期望）",
+      "pass": true,
+      "expected": "standard",
+      "actual": "standard"
+    }
+  ],
+  "summary": {
+    "total": 14,
+    "pass": 14,
+    "fail": 0,
+    "verdict": "PASS"
+  }
+}

@@ -1,0 +1,492 @@
+{
+  "tool": "verify-handoff",
+  "generatedAt": "2026-11-11T06:41:54.275Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "options": {
+    "source": "session-05d1f920-9aaa-4ea1-91ae-cf2844d426ac",
+    "successor": "session-887b8cd1-0f0d-4e1f-9462-8cda27db9581",
+    "expectKind": "root",
+    "expectPermissionPreset": null,
+    "expectAgentPreset": null
+  },
+  "paths": {
+    "sourceLog": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\session-05d1f920-9aaa-4ea1-91ae-cf2844d426ac\\session.v4.jsonl.zstd",
+    "successorLog": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\session-887b8cd1-0f0d-4e1f-9462-8cda27db9581\\session.v4.jsonl.zstd",
+    "workspaceRegistry": "C:\\Users\\sir_c\\.dsh\\storages\\workspace.json",
+    "sourceProjcache": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\session-05d1f920-9aaa-4ea1-91ae-cf2844d426ac.json",
+    "successorProjcache": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\session-887b8cd1-0f0d-4e1f-9462-8cda27db9581.json"
+  },
+  "sessions": {
+    "source": {
+      "id": "session-05d1f920-9aaa-4ea1-91ae-cf2844d426ac",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": null,
+        "origin": null,
+        "delegationDepth": 0,
+        "agentPreset": "cordis",
+        "createdAt": 1791467156640,
+        "isSeeded": false
+      },
+      "firstFrame": {
+        "permissionPreset": {
+          "preset": "workspace-write"
+        },
+        "sandboxMode": {
+          "mode": "workspace-write"
+        },
+        "approvalPolicy": {
+          "policy": "ask"
+        }
+      },
+      "lastFrame": {
+        "permissionPreset": {
+          "preset": "danger-full-access"
+        },
+        "sandboxMode": {
+          "mode": "danger-full-access"
+        },
+        "approvalPolicy": {
+          "policy": "never"
+        }
+      },
+      "projcache": {
+        "found": true,
+        "path": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\session-05d1f920-9aaa-4ea1-91ae-cf2844d426ac.json",
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "permissions": {
+          "preset": "danger-full-access",
+          "sandbox": "danger-full-access",
+          "approval": "never",
+          "seeded": true
+        },
+        "agentPreset": "cordis",
+        "modelSelection": {
+          "lastUsed": {
+            "provider": "deepseek-official",
+            "model": "deepseek-flash",
+            "reasoningEffort": "max"
+          },
+          "pending": null
+        },
+        "workingDirectory": "D:\\Codes\\dsh-tree-harness"
+      },
+      "firstHeader": {
+        "seq": 21,
+        "config": {
+          "provider": "deepseek-official",
+          "model": "deepseek-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 256000
+        },
+        "toolCount": 56
+      },
+      "lastHeader": {
+        "seq": 1453,
+        "config": {
+          "provider": "deepseek-official",
+          "model": "deepseek-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 256000
+        },
+        "toolCount": 167
+      },
+      "headerCount": 7,
+      "eventCount": 1665
+    },
+    "successor": {
+      "id": "session-887b8cd1-0f0d-4e1f-9462-8cda27db9581",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": null,
+        "origin": null,
+        "delegationDepth": 0,
+        "agentPreset": null,
+        "createdAt": 1794376951822,
+        "isSeeded": false
+      },
+      "firstFrame": {
+        "permissionPreset": {
+          "preset": "workspace-write"
+        },
+        "sandboxMode": {
+          "mode": "workspace-write"
+        },
+        "approvalPolicy": {
+          "policy": "ask"
+        }
+      },
+      "projcache": {
+        "found": true,
+        "path": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\session-887b8cd1-0f0d-4e1f-9462-8cda27db9581.json",
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "permissions": {
+          "preset": "workspace-write",
+          "sandbox": "workspace-write",
+          "approval": "ask",
+          "seeded": false
+        },
+        "agentPreset": null,
+        "modelSelection": {
+          "lastUsed": {
+            "provider": "deepseek-official",
+            "model": "deepseek-flash",
+            "reasoningEffort": "max"
+          },
+          "pending": null
+        },
+        "workingDirectory": "D:\\Codes\\dsh-tree-harness"
+      },
+      "firstHeader": {
+        "seq": 11,
+        "config": {
+          "maxTokens": 256000,
+          "provider": "deepseek-official",
+          "model": "deepseek-flash",
+          "reasoningEffort": "max"
+        },
+        "toolCount": 136
+      },
+      "eventCount": 126,
+      "firstUserMessage": "You are the successor session for session-05d1f920-9aaa-4ea1-91ae-cf2844d426ac, which handed off because its context budget is nearly full.\n\nFirst read the handoff file at: D:\\Codes\\dsh-tree-harness\\HANDOFF-05d1f920-20261111-140231.md\n\nIt records the task, current status, decisions, changed files, next steps and open questions.\nThen continue advancing the work from its next steps: do not redo work the handoff records\nas done, keep the same working directory and model/effort, and begin by stating in one short\nparagraph what you will do next.",
+      "handoffPrompt": {
+        "isHandoffPrompt": true,
+        "namedSource": "session-05d1f920-9aaa-4ea1-91ae-cf2844d426ac",
+        "handoffFileMentioned": "D:\\Codes\\dsh-tree-harness\\HANDOFF-05d1f920-20261111-140231.md"
+      },
+      "readEvidence": {
+        "strong": [],
+        "weak": [
+          {
+            "kind": "assistant_claim",
+            "seq": 40,
+            "head": "The terminal backend tries to grant write on the workspace regardless of cwd. So the terminal tool is broken due to ACL permission (Win32 5 = access denied). This may be because the workspace director"
+          },
+          {
+            "kind": "assistant_claim",
+            "seq": 76,
+            "head": "Session searches time out (probably expensive). Let me instead binary-search the parent session events by seq. Start with a big-but-plausible value like 5000, 20000.\n\nMeanwhile, think about a workarou"
+          },
+          {
+            "kind": "tool_call_mention",
+            "tool": "why_check",
+            "seq": 77,
+            "file": "D:\\Codes\\dsh-tree-harness\\HANDOFF-05d1f920-20261111-140231.md"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 78,
+            "head": "D:\\Codes\\dsh-tree-harness\\HANDOFF-05d1f920-20261111-140231.md: no history"
+          },
+          {
+            "kind": "tool_call_mention",
+            "tool": "why_file",
+            "seq": 79,
+            "file": "D:\\Codes\\dsh-tree-harness\\HANDOFF-05d1f920-20261111-140231.md"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 80,
+            "head": "no session touched D:\\Codes\\dsh-tree-harness\\HANDOFF-05d1f920-20261111-140231.md"
+          },
+          {
+            "kind": "assistant_claim",
+            "seq": 86,
+            "head": "Interesting: why_file says no session touched the handoff file, and yet it exists (presumably). Hmm, why index may not include the parent session? Or the handoff file may not have been written yet?? W"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 115,
+            "head": "find \"HANDOFF-05d1f920\"  ·  2 turns in 2 sessions\n\n2026-11-11 14:02  dsh  「You are the successor session」  #0  thoughtdag://open?session=session-887b8cd1-0f0d-4e1f-9462-8cda27db9581&turn=060e87f2-5153"
+          }
+        ],
+        "basename": "HANDOFF-05d1f920-20261111-140231.md"
+      }
+    }
+  },
+  "workspace": {
+    "registryFound": true,
+    "sourceWorkspaces": [
+      {
+        "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+        "path": "D:\\Codes\\dsh-tree-harness"
+      }
+    ],
+    "successorWorkspaces": [],
+    "workspacesWithSuccessorCwd": [
+      {
+        "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+        "path": "D:\\Codes\\dsh-tree-harness"
+      }
+    ],
+    "archivedSessionIdsContainsSuccessor": false
+  },
+  "assertions": [
+    {
+      "id": "cwd_match",
+      "label": "successor cwd 与源相同",
+      "pass": true,
+      "expected": "D:\\Codes\\dsh-tree-harness",
+      "actual": "D:\\Codes\\dsh-tree-harness",
+      "detail": {
+        "sourceProjcacheWorkingDirectory": "D:\\Codes\\dsh-tree-harness",
+        "successorProjcacheWorkingDirectory": "D:\\Codes\\dsh-tree-harness"
+      }
+    },
+    {
+      "id": "workspace_attribution",
+      "label": "successor 归属源 workspace（分组可见）",
+      "pass": false,
+      "expected": {
+        "workspaceWithCwd": {
+          "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+          "path": "D:\\Codes\\dsh-tree-harness"
+        },
+        "sessionIdsContainsSuccessor": false
+      },
+      "actual": {
+        "successor": [],
+        "workspacesWithSamePath": [
+          {
+            "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+            "path": "D:\\Codes\\dsh-tree-harness"
+          }
+        ]
+      },
+      "detail": {
+        "successorWorkspaces": [],
+        "sourceWorkspaces": [
+          {
+            "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+            "path": "D:\\Codes\\dsh-tree-harness",
+            "title": "dsh-tree-harness"
+          }
+        ],
+        "note": "successor 不在任何 workspace.sessionIds → 侧栏「未分组」"
+      }
+    },
+    {
+      "id": "first_frame_permission_preset",
+      "label": "successor 首帧 permission/preset == 源生效权限预设",
+      "pass": false,
+      "expected": "danger-full-access",
+      "actual": "workspace-write",
+      "detail": {
+        "sourceFromProjcache": "danger-full-access",
+        "sourceFromLogLastEvent": "danger-full-access",
+        "sourceFirstFrame": "workspace-write"
+      }
+    },
+    {
+      "id": "first_frame_sandbox_mode",
+      "label": "successor 首帧 sandbox/mode == 源生效 sandbox 模式",
+      "pass": false,
+      "expected": "danger-full-access",
+      "actual": "workspace-write",
+      "detail": {
+        "sourceFromProjcache": "danger-full-access",
+        "sourceFromLogLastEvent": "danger-full-access",
+        "sourceFirstFrame": "workspace-write"
+      }
+    },
+    {
+      "id": "first_frame_approval_policy",
+      "label": "successor 首帧 approval/policy == 源生效审批策略",
+      "pass": false,
+      "expected": "never",
+      "actual": "ask",
+      "detail": {
+        "sourceFromProjcache": "never",
+        "sourceFromLogLastEvent": "never",
+        "sourceFirstFrame": "ask"
+      }
+    },
+    {
+      "id": "agent_preset",
+      "label": "successor agentPreset == 源 agentPreset",
+      "pass": false,
+      "expected": "cordis",
+      "actual": null,
+      "detail": {
+        "sourceSessionEvent": "cordis",
+        "sourceProjcache": "cordis",
+        "successorSessionEvent": null,
+        "successorProjcache": null
+      }
+    },
+    {
+      "id": "header_config",
+      "label": "request/header config（provider/model/reasoningEffort/maxTokens）与源相等",
+      "pass": true,
+      "expected": {
+        "provider": "deepseek-official",
+        "model": "deepseek-flash",
+        "reasoningEffort": "max",
+        "maxTokens": 256000
+      },
+      "actual": {
+        "provider": "deepseek-official",
+        "model": "deepseek-flash",
+        "reasoningEffort": "max",
+        "maxTokens": 256000
+      },
+      "detail": {
+        "sourceHeaderSeq": 1453,
+        "successorHeaderSeq": 11,
+        "diffs": [],
+        "sourceFirstHeaderConfig": {
+          "provider": "deepseek-official",
+          "model": "deepseek-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 256000
+        }
+      }
+    },
+    {
+      "id": "tools_count",
+      "label": "successor 首帧 tools 数量 == 源最近一帧 tools 数量",
+      "pass": false,
+      "expected": 167,
+      "actual": 136,
+      "detail": {
+        "sourceHeaderSeq": 1453,
+        "successorHeaderSeq": 11,
+        "missingInSuccessorCount": 31,
+        "extraInSuccessorCount": 0,
+        "missingInSuccessor": [
+          "ask_user_question",
+          "cordis_inspect_list",
+          "cordis_inspect_query",
+          "create_goal",
+          "edit",
+          "get_goal",
+          "glob",
+          "grep",
+          "job_kill",
+          "job_list",
+          "job_output",
+          "list_subagent_models",
+          "plugin_manager",
+          "plugin_market",
+          "present",
+          "pwsh",
+          "read",
+          "read_image",
+          "schedule_create",
+          "schedule_edit",
+          "schedule_list",
+          "schedule_view",
+          "skill",
+          "subagent",
+          "subagent_fork",
+          "todo_write",
+          "update_goal",
+          "web_fetch",
+          "web_search",
+          "workflow",
+          "write"
+        ],
+        "extraInSuccessor": []
+      }
+    },
+    {
+      "id": "handoff_prompt_present",
+      "label": "successor 首轮 user/message 是交接提示（含 handoff 文件路径）",
+      "pass": true,
+      "expected": {
+        "isHandoffPrompt": true,
+        "handoffFile": "HANDOFF-*.md"
+      },
+      "actual": {
+        "isHandoffPrompt": true,
+        "handoffFile": "D:\\Codes\\dsh-tree-harness\\HANDOFF-05d1f920-20261111-140231.md",
+        "firstUserSeq": 9,
+        "textHead": "You are the successor session for session-05d1f920-9aaa-4ea1-91ae-cf2844d426ac, which handed off because its context budget is nearly full.\n\nFirst read the handoff file at: D:\\Codes\\dsh-tree-harness\\H"
+      }
+    },
+    {
+      "id": "handoff_prompt_names_source",
+      "label": "交接提示点名的源会话 == --source（防止配对错误）",
+      "pass": true,
+      "expected": "session-05d1f920-9aaa-4ea1-91ae-cf2844d426ac",
+      "actual": "session-05d1f920-9aaa-4ea1-91ae-cf2844d426ac",
+      "detail": {
+        "normalized": {
+          "named": "05d1f920-9aaa-4ea1-91ae-cf2844d426ac",
+          "expected": "05d1f920-9aaa-4ea1-91ae-cf2844d426ac"
+        }
+      }
+    },
+    {
+      "id": "handoff_file_read",
+      "label": "successor 首轮确有读取 HANDOFF 文件的证据（read 调用 / 含文件内容的 tool/result）",
+      "pass": false,
+      "expected": ">=1 条强证据",
+      "actual": 0,
+      "detail": {
+        "strong": [],
+        "weakClaims": [
+          {
+            "kind": "assistant_claim",
+            "seq": 40,
+            "head": "The terminal backend tries to grant write on the workspace regardless of cwd. So the terminal tool is broken due to ACL permission (Win32 5 = access denied). This may be because the workspace director"
+          },
+          {
+            "kind": "assistant_claim",
+            "seq": 76,
+            "head": "Session searches time out (probably expensive). Let me instead binary-search the parent session events by seq. Start with a big-but-plausible value like 5000, 20000.\n\nMeanwhile, think about a workarou"
+          },
+          {
+            "kind": "tool_call_mention",
+            "tool": "why_check",
+            "seq": 77,
+            "file": "D:\\Codes\\dsh-tree-harness\\HANDOFF-05d1f920-20261111-140231.md"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 78,
+            "head": "D:\\Codes\\dsh-tree-harness\\HANDOFF-05d1f920-20261111-140231.md: no history"
+          },
+          {
+            "kind": "tool_call_mention",
+            "tool": "why_file",
+            "seq": 79,
+            "file": "D:\\Codes\\dsh-tree-harness\\HANDOFF-05d1f920-20261111-140231.md"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 80,
+            "head": "no session touched D:\\Codes\\dsh-tree-harness\\HANDOFF-05d1f920-20261111-140231.md"
+          },
+          {
+            "kind": "assistant_claim",
+            "seq": 86,
+            "head": "Interesting: why_file says no session touched the handoff file, and yet it exists (presumably). Hmm, why index may not include the parent session? Or the handoff file may not have been written yet?? W"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 115,
+            "head": "find \"HANDOFF-05d1f920\"  ·  2 turns in 2 sessions\n\n2026-11-11 14:02  dsh  「You are the successor session」  #0  thoughtdag://open?session=session-887b8cd1-0f0d-4e1f-9462-8cda27db9581&turn=060e87f2-5153"
+          }
+        ],
+        "basename": "HANDOFF-05d1f920-20261111-140231.md"
+      }
+    },
+    {
+      "id": "successor_kind",
+      "label": "successor 接替类型 == root",
+      "pass": true,
+      "expected": "root",
+      "actual": {
+        "parentSession": null,
+        "delegationDepth": 0
+      }
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "pass": 5,
+    "fail": 7,
+    "verdict": "FAIL"
+  }
+}

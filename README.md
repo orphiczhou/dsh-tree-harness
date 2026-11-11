@@ -19,8 +19,7 @@
 | [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.4.0 | 执行层：8 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain`），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准 | **62/62** | ✅ 运行中（本机 desktop profile 已装载） |
 | [`packages/dsh-meta-loop`](packages/dsh-meta-loop/) | 0.2.0 | 治理层：六阶段方法轮 + **G1–G11** 机械门禁 + `/metaloop/` Web 面板 + M4 递归触发表 | **13/13** | ⏸ 未装配（不在 profile bundles，按需装载） |
 | [`packages/dsh-agent-introspect`](packages/dsh-agent-introspect/) | 0.1.0 | 自省层：`self_spec` 工具，投影当前会话的 model / permissions / sandbox / cwd / token 用量 | —（无单测） | ✅ 运行中 |
-| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | 1.1.0 | 会话树单包（原「UI 半 + 工具半」合并）：左栏嵌套会话树 + `tree_send` 跨层级消息工具；**工作区按最近活动排序 / 隐藏与恢复 / 已隐藏分区 / 检索召回** | 3 份包内测试（153 / 22 / 29 断言） | 🌐 GitHub 公开（**v1.1.0 已发布**）、社区市场已收录；**npm 未发布** |
-| [`packages/dsh-session-handoff`](packages/dsh-session-handoff/) | 0.1.0 | 会话自交接：`session_handoff`（status/handoff）——上下文到 50% 时写交接文件，并启动**同层级**（同模型/同思考强度/同工作区）接替会话 | 24/24 | ✅ 运行中（本机已装载） |
+| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | 1.2.0 | 会话树单包：左栏嵌套会话树 + `tree_send` 跨层级消息工具 + **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设（工作模式）/ 权限模式 / 模型 / 思考等级）；工作区排序 / 隐藏恢复 / 检索召回 | 包内 4 份测试（handoff 34/34、render 全绿、style-guard 22/22、verify-bundle 0 fail） | 🌐 GitHub 公开（**v1.2.0**）、社区市场已收录；**npm 未发布** |
 
 状态口径：
 
@@ -36,7 +35,7 @@
 
 - **DSH 桌面版 `0.2.2-rc.1`**（Cordis 插件宿主 + Web GUI）
 - DSH 自带的 Node v24 runtime（实测 v24.21.0），无需额外安装；各包无 npm 依赖
-- 本仓 `packages/` 建议放在 desktop profile 的 `hmr.root` 覆盖范围内（本机即为 `D:/Codes/dsh-tree-harness/packages`），这样改宿主代码约 25 秒热更
+- 本仓 `packages/` 建议放在 desktop profile 的 `hmr.root` 覆盖范围内（本机即为 `D:/Codes/dsh-tree-harness/packages`），客户端半改动刷新页面即可；**宿主半（`index.js`）改动在本机实测需对该 bundle 做一次 disable→enable（或用新包名/重启 DSH）才加载新实现**——Loader 对已导入宿主模块按包名缓存，逐条证据见 [agent.md](agent.md) §0.2。
 
 ### 安装到 profile
 
@@ -71,7 +70,7 @@
 node "$env:USERPROFILE\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\pnpm\bin\pnpm.cjs" install
 ```
 
-新增包后需一次 `pnpm install`；客户端半改动刷新页面生效。
+新增包后需一次 `pnpm install`；客户端半改动刷新页面生效；宿主半（`index.js`）改动需 disable→enable 该 bundle 条目（或重启 DSH）——2026-11-11 实测 hmr.root 并未让已加载包的宿主模块重新求值。
 
 **B. `plugin_manager` 热装载**
 
@@ -94,12 +93,14 @@ node --test tests/*.test.js     # tests 13 / pass 13 / fail 0
 
 ⚠️ **不要写成 `node --test tests`**：Node 24 会把 `tests` 当文件路径，报 `test at tests:1:1` 的假失败。要机器可读计数加 `--test-reporter=tap`，且**必须放在位置参数之前**（放后面会被静默忽略）。
 
-会话树单包（`packages/dsh-session-tree/`）自带 3 份 cjs 测试：
+会话树单包（`packages/dsh-session-tree/`）自带 4 份测试：
 
 ```powershell
 cd packages/dsh-session-tree
-node test/render.test.cjs      # 确定性夹具渲染检查
-node test/style-guard.cjs      # 样式注入 / SSR 边界检查
+node test/handoff.test.js      # 宿主半 session_handoff：34/34（交接层级矩阵/继承/工作区归属/闸门/失败可追溯）
+node test/render.test.cjs      # 确定性夹具渲染检查（133/133 + 夹具自检 9/9 + 实时附加 11/11）
+node test/style-guard.cjs      # 样式注入 / SSR 边界检查：22/22
+node scripts/verify-bundle.mjs # 清单自检：0 fail
 node test/provider-conformance.cjs [asar 解包目录]
 # 默认读 %TEMP%\dsh-asar-inspect\out（一份含 dsh/node_modules/... 的 DSH 解包树）；
 # 缺该目录时会 ENOENT，属环境依赖，不是代码失败
@@ -136,9 +137,10 @@ node test/provider-conformance.cjs [asar 解包目录]
 
 DSH Loader 对**宿主模块按包名缓存**：
 
-- 已装载包的 `index.js` 改动 → 停用/启用、卸载重装、换入口文件路径都**拿不到新代码**，只能重启进程或换新包名；
-- 新包名没有缓存 → 普通安装即可生效；
-- 但本仓 `packages/` 位于 profile 的 `hmr.root` 内（实测 hmr.root = `D:/Codes/dsh-tree-harness/packages`），所以改 tree-engine / meta-loop 的宿主代码 **约 25 秒热更**（看 `apply.log` 尾部时间戳），包名缓存的坑只在「仓外安装的包」上无解。
+- 已装载包的 `index.js` 改动 → 停用/启用、卸载重装、换入口文件路径都**拿不到新代码**，只能重启进程或换新包名（2026-11-11 第二轮实测：改 `packages/dsh-session-tree/index.js` 后，即使该包在 hmr.root 内，活体工具仍是旧实现；对 `include:session-tree` 做一次 disable→enable 后才加载新实现）。
+- 新包名没有缓存 → 普通安装即可生效。
+- 本仓 `packages/` 虽位于 profile 的 `hmr.root` 内（本机 `D:/Codes/dsh-tree-harness/packages`），但**不要把 hmr.root 当作宿主半热更保证**：客户端半（`client.js`）刷新页面即生效；宿主半（`index.js`）改动请走 disable→enable 该 bundle 条目（`plugin_manager({action:"set_plugin", target:"include:session-tree", enabled:false})` 再 `enabled:true`）或重启 DSH，并逐条验证活体工具面。
+- 由于缓存按包名生效，把新功能并入**已有**包时不会自动替换已加载的旧宿主半；安装/升级后必须重载该 bundle 条目。
 
 ### 目录结构
 
@@ -147,7 +149,7 @@ packages/
   dsh-tree-engine/       执行层：src/ 纯逻辑 + index.js 宿主适配 + tests/（8 个 .test.js + 偏差登记）
   dsh-meta-loop/         治理层：src/core.js + index.js + client.js + panel/ + tests/
   dsh-agent-introspect/  自省层：index.js（self_spec）
-  dsh-session-tree/      会话树单包（发布产物，与公开插件仓同步）
+  dsh-session-tree/      会话树单包（发布产物，与公开插件仓同步；含 tree_send + session_handoff）
 docs/                    规约、设计、交接、发布与审计文档
 demo/  logs/  skills/    演示产物、运行日志、SKILL 资产
 scripts/                 asar-tool / release-plugin（发布同步校验）
@@ -159,8 +161,10 @@ scripts/                 asar-tool / release-plugin（发布同步校验）
 
 | 文档 | 内容 |
 |---|---|
-| [agent.md](agent.md) | **项目代理手册（开工必读）**：角色授权（Lead=指挥官+架构师）、决策 D1–D8、路线图、工程命令、发布门禁与回滚 |
+| [agent.md](agent.md) | **项目代理手册（开工必读）**：角色授权（Lead=指挥官+架构师）、决策 D1–D12、路线图、工程命令、发布门禁与回滚 |
 | [docs/handoff-2026-11-11.md](docs/handoff-2026-11-11.md) | **当前交接**：决策 D1–D7、关键路径、测试/验活命令、发布流程、风险与回滚、下一轮议程 |
+| [docs/session-handoff-2026-11-11.md](docs/session-handoff-2026-11-11.md) | 会话自交接：v0.1.0 设计 + **v1.2.0 并入会话树/继承修复**（工作区、权限模式、Agent 预设、模型/思考等级） |
+| [docs/e2e-handoff-2026-11-11.md](docs/e2e-handoff-2026-11-11.md) | 交接真机 E2E 取证：修复前 root FAIL 5/12 基线 → 修复后 root PASS 14/14 / sibling PASS 12/12 |
 | [docs/publishing.md](docs/publishing.md) | **发布状态与流程**：GitHub 两仓、社区市场、npm 冻结、版本纪律、公开前检查清单 |
 | [PLAN.md](PLAN.md) | 开发方案（工作版）：范围、接口缝、验证策略层、里程碑 |
 | [docs/engine-spec.md](docs/engine-spec.md) | 引擎行为规约（S0 冻结）：工具面、数据模型、状态机闭集、断言 |

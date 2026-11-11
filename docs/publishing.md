@@ -1,6 +1,6 @@
 # 发布状态与流程
 
-> 快照：**2026-11-11 12:30 +08:00**（GitHub / npm / 市场均为当场直查；此后变化以远端与 `git log` 为准）。
+> 快照：**2026-11-11 15:00 +08:00**（GitHub / npm / 市场均为当场直查；此后变化以远端与 `git log` 为准）。
 > 相关决策：**D2**（仓库内资料公开）、**D3**（npm 冻结）、**D5**（公开范围=本仓内容）、**D6**（版本纪律）、**D7**（公开前排除隐私与第三方源码）——单一事实源：[../agent.md](../agent.md)。
 
 ---
@@ -9,10 +9,10 @@
 
 | 渠道 | 对象 | 状态 | 证据 / 说明 |
 |---|---|---|---|
-| GitHub | `orphiczhou/dsh-tree-harness`（本仓） | 🚀 **本轮公开**（D2） | 发布前检查清单见 §6；收尾核对远端 HEAD = 本地 HEAD |
-| GitHub | [`orphiczhou/dsh-session-tree`](https://github.com/orphiczhou/dsh-session-tree)（会话树插件） | ✅ 公开，**v1.1.0**，MIT，6 commits | 与仓内 `packages/dsh-session-tree/` 逐字节一致（release-plugin SHA 校验 15/15）；发布镜像仓 |
+| GitHub | `orphiczhou/dsh-tree-harness`（本仓） | 🚀 **public** | 发布前检查清单见 §6；收尾核对远端 HEAD = 本地 HEAD |
+| GitHub | [`orphiczhou/dsh-session-tree`](https://github.com/orphiczhou/dsh-session-tree)（会话树插件） | ✅ 公开，**v1.2.0**，MIT，7 commits | 与仓内 `packages/dsh-session-tree/` 逐字节一致（release-plugin **16/16** SHA）；main + tag `v1.2.0` = **`597ca31`**（远端=本地） |
 | GitHub | [`orphiczhou/dsh-region-probe`](https://github.com/orphiczhou/dsh-region-probe)（区域观测插件） | ✅ 公开 | 独立插件仓，与本仓无源码依赖 |
-| 社区市场 | awesome-dsh-plugin **PR #6334**（会话树） | ✅ 已合并（2026-10-14） | 市场按 GitHub topic + PR listing 收录；条目为 browse-only |
+| 社区市场 | awesome-dsh-plugin **PR #6334**（会话树） | ✅ 已合并（2026-10-14） | 市场按 GitHub topic + PR listing 收录；条目为 browse-only，按 `package.json.version` 判断更新 |
 | 社区市场 | awesome-dsh-plugin **PR #6435**（region-probe） | ✅ 已合并（2026-10-15） | 同上 |
 | 社区市场 | imsai-sh **PR #554** | ✅ 已合并 | 同上 |
 | npm | `@orphiczhou/*` 候选包名（4 个） | ⏸ **冻结**（D3），registry 均 404 | 只走 Git / `link:` 安装；解冻条件见 §4 |
@@ -20,7 +20,7 @@
 行为边界：
 
 - **本仓公开 ≠ 插件独立发包**：`dsh-tree-engine` / `dsh-meta-loop` / `dsh-agent-introspect` 目前**随本仓公开**（`packages/` 源码 + 测试 + `cordis.patch.yml`），未单独建仓、未单独发布；安装方式是 `link:` 本仓目录。
-- **会话树是唯一「发布镜像」包**：本仓 `packages/dsh-session-tree/` 是唯一源码事实源，GitHub `orphiczhou/dsh-session-tree` 是它的发布副本（D1/D5）。
+- **会话树是唯一「发布镜像」包**：本仓 `packages/dsh-session-tree/` 是唯一源码事实源，GitHub `orphiczhou/dsh-session-tree` 是它的发布副本（D1/D5）。**v1.2.0 起会话自交接也随该包发布**（原独立插件已并入并删除）。
 - **不发布**：仓库外的历史 `publish/` 副本（D5 不复制进仓）、本机 profile 配置、运行时数据（`tree-engine-data/` 等）。
 - **开源协议**：MIT，版权人 orphiczhou（D4）。
 
@@ -29,12 +29,12 @@
 ## 2. 仓库关系与同步方向
 
 ```
-dsh-tree-harness/                     ← 唯一源码事实源（private 开发 → public 发布）
-  packages\dsh-session-tree\          ← 会话树单包源码（v1.1.0）
+dsh-tree-harness/                     ← 唯一源码事实源（public）
+  packages\dsh-session-tree\          ← 会话树单包源码（v1.2.0：tree_send + session_handoff）
         │
         │  scripts/release-plugin.mjs（逐文件 SHA 校验，不自动 push）
         ▼
-github.com/orphiczhou/dsh-session-tree   ← 发布镜像仓（公开、带 tag、市场 listing 指向它）
+github.com/orphiczhou/dsh-session-tree   ← 发布镜像仓（公开、tag v1.2.0、市场 listing 指向它）
         │
         ▼
 awesome-dsh-plugin / imsai-sh 市场条目（browse-only，按版本判断更新）
@@ -49,7 +49,7 @@ awesome-dsh-plugin / imsai-sh 市场条目（browse-only，按版本判断更新
 
 1. **改代码必须 bump version**：market 按 `package.json.version` 判断条目是否更新，不 bump = 市场不刷新，等于发了假更新。
 2. **无内容变化不 bump**：会话树单包迁入本仓（D1）时内容逐字节不变，因此当时**保持 v1.0.4**，不制造假版本。
-3. **有内容变化必须 bump**：2026-11-11 功能轮给会话树加入工作区排序/隐藏/召回 → bump **v1.1.0**，经 `release-plugin.mjs` 同步到公开插件仓并推送（`dcf3519`，远端=本地）。新插件 `dsh-session-handoff` v0.1.0 目前只在**本机 profile 安装**，未对外发布。
+3. **有内容变化必须 bump**：2026-11-11 功能轮给会话树加入工作区排序/隐藏/召回 → bump **v1.1.0**，经 `release-plugin.mjs` 同步到公开插件仓并推送（`dcf3519`，远端=本地）。同日晚第三轮把会话自交接并入会话树（新增 `session_handoff` + 工作区/权限/预设继承修复）→ bump **v1.2.0**，同步 **16/16 SHA 一致**、推送 main + tag `v1.2.0`（`597ca31`，远端=本地）；原独立插件 `@local/dsh-session-handoff` v0.1.0 从本仓与 profile 删除，从未单独发布。
 3. **版本号 = 公开仓 tag = package.json.version** 三者一致；建议 SemVer：修 bug → patch，新增行为 → minor，破坏兼容 → major。
 4. 发布前在包目录自查版本：
 
@@ -114,6 +114,8 @@ node scripts/release-plugin.mjs --help
 
 实测证据（2026-11-11）：`--check` 对**仓外历史发布副本**（D5 降级为参考的 `publish/dsh-session-tree/`）→ `files=15 match=15 mismatch=0 missing=0 extra=0`，`RESULT: OK — 15/15 files byte-identical (SHA-256)`，退出码 0。同期脚本在系统临时目录完成 12/12 项自测（含幂等、`--prune`、篡改检测、错仓护栏、父目录护栏；未污染仓库），见 [merge-session-tree-2026-11-11.md](merge-session-tree-2026-11-11.md) §6。
 
+v1.2.0 实测：先把公开插件仓 clone 到系统临时目录，`node scripts/release-plugin.mjs --target <clone> --prune` → **`files=16 match=16 mismatch=0 missing=0 extra=0`，`RESULT: OK — 16/16 files byte-identical (SHA-256)`**；`git add -A` 后真实变更 5 文件（index.js / package.json / README×2 / 新增 test/handoff.test.js），其余文件仅 CRLF stat 噪声、未入库；commit `597ca31` + tag `v1.2.0` 推送后 `ls-remote` 核对 main 与 tag 均等于本地 HEAD。
+
 标准发布流程：
 
 1. 跑测试全绿（见 §6 测试项）；
@@ -149,8 +151,9 @@ node scripts/release-plugin.mjs --help
 
 - [ ] `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **62/62**，退出码 0；
 - [ ] `packages/dsh-meta-loop`：`node --test tests/*.test.js` → **13/13**，退出码 0；
-- [ ] `packages/dsh-session-tree`：`node test/render.test.cjs`、`node test/style-guard.cjs`、`node test/provider-conformance.cjs [asar 解包目录]`（后者需 rc.2 兼容 asar fixture，见 [merge-session-tree-2026-11-11.md](merge-session-tree-2026-11-11.md) §5）；
-- [ ] 本仓 `packages/dsh-session-tree/` ⇄ 公开插件仓 逐文件 SHA 一致（`release-plugin.mjs`）；
+- [ ] `packages/dsh-session-tree`：`node test/handoff.test.js`（**34/34**）、`node test/render.test.cjs`、`node test/style-guard.cjs`（**22/22**）、`node scripts/verify-bundle.mjs`（0 fail）、`node test/provider-conformance.cjs [asar 解包目录]`（后者需 rc.2 兼容 asar fixture，见 [merge-session-tree-2026-11-11.md](merge-session-tree-2026-11-11.md) §5）；
+- [ ] `packages/dsh-session-tree` 与公开插件仓逐文件 SHA 一致（`release-plugin.mjs`）；
+- [ ] 真机 E2E：`scripts/e2e/verify-handoff.mjs` 对 root/sibling 接替会话断言全 PASS（报告 [e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md)）；
 - [ ] README / handoff / publishing 中的路径、数字、状态与实际一致（版本号、测试数、装配状态、npm 404 结论）。
 
 ### 发布后核对
@@ -167,3 +170,5 @@ node scripts/release-plugin.mjs --help
 ## 7. 变更记录
 
 - 2026-11-11：建立本文件（随本仓首次公开）；记录 GitHub 两仓现状、市场 PR、npm 冻结（D3）、版本纪律（D6）、同步脚本契约、公开前检查清单、D7 排除项。
+- 2026-11-11（v1.1.0）：会话树新增工作区排序/隐藏/召回 → 同步公开插件仓（`dcf3519`，15/15 SHA）。
+- 2026-11-11（v1.2.0，第三轮）：会话自交接 `session_handoff` 并入会话树单包并修复同工作区/权限模式/Agent 预设继承 → 同步公开插件仓 **16/16 SHA**，commit + tag `v1.2.0` = **`597ca31`**，远端=本地；原独立插件 `@local/dsh-session-handoff` 删除（从未单独发布）。

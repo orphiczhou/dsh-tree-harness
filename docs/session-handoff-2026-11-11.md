@@ -1,10 +1,55 @@
-# 会话自交接插件（@local/dsh-session-handoff）— 设计与交付记录
+# 会话自交接 — 设计与交付记录（v0.1.0 独立插件 → v1.2.0 并入会话树）
 
-- **日期**：2026-11-11
-- **角色**：handoff-engineer（T-F1 / task-6）
+- **日期**：2026-11-11（初版 v0.1.0）+ 同日第二轮（并入会话树 v1.2.0）
+- **角色**：handoff-engineer（T-F1 / task-6，v0.1.0）；Lead（第二轮合并与继承修复）
 - **规格来源**：[docs/features-2026-11-11-spec.md](features-2026-11-11-spec.md) **A 节**（Lead 已冻结；本实现照做，未改规格）
-- **状态**：**v0.1.0 源码 + 离线测试全部通过（24/24）**；**未安装 bundle、未做真机验证**（按任务约束由 Lead 执行）
-- **写作用域**：仅 `packages/dsh-session-handoff/` 与本文档；未执行任何 git 写命令、未安装 bundle、未修改 profile / `agent.md` / 既有 packages
+- **状态**：**已并入 `packages/dsh-session-tree` v1.2.0（工具名保持 `session_handoff`）**；独立包 `packages/dsh-session-handoff` 已删除，本机 profile bundle 已移除；离线测试 34/34、真机 E2E 见 [docs/e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md)
+- **写作用域（v0.1.0 轮）**：仅 `packages/dsh-session-handoff/` 与本文档；未执行任何 git 写命令、未安装 bundle、未修改 profile / `agent.md` / 既有 packages
+
+---
+
+## 0. 2026-11-11 第二轮：并入会话树单包 + 继承修复（当前状态）
+
+用户要求（原话）：
+
+> 「交接插件不要单独做插件，功能合并到 tree 体系里面，树的各个层级，包括根，都能同层级交接。」
+> 「交接功能有瑕疵，没有定位同工作区。还有交接后的接手会话的权限，工作模式，思考等级，模型等都要和交接出手会话一样。」
+
+**结果**：`session_handoff` 的 host 实现迁入 `packages/dsh-session-tree/index.js`，与 `tree_send` 同一个 host 半（两次 `ctx.inject`：`tree_send` 需 `tools/subagents/sessionQuery`；`session_handoff` 需 `tools/subagents/agents/tokenMeter`）；独立包 `packages/dsh-session-handoff/` 删除；会话树单包 **v1.1.0 → v1.2.0**。工具名保持不变，既有调用零破坏。
+
+### 0.1 真机审计发现的两个缺陷（修复前证据）
+
+| 缺陷 | 证据（2026-11-11 本机活体） | 根因 |
+|---|---|---|
+| root 接替会话未归属同工作区（侧栏「未分组」） | root 接替 `session-887b8cd1`（源自 `b9d5bacc`）日志 `cwd=D:\Codes\dsh-tree-harness` 正确，但 `storages/workspace.json` 中该目录 workspace（id `6f48f173-d9bf-485c-9425-67faeddc4653`）的 `sessionIds` **不含**它 | 侧栏分组按 `workspace.sessionIds` 成员资格，**不是** cwd；`agents.create({meta:{cwd}})` 只写 header cwd，不写工作区账本 |
+| 权限模式 / Agent 预设未继承 | 同一接替会话：`permission/preset=workspace-write`、`sandbox/mode=workspace-write`、`approval/policy=ask`（部署默认）、`agentPreset=null`、工具数 **136**；源会话 `b9d5bacc` 是 `danger-full-access/never`、preset=`cordis`、工具数 **161**（接替会话缺 read/write/edit/pwsh/skill/subagent 等） | `agents.create` 只认 `agentOptions`（模型路由），既不挂载 Agent preset 组成，也不携带权限事实；permission-presets 在该 Agent 的 `agent/created` 事件里把空状态钉成部署默认 |
+
+对照：**兄弟路径本来就正确**（`subagents.startActivation` 的委派继承）：兄弟接替 `session-68d075bd` 的 `sandbox/mode`、`approval/policy`、`permission/preset` 均带 `source:'delegation'`，工具数 161 与源一致。本轮只修 root/degraded 路径，兄弟路径零改动、零回归。
+
+### 0.2 修复后的继承矩阵
+
+| 层级 | 创建方式 | 工作目录 | 工作区归属 | Agent 预设（工作模式） | 权限模式 | 模型/思考等级 |
+|---|---|---|---|---|---|---|
+| root（含 `kind:"root"` 强制） | `agents.create` + pre-publication `setup` | `meta.cwd` + `workingDirectory.set` | 创建后 `workspaceRegistry.resolveByPath(cwd)` → `Workspace.attachSession(successorId)` | `meta.agentPreset` + `setup` 内 `agentPresets.mount(agentCtx, presetId)` + `agent-preset/selected` 事件 | `setup` 内追加 `permission/preset`、`sandbox/mode`（`source:'delegation'`）、`approval/policy`（`source:'delegation'`），**必须在发布前**追加 | `agentOptions` 原样携带 `provider/model/reasoningEffort/maxTokens` |
+| sibling（子会话 + 活父） | `subagents.startActivation({provider:'spawn', delivery:'parent'})` | `request.cwd` | 不需要（侧栏渲染在父会话下、与交接会话同层） | 委派自动继承父组成（不额外传 `agentPreset`，保持与既有 E2E 一致） | 委派自动继承（`source:'delegation'`） | `request.agentOptions` 原样携带 |
+| degraded root（父已不活） | `agents.create` + `meta.parentSession=<原父>`（不传 `parentAgent`） | 同上 | 同上 | 同上 | 同上 | 同上 |
+
+### 0.3 关键实现事实（维护备忘）
+
+1. **`setup(agentCtx, agent)` 在 Agent 发布前执行**，这是唯一能让继承事实先于 `permission-presets` 的 `agent/created` → `pinInitialPermission` 落地的窗口。事件在 setup 里 `append` 到接替会话自己的日志（`sandbox/mode`/`approval/policy` 带 `source:'delegation'`，与 `@deepseek-ai/dsh-subagent` 的进程内子会话做法逐字同构）。
+2. **工作区挂载的校验读活会话**：`Workspace.attachSession` 的 cwd 校验走 `readSessionHeader`（先查活 `ctx.sessions.get(id)`），所以 `agents.create` 返回后立即可 attach；`resolveByPath` 只读、不创建记录。
+3. **「工作模式」= Agent preset**（UI 文案「Agent 预设」）；**「权限」= 权限模式**（permission preset = sandbox + approval 捆绑）。两者是不同服务：`agentPresets` 管组成/工具集，`permissionPresets` 管沙箱/审批。
+4. **工具返回可追溯**：成功时 `successor` 携带 `agent_preset`、`permission{preset,sandbox,approval}`、`workspace{attached,workspace_id,path}`、`model`、`reasoning_effort`、`max_tokens`；非致命失败进 `warnings[]`，并分别落到 `successor.preset_error` / `permission_error` / `working_directory_error` / `workspace.reason`（绝不静默降级）。交接文件的 `Current status` 增加 Agent preset / Permission preset / Sidebar workspace 三行，`Original session` 增加 `agent_preset` / `permission_preset`。
+5. **宿主半热更**：本机实测，hmr.root 对**已加载包的宿主半文件改动**不会重新求值（Loader 按包名缓存）；必须对 `include:session-tree` 做一次 disable→enable（或重启 DSH）才会加载新实现。客户端半改动只需刷新页面。
+
+### 0.4 本轮交付与证据
+
+- 代码：`packages/dsh-session-tree/index.js`（合并 + 继承修复）、`package.json` v1.2.0；独立包 `packages/dsh-session-handoff/` 删除。
+- 测试：`packages/dsh-session-tree/test/handoff.test.js` **34/34**（24 条从 v0.1.0 移植 + 10 条新增：工作区三态、预设挂载、四类继承事件、失败可追溯、兄弟不回归）；`render.test.cjs` 全绿、`style-guard.cjs` 22/22、`verify-bundle.mjs` 0 fail。
+- 真机 E2E：root + sibling 双路径、同工作区归属、四类继承逐项断言，见 [docs/e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md)。
+- 发布：会话树单包 v1.2.0 已同步公开插件仓 `orphiczhou/dsh-session-tree` 并推送；monorepo 提交哈希见 [agent.md](../agent.md) 与 [docs/publishing.md](publishing.md)（发布完成后回填）。
+
+> 以下 §1–§9 是 **v0.1.0 独立插件**的原始设计与交付记录，保留作为 provenance；其中「独立包 / 单独 bundle」的描述已被本轮合并取代，继承细节以本节为准。
 
 ---
 

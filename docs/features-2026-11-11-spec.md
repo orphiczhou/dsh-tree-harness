@@ -1,14 +1,15 @@
 # 功能规格 — 2026-11-11：会话自交接 + 工作区归档/检索
 
 > Lead 架构规格（实现前冻结）。两个功能的 API 证据、设计决策、验收标准、写作用域。
-> 状态：待实现（团队并行 T-F1 / T-F2）
+> 状态：**已实现**（T-F1 handoff、T-F2 会话树 v1.1.0）。
+> **A 节（交接）已在同日第三轮被修订实现取代**：交接并入 `packages/dsh-session-tree` **v1.2.0**（独立插件删除），并补齐两条真机缺陷修复——① root 接替会话挂到同一侧栏工作区（`workspaceRegistry.resolveByPath` + `Workspace.attachSession`）；② 继承 Agent 预设（`meta.agentPreset` + 发布前 `setup` 内 `agentPresets.mount`）与权限模式（`permission/preset` / `sandbox/mode` / `approval/policy`，`source:'delegation'`）。最新事实以 [session-handoff-2026-11-11.md](session-handoff-2026-11-11.md) §0 与 [e2e-handoff-2026-11-11.md](e2e-handoff-2026-11-11.md) 为准；A.3「新增 host-only 插件」的部署形态描述已过时。
 
 ---
 
 ## A. 功能 1：会话自交接（context handoff）
 
 ### A.1 用户需求
-会话接近 50% 上下文时，能够**自己写交接文件**，并**启动同层级的新会话**（同模型、同思考强度、同工作区）接替自己继续推进。
+会话接近 50% 上下文时，能够**自己写交接文件**，并**启动同层级的新会话**（同工作区、同 Agent 预设（工作模式）、同权限模式、同模型、同思考强度）接替自己继续推进。
 
 ### A.2 API 证据（本机 DSH 0.2.2-rc.1 实测/源码核对）
 | 能力 | API | 证据 |
