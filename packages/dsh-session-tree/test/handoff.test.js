@@ -1,17 +1,27 @@
 /**
- * Offline tests for @local/dsh-session-handoff.
+ * Offline tests for the merged session-tree Host half:
+ * `session_handoff` (ported from @local/dsh-session-handoff) beside `tree_send`.
  *
- * The four Host services are mocked at the seam the tool consumes:
- * `tools`/`agents`/`subagents`/`tokenMeter`, plus the optional
- * `workingDirectory` fallback. No @deepseek-ai package is loaded, no real
- * session is created; files are written to a throw-away temp workspace.
+ * The Host services are mocked at the seam the handoff tool consumes:
+ * `tools`/`agents`/`subagents`/`tokenMeter`, the optional `workingDirectory`
+ * fallback, and the optional inheritance services `workspaceRegistry`,
+ * `agentPresets`, `permissionPresets`, `approval`. No @deepseek-ai package is
+ * loaded, no real session is created; handoff files are written to a throw-away
+ * temp workspace.
+ *
+ * Ported from packages/dsh-session-handoff/tests/handoff.test.js (24 cases,
+ * semantics preserved). Added cases pin the inheritance repair: workspace
+ * attach for root successors, Agent-preset mount + durable inheritance events in
+ * the `agents.create({ setup })` callback, source-fact reporting for sibling
+ * successors, the new `status` fields, and the explicit preset-mount /
+ * workspace-attach failure reporting.
  */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { promises as fsp } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { apply, makeExecute } from '../index.js'
+import { apply, makeExecute, HANDOFF_TOOL } from '../index.js'
 
 const PARENT_ID = 'session-parent-00000000'
 
@@ -47,11 +57,57 @@ function makeExec(session) {
 }
 
 /**
+ * A mock successor Agent that records every durable event the setup callback
+ * appends to it (the real host reconstructs permission/preset state from these
+ * events, so they are the contract under test).
+ */
+function makeRecordedAgent(id, options, calls) {
+  const appended = []
+  const agent = {
+    id,
+    appended,
+    session: {
+      id,
+      header: { id },
+      append: (type, data) => {
+        appended.push({ type, data })
+        calls.appended.push({ type, data })
+      },
+    },
+    followup: async (message) => {
+      calls.followup.push({ options, message })
+    },
+  }
+  return agent
+}
+
+/**
  * Mock Host services and a call log. Overrides are shallow-merged, so a test can
  * replace `services.agents.create` or drop a whole service.
+ *
+ * The `agents.create` mock behaves like the real Host closely enough for the
+ * merged tool: it saves the options (including `setup`), builds a recorded
+ * successor Agent, and invokes `options.setup(agentCtx, agent)` before
+ * resolving — that is where the tool mounts the Agent preset and appends the
+ * inheritance events.
  */
 function makeServices(overrides = {}, { pressureTokens = 60000, contextWindow = 100000 } = {}) {
-  const calls = { create: [], followup: [], startActivation: [], get: [] }
+  const calls = {
+    create: [],
+    followup: [],
+    startActivation: [],
+    get: [],
+    agents: [],
+    appended: [],
+    setupCalls: [],
+    resolveByPath: [],
+    attach: [],
+    mount: [],
+    presetForSession: [],
+    permissionState: [],
+    setPolicy: [],
+    workingDirectorySet: [],
+  }
   const parentAgent = { id: PARENT_ID }
   const services = {
     tokenMeter: {
@@ -64,11 +120,15 @@ function makeServices(overrides = {}, { pressureTokens = 60000, contextWindow = 
       },
       create: async (options) => {
         calls.create.push(options)
-        const agent = {
-          id: options.sessionId,
-          followup: async (message) => {
-            calls.followup.push({ options, message })
-          },
+        const agent = makeRecordedAgent(options.sessionId, options, calls)
+        calls.agents.push(agent)
+        if (typeof options.setup === 'function') {
+          calls.setupCalls.push(options)
+          const agentCtx = {
+            get: (key) => services[key],
+            ...services,
+          }
+          await options.setup(agentCtx, agent)
         }
         return { agent, dispose: async () => {} }
       },
@@ -85,6 +145,72 @@ function makeServices(overrides = {}, { pressureTokens = 60000, contextWindow = 
   return { services, calls, parentAgent }
 }
 
+/** The source-session facts the inheritance repair must carry over. */
+const DEFAULT_INHERITED = {
+  preset: 'architect',
+  permission: { preset: 'auto', sandbox: 'workspace-write', approval: 'ask', seeded: true },
+  workspaceId: 'workspace-1',
+}
+
+/**
+ * Install the optional inheritance services onto `services` and record each
+ * production call. `options` can force the failure paths:
+ *   - `mountThrows: 'boom'`      → `agentPresets.mount` rejects
+ *   - `attachThrows: 'boom'`     → `workspace.attachSession` rejects
+ *   - `workspace: null`          → `workspaceRegistry.resolveByPath` finds nothing
+ * A bare `makeServices()` (no inheritance services) is the "services missing"
+ * baseline the ported cases rely on.
+ */
+function installInheritance(services, calls, options = {}) {
+  const facts = { ...DEFAULT_INHERITED, ...options }
+  services.workspaceRegistry = {
+    resolveByPath: async (cwd) => {
+      calls.resolveByPath.push(cwd)
+      if (facts.workspace === null) return undefined
+      return {
+        id: facts.workspaceId,
+        path: cwd,
+        attachSession: async (sessionId) => {
+          calls.attach.push(sessionId)
+          if (facts.attachThrows) throw new Error(facts.attachThrows)
+        },
+      }
+    },
+  }
+  services.agentPresets = {
+    presetForSession: (session) => {
+      calls.presetForSession.push(session)
+      return facts.preset
+    },
+    mount: async (ctx, id) => {
+      calls.mount.push({ ctx, id })
+      if (facts.mountThrows) throw new Error(facts.mountThrows)
+      return { id }
+    },
+  }
+  services.permissionPresets = {
+    permissionState: (session) => {
+      calls.permissionState.push(session)
+      return { ...facts.permission }
+    },
+    current: (session) => facts.permission.preset ?? 'custom',
+  }
+  services.approval = {
+    setPolicy: (agent, policy) => {
+      calls.setPolicy.push({ agent, policy })
+    },
+  }
+  services.workingDirectory = {
+    get: () => facts.workingDirectoryFallback ?? '/working-directory-fallback',
+    set: async (agent, directory, signal) => {
+      calls.workingDirectorySet.push({ agent, path: directory, signal })
+      if (facts.workingDirectorySetThrows) throw new Error(facts.workingDirectorySetThrows)
+      return directory
+    },
+  }
+  return facts
+}
+
 async function handoffFiles(dir) {
   const entries = await fsp.readdir(dir)
   return entries.filter((entry) => /^HANDOFF-.*\.md$/.test(entry)).sort()
@@ -98,6 +224,17 @@ async function exists(file) {
     return false
   }
 }
+
+/** The durable event a setup callback appended, by type (optionally filtered). */
+function appendedEvent(agent, type, predicate) {
+  return (agent.appended || []).find(
+    (entry) => entry.type === type && (predicate === undefined || predicate(entry.data)),
+  )
+}
+
+// ===========================================================================
+// Ported cases (unchanged semantics): status / guards / file / spawn matrix
+// ===========================================================================
 
 test('status：pressure/model/cwd 齐全时返回真实百分比与继承信息', async (t) => {
   const cwd = await makeWorkspace(t)
@@ -209,7 +346,7 @@ test('handoff：达到阈值 → 写出 HANDOFF 文件，模板字段齐全', as
       action: 'handoff',
       summary: 'Implement the session handoff feature',
       next_steps: ['Run the offline tests', 'Report evidence to the Lead'],
-      files: ['packages/dsh-session-handoff/index.js'],
+      files: ['packages/dsh-session-tree/index.js'],
       open_questions: ['Does the sidebar show created root sessions?'],
       note: 'Chose agents.create + followup over a setup callback.',
     },
@@ -231,7 +368,7 @@ test('handoff：达到阈值 → 写出 HANDOFF 文件，模板字段齐全', as
     '## Decisions',
     'Chose agents.create + followup over a setup callback.',
     '## Changed files',
-    'packages/dsh-session-handoff/index.js',
+    'packages/dsh-session-tree/index.js',
     '## Next steps',
     '1. Run the offline tests',
     '2. Report evidence to the Lead',
@@ -560,7 +697,7 @@ test('execute：没有调用中的会话 → 明确报错', async () => {
   await assert.rejects(execute({ action: 'status' }, {}), /no calling session/)
 })
 
-test('apply：ctx.inject 四服务后注册 session_handoff，工具为 JSON-Schema 形状且 render 有界', async () => {
+test('apply：注入服务后同包注册 session_handoff 与 tree_send，工具为 JSON-Schema 形状且 render 有界', () => {
   const injected = []
   const registered = []
   const fakeCtx = {
@@ -578,10 +715,20 @@ test('apply：ctx.inject 四服务后注册 session_handoff，工具为 JSON-Sch
 
   apply(fakeCtx)
 
-  assert.deepEqual(injected, [['tools', 'subagents', 'agents', 'tokenMeter']])
-  assert.equal(registered.length, 1)
-  const tool = registered[0]
-  assert.equal(tool.name, 'session_handoff')
+  const flatDeps = injected.flat()
+  for (const name of ['tools', 'subagents', 'agents', 'tokenMeter']) {
+    assert.ok(flatDeps.includes(name), `apply must inject ${name}`)
+  }
+
+  // The merge goal: both Host tools live in this one package.
+  const names = registered.map((definition) => definition.name)
+  assert.ok(names.includes('session_handoff'), `session_handoff not registered: ${JSON.stringify(names)}`)
+  assert.ok(names.includes('tree_send'), `tree_send not registered: ${JSON.stringify(names)}`)
+
+  const tool = registered.find((definition) => definition.name === 'session_handoff')
+  // The exported definition is what apply() registers (plus the executor).
+  assert.equal(HANDOFF_TOOL.name, 'session_handoff')
+  assert.deepEqual(tool.parameters, HANDOFF_TOOL.parameters)
   assert.equal(tool.parameters.type, 'object')
   assert.equal(tool.parameters.additionalProperties, false)
   assert.deepEqual(tool.parameters.properties.action.enum, ['status', 'handoff'])
@@ -613,3 +760,271 @@ test('apply：ctx.inject 四服务后注册 session_handoff，工具为 JSON-Sch
   assert.ok(rendered[0].text.includes('62.5'))
   assert.ok(rendered[0].text.length <= 400)
 })
+
+// ===========================================================================
+// Added cases: inheritance repair (workspace / preset / permission facts)
+// ===========================================================================
+
+test('status：新增继承字段 agent_preset/permission/workspace 从服务读取真实事实', async (t) => {
+  const cwd = await makeWorkspace(t)
+  const { services, calls } = makeServices()
+  const facts = installInheritance(services, calls)
+  const session = makeSession({ cwd, config: DEFAULT_CONFIG })
+  const execute = makeExecute(services)
+
+  const status = await execute({ action: 'status' }, makeExec(session))
+
+  assert.equal(status.agent_preset, facts.preset)
+  assert.ok(status.permission && typeof status.permission === 'object')
+  assert.equal(status.permission.preset, facts.permission.preset)
+  assert.equal(status.permission.sandbox, facts.permission.sandbox)
+  assert.equal(status.permission.approval, facts.permission.approval)
+  assert.ok(status.workspace && typeof status.workspace === 'object')
+  assert.equal(status.workspace.workspace_id, facts.workspaceId)
+  assert.equal(status.workspace.path, cwd)
+  // The workspace fact is resolved from the session cwd, not guessed.
+  assert.ok(calls.resolveByPath.includes(cwd), JSON.stringify(calls.resolveByPath))
+})
+
+test('status：继承服务缺失时三个字段取 unavailable，不猜', async (t) => {
+  const cwd = await makeWorkspace(t)
+  const { services } = makeServices() // no workspaceRegistry / agentPresets / permissionPresets
+  const session = makeSession({ cwd, config: DEFAULT_CONFIG })
+  const execute = makeExecute(services)
+
+  const status = await execute({ action: 'status' }, makeExec(session))
+
+  assert.equal(status.agent_preset, 'unavailable')
+  // The implementation reports the whole permission fact as unavailable when
+  // no permission service is composed (instead of fabricating an object).
+  assert.equal(status.permission, 'unavailable')
+  assert.ok(status.workspace && typeof status.workspace === 'object')
+  for (const field of ['workspace_id', 'path']) {
+    assert.equal(status.workspace[field], 'unavailable', `workspace.${field}`)
+  }
+})
+
+test('handoff：root 接替会话 attach 到同工作区，返回 workspace = {attached:true, id, path}', async (t) => {
+  const cwd = await makeWorkspace(t)
+  const { services, calls } = makeServices()
+  const facts = installInheritance(services, calls)
+  const session = makeSession({ cwd, config: DEFAULT_CONFIG })
+  const execute = makeExecute(services)
+
+  const result = await execute({ action: 'handoff', summary: 'Root joins workspace' }, makeExec(session))
+
+  assert.equal(result.status, 'handed-off')
+  assert.equal(result.successor.kind, 'root')
+  assert.ok(calls.resolveByPath.includes(cwd), JSON.stringify(calls.resolveByPath))
+  assert.equal(calls.attach.length, 1)
+  assert.equal(calls.attach[0], result.successor.session_id)
+
+  const workspace = result.successor.workspace
+  assert.ok(workspace && typeof workspace === 'object')
+  assert.equal(workspace.attached, true)
+  assert.equal(workspace.workspace_id, facts.workspaceId)
+  assert.equal(workspace.path, cwd)
+})
+
+test('handoff：root 无 workspaceRegistry → workspace.attached=false + reason，交接仍成功', async (t) => {
+  const cwd = await makeWorkspace(t)
+  const { services, calls } = makeServices() // no workspaceRegistry at all
+  const session = makeSession({ cwd, config: DEFAULT_CONFIG })
+  const execute = makeExecute(services)
+
+  const result = await execute({ action: 'handoff', summary: 'No workspace registry' }, makeExec(session))
+
+  assert.equal(result.status, 'handed-off')
+  assert.equal(calls.attach.length, 0)
+  const workspace = result.successor.workspace
+  assert.ok(workspace && typeof workspace === 'object')
+  assert.equal(workspace.attached, false)
+  assert.match(String(workspace.reason), /workspace|registry|unavailable/i)
+})
+
+test('handoff：root 有 registry 但路径未命中工作区 → attached=false + reason，交接仍成功', async (t) => {
+  const cwd = await makeWorkspace(t)
+  const { services, calls } = makeServices()
+  installInheritance(services, calls, { workspace: null })
+  const session = makeSession({ cwd, config: DEFAULT_CONFIG })
+  const execute = makeExecute(services)
+
+  const result = await execute({ action: 'handoff', summary: 'Workspace not registered' }, makeExec(session))
+
+  assert.equal(result.status, 'handed-off')
+  assert.equal(calls.attach.length, 0)
+  assert.equal(result.successor.workspace.attached, false)
+  assert.match(String(result.successor.workspace.reason), /workspace|unavailable|no/i)
+})
+
+test('handoff：root setup 传 meta.agentPreset、mount 预设、追加四类继承事件', async (t) => {
+  const cwd = await makeWorkspace(t)
+  const { services, calls } = makeServices()
+  const facts = installInheritance(services, calls)
+  const session = makeSession({ cwd, config: DEFAULT_CONFIG })
+  const execute = makeExecute(services)
+
+  const result = await execute({ action: 'handoff', summary: 'Inherit preset' }, makeExec(session))
+
+  assert.equal(result.status, 'handed-off')
+  // 1. The preset is declared on the creation meta so the Host composes it.
+  assert.equal(calls.create.length, 1)
+  const options = calls.create[0]
+  assert.equal(options.meta.agentPreset, facts.preset)
+  assert.equal(typeof options.setup, 'function')
+  assert.equal(calls.setupCalls.length, 1)
+  assert.equal(calls.setupCalls[0], options)
+
+  // 2. The setup callback mounts the preset on the successor's own context.
+  assert.equal(calls.mount.length, 1)
+  assert.equal(calls.mount[0].id, facts.preset)
+
+  // 3. The durable inheritance events are appended to the successor session.
+  const agent = calls.agents[0]
+  assert.ok(agent, 'no successor agent recorded')
+  const selected = appendedEvent(agent, 'agent-preset/selected')
+  assert.ok(selected, 'agent-preset/selected event missing')
+  assert.equal(selected.data.agentPreset, facts.preset)
+
+  const presetEvent = appendedEvent(agent, 'permission/preset')
+  assert.ok(presetEvent, 'permission/preset event missing')
+  assert.equal(presetEvent.data.preset, facts.permission.preset)
+
+  const sandboxEvent = appendedEvent(agent, 'sandbox/mode')
+  assert.ok(sandboxEvent, 'sandbox/mode event missing')
+  assert.equal(sandboxEvent.data.mode, facts.permission.sandbox)
+  assert.equal(sandboxEvent.data.source, 'delegation')
+
+  const approvalEvent = appendedEvent(agent, 'approval/policy')
+  assert.ok(approvalEvent, 'approval/policy event missing')
+  assert.equal(approvalEvent.data.policy, facts.permission.approval)
+  assert.equal(approvalEvent.data.source, 'delegation')
+
+  // 4. The returned successor reports the inherited facts (same source facts).
+  assert.equal(result.successor.agent_preset, facts.preset)
+  assert.ok(result.successor.permission && typeof result.successor.permission === 'object')
+  assert.equal(result.successor.permission.preset, facts.permission.preset)
+  assert.equal(result.successor.permission.sandbox, facts.permission.sandbox)
+  assert.equal(result.successor.permission.approval, facts.permission.approval)
+})
+
+test('handoff：setup 中 preset mount 抛错 → 交接仍成功，warnings + preset_error 可追溯', async (t) => {
+  const cwd = await makeWorkspace(t)
+  const { services, calls } = makeServices()
+  const facts = installInheritance(services, calls, { mountThrows: 'boom-preset-mount' })
+  const session = makeSession({ cwd, config: DEFAULT_CONFIG })
+  const execute = makeExecute(services)
+
+  const result = await execute({ action: 'handoff', summary: 'Preset mount failure' }, makeExec(session))
+
+  assert.equal(result.status, 'handed-off')
+  assert.equal(await exists(result.handoff_path), true)
+  assert.equal(calls.create.length, 1)
+  assert.equal(calls.mount.length, 1)
+  assert.equal(calls.mount[0].id, facts.preset)
+  const warnings = Array.isArray(result.warnings) ? result.warnings.join(' | ') : ''
+  const degraded = typeof result.degraded === 'string' ? result.degraded : ''
+  assert.ok(
+    /preset|mount|inherit/i.test(warnings) || /preset|mount|inherit/i.test(degraded),
+    `failure not surfaced (warnings=${JSON.stringify(result.warnings)}, degraded=${JSON.stringify(result.degraded)})`,
+  )
+  // Traceability: the original contract asks for `successor.preset_error`, and
+  // the merged implementation reports it there (plus the same text in warnings).
+  assert.match(String(result.successor.preset_error), /boom-preset-mount/)
+  assert.match(String(result.successor.preset_error), /not inherited/)
+  assert.match(warnings, /not inherited/)
+  const traceable = [
+    result.successor.preset_error === undefined ? '' : String(result.successor.preset_error),
+    ...(Array.isArray(result.warnings) ? result.warnings : []),
+  ]
+    .filter(Boolean)
+    .join(' | ')
+  assert.match(traceable, /boom-preset-mount/)
+})
+
+test('handoff：workspace attach 抛错 → 交接仍成功，warnings + workspace.reason 可追溯', async (t) => {
+  const cwd = await makeWorkspace(t)
+  const { services, calls } = makeServices()
+  const facts = installInheritance(services, calls, { attachThrows: 'boom-workspace-attach' })
+  const session = makeSession({ cwd, config: DEFAULT_CONFIG })
+  const execute = makeExecute(services)
+
+  const result = await execute({ action: 'handoff', summary: 'Workspace attach failure' }, makeExec(session))
+
+  assert.equal(result.status, 'handed-off')
+  assert.equal(await exists(result.handoff_path), true)
+  assert.equal(calls.attach.length, 1)
+  const workspace = result.successor.workspace
+  assert.ok(workspace && typeof workspace === 'object')
+  assert.equal(workspace.attached, false)
+  // A failed attach reports the reason; it does not claim workspace identity.
+  assert.match(String(workspace.reason), /boom-workspace-attach/)
+  assert.match(String(workspace.reason), /workspace-attach-failed/)
+  const warnings = Array.isArray(result.warnings) ? result.warnings.join(' | ') : ''
+  const degraded = typeof result.degraded === 'string' ? result.degraded : ''
+  assert.ok(
+    /workspace|attach|inherit/i.test(warnings) || /workspace|attach|inherit/i.test(degraded),
+    `failure not surfaced (warnings=${JSON.stringify(result.warnings)}, degraded=${JSON.stringify(result.degraded)})`,
+  )
+})
+
+test('handoff：兄弟路径参数不回归、返回源会话 agent_preset/permission，且不 attach workspace', async (t) => {
+  const cwd = await makeWorkspace(t)
+  const { services, calls, parentAgent } = makeServices()
+  const facts = installInheritance(services, calls)
+  const session = makeSession({ cwd, parentSession: PARENT_ID, config: DEFAULT_CONFIG })
+  const execute = makeExecute(services)
+
+  const result = await execute({ action: 'handoff', summary: 'Sibling inheritance' }, makeExec(session))
+
+  assert.equal(result.status, 'handed-off')
+  assert.equal(calls.create.length, 0)
+  assert.equal(calls.startActivation.length, 1)
+
+  const spec = calls.startActivation[0]
+  assert.equal(spec.provider, 'spawn')
+  assert.equal(spec.delivery, 'parent')
+  assert.equal(spec.request.parent, parentAgent)
+  assert.equal(spec.request.cwd, cwd)
+  assert.equal(spec.request.prompt.length, 1)
+  assert.equal(spec.request.prompt[0].type, 'text')
+  assert.ok(spec.request.prompt[0].text.includes(result.handoff_path))
+  assert.match(spec.request.prompt[0].text, /read the handoff file/i)
+
+  // Sibling successors are delegated under the live parent, so the handoff
+  // itself must not attach a workspace (that path belongs to the parent). The
+  // registry may still be queried to name the Sidebar workspace in the recap
+  // file, so only the attach is asserted here.
+  assert.equal(calls.attach.length, 0, JSON.stringify(calls.attach))
+  const workspace = result.successor.workspace
+  assert.ok(workspace && typeof workspace === 'object')
+  assert.equal(workspace.attached, false)
+  assert.match(String(workspace.reason), /sibling/i)
+
+  // The sibling result reports source-session facts, not guessed values.
+  assert.equal(result.successor.kind, 'sibling')
+  assert.equal(result.successor.agent_preset, facts.preset)
+  assert.ok(result.successor.permission && typeof result.successor.permission === 'object')
+  assert.equal(result.successor.permission.preset, facts.permission.preset)
+  assert.equal(result.successor.permission.sandbox, facts.permission.sandbox)
+  assert.equal(result.successor.permission.approval, facts.permission.approval)
+})
+
+test('handoff：setup 中 workingDirectory.set 抛错 → 交接仍成功，warnings + working_directory_error 可追溯', async (t) => {
+  const cwd = await makeWorkspace(t)
+  const { services, calls } = makeServices()
+  installInheritance(services, calls, { workingDirectorySetThrows: 'boom-working-directory' })
+  const session = makeSession({ cwd, config: DEFAULT_CONFIG })
+  const execute = makeExecute(services)
+
+  const result = await execute({ action: 'handoff', summary: 'Working directory failure' }, makeExec(session))
+
+  assert.equal(result.status, 'handed-off')
+  assert.equal(calls.create.length, 1)
+  assert.equal(calls.workingDirectorySet.length, 1)
+  assert.equal(calls.workingDirectorySet[0].path, cwd)
+  assert.match(String(result.successor.working_directory_error), /boom-working-directory/)
+  const warnings = Array.isArray(result.warnings) ? result.warnings.join(' | ') : ''
+  assert.match(warnings, /workingDirectory\.set failed/i)
+})
+
