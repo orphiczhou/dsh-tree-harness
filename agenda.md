@@ -34,6 +34,7 @@
 - **测试**：tree-engine **62/62**、meta-loop **13/13**（当前工作树，含未提交改动）
 - **会话树**：本机开发态双包（`@local/dsh-session-tree` UI 半 + `@local/dsh-session-tree-tools` 工具半）运行中；发布态单包 `@orphiczhou/dsh-session-tree` **v1.0.4** 已在 GitHub 公开、两个市场 PR 已合并、npm 未发
 - **活体**：`SessionTree` provider 在线；`tree_send` 工具在线；`meta-loop` 未装配；tree-engine `sweep degraded:no-timer`
+- **公开面**：仓库已以 public 发布 → https://github.com/orphiczhou/dsh-tree-harness（master）；插件仓 `orphiczhou/dsh-session-tree` v1.0.4、`orphiczhou/dsh-region-probe`；npm 冻结（D3）
 - **风险**：① 无 remote = 零备份；② RC2 兼容层未入库（当前宿主已无 `startContinuable`，HEAD 旧契约会死）；③ README 停留在 S0 时代
 
 ## 3. 议程（Roadmap）
@@ -41,7 +42,7 @@
 | ID | 议题 | 状态 | 说明 |
 |---|---|---|---|
 | **R1** | 会话树合并为单包（D1 / B⁺） | ✅ 已完成 | `packages/dsh-session-tree/` 15/15 文件 SHA 与发布副本一致；profile 经 `plugin_manager` 切到单包（bundles 29→28），活体验证 `tree_send`×1 + 8 个 `tree_*` 无缺失/重复；**打开中的页面刷新一次**才加载新客户端半 |
-| **R2** | 本仓公开到 GitHub（D2） | 🔄 进行中 | 已提交待推送。硬门禁：D7 文件已从工作树移除，**历史重写清除后由验证者跑 A1–A9 复扫并明确「可 push」**；此前不得 push |
+| **R2** | 本仓公开到 GitHub（D2） | ✅ 已完成 | public 仓 **https://github.com/orphiczhou/dsh-tree-harness**（默认分支 master、7 个 topics、MIT）。2026-11-11 推送成功：**远端 HEAD `366986d` == 本地 HEAD**；推送前门禁 = 独立验证者 A1–A9 复扫全绿（报告 v1.2，PASS WITH RISKS） |
 | **R3** | 止血：RC2 兼容层入库 | ✅ 已完成 | RC2 兼容层（`startContinuable`/`startActivation` 双形 + interrupt authority 兼容 + sendMessage/prompt 回退）+ 缺陷报告入库；**补单测**列后续（现测试不覆盖新分支） |
 | **R4** | 文档对齐（README / handoff / publishing） | ✅ 已完成 | README 重写、LICENSE(MIT)、handoff-2026-11-11、publishing、merge 记录、验证报告 v1.1 全部落盘 |
 | **R5** | npm 发布 | ⏸ 冻结（D3） | 无需动作 |
@@ -71,3 +72,4 @@
 ## 6. 变更记录
 
 - 2026-11-11：建立本文件；记录 D1–D6；启动本轮团队任务（T1–T5）。
+- 2026-11-11（收口）：D7 扩展为 **7 文件**（Lead 复核发现另 3 个 DSH 源码摘录后追加）；T1–T4 全部完成；4 个逻辑 commit + **历史重写**（9 路径从全部历史清除，`.git` 3.80MB→0.64MB，旧对象/refs 0 残留）+ 验证门禁 **A1–A9 全绿（PASS WITH RISKS）**；**公开仓 `orphiczhou/dsh-tree-harness` 已创建并推送（远端 HEAD == 本地）**；npm 维持冻结（D3）。
