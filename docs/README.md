@@ -2,7 +2,7 @@
 
 > 本目录是 `dsh-tree-harness`（DSH 会话树体系）的**全部开发文档**。本文件是文档的**单一索引**，并规定新增/迁移/归档规则。
 > 改完文档必须跑：`node scripts/check-doc-links.mjs` 与 `node scripts/check-md-tables.mjs`。
-> 当前快照：2026-11-12 · tree-engine **v0.8.0**（9 工具 / 165-165 测试）· session-tree **v1.4.0**（本仓；公开镜像 tag 仍 `v1.3.7` = `91c177e`，v1.4.0 待发布）。组合修复：per-leaf relay 开关 / usagePct 端口修复 / sweep 跨实例生命周期 / tree_send 同树收紧 / 会话行元数据徽标（model · effort · context%）。
+> 当前快照：2026-11-12 · tree-engine **v0.8.0**（9 工具 / 165-165 测试）· session-tree **v1.4.0**（本仓；公开镜像 tag 仍 `v1.3.7` = `91c177e`，v1.4.0 待发布）。组合修复：per-leaf relay 开关 / usagePct 端口修复 / sweep 跨实例生命周期 / tree_send 同树收紧 / 会话界面元数据条（子会话补 model·effort·context%，只读子会话 header chip）。
 
 ## 0. 不同读者的入口
 

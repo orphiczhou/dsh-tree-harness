@@ -5,6 +5,8 @@
 > 证据：本仓源码行号 + asar 反编译行号 + **真实会话日志**（`%USERPROFILE%\.dsh\sessions\--D-Codes-dsh-tree-harness--\`，210 个 `.jsonl.zstd`，多帧 zstd，已解码扫描）。
 > scratch：`D:\Codes\_composition-research\session-ui-probe\`（`asar-extract.cjs` / `decode-session.cjs` / `scan-headers.cjs` / `scan-coverage.cjs` / `scan-pressure.cjs` + `extracted/`）。
 > 纪律：只读其他文件；**未改 `packages/**`**、未改 profile、未 reload、未 commit。本文件是唯一写入（+scratch）。
+>
+> **⚠ 2026-11-13 用户修正（task-10）**：**不要在左侧会话树显示** model/effort/context，改到**会话详情页底部**（composer 区）。因此本文 §3–§5、§8 的「树行徽标」方向已**作废**（Lead 负责移除已加的树行 `st-meta`）；**权威方案见 §9「修正：改到会话界面底部 + 子会话为何不显示」**。§1（数据源）、§2（覆盖）仍然有效。
 
 ---
 
@@ -322,3 +324,160 @@ node D:\Codes\_composition-research\session-ui-probe\scan-pressure.cjs  "%USERPR
 - **「每个会话显示 model / reasoning effort / 上下文占用」最小可靠方案 = §5.1 的 #1–#7（纯 client 半）**，不需要宿主协议改动；
 - **还缺的只有**：冷会话 context% 的预热成本控制（限额即可诚实展示）、以及若要做批量接口的核心 API 结论（UNKNOWN）；
 - **实现归属**：树行 + 标题栏 chip → **client 半（`packages/dsh-session-tree/client.js` + locale）**；批量/事件通道 → **host 半/核心 UI（未证实可插件化，不建议 MVP 依赖）**。
+
+> **2026-11-13 修正**：用户要求改到**会话界面底部**、且**不要左侧树行徽标**——§8 的「树行」归属作废（Lead 负责移除）；正确方案见 §9。
+
+---
+
+## 9. 修正（2026-11-13）：改到会话界面底部 + 子会话为何「有些不显示」
+
+> 任务：`task-10`。用户原话：“**不要在左侧会话树显示这些信息**。我要的是在**会话的界面下面**显示，就和正常会话都显示这些信息，但是会话 call 出来的会话有些不显示。”
+> 结论先行：**根因有两条独立的**——① 官方模型选择器对**所有子会话**直接 `return null`（不是布局问题）；② **只读子会话**（一次性/未知模式/父离线）的整个 composer 被官方只读组件**替换**，模型选择器 + ContextMeter + 底部 dock 一起消失。**没有任何官方「常驻底部」slot 能在 composer 被替换时存活**；推荐「`conversation.composer.dock` 底部条（主）+ `conversation.session.header.utilities` 兜底角标（只读子会话）/ 或 Phase 2 chain 覆盖拿回底部」。
+
+### 9.1 官方会话底部信息现状（root 会话为什么「都显示」）
+
+| 信息 | 官方组件 | 所在 slot / 位置 | 数据投影 | 渲染条件（原文） |
+|---|---|---|---|---|
+| **model + 思考强度** | `ModelSelect`（`dsh-client-ui-model-selection/lib/client.js:1120-1128` 注释：trigger 同时显示 model name + effort） | `conversation.input.model`（**single**，位于 composer 工具行；渲染于 `dsh-client-ui-conversation/lib/client.js:22110`） | `modelSelection`（`{lastUsed, next}`，effort 可缺省=adapter 默认） | `if (!available) return null;`（model-selection client `:1297`） |
+| **上下文占用 %** | `ContextMeter`（conversation client `:21480-21540`） | composer 底部 dock 行 `div[data-composer-dock]`（`:22219`），与 `conversation.composer.dock` 同一 flex 行 | `contextPressure`（`projectedTokens ?? pressureTokens` / `contextWindow`，clamp 100%）+ `contextBreakdown` 面板 | `variant === "composer" && input !== undefined && sessionId !== undefined` 才渲染 dock（`:22219`）；`activity` 占用时 `activity ? null : <ContextMeter>`；投影缺 token/window 时 `contextOccupancy()` 返回 null → 不渲染 |
+| **思考强度明细** | `ModelSelect` 二级菜单 Model/Effort 行 | 同上 trigger | 同上 | 同上 |
+| **底部其它** | chat `ActivityPill` id `'activity'`（order 0）/ `UsagePill` id `'usage'`（order 1） | `conversation.composer.dock`（**list**，session scope，"Ambient entries below the composer card"；注册样例 chat client `:15561-15571`） | `useChat` / `performanceUsage` | 同 dock 条件 |
+| **标题栏 utilities** | open-in-app / schedule / forge 等 | `conversation.session.header.utilities`（**list**，session scope，右侧 utility 区；渲染于 conversation client `:20893-20903`） | 各 occupant 自定义；standardProps 含 `sessionId/useProjection/useSession/useSessions` | 常驻（只要 Conversation header 挂载） |
+
+composer 自身的插槽合同（asar `dsh-cordis-client-runner/lib/client.js` slot 目录，逐条核实）：
+
+| slot | kind | scope | 说明 |
+|---|---|---|---|
+| `conversation.composer` | **chain** | session | 按 `select` 选一个组件**替换整个 composer**；fallback 才是正常 composer。官方 occupant：`client-ui-subagent SubagentReadOnlyComposer` 等；owner props = `{sessionId, session, pendingInteraction}` |
+| `conversation.composer.bar` | single | session-maybe | 正常 composer body（`InputBar`），替换=shadow 官方（`replaceRisk: shadows-shipped-ui`） |
+| `conversation.composer.dock` | **list** | session | **composer 卡片下方的一条 flex 行**（`display:flex;justify-content:center;gap:12px;min-height:22px`，CSS `.GRgSLq_dock`），官方 occupant = ActivityPill/UsagePill；**声明于 `conversation.composer.bar` 的 entry**（InputBar 不渲染则不存在） |
+| `conversation.input.model` / `.input.permission` / `.input.plan` / `.input.left`/`.right`/`.input.activity` / `.input.overlay` / `.input.attachments` | single/list | session | 全部**声明于 `conversation.composer.bar` entry**（conversation client `:22958-22995`）→ composer 被替换时一律不存在 |
+| `conversation.session` | single | session | 整个 Conversation body（ConversationSession），替换=shadow 官方 |
+| `conversation.view` | list | session | 会话**视图 tab**（chat/trajectory/stats，一次只渲染一个）→ **不是 footer** |
+| `shell.bottom` | single | **root** | 应用级底部（下方全宽），**无 Session 绑定**，官方 occupant = inspector；替换=shadow |
+| `shell.overlay` | list | root | 应用级浮层，**无 Session 绑定**（拿不到当前会话） |
+| `main.conversation` | single | session-maybe | ConversationRoot 外壳，替换=shadow |
+
+### 9.2 子会话「有些不显示」的代码级原因（4 条）
+
+| # | 现象 | 代码证据 | 影响会话类型 |
+|---|---|---|---|
+| **1** | **model/effort 完全不显示**（即使 composer 正常） | `dsh-client-ui-model-selection/lib/client.js:2074`：`const available = sessions.subagentAddress(sessionId) === void 0;`（子会话=false）→ `:1297`：`if (!available) return null;`；`:944` 还有 `assertAvailable() → "model selection is unavailable for addressed subagent sessions"`。即**官方对子会话直接禁用/隐藏模型选择器** | **全部子会话**（continuable 也一样） |
+| **2** | **整个底部区消失**（连 ContextMeter、dock 都没有） | `dsh-client-ui-subagent/lib/client.js:1221-1230 selectReadOnlySubagent`：`mode==='unknown'`→只读、`mode==='one-shot'`→只读、`parentAvailable===false && !running`→只读；`:1273-1280` 以 `priority:-10` 注册到 `conversation.composer` chain → 命中即用 `SubagentReadOnlyComposer`（`:683-690`，一个 54px 的只读说明框）**替换整个 composer**；conversation client `:20583-20590` `renderSlotChain(... fallback: composerBar)`、`:20592-20597 composerSeat children: composer` → InputBar 不渲染，其声明的 `conversation.composer.dock`/`input.model`/ContextMeter 全部不存在 | **one-shot（含 flow 一次性节点）、mode=unknown、父会话离线且未运行的 continuable** |
+| **3** | 上下文 % 单独缺失 | `ContextMeter` 数据侧：`contextOccupancy(pressure)` 在缺 `contextWindow` 或 token 时返回 null（conversation client `:21525-21534`）→ 不渲染；`activity` occupant 存在时被 `activity ? null : <ContextMeter>` 顶掉（`:22219`） | 空白/未跑完回合、无 usage 的会话；侧栏语音输入激活时 |
+| **4** | 只读子会话的「会话界面」根本没有可输入区 | 同 #2；侧栏子会话（openAside → `sidebar.right.pane.tab` + `sidebar.chat.conversation`，subagent client `:835-843`）同样走 `conversation.content` embedded variant（`ConversationSlotPanel`）→ composer 同样可能被只读替换 | 侧栏打开的 one-shot 子会话 |
+
+> 补充：root 会话与**父可用**的 continuable 子会话 composer 正常（`selectReadOnlySubagent` 返回 null → fallback InputBar），但 #1 仍让它们的 model/effort 不显示；#2 的三种只读场景则整块底部不存在。
+
+### 9.3 推荐注入点（底部优先）
+
+| 方案 | slot / 注册 | 覆盖 | 风险 |
+|---|---|---|---|
+| **主方案（MVP，强烈推荐）** | `conversation.composer.dock`（**list**，session scope）→ `ctx.slots.register({ name:'conversation.composer.dock', id:'session-meta', order:100, locale:'session-tree' }, SessionMetaStrip)` | **root + 父可用的 continuable 子会话**（主窗口与右侧栏 embedded 均可，只要 InputBar 渲染）；位置 = composer 卡片下方 dock 行（**真正的“会话界面下面”**），与 ActivityPill/UsagePill/ContextMeter 同排 | 无（list 追加、`replaceRisk:none`）；空白/hero 阶段（`variant!=='composer'` 或 `input===undefined`）不渲染 → 需要兜底 |
+| **兜底 A（零 shadow，推荐与主方案一起）** | `conversation.session.header.utilities`（**list**，session scope）→ `ctx.slots.register({ name:'conversation.session.header.utilities', id:'session-meta-chip', order:60, locale:'session-tree' }, SessionMetaChip)`；组件内用 `useSession(s=>s.subagent)` 判断，**仅只读子会话渲染**（正常会话返回 null 避免重复） | **one-shot / unknown / 父离线子会话**（composer 被替换也常驻，因为 header 始终在）；位置 = 标题栏右侧（不是底部，但 100% 可见、官方支持追加） | 无（list）；位置妥协：不是“界面下面” |
+| **兜底 B（Phase 2，拿回只读子会话的底部）** | `conversation.composer`（**chain**）注册 `priority:-20`（低于官方 subagent 的 -10 → 先被尝试），`select` **精确复刻** `selectReadOnlySubagent` 四分支；命中时渲染「只读说明 + 元信息条」；未命中返回 null 落回官方 | 三类只读子会话的**底部** | ⚠ 需复刻官方只读文案/分支（zh/en 至少；其它语言回退）；上游改文案/条件要跟进 → `replaceRisk` 实质是 shadows-仅只读态 |
+| ❌ 不推荐 | `conversation.composer.bar` / `conversation.session` / `main.conversation`（single，替换=shadow 官方）；`conversation.view`（是 tab 不是 footer）；`shell.bottom`（single/root、被 inspector 占用、**无 session 绑定**）；`shell.overlay`（root scope 拿不到当前会话） | — | 高 |
+
+**推荐组合**：MVP = 主方案（dock 底部条）+ 兜底 A（只读子会话 header chip）；用户若坚持「只读子会话也要在底部」，再做兜底 B（chain 覆盖）。
+
+### 9.4 组件与 patch 计划（纯 client 半，仅 `packages/dsh-session-tree/client.js`）
+
+**数据投影（子会话与 root 同源可用）**：打开子会话走 `uiWorkspace.openSession(address)` → `replaceMain(target)`（`dsh-client-ui-workspace/lib/client.js:1473-1475,1661-1690`：`sessions.retain(target)` 保留**子会话**并记录 `subagentAddress`）→ Conversation 绑定子会话，打开流返回**全量 projections**（host `dsh-api-session-controller/lib/index.js:2509-2514` `projections: projections(observation)`，含 `contextPressure`）→ `useProjection('modelSelection'|'contextPressure')` 拿到的就是子会话自己的数据。前一轮实测：one-shot/flow 节点 31/31 有首个 `request/header`（model）且 31/31 具备 contextPressure 输入（§2），因此只读子会话也能显示真实值；空白/无 usage 时诚实显示 `—`。
+
+**插件内实现（伪代码）**：
+
+```js
+// ① 纯函数：与官方 ContextMeter 同口径
+function metaOf(modelSelection, contextPressure) {          // 均可 undefined
+  const sel = (modelSelection && (modelSelection.lastUsed || modelSelection.next)) || null
+  const used = contextPressure && (contextPressure.projectedTokens ?? contextPressure.pressureTokens)
+  const win = contextPressure && contextPressure.contextWindow
+  return {
+    model: sel ? sel.model : null,
+    provider: sel ? sel.provider : null,
+    effort: sel ? (sel.reasoningEffort || null) : null,     // 缺省 = adapter 默认
+    pct: used !== undefined && win > 0 ? Math.min(100, Math.round((used / win) * 100)) : null,
+    usedTokens: used, contextWindow: win,
+  }
+}
+
+// ② 组件（dock 条目与 header 条目共用；t 由 locale:'session-tree' 注入）
+function SessionMetaStrip({ sessionId, useProjection, t }) {
+  const sel = useProjection('modelSelection')
+  const cp  = useProjection('contextPressure')
+  const m = metaOf(sel, cp)
+  if (!m.model && m.pct === null) return null                 // 诚实缺失：不渲染假值
+  const title = [m.provider && (m.provider + '/' + m.model),
+                 m.pct !== null && (m.usedTokens + ' / ' + m.contextWindow + ' tokens')]
+                .filter(Boolean).join(' · ')
+  return React.createElement('div', { className: 'st-meta-strip', 'data-session-meta': sessionId, title },
+    m.model ? React.createElement('span', { className: 'st-meta-item' }, m.model) : null,
+    m.model ? React.createElement('span', { className: 'st-meta-item' }, m.effort || t('effortDefault')) : null,
+    m.pct !== null ? React.createElement('span', { className: 'st-meta-item st-meta-pct' }, m.pct + '%') : null)
+}
+
+// ③ apply() 内（与现有 sidebar.workspaces 注册并列）
+ctx.slots.inject('conversation.composer.dock', () => ctx.slots.register({
+  name: 'conversation.composer.dock', id: 'session-meta', order: 100, locale: 'session-tree',
+}, SessionMetaStrip))
+
+// ④ 兜底 A（只读子会话 header chip；组件内部判断，正常会话 return null）
+ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
+  name: 'conversation.session.header.utilities', id: 'session-meta-chip', order: 60, locale: 'session-tree',
+}, SessionMetaChip))     // chip 内：const sub = useSession(s => s.subagent); 正常会话直接 null
+
+// ⑤ 兜底 B（Phase 2，只读子会话底部；select 复刻官方四分支）
+function selectReadOnlyMeta(owner) {
+  const sub = owner.session && owner.session.subagent
+  if (!sub) return null
+  if (sub.address.mode === 'unknown') return { reason: 'unknown' }
+  if (sub.address.mode === 'one-shot') return { reason: 'one-shot' }
+  if (sub.parentAvailable !== false) return null
+  return owner.session.running === true ? null : { reason: 'parent-unavailable' }
+}
+ctx.slots.inject('conversation.composer', () => ctx.slots.register({
+  name: 'conversation.composer', priority: -20, locale: 'session-tree', select: selectReadOnlyMeta,
+}, SessionMetaReadOnlyComposer))   // 渲染：只读说明（复刻文案）+ <SessionMetaStrip/>
+```
+
+CSS（injected 到 `<head>`，沿用 `ensureStylesheet` 模式）：`.st-meta-strip{display:inline-flex;align-items:center;gap:10px;min-width:0;color:var(--dsw-alias-label-tertiary);font-size:var(--dsh-content-font-size-secondary,13px);font-variant-numeric:tabular-nums;white-space:nowrap}`；窄容器 `max-width:100%;overflow:hidden;text-overflow:ellipsis`（dock 行为 `display:flex;justify-content:center;gap:12px`，条目过长会挤压 → 加 `max-width`）。
+
+> **树行徽标移除**（task-9 方向错误）：由 Lead 另派实施，本报告只登记“作废”；`norm()` 的投影字段读取可保留（无渲染副作用）或一并回退。
+
+### 9.8 实施记录（2026-11-13，task-11）
+
+- **树行徽标已全部移除**：`.st-meta{` / `.st-meta-model` / `.st-ctx{` / `rowMetaElement` / `ensureMeta` / `data-ctx-pct` 在 `client.js` 均 0 命中；render 新增断言“即使行投影带 model/context，树行也没有 `st-meta*`”。
+- **已实现（纯 client，2 个追加式 list slot）**：① `conversation.composer.dock` `{id:'session-meta', order:100}` → `SessionMetaStrip`（仅子会话；composer 卡片下方 dock 行）；② `conversation.session.header.utilities` `{id:'session-meta-chip', order:60}` → `SessionMetaChip`（仅只读子会话，精确复刻官方 `selectReadOnlySubagent` 四分支）；root 两面返回 null，保留官方 UI。
+- **数据**：slot `sessionId` + `useProjection('modelSelection'/'contextPressure')`；`metaOf` 与 ContextMeter 同口径；effort 缺省“默认/default”；缺失不渲染。
+- **测试**：render **151/151**（夹具 9/9 + 实时 11/11）、meta **41/41**、style-guard **26/26**、handoff 41/41、tree-send 25/25、skills 3/3、verify-bundle 0 fail。
+- **待人工验收**：刷新 `http://127.0.0.1:9398` 后检查：root 不重复 / continuable 子会话 dock 条 / one-shot·父离线子会话 header chip / 空白隐藏 / pct 随事件更新 / 右侧栏 embedded（报告 §9.7 UNKNOWN 仍适用）。
+- **平台边界不变**：只读子会话没有“composer 之外的会话级底部 slot”；若要求底部，只能 Phase 2 chain 覆盖（需复刻官方只读 UI）。
+
+### 9.5 为什么不能简单塞进「常驻底部」（关键限制，避免实施返工）
+
+- `conversation.composer.dock` 虽然 kind=list，但它是 **InputBar 渲染时**调用的（conversation client `:22219`）——**只注册 slot 不够，必须 InputBar 挂载**；composer 被 chain 替换 = dock 永远不会被 render，插件注册的条目静默不显示（不会报错）。
+- 官方**没有任何**“composer 之外、会话级、常驻”的底部 slot：`conversation.view` 是 tab；`shell.bottom`/`shell.overlay` 是 root scope 且无 Session 绑定；`conversation.session`/`header` 是 single（替换即 shadow）。
+- 因此「只读子会话的底部」只有两条路：**chain 覆盖**（兜底 B，复刻只读 UI）或 **header chip**（兜底 A，位置改上方）。这是平台能力边界，不是插件实现问题。
+
+### 9.6 测试计划
+
+| 测试 | 新增断言 |
+|---|---|
+| `node test/render.test.cjs`（沙箱加载真 `client.js`，合成 props） | ① 注入 `composer.dock` 的组件能收到 `sessionId/useProjection` 并渲染 `model · effort · NN%`；② `metaOf` 边界：`lastUsed` 优先于 `next`、`projectedTokens` 优先、windownull → pct null、pct clamp 100、effort 缺省 → `默认`；③ 缺投影 → 组件返回 null（不渲染假值）；④ dock/header 两个注册 id 唯一、order 正确 |
+| `node test/style-guard.cjs` | 注入 CSS 含 `.st-meta-strip`；样式自愈守卫仍 PASS |
+| `node --test test/handoff.test.js` / `tree-send.test.js` / `provider-conformance.cjs` | host 半未改，保持基线全绿（防误改） |
+| GUI 7 步（`http://127.0.0.1:9398`） | 1) 刷新页面（client 半无需 disable→enable）；2) root 会话：底部 dock 出现 `model · effort · %`（与上方 ModelSelect/ContextMeter 一致）；3) **continuable 子会话**（树里 leaf）打开：以前无 model 选择器 → 现在底部条出现；4) **one-shot/flow 子会话**打开：以前只有只读框 → header chip 出现（Phase 2 后为底部条）；5) **父离线子会话**：同 4；6) 空白新会话：不显示假值（隐藏或 `—`）；7) 跑一个 turn：% 随 contextPressure 事件更新，切换会话不串数据、无 console error |
+
+### 9.7 工作量、风险、UNKNOWN
+
+| 项 | 估算 |
+|---|---|
+| 主方案（dock 底部条 + metaOf + CSS + locale） | 2–3 h |
+| 兜底 A（header chip 只读子会话） | 1–2 h |
+| 测试（render 夹具 + style-guard + 纯函数边界） | 1–2 h |
+| **MVP 合计（主 + 兜底 A）** | **≈ 0.5–1 人日** |
+| 兜底 B（chain 覆盖只读子会话底部） | +3–4 h（含只读文案复刻与回归） |
+
+风险：① 兜底 B 复刻官方只读 UI（文案/条件漂移、8 语言 vs 我方 zh/en）；② 空白/hero 阶段与 `activity` 占用时 dock 不渲染（兜底 A 覆盖）；③ root 会话官方已有 ModelSelect+ContextMeter，本方案**重复显示**（可接受；也可只对 `subagent!==null` 渲染 dock 条，但用户要求“不管什么会话”故默认全渲染）；④ 子会话投影在极大历史下打开较慢（打开流全量 projections 与现有行为一致，无额外 RPC）。
+
+UNKNOWN：① ≥0.2.2-rc.1 是否有计划中的「Conversation 常驻 footer/status」slot（当前目录没有）；② `ctx.locale.bind('subagent')` 能否跨插件读官方只读文案（若可，兜底 B 可免复刻）；③ 侧栏 embedded 会话中 `composer.dock` 的可用性仅从 `variant: 'composer'` 条件推断，未在运行中实测（建议 GUI 第 3 步同时验证主窗口与「在右侧栏打开」两种入口）。

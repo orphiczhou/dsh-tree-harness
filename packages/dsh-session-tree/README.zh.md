@@ -24,7 +24,7 @@
 | 按需展开 | 初始全部折叠；展开某个节点才构建它的子树，缩进每层加 13 px（最多 8 层）。 |
 | 渲染上限 | 每层最多渲染 300 个子行，其余以明确的“另有 N 个未显示”提示给出，不静默丢弃。 |
 | 四态状态圆点 | 每行一个：进行中（蓝、带呼吸动画）、已完成但还没看过（绿）、已完成且已看过（灰）、正在等你回应（橙）。颜色取自 DSH 主题 token，随明暗主题变化。 |
-| 模型 / 思考强度 / 上下文徽标 | 每个会话行显示它最近使用的模型与思考强度；上下文投影就绪后还显示上下文窗口占用 `NN%`。全部在客户端从该行自己的 `modelSelection` / `agentPreset` / `tokenUsage` / `contextPressure` 投影派生；冷会话用有界、尽力而为的 `refreshProjections` 队列预热（每 60ms 6 个、每页最多 300 个、失败静默）。缺失值不猜不编（不显示 0/假值），徽标 tooltip 给出 provider、预设、窗口与 token 事实。 |
+| 会话界面元数据 | 在**会话界面**里显示 `模型 · 思考强度 · 上下文%`（用户要求的位置）：composer 卡片下方 dock 行的信息条，以及只读子会话的标题栏 chip 兜底。左侧会话树本身保持纯会话树、不显示这些信息。root 会话不改动——自带模型选择器与 ContextMeter 已显示；**子会话**（自带模型选择器对其禁用）补上 dock 条；one-shot / unknown 模式 / 父离线的只读子会话（composer 被只读面板替换）用标题栏 chip 兜底。全部在客户端从 slot 的 `modelSelection` / `contextPressure` 投影派生；缺失不猜不编，tooltip 给出 provider 与 token 明细。 |
 | 视图选项 | 标题栏 `…` 菜单：按最近更新或按名称排序（置顶会话始终在前）、已归档会话「隐藏 / 显示 / 仅显示」、展开全部、全部折叠、重新加载标题。 |
 | 每行 `…` 菜单 | 置顶 / 取消置顶、重命名（行内编辑：回车提交、Esc 取消、失焦提交）、Fork、归档 / 取消归档。 |
 | `↗` 在右侧栏打开 | 把子会话的对话以 `subagentchat` 资源的形式打开在右侧栏，单独占一个窗格。 |
@@ -339,7 +339,7 @@ dsh-session-tree/
 ├── icon.svg                 # bundle 图标
 ├── scripts/verify-bundle.mjs  # 清单自检
 ├── test/render.test.cjs     # headless 渲染测试
-├── test/meta.test.cjs       # 客户端半 metaOf 派生纯函数单测（无 DOM）
+├── test/meta.test.cjs       # 客户端半 metaOf / 只读判定纯函数单测（无 DOM）
 ├── test/handoff.test.js     # 宿主半 session_handoff 测试（node:test）
 ├── test/tree-send.test.js   # 宿主半 tree_send 同树规则测试（node:test）
 ├── test/skills.test.cjs     # 随包 Skill 打包回归（frontmatter/files/patch 行）
@@ -354,9 +354,9 @@ dsh-session-tree/
 node test/render.test.cjs
 ```
 
-它在 Node 沙箱里加载**真实的** `client.js`（stub 掉 `window.__ModuleLoader__` 和 React），用按实时会话数据重建的会话表驱动它，然后断言产出的行结构：默认是否全折叠、逐级展开后的行数、各层缩进、key 是否唯一、畸形行是否被容错处理，以及点击顶层会话与子会话行是否用正确的寻址方式导航。同一套件还覆盖每行的 model / effort / 上下文徽标与其有界的冷会话预热。
+它在 Node 沙箱里加载**真实的** `client.js`（stub 掉 `window.__ModuleLoader__` 和 React），用按实时会话数据重建的会话表驱动它，然后断言产出的行结构：默认是否全折叠、逐级展开后的行数、各层缩进、key 是否唯一、畸形行是否被容错处理，以及点击顶层会话与子会话行是否用正确的寻址方式导航。同一套件还用合成 slot props 覆盖两个会话界面元数据面（`conversation.composer.dock` 信息条与 `conversation.session.header.utilities` 只读 chip）。
 
-单独检查元数据派生（`modelSelection.lastUsed` 优先于 `next`、与自带 `ContextMeter` 同公式的百分比、clamp、缺失/零窗口、诚实 null 契约）：
+单独检查会话界面元数据派生（`modelSelection.lastUsed` 优先于 `next`、与自带 `ContextMeter` 同公式的百分比、clamp、缺失/零窗口、诚实 null 契约，以及 header chip 复刻的只读 composer 判定）：
 
 ```sh
 node test/meta.test.cjs

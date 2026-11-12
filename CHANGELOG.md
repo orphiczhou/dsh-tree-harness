@@ -38,11 +38,11 @@
 
 - 版本：`packages/dsh-session-tree` `1.3.7` → **`1.4.0`**（安全收紧；公开镜像 tag 仍 `v1.3.7`，v1.4.0 待发布）。
 - **Q4 安全收紧**：`tree_send` **移除 `parent` 入参**（显式传报 `E_PARENT_REMOVED`）；target 的直接父地址只由 Host 从会话日志 `header.parentSession` 解析；caller 取 ambient `exec.agent.session.id`（绝不来自 args）；target/caller 父链各自走到根，**同根才投递**——跨树 `E_CROSS_TREE_SEND`、caller 缺失 `E_CALLER_REQUIRED`、self `E_SEND_TO_SELF`、谱系读不到 `E_LINEAGE_UNRESOLVED`（全部 fail-closed）。同树内跨层/兄弟消息保留。
-- 测试：新增 `test/tree-send.test.js` **25 例**；handoff **41/41**、render 133/133 + 9/9 + 11/11、skills 3/3、style-guard 22/22、verify-bundle 0 fail。
+- 测试：新增 `test/tree-send.test.js` **25 例**；handoff **41/41**、render 151/151 + 9/9 + 11/11、skills 3/3、style-guard 26/26、verify-bundle 0 fail。
 - 活体（Lead 真机探针）：同树投递放行（queue 到 leaf）、跨树 `E_CROSS_TREE_SEND`、显式 parent `E_PARENT_REMOVED`、root 目标 `is not a subagent session`、self `E_SEND_TO_SELF`；`include:session-tree` disable→enable 后生效。
 - 包内 README / AGENT-INSTALL / SKILL 同步（无 `parent`、仅同树、错误码）。
-- **会话行内元数据徽标（纯 client 半，0 host 改动）**：左树每行显示 **`model · effort · NN%`**（`modelSelection.lastUsed` 优先 / `next` 兜底，effort 缺省显示「默认/default」，pct 与官方 ContextMeter 同口径 `projectedTokens ?? pressureTokens / contextWindow`，clamp 0–100；缺失诚实不渲染）；`title`/`aria-label` 给 provider/model · effort · preset · 上下文 tokens 详情；冷会话用 `ctx.sessions.refreshProjections` 可见行限额预热（6/60ms、上限 300、失败静默）；`data-model/data-effort/data-ctx-pct` 可机读，pct ≥75 warn / ≥90 error。
-- 测试：`render.test.cjs` **133 → 157**（+24 徽标/预热）、新增 `meta.test.cjs` **37**、`style-guard.cjs` **22 → 25**；handoff 41/41、tree-send 25/25、skills 3/3、verify-bundle 0 fail 全绿。
+- **会话界面元数据（纯 client 半，0 host 改动；方向修正）**：**不在左侧树显示**；在会话详情页底部 `conversation.composer.dock` 追加 `SessionMetaStrip`，对**子会话**显示 **`model · effort · NN%`**（官方 ModelSelect 对所有子会话隐藏、continuable 子会话原本无 model/effort；pct 与官方 ContextMeter 同口径）；只读子会话（one-shot/未知模式/父离线）的 composer 被官方替换、无会话级底部 slot → 用 `conversation.session.header.utilities` 的 `SessionMetaChip` 兜底（标题栏右侧，平台能力边界）；root 会话两面均不渲染，保留官方 ModelSelect/ContextMeter。
+- 测试：`render.test.cjs` **133 → 151**（+18：dock/chip 组件/注册/隐藏/树行无元数据）、`meta.test.cjs` **41**（metaOf 边界 + selectReadOnlyMeta 全分支）、`style-guard.cjs` **22 → 26**；handoff 41/41、tree-send 25/25、skills 3/3、verify-bundle 0 fail 全绿。
 
 ## [Unreleased]
 

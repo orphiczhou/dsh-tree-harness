@@ -24,7 +24,7 @@ A DeepSeek Harness profile bundle that turns the left sidebar into a **session t
 | Lazy expansion | Nodes start collapsed. Expanding one builds its subtree; indentation grows 13 px per depth level (8 levels maximum). |
 | Bounded fan-out | A node renders at most 300 child rows per level; the remainder is reported as an explicit `N more omitted` notice instead of being dropped silently. |
 | Four-state status dot | Per row: running (blue, pulsing), completed but not viewed yet (green), completed and viewed (gray), waiting for your answer (orange). Colours come from DSH theme tokens and follow the light/dark theme. |
-| Model / effort / context badge | Every session row shows the model and reasoning effort it last used, plus its context-window usage as `NN%` once the projection is warm. Derived purely on the client from the row's own `modelSelection` / `agentPreset` / `tokenUsage` / `contextPressure` projections; cold sessions are warmed with a bounded, best-effort `refreshProjections` queue (6 per 60 ms tick, at most 300 per page, silent on failure). Missing values are omitted rather than guessed, and the badge tooltip names the provider, preset, window and token facts. |
+| Conversation metadata | Shows `model · reasoning effort · context %` **in the conversation UI**, where the user asked for it: a strip in the composer dock row (below the composer card) and a header chip fallback for read-only child sessions. The sidebar tree itself stays a plain session tree. Root sessions are left untouched — the shipped model selector and ContextMeter already show these facts there — while addressed **child** sessions (where the shipped model selector is disabled) get the strip, and one-shot / unknown-mode / parent-offline children (whose composer is replaced by the read-only panel) get the header chip. Derived purely on the client from the slot's `modelSelection` / `contextPressure` projections; missing facts are omitted rather than guessed, and the tooltip names provider and token usage. |
 | View options | Header `…` menu: order by last updated or title (pinned sessions always lead), archived sessions hidden / shown / archived-only, expand all, collapse all, reload titles. |
 | Per-row `…` menu | Pin / unpin, rename (inline input: Enter commits, Esc cancels, blur commits), Fork, archive / unarchive. |
 | `↗` open aside | Opens a subagent conversation in the right sidebar as a `subagentchat` resource, in its own pane. |
@@ -339,7 +339,7 @@ dsh-session-tree/
 ├── icon.svg                 # bundle icon
 ├── scripts/verify-bundle.mjs  # manifest self-check
 ├── test/render.test.cjs     # headless render test
-├── test/meta.test.cjs       # client-half metaOf derivation unit tests (no DOM)
+├── test/meta.test.cjs       # client-half metaOf / read-only predicate unit tests (no DOM)
 ├── test/handoff.test.js     # Host-half tests for session_handoff (node:test)
 ├── test/tree-send.test.js   # Host-half tests for tree_send's same-tree rule (node:test)
 ├── test/skills.test.cjs     # bundled-Skill packaging regression (frontmatter/files/patch row)
@@ -354,9 +354,9 @@ Run the render test:
 node test/render.test.cjs
 ```
 
-It loads the **real** `client.js` in a Node sandbox (stubbing `window.__ModuleLoader__` and React) and drives it with a session map rebuilt from live session data, then asserts the row structure it produces: default collapsed state, per-level row counts after expanding, indentation per depth, key uniqueness, tolerant handling of malformed rows, and that clicking a top-level session and a subagent row navigate with the correct addresses. The same suite covers the per-row model / effort / context badge and its bounded cold-session warm-up.
+It loads the **real** `client.js` in a Node sandbox (stubbing `window.__ModuleLoader__` and React) and drives it with a session map rebuilt from live session data, then asserts the row structure it produces: default collapsed state, per-level row counts after expanding, indentation per depth, key uniqueness, tolerant handling of malformed rows, and that clicking a top-level session and a subagent row navigate with the correct addresses. The same suite covers the two conversation-UI metadata surfaces (`conversation.composer.dock` strip and `conversation.session.header.utilities` read-only chip) with synthetic slot props.
 
-Check the metadata derivation in isolation (choice of `modelSelection.lastUsed` vs `next`, the shipped `ContextMeter` percentage formula, clamping, missing/zero windows, and the honest-null contract):
+Check the conversation-metadata derivations in isolation (choice of `modelSelection.lastUsed` vs `next`, the shipped `ContextMeter` percentage formula, clamping, missing/zero windows, the honest-null contract, and the read-only-composer predicate the header chip mirrors):
 
 ```sh
 node test/meta.test.cjs

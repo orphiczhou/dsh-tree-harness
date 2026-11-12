@@ -47,10 +47,6 @@ window.__ModuleLoader__.load({
 
     const MAX_CHILDREN = 300
     const MAX_DEPTH = 8
-    /** Bounds for the metadata warm-up: visible rows only, one read each. */
-    const MAX_META_PRELOAD = 300
-    const META_BATCH = 6
-    const META_INTERVAL_MS = 60
     const EMPTY = {}
     const EMPTY_ARR = []
 
@@ -88,15 +84,20 @@ window.__ModuleLoader__.load({
 .st-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .st-label-fallback{opacity:.6}
 .st-tag{flex:none;font-size:10px;color:var(--dsw-alias-label-tertiary);opacity:.85;border:1px solid var(--dsw-alias-border-l1);border-radius:var(--dsw-radius-sm);padding:0 4px;line-height:15px}
-/* Session metadata badge (v1.4.0): model · reasoning effort · context usage.
-   Pure client-side derivation from the row's own projections; the model/effort
-   half comes from the list-summary projection, the context % only once the full
-   contextPressure projection has been seeded (or warmed by ensureMeta). */
-.st-meta{flex:none;display:inline-flex;align-items:center;gap:5px;max-width:46%;min-width:0;overflow:hidden;white-space:nowrap;font-size:10px;line-height:15px;color:var(--dsw-alias-label-tertiary);opacity:.9}
-.st-meta-model{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.st-ctx{flex:none;font-variant-numeric:tabular-nums}
-.st-ctx[data-level='warn']{color:var(--dsw-alias-state-warn-primary)}
-.st-ctx[data-level='error']{color:var(--dsw-alias-state-error-primary)}
+/* Session metadata in the CONVERSATION UI (v1.4.0). The sidebar tree stays a
+   pure session tree; the metadata lives where the user asked for it - under the
+   conversation. st-meta-strip is the composer-dock row for addressed child
+   sessions (the shipped ModelSelect/ContextMeter are unavailable there);
+   st-meta-chip is the header-utilities fallback for read-only children whose
+   composer is replaced. Theme tokens keep light/dark consistent. */
+.st-meta-strip{display:inline-flex;align-items:center;gap:8px;max-width:100%;min-width:0;overflow:hidden;white-space:nowrap;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:16px;font-variant-numeric:tabular-nums}
+.st-meta-item{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-meta-item:first-child{max-width:24ch}
+.st-meta-pct{flex:none;color:var(--dsw-alias-label-tertiary)}
+.st-meta-pct[data-level='warn']{color:var(--dsw-alias-state-warn-primary)}
+.st-meta-pct[data-level='error']{color:var(--dsw-alias-state-error-primary)}
+.st-meta-chip{font-size:11px;line-height:15px;gap:6px;opacity:.9}
+.st-meta-chip .st-meta-item:first-child{max-width:20ch}
 .st-note{padding:3px 6px 3px 31px;color:var(--dsw-alias-label-tertiary);font-size:11px}
 .st-err{padding:10px;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}
 .st-rail{display:flex;align-items:center;justify-content:center;height:100%;cursor:pointer;color:var(--dsw-alias-label-tertiary);background:none;border:0;width:100%}
@@ -246,9 +247,7 @@ window.__ModuleLoader__.load({
         model: 'Model',
         effort: 'Reasoning effort',
         effortDefault: 'default',
-        preset: 'Agent preset',
         contextUsage: 'Context {pct}% ({used} of {window} tokens)',
-        contextUnknown: 'Context usage not loaded yet',
       },
       zh: {
         title: '会话树',
@@ -299,9 +298,7 @@ window.__ModuleLoader__.load({
         model: '模型',
         effort: '思考强度',
         effortDefault: '默认',
-        preset: 'Agent 预设',
         contextUsage: '上下文占用 {pct}%（{used}/{window} tokens）',
-        contextUnknown: '上下文占用尚未加载',
       },
     }
 
@@ -445,30 +442,10 @@ window.__ModuleLoader__.load({
       return fallback
     }
 
-    /**
-     * Client store row OR Host SessionSummary -> the fields the tree needs.
-     *
-     * @param key - fallback row identity.
-     * @param raw - the client store row or Host SessionSummary.
-     * @param snapshot - optional `projectionsBySession[id]` entry for the same
-     *   session. The list summary omits `contextPressure` (`wire.summary:false`);
-     *   the full snapshot (live baseline, opened session, or `refreshProjections`
-     *   warm-up) carries it. Merging both here is what lets a warmed row show its
-     *   context percentage without a second read path.
-     */
-    function norm(key, raw, snapshot) {
+    /** Client store row OR Host SessionSummary -> the fields the tree needs. */
+    function norm(key, raw) {
       const r = raw || EMPTY
-      const summaryVals = r.projectionValues || (r.projections && r.projections.values) || null
-      const snapshotVals =
-        snapshot && typeof snapshot === 'object' && snapshot.values && typeof snapshot.values === 'object'
-          ? snapshot.values
-          : null
-      // The summary view wins per key; the full snapshot fills the keys it omits.
-      const vals = snapshotVals
-        ? summaryVals
-          ? Object.assign({}, snapshotVals, summaryVals)
-          : snapshotVals
-        : summaryVals
+      const vals = r.projectionValues || (r.projections && r.projections.values) || null
       // The DURABLE title is what the opened conversation shows. `displayTitle`
       // is a display-only projection (api-session-controller service.js:45-52:
       // durable title -> **project cwd basename** -> raw id), and for catalog
@@ -511,13 +488,6 @@ window.__ModuleLoader__.load({
         // consulted by activityOf (workspace "recent" ordering).
         lastEventAt: num(r.lastEventAt),
         catalog: Array.isArray(vals && vals.subagentCatalog) ? vals.subagentCatalog : null,
-        // Raw projections the metadata badge derives from (see metaOf). Kept as
-        // the original objects: the badge is a pure derivation and must not
-        // flatten or invent missing values.
-        modelSelection: (vals && vals.modelSelection) || null,
-        agentPreset: vals && typeof vals.agentPreset === 'string' ? vals.agentPreset : null,
-        tokenUsage: (vals && vals.tokenUsage) || null,
-        contextPressure: (vals && vals.contextPressure) || null,
         raw: r,
       }
     }
@@ -544,41 +514,32 @@ window.__ModuleLoader__.load({
     }
 
     /**
-     * Derive the row's metadata badge from the projections already on the row.
+     * Derive the session metadata shown in the CONVERSATION UI.
      *
-     * Contract (report `session-metadata-display-2026-11-12.md` §5.1):
+     * Contract (report `session-metadata-display-2026-11-12.md` §9.4):
      *   - `model`/`provider`/`effort` come from `modelSelection.lastUsed`, with
      *     `next` as the documented fallback. A missing `reasoningEffort` stays
      *     null (the renderer shows the localized "default"), never a guess.
      *   - `pct` uses the same formula as the shipped `ContextMeter`
      *     (`dsh-client-ui-conversation/lib/client.js:21520-21534`):
      *     `used = projectedTokens ?? pressureTokens`,
-     *     `pct = min(100, round(used / contextWindow * 100))`, and nothing is
-     *     rendered when the window or the token count is missing.
+     *     `pct = min(100, round(used / contextWindow * 100))` clamped to 0–100;
+     *     no window / no token count → no percentage at all.
      *   - Everything absent stays null. If nothing displayable is left (no model,
-     *     no effort, no percentage) the whole meta is null — an empty badge is
-     *     never rendered.
+     *     no effort, no percentage) the whole meta is null — no fake badge.
      *
      * Exported on the module object as a pure test seam (`test/meta.test.cjs`);
      * it touches no DOM and no service.
      */
-    function metaOf(node) {
-      if (!node || typeof node !== 'object') return null
-      const selection = selectionOf(node.modelSelection)
+    function metaOf(modelSelection, contextPressure) {
+      const selection = selectionOf(modelSelection)
       const model = selection ? projectionText(selection.model) : null
       const provider = selection ? projectionText(selection.provider) : null
       const effort = selection ? projectionText(selection.reasoningEffort) : null
-      const preset = projectionText(node.agentPreset)
-      const usage =
-        node.tokenUsage && typeof node.tokenUsage === 'object' ? node.tokenUsage : null
       const pressure =
-        node.contextPressure && typeof node.contextPressure === 'object' ? node.contextPressure : null
-      const contextWindow = pressure
-        ? (() => {
-            const window = projectionNumber(pressure.contextWindow)
-            return window !== null && window > 0 ? window : null
-          })()
-        : null
+        contextPressure && typeof contextPressure === 'object' ? contextPressure : null
+      const window = pressure ? projectionNumber(pressure.contextWindow) : null
+      const contextWindow = window !== null && window > 0 ? window : null
       const projected = pressure ? projectionNumber(pressure.projectedTokens) : null
       const forced = pressure ? projectionNumber(pressure.pressureTokens) : null
       let usedTokens = projected !== null ? projected : forced
@@ -588,26 +549,15 @@ window.__ModuleLoader__.load({
         contextWindow !== null && usedTokens !== null
           ? Math.max(0, Math.min(100, Math.round((usedTokens / contextWindow) * 100)))
           : null
-      // Nothing displayable → no badge at all (blank sessions stay blank).
+      // Nothing displayable → render nothing at all (blank sessions stay blank).
       if (!model && !effort && pct === null) return null
-      return {
-        model,
-        provider,
-        effort,
-        modelLabel: model,
-        pct,
-        usedTokens,
-        contextWindow,
-        preset,
-        tokenUsage: usage,
-      }
+      return { model, provider, effort, pct, usedTokens, contextWindow }
     }
 
     /**
-     * Localized one-line description of one row's metadata, used as the badge's
-     * `title`/`aria-label`: provider/model, reasoning effort (or the honest
-     * "default"), agent preset, and the context window fact — or the explicit
-     * fact that it is not loaded yet.
+     * Localized one-line description of one metadata fact set, used as the
+     * strip/chip `title` and `aria-label`: provider/model, reasoning effort (or
+     * the honest "default") and the context usage with its token facts.
      */
     function metaTitleOf(meta, t) {
       if (!meta) return ''
@@ -616,8 +566,7 @@ window.__ModuleLoader__.load({
         parts.push(t('model') + ': ' + (meta.provider ? meta.provider + '/' : '') + meta.model)
       }
       parts.push(t('effort') + ': ' + (meta.effort || t('effortDefault')))
-      if (meta.preset) parts.push(t('preset') + ': ' + meta.preset)
-      if (meta.pct !== null && meta.contextWindow !== null) {
+      if (meta.pct !== null) {
         parts.push(
           t('contextUsage', {
             pct: meta.pct,
@@ -625,61 +574,132 @@ window.__ModuleLoader__.load({
             window: meta.contextWindow,
           }),
         )
-      } else {
-        parts.push(t('contextUnknown'))
       }
       return parts.join(' · ')
     }
 
     /**
-     * The inline metadata badge for one session row: `model · effort` (from the
-     * list-summary projection) plus `NN%` when the full context projection is
-     * known. Renders nothing at all when there is nothing honest to show.
+     * The shared body of both conversation-UI surfaces: `model · effort · pct`.
+     * Returns a node carrying the display text plus title/aria details, or null
+     * when there is nothing honest to show.
      */
-    function rowMetaElement(row, t) {
-      const meta = row && row.meta
+    function sessionMetaNode(meta, sessionId, t, options) {
       if (!meta) return null
-      const modelText = meta.modelLabel || meta.model || ''
-      const pctText = meta.pct === null || meta.pct === undefined ? '' : meta.pct + '%'
-      if (!modelText && !pctText) return null
+      const kind = options && options.kind === 'chip' ? 'chip' : 'strip'
+      const className = kind === 'chip' ? 'st-meta-strip st-meta-chip' : 'st-meta-strip'
       const title = metaTitleOf(meta, t)
       const kids = []
-      if (modelText) {
+      if (meta.model) {
+        kids.push(h('span', { className: 'st-meta-item', key: 'model' }, meta.model))
+        kids.push(h('span', { className: 'st-meta-item', key: 'effort' }, meta.effort || t('effortDefault')))
+      }
+      if (meta.pct !== null) {
         kids.push(
           h(
             'span',
-            { className: 'st-meta-model', key: 'model' },
-            modelText + ' · ' + (meta.effort || t('effortDefault')),
+            { className: 'st-meta-item st-meta-pct', key: 'pct', 'data-level': metaLevel(meta.pct) },
+            meta.pct + '%',
           ),
         )
       }
-      if (pctText) {
-        kids.push(
-          h(
-            'span',
-            { className: 'st-ctx', key: 'ctx', 'data-level': metaLevel(meta.pct) },
-            pctText,
-          ),
-        )
-      }
+      if (kids.length === 0) return null
       return h(
-        'span',
+        kind === 'chip' ? 'span' : 'div',
         {
-          className: 'st-meta',
-          'data-model': meta.model || '',
-          'data-effort': meta.effort || '',
-          'data-ctx-pct': meta.pct === null || meta.pct === undefined ? '' : String(meta.pct),
+          className,
           title,
           'aria-label': title,
+          ...(sessionId ? { 'data-session-meta': sessionId } : {}),
         },
         kids,
       )
     }
 
     /**
-     * Visual level of a context percentage, for the `.st-ctx[data-level]` CSS.
-     * Same intent as the shipped meter's warning colour: near-full windows stand
-     * out; anything else stays tertiary.
+     * Mirror of the shipped `selectReadOnlySubagent`
+     * (`dsh-client-ui-subagent/lib/client.js:1221-1230`): the read-only composer
+     * replaces the whole composer (and with it every composer slot) exactly for
+     * these three cases. The header chip uses the same predicate so it renders
+     * only where the dock strip cannot.
+     *
+     * @param sub - `useSession((s) => s.subagent)` snapshot value.
+     * @param running - whether that addressed child is currently running.
+     * @returns `{reason}` when the composer is read-only, else null.
+     */
+    function selectReadOnlyMeta(sub, running) {
+      if (!sub || typeof sub !== 'object') return null
+      const address = sub.address && typeof sub.address === 'object' ? sub.address : null
+      const mode = address && typeof address.mode === 'string' ? address.mode : null
+      if (mode === 'unknown') return { reason: 'unknown' }
+      if (mode === 'one-shot') return { reason: 'one-shot' }
+      if (sub.parentAvailable !== false) return null
+      return running === true ? null : { reason: 'parent-unavailable' }
+    }
+
+    /** Unconditional fallbacks so the slot hook props can never break a render. */
+    const noProjection = () => undefined
+    const noSession = (sel) => (typeof sel === 'function' ? sel(EMPTY) : EMPTY)
+    const noSessions = (sel) => (typeof sel === 'function' ? sel({ byId: EMPTY }) : EMPTY)
+
+    /**
+     * Conversation metadata strip — MAIN surface.
+     *
+     * Registered on `conversation.composer.dock` (list, session scope), so it
+     * sits in the ambient row below the composer card, beside the shipped
+     * ActivityPill/UsagePill. The shipped `ModelSelect` returns null for every
+     * ADDRESSED child session (`dsh-client-ui-model-selection:2074,1297`), which
+     * is exactly the "call 出来的会话有些不显示" the user reported, so this strip
+     * fills the model/effort/context gap for child sessions. Root sessions keep
+     * the shipped ModelSelect + ContextMeter untouched (no duplicate).
+     *
+     * A child whose composer is replaced (one-shot / unknown / parent offline)
+     * never renders the dock at all; `SessionMetaChip` covers that case.
+     */
+    function SessionMetaStrip(props) {
+      const t = props && props.t ? props.t : (key) => key
+      const sessionId = props && props.sessionId
+      const useProjection =
+        props && typeof props.useProjection === 'function' ? props.useProjection : noProjection
+      const useSessions = props && typeof props.useSessions === 'function' ? props.useSessions : noSessions
+      const useSession = props && typeof props.useSession === 'function' ? props.useSession : noSession
+      const selection = useProjection('modelSelection')
+      const pressure = useProjection('contextPressure')
+      const parentId = useSessions((state) => {
+        const row = state && state.byId && sessionId ? state.byId[sessionId] : undefined
+        return row ? row.parentId || row.parentSessionId || null : null
+      })
+      const subagent = useSession((state) => (state && state.subagent) || null)
+      if (!sessionId || (!parentId && !subagent)) return null
+      return sessionMetaNode(metaOf(selection, pressure), sessionId, t, { kind: 'strip' })
+    }
+
+    /**
+     * Conversation metadata chip — FALLBACK for read-only child sessions.
+     *
+     * Registered on `conversation.session.header.utilities` (list, session
+     * scope). It renders ONLY where the shipped read-only composer replaced the
+     * composer (one-shot / unknown mode / parent offline and not running),
+     * because that is the only case where the dock strip cannot appear; every
+     * normal session returns null so nothing is duplicated.
+     */
+    function SessionMetaChip(props) {
+      const t = props && props.t ? props.t : (key) => key
+      const sessionId = props && props.sessionId
+      const useProjection =
+        props && typeof props.useProjection === 'function' ? props.useProjection : noProjection
+      const useSession = props && typeof props.useSession === 'function' ? props.useSession : noSession
+      const selection = useProjection('modelSelection')
+      const pressure = useProjection('contextPressure')
+      const subagent = useSession((state) => (state && state.subagent) || null)
+      const running = useSession((state) => !!(state && state.running))
+      if (!sessionId || !selectReadOnlyMeta(subagent, running)) return null
+      return sessionMetaNode(metaOf(selection, pressure), sessionId, t, { kind: 'chip' })
+    }
+
+    /**
+     * Visual level of a context percentage, for the `.st-meta-pct[data-level]`
+     * CSS. Same intent as the shipped meter's warning colour: near-full windows
+     * stand out; anything else stays tertiary.
      */
     function metaLevel(pct) {
       if (pct === null || pct === undefined) return 'normal'
@@ -749,7 +769,7 @@ window.__ModuleLoader__.load({
       if (keys.length === 0) return out
 
       const node = new Map()
-      for (const k of keys) node.set(k, norm(k, byId[k], projectionsBySession && projectionsBySession[k]))
+      for (const k of keys) node.set(k, norm(k, byId[k]))
 
       // Children by durable lineage, plus catalog children with no row of their own.
       const kids = new Map()
@@ -798,9 +818,6 @@ window.__ModuleLoader__.load({
             updatedAt: num(e.createdAt),
             catalog: null,
             mode: e.mode || 'unknown',
-            // Catalog-only children have no row (and no projections) of their
-            // own yet: no badge until a real row arrives. Never a placeholder.
-            meta: null,
             raw: null,
           })
           catalogOnly.set(e.id, true)
@@ -1014,7 +1031,6 @@ window.__ModuleLoader__.load({
             expandable: children.length > 0,
             expanded,
             childCount: children.length,
-            meta: metaOf(n),
           })
           if (!expanded) return
           if (children.length === 0) {
@@ -1098,7 +1114,6 @@ window.__ModuleLoader__.load({
                 tag: m.origin === 'subagent' ? t('subagent') : null,
                 expandable: false,
                 expanded: false,
-                meta: metaOf(m),
               })
             }
             return
@@ -1149,14 +1164,14 @@ window.__ModuleLoader__.load({
         for (const n of roots) {
           if (!keep(n.id)) continue
           const label = labelFor(n)
-          if (matches(label, n.id)) out.push({ key: n.id, kind: 'session', depth: 0, id: n.id, label, labelIsFallback: isFallbackFor(n), secondary: secondaryFor(n), expandable: false, expanded: false, state: sessionState(statuses, n.id, n.running), meta: metaOf(n) })
+          if (matches(label, n.id)) out.push({ key: n.id, kind: 'session', depth: 0, id: n.id, label, labelIsFallback: isFallbackFor(n), secondary: secondaryFor(n), expandable: false, expanded: false, state: sessionState(statuses, n.id, n.running) })
         }
         for (const n of node.values()) {
           for (const c of kids.get(n.id) || EMPTY_ARR) {
             if (!keep(c.id)) continue
             const label = labelFor(c)
             if (matches(label, c.id)) {
-              out.push({ key: n.id + '/' + c.id, kind: 'subagent', depth: 1, id: c.id, parentId: n.id, mode: c.mode, label, labelIsFallback: isFallbackFor(c), secondary: secondaryFor(c), expandable: false, expanded: false, running: c.running, state: sessionState(statuses, c.id, c.running), meta: metaOf(c) })
+              out.push({ key: n.id + '/' + c.id, kind: 'subagent', depth: 1, id: c.id, parentId: n.id, mode: c.mode, label, labelIsFallback: isFallbackFor(c), secondary: secondaryFor(c), expandable: false, expanded: false, running: c.running, state: sessionState(statuses, c.id, c.running) })
             }
           }
         }
@@ -1186,7 +1201,6 @@ window.__ModuleLoader__.load({
           expandable: children.length > 0,
           expanded,
           childCount: children.length,
-          meta: metaOf(n),
         })
         if (!expanded) return
         if (children.length === 0) {
@@ -1331,13 +1345,6 @@ window.__ModuleLoader__.load({
       const [hiddenWorkspaces, setHiddenWorkspaces] = useState(() => new Set(loadHiddenWorkspaces()))
       const [hiddenMode, setHiddenMode] = useState(() => loadHiddenMode())
       const requested = useRef(new Set())
-      // Metadata warm-up state (v1.4.0): the same "one read per session per
-      // connection" discipline as `requested`, plus a bounded queue so a cold
-      // tree never fires hundreds of simultaneous log reads.
-      const metaRequested = useRef(new Set())
-      const metaQueue = useRef([])
-      const metaTimer = useRef(null)
-      const metaRequestCount = useRef(0)
 
       const ensureLoaded = useCallback(
         (id) => {
@@ -1394,80 +1401,6 @@ window.__ModuleLoader__.load({
           step()
         },
         [ctx, byId],
-      )
-
-      /**
-       * Warm the FULL projection of visible rows that are missing their context
-       * percentage.
-       *
-       * `contextPressure` is `wire.summary:false`, so a cold session's tree row
-       * knows only model/effort until its full projection has been read. This
-       * asks `ctx.sessions.refreshProjections(id)` for the rows currently on
-       * screen: bounded by MAX_META_PRELOAD per connection, six per 60 ms tick,
-       * deduped forever, feature-detected and wholly best-effort. The store
-       * update re-renders the row by itself; a failure leaves the badge without
-       * a percentage — never a fabricated number.
-       */
-      const ensureMeta = useCallback(
-        (ids) => {
-          const svc = ctx && ctx.sessions
-          if (!svc || typeof svc.refreshProjections !== 'function') return
-          if (!Array.isArray(ids) || ids.length === 0) return
-          const queue = metaQueue.current
-          for (const id of ids) {
-            if (!id || metaRequested.current.has(id)) continue
-            if (metaRequestCount.current >= MAX_META_PRELOAD) break
-            metaRequested.current.add(id)
-            metaRequestCount.current += 1
-            queue.push(id)
-          }
-          if (queue.length === 0 || metaTimer.current !== null) return
-          const step = () => {
-            metaTimer.current = null
-            const batch = queue.splice(0, META_BATCH)
-            if (batch.length === 0) return
-            for (const id of batch) {
-              // A title warm-up may have requested the same session already.
-              if (requested.current.has(id)) continue
-              requested.current.add(id)
-              try {
-                const p = svc.refreshProjections(id)
-                if (p && typeof p.catch === 'function') p.catch(() => {})
-              } catch (e) {
-                /* silent: the badge simply keeps showing model/effort only */
-              }
-            }
-            if (queue.length > 0) {
-              try {
-                metaTimer.current = setTimeout(step, META_INTERVAL_MS)
-              } catch (e) {}
-            }
-          }
-          try {
-            // Defer the first batch past the current paint: warming must never
-            // compete with (or be observed by) the render that scheduled it.
-            // A host without timers simply does not warm (the badge stays
-            // model/effort-only until the store is seeded some other way).
-            if (typeof setTimeout !== 'function') return
-            metaTimer.current = setTimeout(step, 0)
-          } catch (e) {
-            metaTimer.current = null
-          }
-        },
-        [ctx],
-      )
-
-      /** Stop the queue's timer when the tree unmounts (no stray reads). */
-      useEffect(
-        () => () => {
-          if (metaTimer.current !== null) {
-            try {
-              clearTimeout(metaTimer.current)
-            } catch (e) {}
-            metaTimer.current = null
-          }
-        },
-        [],
       )
 
       const toggle = useCallback(
@@ -1702,32 +1635,6 @@ window.__ModuleLoader__.load({
         }),
         [byId, projectionsBySession, expandedIds, query, t, statuses, order, archives, archivedMode, pinned, titleMap, workspaceItems, collapsedGroups, workspaceOrder, hiddenWorkspaces, hiddenMode],
       )
-
-      /**
-       * Warm only what the frame actually rendered: rows whose context
-       * projection is still missing. Unexpanded children are never fetched, and
-       * `ensureMeta` dedupes/caps the queue, so this is one bounded read per
-       * visible cold session — not a poll.
-       */
-      useEffect(() => {
-        if (props.wide === false) return
-        const ids = []
-        for (const row of rows) {
-          if (row.kind !== 'session' && row.kind !== 'subagent') continue
-          if (row.meta && row.meta.pct !== null) continue
-          const raw = byId[row.id]
-          const snap = projectionsBySession[row.id]
-          const vals =
-            (raw && raw.projectionValues) ||
-            (raw && raw.projections && raw.projections.values) ||
-            (snap && snap.values) ||
-            null
-          // Already projected (live baseline / opened session): no read needed.
-          if (vals && vals.contextPressure) continue
-          ids.push(row.id)
-        }
-        ensureMeta(ids)
-      }, [rows, byId, projectionsBySession, ensureMeta, props.wide])
 
       /** Every parent id in the current map — the bound for "expand all". */
       const idsWithChildren = useMemo(() => {
@@ -1987,7 +1894,6 @@ window.__ModuleLoader__.load({
                       { className: 'st-label' + (row.labelIsFallback ? ' st-label-fallback' : '') },
                       row.label,
                     ),
-                rowMetaElement(row, t),
                 row.tag ? h('span', { className: 'st-tag' }, row.tag) : null,
                 row.expandable && !row.expanded ? h('span', { className: 'st-count' }, String(row.childCount)) : null,
                 row.kind === 'subagent'
@@ -2369,12 +2275,45 @@ window.__ModuleLoader__.load({
           ctx.slots.register({ name: 'sidebar.workspaces', priority: -100 }, Component),
         )
 
+        /**
+         * Conversation-UI metadata (v1.4.0). Both entries are additive `list`
+         * slots owned by shipped conversation packages, so they only render
+         * where the owner mounts — no shipped UI is shadowed.
+         *
+         *   - MAIN: `conversation.composer.dock` — the ambient row below the
+         *     composer card; this is the user's "会话的界面下面". It renders a
+         *     strip for ADDRESSED child sessions, because the shipped
+         *     `ModelSelect` is disabled for every child and the ContextMeter
+         *     lives in the same composer block.
+         *   - FALLBACK: `conversation.session.header.utilities` — permanent
+         *     right-side utilities. The chip renders ONLY for read-only children
+         *     (one-shot / unknown mode / parent offline), whose composer — and
+         *     therefore the dock — is replaced by the shipped read-only composer.
+         */
+        const withLocale = (render) => (props) => render(Object.assign({}, props, { t }))
+        ctx.slots.inject('conversation.composer.dock', () =>
+          ctx.slots.register(
+            { name: 'conversation.composer.dock', id: 'session-meta', order: 100 },
+            withLocale((props) => h(SessionMetaStrip, props)),
+          ),
+        )
+        ctx.slots.inject('conversation.session.header.utilities', () =>
+          ctx.slots.register(
+            { name: 'conversation.session.header.utilities', id: 'session-meta-chip', order: 60 },
+            withLocale((props) => h(SessionMetaChip, props)),
+          ),
+        )
+
         registerInspectProvider(ctx)
       },
-      // Pure derivation exposed as a test seam (`test/meta.test.cjs`). The
-      // module loader only consumes `inject`/`apply`, so this adds no runtime
-      // surface to the mounted plugin.
+      // Pure derivation/selector/components exposed as test seams
+      // (`test/meta.test.cjs`, `test/render.test.cjs`). The module loader only
+      // consumes `inject`/`apply`, so these add no runtime surface to the
+      // mounted plugin.
       metaOf,
+      selectReadOnlyMeta,
+      SessionMetaStrip,
+      SessionMetaChip,
     }
   },
 })

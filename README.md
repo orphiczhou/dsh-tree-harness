@@ -21,7 +21,7 @@
 |---|---|---|---|---|
 | [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.8.0 | 执行层：9 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain` / **`tree_doctor` 只读自检**），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准、leaf 写面护栏（`LEAF_WRITE_MATRIX`）；Wave-2 增补：**W2.1** 会话预算计入竹节链（`runtime.segmentChain` 归一化去重）、**W2.3** RC2 兼容层抽 `src/compat.js`（双形探测 + 11 测）、**W2.6** root/主会话 id 归一化（`session-` 前缀与裸 UUID 等价比较）；**v0.8.0 组合修复**：per-leaf relay 开关（`tree_node {action:"set-relay"}`）、tokenMeter 测量端口修复、sweep 跨实例（热更僵尸）生命周期、relay parent 重解析；**随包 tree-commander/tree-worker Skill v2.2** | **165/165** | ✅ 运行中（本机 desktop profile 已装载，活体 v0.8.0） |
 | [`packages/dsh-agent-introspect`](packages/dsh-agent-introspect/) | 0.1.0 | 自省层：`self_spec` 工具，投影当前会话的 model / permissions / sandbox / cwd / token 用量 | —（无单测） | ✅ 运行中 |
-| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.4.0** | 会话树单包：左栏嵌套会话树 + **行内元数据徽标（model / reasoning effort / 上下文 %）** + `tree_send` 跨层级消息工具（**v1.4.0 起仅同树投递、移除 `parent` 入参、调用者谱系校验**）+ **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回 | 包内 8 个测试入口（handoff **41/41**、tree-send **25/25**、meta **37/37**、render **157/157** + 9/9 + 11/11、style-guard 25/25、verify-bundle 0 fail、provider-conformance **29/29**） | 🌐 GitHub 公开（镜像 **v1.3.7** = `91c177e`；本仓 **v1.4.0 待发布**）、社区市场已收录；**npm 未发布** |
+| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.4.0** | 会话树单包：左栏嵌套会话树 + **会话界面底部元数据条（model / reasoning effort / 上下文 %；子会话补官方缺失的 model/effort，只读子会话用标题栏 chip 兜底）** + `tree_send` 跨层级消息工具（**v1.4.0 起仅同树投递、移除 `parent` 入参、调用者谱系校验**）+ **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回 | 包内 8 个测试入口（handoff **41/41**、tree-send **25/25**、meta **41/41**、render **151/151** + 9/9 + 11/11、style-guard 26/26、verify-bundle 0 fail、provider-conformance **29/29**） | 🌐 GitHub 公开（镜像 **v1.3.7** = `91c177e`；本仓 **v1.4.0 待发布**）、社区市场已收录；**npm 未发布** |
 
 状态口径：
 
@@ -111,10 +111,10 @@ node --test tests/*.test.js     # tests 165 / pass 165 / fail 0（62 引擎 + 4 
 cd packages/dsh-session-tree
 node test/handoff.test.js      # 宿主半 session_handoff：41/41（交接层级矩阵/继承/工作区归属/闸门/失败可追溯）
 node test/tree-send.test.js    # v1.4.0 同树投递/谱系校验：25/25（跨树/显式 parent/fail-closed）
-node test/meta.test.cjs        # 行内元数据纯函数（model/effort/context% 边界）：37/37
+node test/meta.test.cjs        # 会话元数据纯函数/只读判定（model/effort/context%）：41/41
 node test/skills.test.cjs      # 随包 Skill 打包回归：3/3（frontmatter/files/patch 行）
-node test/render.test.cjs      # 确定性夹具渲染检查（157/157 + 夹具自检 9/9 + 实时附加 11/11）
-node test/style-guard.cjs      # 样式注入 / SSR 边界检查：25/25
+node test/render.test.cjs      # 确定性夹具渲染检查（151/151 + 夹具自检 9/9 + 实时附加 11/11）
+node test/style-guard.cjs      # 样式注入 / SSR 边界检查：26/26
 node scripts/verify-bundle.mjs # 清单自检：0 fail
 node test/provider-conformance.cjs [asar 解包目录]
 # fixture 解析顺序：DSH_RC2_FIXTURE_DIR → %TEMP%\dsh-asar-inspect\out-rc2-compat → out
