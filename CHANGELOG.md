@@ -44,7 +44,7 @@
 - **会话界面元数据（纯 client 半，0 host 改动；方向修正）**：**不在左侧树显示**；在会话详情页底部 `conversation.composer.dock` 追加 `SessionMetaStrip`，对**子会话**显示 **`model · effort · NN%`**（官方 ModelSelect 对所有子会话隐藏、continuable 子会话原本无 model/effort；pct 与官方 ContextMeter 同口径）；只读子会话（one-shot/未知模式/父离线）的 composer 被官方替换、无会话级底部 slot → 用 `conversation.session.header.utilities` 的 `SessionMetaChip` 兜底（标题栏右侧，平台能力边界）；root 会话两面均不渲染，保留官方 ModelSelect/ContextMeter。
 - 测试：`render.test.cjs` **133 → 151**（+18：dock/chip 组件/注册/隐藏/树行无元数据）、`meta.test.cjs` **41**（metaOf 边界 + selectReadOnlyMeta 全分支）、`style-guard.cjs` **22 → 26**；handoff 41/41、tree-send 25/25、skills 3/3、verify-bundle 0 fail 全绿。
 - 发布：2026-11-13 `node scripts/release-all.mjs --push` 成功——包 `@orphiczhou/dsh-session-tree@1.4.0` 同步 **21/21 SHA**；本仓发布提交 **`d8b9f7c`**（已推送）；镜像提交 + tag **`v1.4.0` = `0343f0c`**（main+tag 已推送）；两侧 `ls-remote` 核对通过。
-- 待验证（NOT VERIFIED）：会话界面元数据的 **GUI 可视化**尚未确认（用户 2026-11-13 反馈“现在看不到”，见 agent.md D20/交接 §7.10h）；代码/单测已绿，待 DSH 重启/刷新后复验。
+- 人工验收（2026-11-13 01:07）：用户重启 DSH 后反馈“看到参数了”（会话元数据 UI 以用户反馈为准）；细节由新会话复核。
 
 ## [Unreleased]
 
