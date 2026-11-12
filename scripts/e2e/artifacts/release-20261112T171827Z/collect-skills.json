@@ -1,0 +1,116 @@
+{
+  "tool": "collect-skills",
+  "generatedAt": "2026-11-12T17:18:27.860Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "expected": [
+    "tree-commander",
+    "tree-worker",
+    "session-handoff"
+  ],
+  "expectAt": "latest",
+  "sessions": [
+    {
+      "id": "612f0535-1ea0-4170-9528-4095e605a0c8",
+      "ok": true,
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\session-612f0535-1ea0-4170-9528-4095e605a0c8\\session.v4.jsonl.zstd",
+      "logBytes": 366359,
+      "frames": 189,
+      "eventCount": 338,
+      "found": true,
+      "expectAt": "latest",
+      "atCreation": {
+        "present": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "missing": [],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "seq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ]
+      },
+      "latest": {
+        "present": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "missing": [],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "seq": 12,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-export-pdf",
+          "office-pptx",
+          "office-recalculate",
+          "office-render",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ]
+      },
+      "evolution": [
+        {
+          "seq": 12,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        }
+      ],
+      "expected": [
+        "tree-commander",
+        "tree-worker",
+        "session-handoff"
+      ],
+      "missing": [],
+      "skillLoads": [],
+      "firstUserMessageSeq": 10,
+      "firstUserMessageHead": "你是 session-bff3c54c-a11e-4efe-bf4f-d254af6075cc 的接替会话。上一个会话因上下文预算接近上限而把工作交棒给你。\n\n请先读取交接文件：D:\\Codes\\dsh-tree-harness\\HANDOFF-bff3c54c-20261113-010944.md\n\n文件中记录了任务、当前状态、决策、变更文件、下一步与未决问题。\n请从「下一步」继续推进：不要重做文件中已记为完成的工作，保持相同的工作目录与\n模型/思考等级，并用一小段话说明你…"
+    }
+  ],
+  "summary": {
+    "sessions": 1,
+    "found": 1,
+    "missingSessions": 0,
+    "allExpectedPresent": true,
+    "verdict": "PASS"
+  }
+}

@@ -450,7 +450,7 @@ CSS（injected 到 `<head>`，沿用 `ensureStylesheet` 模式）：`.st-meta-st
 - **已实现（纯 client，2 个追加式 list slot）**：① `conversation.composer.dock` `{id:'session-meta', order:100}` → `SessionMetaStrip`（仅子会话；composer 卡片下方 dock 行）；② `conversation.session.header.utilities` `{id:'session-meta-chip', order:60}` → `SessionMetaChip`（仅只读子会话，精确复刻官方 `selectReadOnlySubagent` 四分支）；root 两面返回 null，保留官方 UI。
 - **数据**：slot `sessionId` + `useProjection('modelSelection'/'contextPressure')`；`metaOf` 与 ContextMeter 同口径；effort 缺省“默认/default”；缺失不渲染。
 - **测试**：render **151/151**（夹具 9/9 + 实时 11/11）、meta **41/41**、style-guard **26/26**、handoff 41/41、tree-send 25/25、skills 3/3、verify-bundle 0 fail。
-- **人工验收状态（2026-11-13 01:07 更新）**：用户重启 DSH 后反馈“看到参数了”（推断会话元数据 UI 已可见；以用户反馈为准）。新会话复核时确认：root 不重复 / continuable 子会话 dock 条 / one-shot·父离线子会话 header chip / 空白隐藏 / pct 随事件更新 / 右侧栏 embedded；若个别会话仍不可见，按交接 §7.10h 查 client 缓存与 slot 注册。
+- **人工验收状态（2026-11-13 D21 复核更新）**：用户重启 DSH 后反馈“看到参数了”（推断会话元数据 UI 已可见）。**D21 轮代码级复核确认**：`client.js` 中 `conversation.composer.dock#session-meta` 仅对**子会话**渲染（root 返回 null，保留官方 UI，无重复）；`conversation.session.header.utilities#session-meta-chip` 仅对只读子会话（`SelectReadOnlyMeta` 三分支）渲染；空白/缺投影返回 null 不渲染假值；render **151/151**、meta **41/41**、style-guard **26/26** 全绿。**仍未确认**：具体哪些会话/哪个位置（root 官方区 / continuable 子会话 dock 条 / 只读子会话 chip / 右侧栏 embedded）——本轮 DSH 窗口被全屏视频遮挡，未取得截图，**NOT VERIFIED 保持开放**，待用户按交接 §7.10h 六项点检后关闭。若个别会话仍不可见，按交接 §7.10h 查 client 缓存与 slot 注册。
 - **平台边界不变**：只读子会话没有“composer 之外的会话级底部 slot”；若要求底部，只能 Phase 2 chain 覆盖（需复刻官方只读 UI）。
 
 ### 9.5 为什么不能简单塞进「常驻底部」（关键限制，避免实施返工）

@@ -47,5 +47,11 @@ ls-remote:
 
 1. **GUI 可视化未验证**（用户反馈当前看不到）：client 半改动可能需 DSH 重启或插件重载后生效；复验步骤见交接 §7.10h（刷新/重开 `http://127.0.0.1:9398`，查 slot `conversation.composer.dock#session-meta` 与 `conversation.session.header.utilities#session-meta-chip`）。
 2. **只读子会话无底部 slot**：平台边界（官方 composer 被 `SubagentReadOnlyComposer` 替换后无会话级 footer slot），当前用 header chip 兜底；若要求底部需 Phase 2 chain 覆盖（需复刻官方只读 UI）。
-3. **`maxActiveSubagents` 24 未生效**：profile 已改 20→24（备份 `cordis.patch.yml.bak-20261112-budget`），**下次重启 DSH 生效**；当前运行仍 20。
-4. `release-all.mjs` 的测试清单仍为 5 条（未含 `tree-send`/`meta`/`provider-conformance`），本次这些测试由人工/单测另行跑绿；建议下一轮把新增测试入口纳入发布门禁脚本。
+3. ~~**`maxActiveSubagents` 24 未生效**~~：**已生效**——DSH 于 2026-11-13 01:00 重启后 `maxActiveSubagents=24`（交接 §1 活体）。
+4. ~~`release-all.mjs` 的测试清单仍为 5 条~~：**已补强（2026-11-13，D21）**——测试候选 5 → **9** 条（补 `tree-send` / `meta` / `provider-conformance` + 工具链回归），9/9 实跑通过、`--dry-run` 对账 exit 0；详见 [e2e-release-three-assertions-2026-11-13.md](e2e-release-three-assertions-2026-11-13.md) §4。
+
+## 4. 发布后补验（2026-11-13，D21）
+
+- **真机三断言首次实际执行并 PASS**：`verify-handoff` 12/12、`verify-kickoff-language` zh、`collect-skills` 1/1（`scripts/e2e/artifacts/release-20261112T171827Z.json`）；首跑暴露验证器**英文-only 假 FAIL** 并已修复（语言无关识别 + 6 例单测；**包内容未变，不影响本发布**）。报告：[e2e-release-three-assertions-2026-11-13.md](e2e-release-three-assertions-2026-11-13.md)。
+- **GUI 可视化复核（D21）**：代码级已确认（root 不渲染、子会话 dock 条、只读子会话 chip；render 151/151、meta 41/41 全绿），但**用户逐项确认仍缺**（NOT VERIFIED 保持开放，见交接 §7.10h 六项点检）。
+- **镜像状态**：`release-all.mjs --dry-run` 对账 v1.4.0 = no-op（`files=21 match=21`、镜像 tag `v1.4.0` = `0343f0c`），发布物与源码仍逐字节一致。

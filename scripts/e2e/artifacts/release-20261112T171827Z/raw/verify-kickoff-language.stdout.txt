@@ -1,0 +1,9 @@
+{
+  "session": "612f0535-1ea0-4170-9528-4095e605a0c8",
+  "first_message_seq": 10,
+  "language": "zh",
+  "expect": "zh",
+  "pass": true,
+  "mentions_handoff_file": true,
+  "excerpt": "你是 session-bff3c54c-a11e-4efe-bf4f-d254af6075cc 的接替会话。上一个会话因上下文预算接近上限而把工作交棒给你。 请先读取交接文件：D:\\Codes\\dsh-tree-harness\\HANDOFF-bff3c54c-20261113-010944.md 文件中记录了任务、当前状态、决策、变更文件、下一步与未决问题。 请从「下一步」继续推进：不要重做文件中已记为完成的工作，保持相同的工作目录与 模型/思考等级，并用一小段话说明你接下来要做什么。"
+}

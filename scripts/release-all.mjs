@@ -43,6 +43,8 @@ const SCRIPT_DIR = dirname(SCRIPT_PATH)
 const REPO_ROOT = dirname(SCRIPT_DIR)
 const RELEASE_PLUGIN = join(SCRIPT_DIR, 'release-plugin.mjs')
 const CONSISTENCY_SCRIPT = join(SCRIPT_DIR, 'check-version-consistency.mjs')
+// 工具链自身的回归测试（repo 相对路径，cwd = 仓库根）：发布门禁顺便验证发布/取证脚本。
+const REPO_TEST_CANDIDATES = [join('scripts', 'e2e', 'lib', 'handoff-prompt.test.mjs')]
 
 const SOURCE_REPO_SLUG = 'orphiczhou/dsh-tree-harness'
 const DEFAULT_PKG = '@orphiczhou/dsh-session-tree'
@@ -732,9 +734,23 @@ function preflight(opts) {
       'test/skills.test.cjs',
       'test/style-guard.cjs',
       'test/render.test.cjs',
+      'test/meta.test.cjs',
+      'test/tree-send.test.js',
+      'test/provider-conformance.cjs',
       'scripts/verify-bundle.mjs',
     ]
-    info.testCommands = candidates.filter((rel) => existsSync(join(pkgDir, rel))).map((rel) => ({ rel }))
+    info.testCommands = candidates
+      .filter((rel) => existsSync(join(pkgDir, rel)))
+      .map((rel) => ({
+        rel,
+        cwd: pkgDir,
+        // provider-conformance 依赖本机 rc.2 fixture（%TEMP% 可被清理 / 宿主布局会漂移）：
+        // exit 2 = 配置环境不足（不是断言失败），记 [SKIP] 并在日志留下「未覆盖」，不阻断发布；exit 1 仍然阻断。
+        optionalEnv: rel === 'test/provider-conformance.cjs' ? 'rc2-fixture' : undefined,
+      }))
+    for (const rel of REPO_TEST_CANDIDATES) {
+      if (existsSync(join(REPO_ROOT, rel))) info.testCommands.push({ rel: rel.split(sep).join('/'), cwd: REPO_ROOT })
+    }
   }
   if (opts.skipTests) record('skip', '测试（--skip-tests）')
   else if (info.testCommands.length === 0) record('warn', '未找到已知测试入口（未知 --pkg），发布前请自行确认测试')
@@ -768,8 +784,12 @@ function printPlan(opts, info) {
   log('  1. 预检（只读；上方已执行，GATE 项会阻止真实运行）')
   if (opts.skipTests) log('  1b. 测试：[跳过 --skip-tests]')
   else if (info.testCommands.length) {
-    log('  1b. 测试（本仓包目录内）:')
-    for (const test of info.testCommands) log(`        node ${test.rel}`)
+    log('  1b. 测试（包目录内 + 工具链回归）:')
+    for (const test of info.testCommands) {
+      const where = test.cwd === REPO_ROOT ? '（cwd: 仓库根）' : ''
+      const optional = test.optionalEnv === 'rc2-fixture' ? '   # 环境依赖：缺 rc.2 fixture（exit 2）记 SKIP，断言失败（exit 1）仍阻断' : ''
+      log(`        node ${test.rel}${where}${optional}`)
+    }
   } else log('  1b. 测试：未配置')
   log(`  2. 同步（单向，release-plugin.mjs；写入镜像 checkout）:`)
   log(`        node scripts/release-plugin.mjs --check --target "${mirror}"`)
@@ -819,14 +839,21 @@ function runTests(opts, info) {
   log('')
   log(`== 步骤 1b: 测试（${info.pkg.short}） ==`)
   for (const test of info.testCommands) {
-    echoCommand(process.execPath, [test.rel], info.pkg.dir)
+    const cwd = test.cwd ?? info.pkg.dir
+    echoCommand(process.execPath, [test.rel], cwd)
     const res = runProcess(process.execPath, [test.rel], {
-      cwd: info.pkg.dir,
+      cwd,
       allowFailure: true,
       timeout: 900_000,
     })
     const lines = `${res.stdout}\n${res.stderr}`.trim().split(/\r?\n/).filter(Boolean)
     for (const line of lines.slice(-6)) log(`      ${line}`)
+    if (res.status === 2 && test.optionalEnv === 'rc2-fixture') {
+      // provider-conformance 的 exit 2 = 本机没有可用的 rc.2 fixture（配置环境不足，
+      // 不是断言失败）；发布不因此阻断，但必须在日志里留下「未覆盖」事实。
+      log('  [SKIP] 环境依赖未满足（exit 2：rc.2 fixture 缺失/不兼容）— 该测试未覆盖，其余测试继续')
+      continue
+    }
     if (res.status !== 0) {
       throw new ReleaseError(`测试失败: node ${test.rel}（exit ${res.status}）`, {
         step: '测试',

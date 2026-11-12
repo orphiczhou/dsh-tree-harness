@@ -1,0 +1,29 @@
+{
+  "dslVersion": "0.1",
+  "id": "t3c1-inner-tree-pilot",
+  "title": "三层受控试点：tree(t3c1) → flow → tree(t3c2)",
+  "vars": {},
+  "limits": {
+    "maxNodes": 8,
+    "maxRunMs": 900000
+  },
+  "defaults": {
+    "nodeTimeoutMs": 600000
+  },
+  "nodes": [
+    {
+      "id": "INNER",
+      "type": "session",
+      "title": "INNER：派发内层树 commander 并等待收口",
+      "timeoutMs": 600000,
+      "input": {
+        "prompt": "读取 D:\\Codes\\dsh-tree-harness\\demo\\t3cpilot\\inner-node.prompt.md，并严格按其中的步骤执行。只读该文件，不要修改它，不要写任何其他文件。"
+      },
+      "output": {
+        "var": "innerResult",
+        "extract": "text"
+      }
+    }
+  ],
+  "edges": []
+}

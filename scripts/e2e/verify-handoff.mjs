@@ -44,6 +44,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import { analyzeHandoffPrompt } from './lib/handoff-prompt.mjs';
 
 // ---------------------------------------------------------------------------
 // 基础工具
@@ -358,20 +359,9 @@ function workspacesByPath(registry, p) {
 // 交接提示与读取证据
 // ---------------------------------------------------------------------------
 
-const HANDOFF_FILE_RE = /([A-Za-z]:\\[^\s"'<>]*?HANDOFF[^\s"'<>\\]*\.md)|HANDOFF[-A-Za-z0-9._]*\.md/i;
-const PROMPT_SOURCE_RE = /You are the successor session for\s+([A-Za-z0-9._:-]+)/i;
-
-function analyzeHandoffPrompt(summary) {
-  const text = summary.firstUserMessage?.text || '';
-  const srcMatch = text.match(PROMPT_SOURCE_RE);
-  const fileMatch = text.match(HANDOFF_FILE_RE);
-  return {
-    textHead: text.slice(0, 600),
-    isHandoffPrompt: /You are the successor session for/i.test(text) && /First read the handoff file at/i.test(text),
-    namedSource: srcMatch ? srcMatch[1] : null,
-    handoffFileMentioned: fileMatch ? fileMatch[0] : null,
-  };
-}
+// 接替提示的识别（zh/en 双语言）集中在 lib/handoff-prompt.mjs：
+// session-tree v1.3.1 起提示跟随界面语言，早期英文-only 正则会在中文界面下假 FAIL
+// （2026-11-13 真机 E2E 实测：handoff_prompt_present / handoff_prompt_names_source）。
 
 /** 在 successor 日志里找「真的读了 HANDOFF 文件」的证据。 */
 function findReadEvidence(summary, handoffFileMentioned) {
@@ -617,13 +607,19 @@ function buildAssertions(opts, source, successor, registry, prompt, readEvidence
     },
   ));
 
-  // 9. 首轮消息是交接提示
+  // 9. 首轮消息是交接提示（zh/en 双语言：session-tree v1.3.1 起提示跟随界面语言）
   out.push(assertion(
     'handoff_prompt_present',
-    'successor 首轮 user/message 是交接提示（含 handoff 文件路径）',
+    'successor 首轮 user/message 是交接提示（含 handoff 文件路径；zh/en 均可）',
     prompt.isHandoffPrompt && Boolean(prompt.handoffFileMentioned),
     { isHandoffPrompt: true, handoffFile: 'HANDOFF-*.md' },
-    { isHandoffPrompt: prompt.isHandoffPrompt, handoffFile: prompt.handoffFileMentioned, firstUserSeq: successor.firstUserMessage?.seq ?? null, textHead: prompt.textHead.slice(0, 200) },
+    {
+      isHandoffPrompt: prompt.isHandoffPrompt,
+      language: prompt.language ?? null,
+      handoffFile: prompt.handoffFileMentioned,
+      firstUserSeq: successor.firstUserMessage?.seq ?? null,
+      textHead: prompt.textHead.slice(0, 200),
+    },
   ));
 
   // 10. 交接提示点名的源 == --source
@@ -635,7 +631,7 @@ function buildAssertions(opts, source, successor, registry, prompt, readEvidence
     Boolean(named) && named === wantSource,
     opts.source,
     prompt.namedSource,
-    { normalized: { named, expected: wantSource } },
+    { normalized: { named, expected: wantSource }, language: prompt.language ?? null },
   ));
 
   // 11. 读取 HANDOFF 文件的证据
@@ -808,6 +804,7 @@ async function main() {
         firstUserMessage: prompt.textHead,
         handoffPrompt: {
           isHandoffPrompt: prompt.isHandoffPrompt,
+          language: prompt.language ?? null,
           namedSource: prompt.namedSource,
           handoffFileMentioned: prompt.handoffFileMentioned,
         },
@@ -871,7 +868,7 @@ function printHuman(report) {
   lines.push(`  succ    firstFrame: preset=${JSON.stringify(u.firstFrame.permissionPreset)} sandbox=${JSON.stringify(u.firstFrame.sandboxMode)} approval=${JSON.stringify(u.firstFrame.approvalPolicy)} agentPreset=${JSON.stringify(u.session?.agentPreset ?? u.projcache?.agentPreset ?? null)}`);
   lines.push(`  source  tools=${s.lastHeader?.toolCount ?? '?'}  succ tools=${u.firstHeader?.toolCount ?? '?'}`);
   lines.push(`  workspace attrib: sourceHomes=${JSON.stringify(report.workspace.sourceWorkspaces)} succHomes=${JSON.stringify(report.workspace.successorWorkspaces)}`);
-  lines.push(`  prompt names source: ${JSON.stringify(u.handoffPrompt.namedSource)}; handoff file: ${JSON.stringify(u.handoffPrompt.handoffFileMentioned)}`);
+  lines.push(`  prompt names source: ${JSON.stringify(u.handoffPrompt.namedSource)} (language=${u.handoffPrompt.language ?? '?'}); handoff file: ${JSON.stringify(u.handoffPrompt.handoffFileMentioned)}`);
   lines.push(`  read evidence: strong=${report.sessions.successor.readEvidence.strong.length} weak=${report.sessions.successor.readEvidence.weak.length}`);
   process.stdout.write(lines.join('\n') + '\n');
 }

@@ -48,6 +48,23 @@
 
 ## [Unreleased]
 
+### 2026-11-13 · 真机证据收口（工具链；包版本无变化）
+
+**执行证据（无代码变更）**
+
+- **真机三断言首次实际执行并 PASS**：`scripts/e2e/run-release-e2e.mjs` → `verify-handoff` **12/12**、`verify-kickoff-language` zh、`collect-skills` 1/1（汇总 artifact `scripts/e2e/artifacts/release-20261112T171827Z.json`）。报告：[docs/reports/e2e-release-three-assertions-2026-11-13.md](docs/reports/e2e-release-three-assertions-2026-11-13.md)。
+- **tree→flow→tree 三层受控试点 PASS（受控范围）**：外层树 `t3c1` commander（`relay=off`）同步跑 flow `T3C1-R1`（integrity=verified，139.8s），flow 节点在内层树 `t3c2` 派发 commander→worker 并收口；两树 `validate` **0 issues**、深度链 max=4、总耗时约 179s、无 depth/cancel 错误。试点配置入仓 [demo/t3cpilot/](demo/t3cpilot/)；报告：[docs/reports/composition-pilot-tree-flow-tree-2026-11-13.md](docs/reports/composition-pilot-tree-flow-tree-2026-11-13.md)。
+
+**工具链变更**
+
+- **修复 `verify-handoff.mjs` 的英文-only 接替提示识别**（2026-11-13 真机首跑暴露：中文界面下 `handoff_prompt_present` / `handoff_prompt_names_source` 假 FAIL）。新增语言无关模块 `scripts/e2e/lib/handoff-prompt.mjs`（`HANDOFF_PROMPT_PATTERNS` zh/en + `analyzeHandoffText` / `analyzeHandoffPrompt`），`verify-handoff.mjs` 改为消费该模块并在报告/断言 actual 中附 `language`；新增 `scripts/e2e/lib/handoff-prompt.test.mjs` **6 例**单测（zh、en 不回归、zh 兜底 origin、普通消息不误判、半截措辞、600 字符截断）。**session-tree 包内容未变，不 bump 版本。**
+- **`release-all.mjs` 发布测试门禁 5 → 9 条**：补入 `test/meta.test.cjs`、`test/tree-send.test.js`、`test/provider-conformance.cjs`，并新增工具链回归 `scripts/e2e/lib/handoff-prompt.test.mjs`（cwd = 仓库根）；测试条目支持 per-entry `cwd`；`provider-conformance` 标注为环境依赖——缺 rc.2 fixture 时 `exit 2` 记 `[SKIP]` 不阻断发布，`exit 1` 仍阻断。dry-run 计划行显式标注环境依赖与仓库根 cwd。
+
+**验证**
+
+- 9 条测试实跑：handoff 41/41、skills 3/3、style-guard 26/26、render 151/151+9/9+11/11、meta 41/41、tree-send 25/25、provider-conformance 29/29（rc.2 fixture）、verify-bundle 0 fail、handoff-prompt 6/6 —— 全部 exit 0。
+- `node scripts/release-all.mjs --dry-run --mirror-dir <镜像 checkout>` → exit 0（v1.4.0 no-op、21/21 SHA 一致、测试计划 9 条）；`node scripts/check-version-consistency.mjs` → 23 checks OK。
+
 ### 2026-11-12 · 组合编排 P0/P1 修复（tree-engine v0.8.0）
 
 **`packages/dsh-tree-engine`（`0.7.0` → `0.8.0`）**
