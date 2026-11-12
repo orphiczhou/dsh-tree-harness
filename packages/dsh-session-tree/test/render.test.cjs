@@ -23,9 +23,11 @@
  *      数据驱动的检查。这一段永不崩溃、永不阻塞、默认永不失败（不一致只打印
  *      WARN），缺失时静默退回夹具模式。
  *
- * 断言构成：90 项与参考套件逐条对应（名称、判定、意图都不变），另有 8 项
- * 夹具/套件自检（前缀 `夹具：`），用来证明夹具真的满足上面那串要求、并且那
- * 90 项确实全部执行（没有被条件分支悄悄跳过）。总判定项 98。
+ * 断言构成：90 项与参考套件逐条对应（名称、判定、意图都不变），其余为后续
+ * 功能回归（工作区/检索/行菜单/标题/元数据徽标等），另有 9 项夹具/套件自检
+ * （前缀 `夹具：`），用来证明夹具真的满足上面那串要求、并且那 90 项确实全部
+ * 执行（没有被条件分支悄悄跳过）。当前总判定项见运行输出
+ * （参考套件对齐 157 / 夹具自检 9）。
  *
  * 只使用 Node 内置模块（node:fs / node:path / node:vm / node:zlib / node:os）。
  *
@@ -430,8 +432,25 @@ const localStorageStub = {
 }
 
 let captured = null
+/**
+ * Deterministic timer fixture (v1.4.0 metadata warm-up): a `vm` context has no
+ * Node `setTimeout`, so a deferred client-side queue would either never run or
+ * (worse) be tricked into running synchronously. Capture timers instead and let
+ * the warm-up case flush them explicitly with `flushTimers()`.
+ */
+const pendingTimers = []
+let timerSeq = 0
 const sandbox = {
   console,
+  setTimeout: (fn, ms) => {
+    timerSeq += 1
+    pendingTimers.push({ id: timerSeq, fn, ms: ms || 0 })
+    return timerSeq
+  },
+  clearTimeout: (id) => {
+    const at = pendingTimers.findIndex((timer) => timer.id === id)
+    if (at >= 0) pendingTimers.splice(at, 1)
+  },
   window: {
     localStorage: localStorageStub,
     __ModuleLoader__: {
@@ -784,7 +803,7 @@ const expandTwist = expandRow && expandRow.kids.find((k) => typeof k.props.class
 check('可展开行带有点击展开的箭头', !!expandTwist)
 if (expandTwist) {
   expandTwist.props.onClick({ stopPropagation() {} })
-  check('展开会刷新该节点自身的投影', refreshed.includes(expandRow.props.key), JSON.stringify(refreshed.slice(0, 3)))
+  check('展开会刷新该节点自身的投影', refreshed.includes(expandRow.props.key), `row=${expandRow.props.key} id=${expandRow.props.id} refreshed=${JSON.stringify(refreshed.slice(0, 6))}`)
   // 这正是"标题对不上"的修复：子会话的真标题在它自己的投影里，必须主动加载
   check('展开还会为子会话加载标题投影（否则树里只能显示委派标签）',
     refreshed.length > 1, `共 ${refreshed.length} 次（自身 + 首批子会话）`)
@@ -1751,6 +1770,259 @@ check(
 )
 sandbox.window.localStorage = savedLocalStorage
 resetStorage()
+
+// ---------------------- test 24: 冷会话元数据预热（有界 / 仅可见行 / 静默）
+console.log('\n=== 测试 24：冷会话元数据预热（6 个/60ms、上限 300、失败静默）===')
+/** Run queued client timers (the vm sandbox captures them instead of firing). */
+function flushTimers(limit = 200) {
+  let ran = 0
+  while (pendingTimers.length > 0 && ran < limit) {
+    const timer = pendingTimers.shift()
+    ran++
+    try {
+      timer.fn()
+    } catch (e) {
+      /* a timer callback failing is itself a failure the assertions catch */
+    }
+  }
+  return ran
+}
+pendingTimers.length = 0
+refreshed.length = 0
+const warmById = {
+  W1: {
+    id: 'W1',
+    displayTitle: 'Warm one',
+    updatedAt: 30,
+    projectionValues: { modelSelection: { lastUsed: { provider: 'p', model: 'm-warm' } } },
+  },
+  W2: {
+    id: 'W2',
+    displayTitle: 'Already projected',
+    updatedAt: 20,
+    projectionValues: {
+      modelSelection: { lastUsed: { provider: 'p', model: 'm-ready' } },
+      contextPressure: { contextWindow: 100000, pressureTokens: 10000 },
+    },
+  },
+  W3: { id: 'W3', displayTitle: 'Blank', updatedAt: 10, projectionValues: {} },
+}
+const t24 = renderPanel(undefined, warmById, noItems)
+check('预热不阻塞渲染（三行照常渲染）', t24.rows.length === 3, `${t24.rows.length} 行`)
+check('预热在渲染帧内不发起读（延后到 paint 之后）', refreshed.length === 0, JSON.stringify(refreshed))
+flushTimers()
+check(
+  '只对缺 contextPressure 的可见行预热（已有全量投影的 W2 跳过）',
+  JSON.stringify(refreshed.slice().sort()) === JSON.stringify(['W1', 'W3']),
+  JSON.stringify(refreshed),
+)
+check(
+  '预热每个会话只请求一次（同一 id 不重复入队）',
+  refreshed.filter((id) => id === 'W1').length === 1,
+  JSON.stringify(refreshed),
+)
+
+// 节流：8 个冷行 → 第一批 6 个（60ms 后第二批）；上限 300 行为止。
+pendingTimers.length = 0
+refreshed.length = 0
+const eightById = {}
+for (let i = 0; i < 8; i++) {
+  eightById['E' + i] = { id: 'E' + i, displayTitle: 'cold-' + i, updatedAt: 100 - i, projectionValues: {} }
+}
+renderPanel(undefined, eightById, noItems)
+const ranFirstBatch = flushTimers(1)
+check(
+  '节流：首批 6 个/60ms（8 个冷行首批只发 6 个）',
+  ranFirstBatch === 1 && refreshed.length === 6,
+  `timers=${ranFirstBatch} requests=${refreshed.length}`,
+)
+flushTimers()
+check('节流：后续批次补齐剩余 2 个', refreshed.length === 8, String(refreshed.length))
+
+// 总上限 300：320 个冷行 → 最多 300 次预热请求。
+pendingTimers.length = 0
+refreshed.length = 0
+const manyById = {}
+for (let i = 0; i < 320; i++) {
+  manyById['M' + i] = { id: 'M' + i, displayTitle: 'many-' + i, updatedAt: 1000 - i, projectionValues: {} }
+}
+renderPanel(undefined, manyById, noItems)
+flushTimers()
+check('总上限 300：320 个冷行最多预热 300 个会话', refreshed.length === 300, String(refreshed.length))
+
+// feature-detect：refreshProjections 缺失 → 静默跳过，不抛错。
+pendingTimers.length = 0
+refreshed.length = 0
+const savedRefreshProjections = ctx.sessions.refreshProjections
+ctx.sessions.refreshProjections = undefined
+let noRefreshThrew = null
+try {
+  const t24c = renderPanel(undefined, warmById, noItems)
+  flushTimers()
+  check('refreshProjections 缺失时预热静默跳过（行照常渲染）', t24c.rows.length === 3, `${t24c.rows.length} 行`)
+} catch (e) {
+  noRefreshThrew = e
+}
+check('refreshProjections 缺失时不抛错', noRefreshThrew === null, noRefreshThrew && noRefreshThrew.message)
+check('refreshProjections 缺失时不产生预热请求', refreshed.length === 0, JSON.stringify(refreshed))
+ctx.sessions.refreshProjections = savedRefreshProjections
+pendingTimers.length = 0
+refreshed.length = 0
+
+// ---------------------- test 25: 行内元数据徽标（model · effort · 上下文 %）
+console.log('\n=== 测试 25：行内元数据徽标（model · effort · context%）===')
+const metaById = {
+  R1: {
+    id: 'R1',
+    displayTitle: 'Meta root',
+    updatedAt: 40,
+    projectionValues: {
+      modelSelection: {
+        lastUsed: { provider: 'opencode-go', model: 'deepseek-v4.1-flash', reasoningEffort: 'max' },
+      },
+      contextPressure: { contextWindow: 200000, pressureTokens: 50000, projectedTokens: 76000 },
+      agentPreset: 'standard',
+      tokenUsage: { inputTokens: 1234 },
+    },
+  },
+  R2: {
+    id: 'R2',
+    displayTitle: 'Next only',
+    updatedAt: 30,
+    projectionValues: {
+      modelSelection: { next: { provider: 'deepseek', model: 'deepseek-chat' } },
+      contextPressure: { contextWindow: 100000, pressureTokens: 25000 },
+    },
+  },
+  R3: {
+    id: 'R3',
+    displayTitle: 'No window',
+    updatedAt: 20,
+    projectionValues: {
+      modelSelection: { lastUsed: { provider: 'p', model: 'm-no-window', reasoningEffort: 'low' } },
+      contextPressure: { pressureTokens: 999 },
+    },
+  },
+  R4: { id: 'R4', displayTitle: 'Blank row', updatedAt: 10, projectionValues: {} },
+}
+const metaRowOf = (rendered, label) => {
+  const row = rendered.rows.find((r) => labelOf(r) === label)
+  if (!row) return null
+  return row.kids.find((k) => String((k.props && k.props.className) || '') === 'st-meta') || null
+}
+const textOfEl = (el) => {
+  if (!el) return ''
+  if (typeof el.text === 'string' || typeof el.text === 'number') return String(el.text)
+  return (el.kids || []).map(textOfEl).join('')
+}
+const ctxElOf = (metaEl) =>
+  metaEl ? metaEl.kids.find((k) => String((k.props && k.props.className) || '') === 'st-ctx') || null : null
+pendingTimers.length = 0
+const t25 = renderPanel(undefined, metaById, noItems)
+const meta25 = metaRowOf(t25, 'Meta root')
+check('有 model/effort/context 的行渲染出 .st-meta 徽标', !!meta25)
+check(
+  '徽标显示 `model · effort`（modelSelection.lastUsed 优先）',
+  textOfEl(meta25).includes('deepseek-v4.1-flash · max'),
+  textOfEl(meta25),
+)
+check(
+  '徽标显示上下文百分比（projectedTokens 优先，76k/200k = 38%）',
+  textOfEl(ctxElOf(meta25)).trim() === '38%',
+  textOfEl(ctxElOf(meta25)),
+)
+check(
+  '徽标带可机读的 data-*（model/effort/ctx-pct）',
+  !!meta25 &&
+    meta25.props['data-model'] === 'deepseek-v4.1-flash' &&
+    meta25.props['data-effort'] === 'max' &&
+    meta25.props['data-ctx-pct'] === '38',
+  meta25 ? JSON.stringify({ m: meta25.props['data-model'], e: meta25.props['data-effort'], p: meta25.props['data-ctx-pct'] }) : '(无)',
+)
+check(
+  '悬停 title/aria-label 给出完整 provider/preset/窗口/token',
+  !!meta25 &&
+    String(meta25.props.title).includes('opencode-go/deepseek-v4.1-flash') &&
+    String(meta25.props.title).includes('standard') &&
+    String(meta25.props.title).includes('上下文占用 38%（76000/200000 tokens）') &&
+    meta25.props['aria-label'] === meta25.props.title,
+  meta25 ? String(meta25.props.title) : '(无)',
+)
+const meta25b = metaRowOf(t25, 'Next only')
+check(
+  '缺 reasoningEffort 时显示「默认」而不是猜值；next 作为兜底选择',
+  textOfEl(meta25b).includes('deepseek-chat · 默认') && meta25b.props['data-effort'] === '',
+  textOfEl(meta25b),
+)
+check(
+  '有 window 时照常渲染百分比（pressureTokens 兜底：25k/100k = 25%）',
+  !!meta25b && textOfEl(ctxElOf(meta25b)).trim() === '25%',
+  textOfEl(ctxElOf(meta25b)),
+)
+const meta25c = metaRowOf(t25, 'No window')
+check(
+  'contextPressure 无 window → 不渲染 .st-ctx，data-ctx-pct 为空',
+  !!meta25c && ctxElOf(meta25c) === null && meta25c.props['data-ctx-pct'] === '' && textOfEl(meta25c).includes('m-no-window · low'),
+  meta25c ? `${textOfEl(meta25c)} / pct=${JSON.stringify(meta25c.props['data-ctx-pct'])}` : '(无)',
+)
+check('全空投影的行完全不渲染徽标（不显示 0/假值）', metaRowOf(t25, 'Blank row') === null)
+check(
+  '徽标不改变行序与几何（仍是 4 行、全部 depth 0）',
+  t25.rows.length === 4 && t25.rows.every((r) => indentOf(r) === 6),
+  `${t25.rows.length} 行 / ${JSON.stringify(t25.rows.map(indentOf))}`,
+)
+
+// 子会话行：badge 位于 label 与 tag 之间；catalog-only 子行没有投影也不崩。
+const metaKidById = {
+  P: {
+    id: 'P',
+    displayTitle: 'Parent',
+    updatedAt: 50,
+    projectionValues: {
+      subagentCatalog: [
+        { id: 'CAT1', mode: 'one-shot', label: 'Catalog only' },
+      ],
+      modelSelection: { lastUsed: { provider: 'p', model: 'root-model' } },
+    },
+  },
+  KID: {
+    id: 'KID',
+    parentId: 'P',
+    origin: 'subagent',
+    displayTitle: 'Kid',
+    updatedAt: 40,
+    projectionValues: {
+      subagent: { label: 'Kid label' },
+      modelSelection: { lastUsed: { provider: 'p', model: 'kid-model', reasoningEffort: 'high' } },
+      contextPressure: { contextWindow: 100000, pressureTokens: 50000 },
+    },
+  },
+}
+const t25kid = renderPanel(seedSetAt(EXPANDED_IDS_HOOK, ['P']), metaKidById, noItems)
+const kidRow = t25kid.rows.find((r) => labelOf(r) === 'Kid label')
+const kidMeta = kidRow
+  ? kidRow.kids.find((k) => String((k.props && k.props.className) || '') === 'st-meta')
+  : null
+check('展开后的子会话行也渲染徽标', !!kidMeta && textOfEl(kidMeta).includes('kid-model · high') && textOfEl(kidMeta).includes('50%'), kidMeta ? textOfEl(kidMeta) : '(无)')
+const kidClasses = kidRow
+  ? kidRow.kids.map((k) => String((k.props && k.props.className) || ''))
+  : []
+check(
+  '徽标位于 label 与 tag 之间（label < meta < tag）',
+  kidClasses.findIndex((c) => c.includes('st-label')) < kidClasses.indexOf('st-meta') &&
+    kidClasses.indexOf('st-meta') < kidClasses.indexOf('st-tag'),
+  JSON.stringify(kidClasses.filter(Boolean)),
+)
+check('catalog-only 子行（无自身投影）不渲染徽标且不崩', !t25kid.rows.some((r) => labelOf(r) === 'Catalog only' && r.kids.some((k) => String((k.props && k.props.className) || '') === 'st-meta')))
+const clientSrc25 = fs.readFileSync(CLIENT, 'utf8')
+check(
+  '预热上限/节流常量固定（MAX_META_PRELOAD=300、6 个/60ms），且 feature-detect refreshProjections',
+  /MAX_META_PRELOAD = 300/.test(clientSrc25) &&
+    /META_BATCH = 6/.test(clientSrc25) &&
+    /META_INTERVAL_MS = 60/.test(clientSrc25) &&
+    /typeof svc\.refreshProjections !== 'function'/.test(clientSrc25),
+)
+pendingTimers.length = 0
 
 // ------------------------------------------------- 套件自检：90 项一条不少
 console.log('\n=== 测试 M：套件自检 ===')

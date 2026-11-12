@@ -228,6 +228,23 @@ async function main() {
       check('A0 apply() does not throw', threw === null, threw && threw.message)
       check('A1 exactly one tagged sheet injected into <head>', state.injected.length === 1, String(state.injected.length))
       check('A1b the sheet is reachable via the documented selector', doc.querySelector(SELECTOR) !== null)
+      // v1.4.0 row metadata badge: model · effort · context% (pure client half).
+      const sheet = sheetText(state)
+      check(
+        'A1c the sheet carries the row metadata rules (.st-meta / .st-ctx)',
+        /\.st-meta\{/.test(sheet) && /\.st-ctx\{/.test(sheet),
+        `meta=${/\.st-meta\{/.test(sheet)} ctx=${/\.st-ctx\{/.test(sheet)}`,
+      )
+      check(
+        'A1d context% levels use theme state tokens (warn / error)',
+        /\.st-ctx\[data-level='warn'\]\{color:var\(--dsw-alias-state-warn-primary\)\}/.test(sheet) &&
+          /\.st-ctx\[data-level='error'\]\{color:var\(--dsw-alias-state-error-primary\)\}/.test(sheet),
+      )
+      check(
+        'A1e the shared row rule keeps its 24px minimum height (badge must not reflow rows)',
+        /\.st-row\{[^}]*min-height:24px/.test(sheet),
+        /\.st-row\{[^}]*min-height:24px/.exec(sheet) ? 'present' : 'missing',
+      )
       check(
         'A2 sheet text carries the .st-folder 13px rule',
         /\.st-folder\{[^}]*width:13px/.test(sheetText(state)),

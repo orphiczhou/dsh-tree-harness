@@ -4,6 +4,7 @@
 > 产出人：Lead（指挥官 + 架构师）· 日期：2026-11-12 · 基线：本仓 `master` @ `1b1f610`；DSH `0.2.2-rc.1`；profile `desktop`。
 > 方法：4 位专家只读取证（E1 仓库耦合 / E2 DSH 平台 asar / E3 自由流程引擎 / E4 SOTA 组合模式）→ Lead 综合 v0 → **1 位红队专家证伪评审** → v0.1 修订。证据标记：`FACT` / `INFERENCE` / `UNKNOWN`；专家报告在仓外 `D:\Codes\_composition-research\`（不入库）。
 > 修订说明：v0.1 按红队 S1–S6 严重缺陷、M1–M9 遗漏、N1–N7 内部不一致修订；**主叙事从"拆分低风险/零代码过渡"纠偏为"先测一个关键未知 + 一个必须的代码开关 + 三个数据面小改 + 一页约定"**。红队报告：`D:\Codes\_composition-research\REDTEAM-review.md`。
+> **配套解说（2026-11-12 归档）**：[composition-layers-explainer.md](composition-layers-explainer.md)（分层问答整理：层数 vs 会话深度、root/commander 角色、拆树与审计路径）+ [composition-layers.html](composition-layers.html)（可交互图解）。
 
 ---
 
@@ -15,11 +16,11 @@
 |---|---|---|
 | 1 | 把会话树（UI + 会话操作插件）与树形任务约束 tree-harness **拆成两个独立项目/插件**，是否可行？ | **运行时层面：可行，且今天已事实独立**（3 个独立 bundle / 3 条独立 `link:` / 各自 patch 与 skill provider / 各自状态域 / **0 跨包 import、0 dependencies/peerDependencies**）。**但"拆仓=零运行时改动、约 3+6 人日"不成立**：拆仓会移出 profile `hmr.root`（两个**绝对目录**，新仓不在其中→失去热更）、**反转 D1「本仓=唯一源码事实源」**、废掉单向镜像发布链与检查清单、镜像仓不是开发仓（本机无 checkout / 无 CI）、发布门禁要跑两遍。**建议：现在不拆**，把事实写清楚并挂两个触发器（npm 解冻 / 出现第二个独立消费方）。 |
 | 2 | **tree-harness 和 DSH 内置子智能体插件之间是什么关系？** | **控制面 / 执行面**。平台负责会话创建/恢复、消息投递、中断、血缘、权限/审批继承、会话日志、事件观察、令牌计量、存储与 UI 槽位；tree-engine 负责**任务拓扑与治理**（任务树、依赖闸、派发策略、DoD/验证、竹节接力、预算、账本）。E2 结论：**DSH 是「会话运行时 + 能力总线」，不是编排引擎**；编排层应定位为 DSH 之上的**任务账本 + 对账器 + 只读视图**。需修正的措辞：竹节接力（interrupt 旧会话→起新会话）**部分重造了"续接"语义**，它是 tree-engine 的会话轮换策略（平台没有等价物），不能简单说成"完全不重造"。 |
-| 3 | 让 tree-harness 与自由流程引擎**互相组合、递归嵌套**，形成各种组织形态，是否可行？ | **方向可行，但当前可靠性被高估、递归旗舰用例在当前 profile 下不可达**。① **软组合**（节点会话调另一引擎工具）今天"能演示"，**不能无人值守**：tree 的竹节是**定时器自主触发**的会话替换器（会打断 flow 的 `await`）、flow 的 `activeRun` **单槽**（flow 套 flow 会互相覆盖取消）、`callerOrigin=subagent` 会把权限 ceiling 静默压到 `safe`、工具结果 600/4000 截断、前台同步无后台 job。② **结构化嵌套**今天不可行（两侧无服务面/事件/取消 handle/executor 注册），且"契约 12 条不变量内核强制"**没有执行点**（平台唯一可插拔执行面是 `subagents.registerProvider`，两个引擎都只是消费者）。③ **递归**：`maxDepth=4` + tree 自身 2 层 + flow 节点 1 层 = 内层 worker 正好第 4 层，再任一 verify/judge（会另起会话）或 handoff 即 `SubagentDepthError`——**"tree→flow→tree + verify + 审批分流"在当前 profile 不可达**。要三层组合必须先调大 `maxDepth` 并写清风险与代价。 |
+| 3 | 让 tree-harness 与自由流程引擎**互相组合、递归嵌套**，形成各种组织形态，是否可行？ | **方向可行；relay 互斥已解决，递归天花板已抬高**。① **软组合**（节点会话调另一引擎工具）今天"能演示"，但可靠性依赖剧本纪律：v0.8.0 前 tree 的竹节会打断 flow（已由 per-leaf relay 开关解决，见 §7.2/组合剧本 R1）、flow `activeRun` 仍单槽、`callerOrigin=subagent` 权限 ceiling 仍压到 `safe`、结果仍 600/4000 截断。② **结构化嵌套**今天仍不可行（两侧无服务面/事件/取消 handle/executor 注册），"契约内核强制"没有执行点。③ **递归**：用户 2026-11-12 已把 profile `maxDepth` 调到 **5**（tree `commander_max_depth` 保持 **3**）；按 root=0 算术，tree→flow→tree 三层可达（root0→tree commander1→worker2→flow 节点3→内层 tree commander4→worker5），但**最深层 worker 不能再起 verify/judge/handoff**；近期默认验收仍是 "tree→flow" 两层，三层只做受控试点（见 [组合编排剧本](../guides/composition-playbook.md)）。④ Q4 安全面已按用户决策收紧（session-tree v1.4.0：`tree_send` 仅同树、移除 `parent` 入参；见 §8.1）。 |
 
 ### 0.2 一句话判断（修订）
 
-**方向对（分层、四图分离、禁止引擎互 import、不做公共 adapter 包都成立）；但第一动作既不是拆仓，也不是 45–73 人日的"契约内核"。** 正确顺序是：**先测一个决定后续所有方案是否安全的关键未知（竹节定时器会不会自主打断运行中的 flow）→ 加一个必须的代码开关（per-leaf relay 抑制）→ 做三个数据面小改（lineage、cancel/多槽、结果引用）→ 写一页组合约定**（合计约 4–6 人日）；拆仓、内核、注册表、统一拓扑 UI、tree 服务化**现在都不做**（理由与触发条件见 §6、§7）。
+**方向对（分层、四图分离、禁止引擎互 import、不做公共 adapter 包都成立）；但第一动作既不是拆仓，也不是 45–73 人日的"契约内核"。** 正确顺序是：**先测一个决定后续所有方案是否安全的关键未知（竹节定时器会不会自主打断运行中的 flow）→ 加一个必须的代码开关（per-leaf relay 抑制）→ 做三个数据面小改（lineage、cancel/多槽、结果引用）→ 写一页组合约定**（合计约 4–6 人日）；拆仓、内核、注册表、统一拓扑 UI、tree 服务化**现在都不做**（理由与触发条件见 §6、§7）。**2026-11-12 进展**：关键未知已测（S1）、relay 开关已实现并 E2E（v0.8.0）、组合剧本已落地（[composition-playbook.md](../guides/composition-playbook.md)）；数据面三小改仍为下一步。
 
 ### 0.3 推荐目标形态（North Star，方向参考，非本轮承诺）
 
@@ -47,7 +48,7 @@
 2. **换命名空间，不换执行器**：父引擎只拿子引擎的 `RunHandle`，不知道对方是树还是 DAG。
 3. **预算/权限/取消只能单调衰减，不能每层重置**（Erlang 监督树重启强度相乘是反例：4 层 × retry 3 = 81 次尝试）。
 4. **持久化事实源只能有一个**：session 生命周期归会话层，run 生命周期归引擎；任务树/DAG/组织图都是**投影**。
-5. **递归边界默认要小**：LLM 自主分解 `depth=3` 是研究建议值；**当前 DSH profile 的硬上限是 `maxDepth=4`**（不是 8——8 只是目标态建议的硬帽，实际以 profile 为准，内核/约定必须取 min）。没有"预算递减 + 绝对 deadline + 无进展检测"的递归不允许上线。
+5. **递归边界默认要小**：LLM 自主分解 `depth=3` 是研究建议值；**当前 DSH profile 的硬上限是 `maxDepth=5`**（用户 2026-11-12 调大，原 4；8 只是目标态建议的硬帽，内核/约定必须取 min），tree `commander_max_depth=3`。没有"预算递减 + 绝对 deadline + 无进展检测"的递归不允许上线。
 
 ### 0.5 你的设想到分层的映射（逐条回应）
 
@@ -57,14 +58,14 @@
 | 「tree harness 是严格约束化的树形分解体系」 | **L2 编排引擎** | ✅ 正确。它是跑在会话原语之上的控制面（任务树/DoD/验证/竹节/预算），不是"子智能体插件"的同类。 |
 | 「自由流程基于简单的子会话能力……在一级子会话群里建立起流程约束」 | **L2 编排引擎（DAG 型）** | ✅ 描述准确：flow M1 的节点就是**同级平铺的一级子会话**，引擎只加变量/边/门禁/journal 约束，不建层级。 |
 | 「tree harness 和自由流程可以相互组合，某个节点的会话再调用子自由会话或者子 tree harness」 | **L1 契约 / NodeRuntime（结构化嵌套）；当前可行的是"节点会话调工具"的软组合** | ⚠️ 修订：软组合**可演示、不可无人值守**（relay 定时器、flow 单槽、权限降级、结果截断）；结构化嵌套需要服务化 + 契约，当前不可行。 |
-| 「组合形成各种递归结构 / 千变万化的组织形态」 | **L3 拓扑投影 + 组合代数（拓扑 × 执行语义 × 治理）** | ⚠️ 目标方向成立，但受平台硬约束限制（审批 turnOpen/never、`maxDepth=4`、并发槽位、无预算原语）；递归必须先解决 scope 衰减与取消级联，且当前旗舰三层用例不可达。 |
+| 「组合形成各种递归结构 / 千变万化的组织形态」 | **L3 拓扑投影 + 组合代数（拓扑 × 执行语义 × 治理）** | ⚠️ 目标方向成立，但受平台硬约束限制（审批 turnOpen/never、`maxDepth=5`、并发槽位、无预算原语）；递归必须先解决 scope 衰减与取消级联；三层结构在 maxDepth=5 下理论可达（最深层不可再起 verify/judge），仍需受控试点。 |
 
 ### 0.6 红队复核后的修正摘要（S1–S6 处置）
 
 | # | 红队缺陷 | 本文处置 |
 |---|---|---|
 | S1 | **竹节是定时器/自报驱动的会话替换器**：`sweepTick` 用 `usagePct`（宿主测量，当前恒 null）∨ 自报对所有 running leaf 判 42% 并 relay（`src/engine.js:560-567`；定时器 `:587-588`），"leaf 不报 context"只挡自报、挡不住未来修好的宿主测量 | **真机实测（2026-11-12）**：自报即可触发 relay 并打断运行中的 flow（flow journal `cancelled / E_RUN_CANCELLED`）；宿主测量因 inject 缺陷恒 null；timer 自主路径受 reload 残影影响不可靠。→ P0"relay×flow 互斥"作废；**per-leaf relay 抑制开关列为必须项**（第 2 步）；§4.1 定级 ⚠️ |
-| S2 | **递归旗舰用例不可达**：`maxDepth=4` + tree 2 层 + flow 1 层 = 第 4 层满；verify/judge/handoff 各 +1 即超限（`index.js:414` judge 另起会话） | §4.3 给出深度算术；§7 验收降为"tree→flow"两层；三层组合需先调 `maxDepth`（列为显式前置+代价） |
+| S2 | **递归旗舰用例曾不可达**：`maxDepth=4` + tree 2 层 + flow 1 层 = 第 4 层满；verify/judge/handoff 各 +1 即超限 | **已处置（2026-11-12）**：用户把 profile `maxDepth` 调到 **5**（tree commander_max_depth 保持 3）；§4.3 更新算术——tree→flow→tree 可达，但最深层不能带 verify/judge；近期验收仍以"tree→flow"两层为主，三层列入受控试点（组合剧本 §5） |
 | S3 | **拆仓不是零运行时改动**：`hmr.root` 是绝对目录、D1 反转、镜像仓非开发仓、门禁/工具链重做 | §6 重写：拆分真实成本 + 与 D1/D3 冲突；建议现在不拆，挂触发器 |
 | S4 | **审批机制被误述**：真实约束 = 请求方会话 `turnOpen` + `policy ≠ never`（`dsh-user-approval` `request()`/`decide()`；`child-agent.js:185` 条件式钉 never） | §1.4/§3 修正；新增 §8 安全章（"root 代批"在 fire-and-forget 形态下不成立；**借用 root Agent 句柄请求审批是未申明的越权面**） |
 | S5 | **契约无强制点**：内核/注册表/12 条不变量没有执行面，只会变成第 4 份文档债 | §5.2 收缩为"一页 5 条必须规则"；内核/注册表降级为"条件满足后再评估"（§7.6） |
@@ -116,8 +117,8 @@
 
 | 约束 | 值/机制 | 对组合的含义 |
 |---|---|---|
-| 会话深度 | profile `maxDepth=4`（`cordis.patch.yml:226`）；子深度 = 父 + 1，超限抛 `SubagentDepthError` | tree 2 层 + flow 1 层已到第 4 层；verify/judge/handoff 再 +1 即超限。**这是硬上限，不是建议值** |
-| 并发子会话 | `maxActiveSubagents=20`（进程内激活槽位，**不是全局累计预算**，无租约） | 跨引擎 fan-out 互相挤占；嵌套预算无法在平台层观测 |
+| 会话深度 | profile `maxDepth=5`（用户 2026-11-12 调大；`cordis.patch.yml` subagent 配置）；子深度 = 父 + 1，超限抛 `SubagentDepthError`；tree 内 `commander_max_depth=3` | 按 root=0：tree→flow→tree 三层可达（root0→tree commander1→worker2→flow 节点3→内层 commander4→worker5）；**最深层不能再起 verify/judge/handoff**（会到 6）。两层组合富余 2–3 层。**深度仍是硬上限，不是建议值** |
+| 并发子会话 | `maxActiveSubagents=20`（运行中；profile 文件已按用户授权调到 **24**，重启后生效；进程内激活槽位，**不是全局累计预算**，无租约） | 跨引擎 fan-out 互相挤占；嵌套预算无法在平台层观测 |
 | 审批（精确机制） | ① `approval.request()` 要求**请求方会话的 turn 处于打开状态**（否则抛 "outside an open turn"）；② 子会话若有 approval 服务则 `approvalPolicy` 被**条件式钉死 `'never'`**（`child-agent.js:185`）；③ policy=never 时 `decide()` 直接返回 `rejected`，不问 answerer | **不是"只能 root"，而是"请求方要有打开 turn + policy≠never"**：flow 形态（root 同步 await）可以 gate；tree 的 fire-and-forget 形态下 root 的 turn 已结束 → **"leaf 发起、root 代批"必死在 `turnOpen`**。子会话内 gate 仍必失败 |
 | 权限/预设继承 | `meta.agentPreset` **只写 header、不挂载组合**；须 `setup()` 自 mount 并补写 `permission/preset`、`sandbox/mode`、`approval/policy`（`source:'delegation'`）；仅复制父**显式** sandbox 覆盖 | 程序创建的节点会话不会自动获得父工具集/权限，引擎必须显式继承 |
 | 会话元数据 | header 是闭集白名单：**7 个 meta 字段（共 9 个 header 字段）**，未知 meta **静默丢弃**；无 tags/labels | 无法在会话上标注 `runId/nodeId`；只能引擎账本 + `label` + 首条 prompt 前缀 |
@@ -234,13 +235,13 @@ plan_node_id → run_id → attempt(s) → session_id(s)
 | 约束 | 当前值/机制 | 递归含义 |
 |---|---|---|
 | 审批 | 请求方 turnOpen + policy≠never；子会话钉 never | 递归结构里**只有一个 gate 层**（发起 flow_run 且 turn 未结束的那层）；tree 的 fire-and-forget 形态下"root 代批"不成立 |
-| 会话深度 | profile `maxDepth=4`；子深度=父+1 | **算术（root=0）**：tree root 0 → commander 1 → worker 2 → flow 节点 3 → 内层 tree worker **4（满）**；再 verify/judge/handoff/再嵌一层 = 5 ✗。**旗舰用例"tree→flow→tree + verify + 审批分流"不可达**；近期验收应降为"tree→flow"两层 |
+| 会话深度 | profile `maxDepth=5`；子深度=父+1；tree `commander_max_depth=3` | **算术（root=0）**：tree root 0 → commander 1 → worker 2 → flow 节点 3 → 内层 tree commander 4 → 内层 worker **5（满）**；最深层再 verify/judge/handoff/再嵌一层 = 6 ✗。**结论**：tree→flow（两层）富余；tree→flow→tree（三层）理论可达但**最深层不能带验证**；第 4 层结构仍不可达。详见 [组合编排剧本](../guides/composition-playbook.md) §3 |
 | 并发会话 | `maxActiveSubagents=20`（进程内激活槽位，无租约） | 嵌套 fan-out 互相挤占；跨引擎无预算观测 |
 | 预算 | 各引擎独立记账；平台无 token/时间预算原语 | 父无法给子下发预算；嵌套越深越容易超支 |
 | 取消 | 无跨进程/跨引擎 | 父取消后子可能变孤儿（运行到自身墙钟上限） |
 | 持久化 | 两套格式（tree-state vs flow journal） | 无跨引擎事务；只能按 id 关联、分别恢复 |
 
-> 若目标必须是三层以上组合：**前置条件 = 调大 `maxDepth`（profile 改动）+ 写清风险（并发/成本/审批）+ 分阶段真机验证**；这不是"配置一下"的事。
+> 三层以上组合：**前置条件 = 调大 `maxDepth`（用户 2026-11-12 已调到 5）+ 写清风险（并发/成本/审批）+ 分阶段真机验证**；当前三层可达但最深层不能带 verify/judge，仍需受控试点，不是"配置一下"就能无人值守。
 
 ### 4.4 结论
 
@@ -278,10 +279,10 @@ child.budget  = min(floor(parent.available × share), parent.available − reser
 reserve_floor = 20% × parent.limit
 child.grants  ⊆ parent.grants
 child.deadline ≤ parent.deadline
-child.depth   = parent.depth + 1        # 当前硬上限 = profile maxDepth(4)，不是 8
+child.depth   = parent.depth + 1        # 当前硬上限 = profile maxDepth(5)，不是 8
 ```
 
-起步参数（目标态建议，按负载再调）：LLM 自主分解 `depth=3`；引擎互嵌 `depth≤4`（平台硬限）；`max_children=8`；`max_nodes/run=256`；`max_attempts=3`；`retry_budget=20%`；`cancel_grace=30s`；`no_progress_threshold=3`。
+起步参数（目标态建议，按负载再调）：LLM 自主分解 `depth=3`；引擎互嵌 `depth≤5`（平台硬限，tree 内叶子嵌套 ≤ `commander_max_depth=3`）；`max_children=8`；`max_nodes/run=256`；`max_attempts=3`；`retry_budget=20%`；`cancel_grace=30s`；`no_progress_threshold=3`；并发 `maxActiveSubagents=20`（用户授权可小幅调大，建议 24，需重启）。
 
 ### 5.4 identity / lineage 三件套（全篇最便宜、最该先做）
 
@@ -379,9 +380,9 @@ child.depth   = parent.depth + 1        # 当前硬上限 = profile maxDepth(4)�
 (c) 结果引用：`flow_run` 返回 artifact 路径（替代 600 字符摘要）。
 **验收**：从 tree leaf 起的 flow 可被 tree 侧按 `runId` 取消（贴 journal `cancelled` 事件）；`flow_status` 能按父 run 聚合；节点输出 >600 字符时父能从文件读全文。
 
-### 7.4 第 4 步（≤0.5 人日）｜一页《组合约定 v0》
+### 7.4 第 4 步（≤0.5 人日）｜《组合编排剧本》（**已落地**）
 
-只写 §5.2 的 5 条，不写 schema、不建 contract 仓、不建 12 条不变量。两个引擎的 SKILL/README 各加一行指针。**出现第二个独立实现者或第二次真实组合需求之前，不升级为 schema。**
+2026-11-12 产物：[docs/guides/composition-playbook.md](../guides/composition-playbook.md)——relay 开关纪律（R1）、tree→flow / flow→tree / tree→flow→tree 三套剧本、深度算术（maxDepth=5）、预算、验证清单、一次性→非一次性会话说明、已知边界。两个引擎的 README/SKILL 各加一行指针（session-tree v1.4.0 已补 tree_send 同树限制）。
 
 ### 7.5 第 5 步（0 人日）｜拆仓：不做
 
@@ -393,7 +394,8 @@ child.depth   = parent.depth + 1        # 当前硬上限 = profile maxDepth(4)�
 |---|---|---|
 | ① 真机验证 relay 可抑制 + ② 有第二次真实跨引擎组合需求 | 才评估"服务化"（flow `ctx.flowEngine` / tree `ctx.treeEngine` + handle/events） | tree 服务化会与 fire-and-forget/竹节语义正面冲突，需 CR |
 | ③ 出现第二个独立实现者 / 多引擎并存成为常态 | 才评估轻量注册表（单一 owner + 软探测） | 无强制点时只是文档；不要 12 条不变量内核 |
-| ④ 用户明确要三层以上组织形态 | 才调 `maxDepth` 并做真机矩阵 | 并发/成本/审批风险同步放大；先写 profile 变更与回滚 |
+| ④ **用户明确要三层以上组织形态**（2026-11-12 已表态：maxDepth=5、tree 深度 3 不变、预算可小幅调大、一次性会话可改非一次性） | 三层受控试点 + 真机矩阵（先按 [组合剧本](../guides/composition-playbook.md) §5，最深层不带 verify/judge） | 并发/成本/审批风险同步放大；先写 profile 变更与回滚；预算调大需重启 |
+| ⑥ 组合剧本落地（2026-11-12 已完成） | relay 开关已入剧本；后续组合一律按剧本 R1–R8 执行 | 不做剧本外"随手组合" |
 | ⑤ npm 解冻 + 生态型目标 | 才评估拆仓 | 见 §6 成本清单（D1 反转、门禁翻倍） |
 
 **合计本轮 ~4–6 人日**，覆盖原 v0 P1 清单约 60% 的价值，不碰内核。
@@ -402,12 +404,12 @@ child.depth   = parent.depth + 1        # 当前硬上限 = profile maxDepth(4)�
 
 ## 8. 安全与数据面（新增；红队 M1/M9）
 
-### 8.1 工具面 = 权限面（当前存在越权注入面）
+### 8.1 工具面 = 权限面（**已按用户决策收紧**）
 
-- `tree_send` 的 `parent` **可由模型入参指定**（`session-tree/index.js:251`）；不传时才回落到查目标 header 的 `parentSession`（`:262-269`），随后 `subagents.prompt({parentSessionId: parent, childSessionId: target})` 按**父地址**授权（`:273-283`）。
-- 后果：**任何能调 `tree_send` 的会话**（工具全局注册）只要同时给出 target 与其真实父 id，就能向任意可续接会话注入一条 steer 消息。这不是"跨层消息能力"，而是**无调用者校验的消息注入面**。
-- 建议（需用户决策，可能改行为）：`tree_send` 校验调用者与 target 的谱系关系（同树/同祖先），或移除显式 `parent` 入参、只允许 Host 内部解析；至少记录调用者并限制跨树。
-- 同类：`tree_node add` 字段透传无白名单（`handoff-2026-11-12.md:195` 自认 severe 属实）→ 字段白名单化。
+- **旧风险（v1.3.7 及以前）**：`tree_send` 的 `parent` **可由模型入参指定**（`session-tree/index.js:251`）；不传时才回落查目标 header 的 `parentSession`（`:262-269`），随后 `subagents.prompt({parentSessionId: parent, childSessionId: target})` 按**父地址**授权（`:273-283`）——任何能调 `tree_send` 的会话只要给出 target 与其真实父 id 就能注入 steer。
+- **处置（2026-11-12 用户决策 Q4，session-tree v1.4.0）**：**移除显式 `parent` 入参**（只由 Host 从 target 日志解析）；增加**调用者谱系校验**（caller 必须与 target 同根/同树，跨树拒绝 `E_CROSS_TREE_SEND`）；用户明确"不需要跨树会话"。跨层/兄弟（同树）消息保留。
+- **留着的行为**：同树兄弟/祖先消息仍可注入，这是设计意图；调用者身份必须来自 ambient `exec.agent.session`，不得来自工具参数。
+- 同类：`tree_node add` 字段透传无白名单（`handoff-2026-11-12.md:195` 自认 severe 属实）→ 字段白名单化仍在待办（下轮）。
 
 ### 8.2 审批句柄可被借用（未申明的越权面）
 
@@ -435,7 +437,8 @@ child.depth   = parent.depth + 1        # 当前硬上限 = profile maxDepth(4)�
 | 高 | **`usagePct` 端口缺陷**（inject 缺 `tokenMeter` → 测量恒 null） | 修 inject/取值路径并保留 `tokenMeter.measure shape:` 日志；否则"是否自主 relay"无法观测 |
 | 高 | **双账本**（会话图 vs 任务/运行图都声称拥有生命周期） | 单一写者；`run_id` 唯一关联；幂等 spawn；投影只读 |
 | 高 | **scope 不衰减 / 预算无原语** | 目标态内核强制；当前用引擎自限额 + 人工公式，不承诺平台级保证 |
-| 高 | **递归深度满额** | 近期验收降为两层；三层需先调 maxDepth + 风险说明 |
+| 高 | **递归深度接近上限** | 两层为默认验收；三层按 [剧本 C](../guides/composition-playbook.md) 受控试点（最深层不带 verify/judge）；出现 `SubagentDepthError` 立即回退 |
+| 高 | **relay 误开打断 flow** | 组合剧本 R1 强制：leaf 等外部编排前 `set-relay off`；E2E 已证明 off 生效 |
 | 高 | **审批机制误用**（turnOpen/never/句柄借用） | §1.4 精确表述；§8.2 规则；不在 delegated child 内放 gate |
 | 中 | **sweep 僵尸循环 / 单实例写竞态**（73 次 apply 残影、24 条 inactive context、tree-state tmp rename ENOENT） | dispose 时保存并调用上一代 `stop()`；托管宿主 timer 或落盘句柄；同 profile 单实例锁 |
 | 中 | **flow 单槽 activeRun** | 多槽修复前列为"flow 套 flow 不安全" |
@@ -454,14 +457,14 @@ child.depth   = parent.depth + 1        # 当前硬上限 = profile maxDepth(4)�
 
 ## 10. 决策记录与待决事项（2026-11-12 用户指示后）
 
-> 记录规则：用户明确"先做 / 记录待决 / 等更多信息"的项，状态如下；未表态的保持待定。决策日志见 `agent.md` D18。
+> 记录规则：用户明确"先做 / 记录待决 / 等更多信息"的项，状态如下；未表态的保持待定。决策日志见 `agent.md` D18/D19，2026-11-12 晚 Q3/Q4 决策见 D20（待录）。配套执行剧本：[composition-playbook.md](../guides/composition-playbook.md)。
 
 | # | 事项 | 状态（2026-11-12） |
 |---|---|---|
 | 1 | 先做第 1 步**真机压测**（tree→flow，观察 relay 是否自主打断；需要一次真实会话/配额） | **✅ 已完成（2026-11-12）**：结论见 §7.1；报告 [e2e-composition-relay-2026-11-12.md](../reports/e2e-composition-relay-2026-11-12.md)（relay 会打断 flow；宿主测量恒 null；timer 路径不可靠） |
 | 2 | 给 tree-engine 加 **per-leaf relay 抑制开关**（唯一必须的代码改动，约 1 人日） | **✅ 已实施并真机验收（2026-11-12，D19，tree-engine v0.8.0）**：`tree_node {action:"set-relay", relay:"auto"\|"off"}`；`off` 时 sweep 只跳过竹节；单测 165/165；E2E（[报告](../reports/e2e-relay-switch-2026-11-12.md)）：relay:'off' 长 flow 315.4s 穿越 ≥5 次 sweep 不被中断、auto 回归/权限正负例 PASS；同轮收口 F1 validate 假阳性、F2 validate TypeError、F3 usagePct measure 契约（活体 `tokenMeter.measure shape:` 已出现） |
-| 3 | **递归目标**：近期接受"tree→flow"两层组合（不改 maxDepth），还是明确要三层以上（需先调 `maxDepth`、写风险与回滚） | 待用户表态 |
-| 4 | **安全面**：`tree_send` 的显式 `parent` 注入面是否先加调用者/谱系校验（可能改变跨树消息用法） | 待用户表态 |
+| 3 | **递归目标**：近期接受"tree→flow"两层组合（不改 maxDepth），还是明确要三层以上（需先调 `maxDepth`、写风险与回滚） | **✅ 用户已表态（2026-11-12）**：`maxDepth` 已改 **5**（profile 实测）；tree 的 `commander_max_depth` **保持 3**；预算可**小幅调大**（建议 `maxActiveSubagents` 20→24，重启生效）；**一次性会话受限的 flow/tree 节点可改为非一次性会话**（flow 引擎变更项，见剧本 §6）。近期仍先验收两层，三层按剧本 C 受控试点 |
+| 4 | **安全面**：`tree_send` 的显式 `parent` 注入面是否先加调用者/谱系校验（可能改变跨树消息用法） | **✅ 用户已决策（2026-11-12）**：按推荐方案执行，**不需要跨树会话**。已派 `session-tree-dev` 落地：移除 `parent` 入参 + 调用者同树/谱系校验 + 跨树拒绝；session-tree **v1.4.0**；论证与回滚见 §8.1 |
 | 5 | **拆仓/内核**：现在不拆仓、不建契约内核/注册表，挂两个触发器（npm 解冻 / 第二个独立消费方） | **已记录待决**（用户 2026-11-12 指示"等更多信息后决策"；触发器见 §6.4、§7.6） |
 
 **本轮配套产物**（2026-11-12 用户指示）：专家取证报告已入库 [docs/reports/composition-research-2026-11-12/](../reports/composition-research-2026-11-12/README.md)；插件源码目录地图 [docs/reports/audit-plugin-sources-2026-11-12.md](../reports/audit-plugin-sources-2026-11-12.md) 与开发会话索引 [docs/reports/audit-dev-sessions-2026-11-12.md](../reports/audit-dev-sessions-2026-11-12.md) 已整理，并汇总为拆分准备指南 [docs/guides/split-preparation.md](../guides/split-preparation.md)——为未来拆分做向导准备，不代表已决定拆分。
@@ -479,7 +482,7 @@ child.depth   = parent.depth + 1        # 当前硬上限 = profile maxDepth(4)�
 | 红队证伪评审（S1–S6/M1–M9/N1–N7） | `REDTEAM-review.md` |
 | tree-engine 宿主适配/竹节/verify | `packages/dsh-tree-engine/index.js:41-197,313-414,809`；`src/engine.js:372-588`；`src/compat.js` |
 | session-tree 纯客户端渲染/两工具 | `packages/dsh-session-tree/client.js:22-33,2012`；`index.js:40-53,243-293,1109-1385` |
-| 审批机制 / 子会话 never / 深度 | asar `dsh-user-approval/lib/index.js:153-201`；`dsh-subagent/lib/types/child-agent.js:180-186`；profile `cordis.patch.yml:4-9,226-227,272-280` |
+| 审批机制 / 子会话 never / 深度 | asar `dsh-user-approval/lib/index.js:153-201`；`dsh-subagent/lib/types/child-agent.js:180-186`；profile `cordis.patch.yml`（subagent `maxDepth: 5` / `maxActiveSubagents: 20`）；tree `commander_max_depth=3`（`src/guards.js:61`） |
 | flow 单槽 / 权限 ceiling / 存储根 | `flow-core/src/engine.js:268,3008`；`permissions.js:448-451`；`spike/dsh-flow-plugin/lib/storage-path.js:7-10` |
 | 跨引擎既有论证（A/A+/B/C） | `INTEGRATION-DESIGN.md` §5、§6、§8 |
 

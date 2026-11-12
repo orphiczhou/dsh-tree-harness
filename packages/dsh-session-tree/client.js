@@ -47,6 +47,10 @@ window.__ModuleLoader__.load({
 
     const MAX_CHILDREN = 300
     const MAX_DEPTH = 8
+    /** Bounds for the metadata warm-up: visible rows only, one read each. */
+    const MAX_META_PRELOAD = 300
+    const META_BATCH = 6
+    const META_INTERVAL_MS = 60
     const EMPTY = {}
     const EMPTY_ARR = []
 
@@ -84,6 +88,15 @@ window.__ModuleLoader__.load({
 .st-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .st-label-fallback{opacity:.6}
 .st-tag{flex:none;font-size:10px;color:var(--dsw-alias-label-tertiary);opacity:.85;border:1px solid var(--dsw-alias-border-l1);border-radius:var(--dsw-radius-sm);padding:0 4px;line-height:15px}
+/* Session metadata badge (v1.4.0): model · reasoning effort · context usage.
+   Pure client-side derivation from the row's own projections; the model/effort
+   half comes from the list-summary projection, the context % only once the full
+   contextPressure projection has been seeded (or warmed by ensureMeta). */
+.st-meta{flex:none;display:inline-flex;align-items:center;gap:5px;max-width:46%;min-width:0;overflow:hidden;white-space:nowrap;font-size:10px;line-height:15px;color:var(--dsw-alias-label-tertiary);opacity:.9}
+.st-meta-model{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-ctx{flex:none;font-variant-numeric:tabular-nums}
+.st-ctx[data-level='warn']{color:var(--dsw-alias-state-warn-primary)}
+.st-ctx[data-level='error']{color:var(--dsw-alias-state-error-primary)}
 .st-note{padding:3px 6px 3px 31px;color:var(--dsw-alias-label-tertiary);font-size:11px}
 .st-err{padding:10px;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}
 .st-rail{display:flex;align-items:center;justify-content:center;height:100%;cursor:pointer;color:var(--dsw-alias-label-tertiary);background:none;border:0;width:100%}
@@ -230,6 +243,12 @@ window.__ModuleLoader__.load({
         archive: 'Archive',
         unarchive: 'Unarchive',
         titlePending: 'Title not loaded yet — showing a delegation label or folder name instead',
+        model: 'Model',
+        effort: 'Reasoning effort',
+        effortDefault: 'default',
+        preset: 'Agent preset',
+        contextUsage: 'Context {pct}% ({used} of {window} tokens)',
+        contextUnknown: 'Context usage not loaded yet',
       },
       zh: {
         title: '会话树',
@@ -277,6 +296,12 @@ window.__ModuleLoader__.load({
         archive: '归档',
         unarchive: '取消归档',
         titlePending: '标题尚未加载——这里显示的是委派标签或目录名',
+        model: '模型',
+        effort: '思考强度',
+        effortDefault: '默认',
+        preset: 'Agent 预设',
+        contextUsage: '上下文占用 {pct}%（{used}/{window} tokens）',
+        contextUnknown: '上下文占用尚未加载',
       },
     }
 
@@ -420,10 +445,30 @@ window.__ModuleLoader__.load({
       return fallback
     }
 
-    /** Client store row OR Host SessionSummary -> the fields the tree needs. */
-    function norm(key, raw) {
+    /**
+     * Client store row OR Host SessionSummary -> the fields the tree needs.
+     *
+     * @param key - fallback row identity.
+     * @param raw - the client store row or Host SessionSummary.
+     * @param snapshot - optional `projectionsBySession[id]` entry for the same
+     *   session. The list summary omits `contextPressure` (`wire.summary:false`);
+     *   the full snapshot (live baseline, opened session, or `refreshProjections`
+     *   warm-up) carries it. Merging both here is what lets a warmed row show its
+     *   context percentage without a second read path.
+     */
+    function norm(key, raw, snapshot) {
       const r = raw || EMPTY
-      const vals = r.projectionValues || (r.projections && r.projections.values) || null
+      const summaryVals = r.projectionValues || (r.projections && r.projections.values) || null
+      const snapshotVals =
+        snapshot && typeof snapshot === 'object' && snapshot.values && typeof snapshot.values === 'object'
+          ? snapshot.values
+          : null
+      // The summary view wins per key; the full snapshot fills the keys it omits.
+      const vals = snapshotVals
+        ? summaryVals
+          ? Object.assign({}, snapshotVals, summaryVals)
+          : snapshotVals
+        : summaryVals
       // The DURABLE title is what the opened conversation shows. `displayTitle`
       // is a display-only projection (api-session-controller service.js:45-52:
       // durable title -> **project cwd basename** -> raw id), and for catalog
@@ -466,8 +511,181 @@ window.__ModuleLoader__.load({
         // consulted by activityOf (workspace "recent" ordering).
         lastEventAt: num(r.lastEventAt),
         catalog: Array.isArray(vals && vals.subagentCatalog) ? vals.subagentCatalog : null,
+        // Raw projections the metadata badge derives from (see metaOf). Kept as
+        // the original objects: the badge is a pure derivation and must not
+        // flatten or invent missing values.
+        modelSelection: (vals && vals.modelSelection) || null,
+        agentPreset: vals && typeof vals.agentPreset === 'string' ? vals.agentPreset : null,
+        tokenUsage: (vals && vals.tokenUsage) || null,
+        contextPressure: (vals && vals.contextPressure) || null,
         raw: r,
       }
+    }
+
+    /** A finite number from a projection, or null (never a guessed 0). */
+    function projectionNumber(value) {
+      return typeof value === 'number' && isFinite(value) ? value : null
+    }
+
+    /** The selection the session is currently using: `lastUsed`, else `next`. */
+    function selectionOf(modelSelection) {
+      if (!modelSelection || typeof modelSelection !== 'object') return null
+      const lastUsed =
+        modelSelection.lastUsed && typeof modelSelection.lastUsed === 'object'
+          ? modelSelection.lastUsed
+          : null
+      if (lastUsed) return lastUsed
+      return modelSelection.next && typeof modelSelection.next === 'object' ? modelSelection.next : null
+    }
+
+    /** Trimmed non-empty string from a projection, else null. */
+    function projectionText(value) {
+      return typeof value === 'string' && value.trim() ? value.trim() : null
+    }
+
+    /**
+     * Derive the row's metadata badge from the projections already on the row.
+     *
+     * Contract (report `session-metadata-display-2026-11-12.md` §5.1):
+     *   - `model`/`provider`/`effort` come from `modelSelection.lastUsed`, with
+     *     `next` as the documented fallback. A missing `reasoningEffort` stays
+     *     null (the renderer shows the localized "default"), never a guess.
+     *   - `pct` uses the same formula as the shipped `ContextMeter`
+     *     (`dsh-client-ui-conversation/lib/client.js:21520-21534`):
+     *     `used = projectedTokens ?? pressureTokens`,
+     *     `pct = min(100, round(used / contextWindow * 100))`, and nothing is
+     *     rendered when the window or the token count is missing.
+     *   - Everything absent stays null. If nothing displayable is left (no model,
+     *     no effort, no percentage) the whole meta is null — an empty badge is
+     *     never rendered.
+     *
+     * Exported on the module object as a pure test seam (`test/meta.test.cjs`);
+     * it touches no DOM and no service.
+     */
+    function metaOf(node) {
+      if (!node || typeof node !== 'object') return null
+      const selection = selectionOf(node.modelSelection)
+      const model = selection ? projectionText(selection.model) : null
+      const provider = selection ? projectionText(selection.provider) : null
+      const effort = selection ? projectionText(selection.reasoningEffort) : null
+      const preset = projectionText(node.agentPreset)
+      const usage =
+        node.tokenUsage && typeof node.tokenUsage === 'object' ? node.tokenUsage : null
+      const pressure =
+        node.contextPressure && typeof node.contextPressure === 'object' ? node.contextPressure : null
+      const contextWindow = pressure
+        ? (() => {
+            const window = projectionNumber(pressure.contextWindow)
+            return window !== null && window > 0 ? window : null
+          })()
+        : null
+      const projected = pressure ? projectionNumber(pressure.projectedTokens) : null
+      const forced = pressure ? projectionNumber(pressure.pressureTokens) : null
+      let usedTokens = projected !== null ? projected : forced
+      // Negative token counts are malformed facts, not "0 used": drop them.
+      if (usedTokens !== null && usedTokens < 0) usedTokens = null
+      const pct =
+        contextWindow !== null && usedTokens !== null
+          ? Math.max(0, Math.min(100, Math.round((usedTokens / contextWindow) * 100)))
+          : null
+      // Nothing displayable → no badge at all (blank sessions stay blank).
+      if (!model && !effort && pct === null) return null
+      return {
+        model,
+        provider,
+        effort,
+        modelLabel: model,
+        pct,
+        usedTokens,
+        contextWindow,
+        preset,
+        tokenUsage: usage,
+      }
+    }
+
+    /**
+     * Localized one-line description of one row's metadata, used as the badge's
+     * `title`/`aria-label`: provider/model, reasoning effort (or the honest
+     * "default"), agent preset, and the context window fact — or the explicit
+     * fact that it is not loaded yet.
+     */
+    function metaTitleOf(meta, t) {
+      if (!meta) return ''
+      const parts = []
+      if (meta.model) {
+        parts.push(t('model') + ': ' + (meta.provider ? meta.provider + '/' : '') + meta.model)
+      }
+      parts.push(t('effort') + ': ' + (meta.effort || t('effortDefault')))
+      if (meta.preset) parts.push(t('preset') + ': ' + meta.preset)
+      if (meta.pct !== null && meta.contextWindow !== null) {
+        parts.push(
+          t('contextUsage', {
+            pct: meta.pct,
+            used: meta.usedTokens !== null ? meta.usedTokens : '—',
+            window: meta.contextWindow,
+          }),
+        )
+      } else {
+        parts.push(t('contextUnknown'))
+      }
+      return parts.join(' · ')
+    }
+
+    /**
+     * The inline metadata badge for one session row: `model · effort` (from the
+     * list-summary projection) plus `NN%` when the full context projection is
+     * known. Renders nothing at all when there is nothing honest to show.
+     */
+    function rowMetaElement(row, t) {
+      const meta = row && row.meta
+      if (!meta) return null
+      const modelText = meta.modelLabel || meta.model || ''
+      const pctText = meta.pct === null || meta.pct === undefined ? '' : meta.pct + '%'
+      if (!modelText && !pctText) return null
+      const title = metaTitleOf(meta, t)
+      const kids = []
+      if (modelText) {
+        kids.push(
+          h(
+            'span',
+            { className: 'st-meta-model', key: 'model' },
+            modelText + ' · ' + (meta.effort || t('effortDefault')),
+          ),
+        )
+      }
+      if (pctText) {
+        kids.push(
+          h(
+            'span',
+            { className: 'st-ctx', key: 'ctx', 'data-level': metaLevel(meta.pct) },
+            pctText,
+          ),
+        )
+      }
+      return h(
+        'span',
+        {
+          className: 'st-meta',
+          'data-model': meta.model || '',
+          'data-effort': meta.effort || '',
+          'data-ctx-pct': meta.pct === null || meta.pct === undefined ? '' : String(meta.pct),
+          title,
+          'aria-label': title,
+        },
+        kids,
+      )
+    }
+
+    /**
+     * Visual level of a context percentage, for the `.st-ctx[data-level]` CSS.
+     * Same intent as the shipped meter's warning colour: near-full windows stand
+     * out; anything else stays tertiary.
+     */
+    function metaLevel(pct) {
+      if (pct === null || pct === undefined) return 'normal'
+      if (pct >= 90) return 'error'
+      if (pct >= 75) return 'warn'
+      return 'normal'
     }
 
     /**
@@ -531,7 +749,7 @@ window.__ModuleLoader__.load({
       if (keys.length === 0) return out
 
       const node = new Map()
-      for (const k of keys) node.set(k, norm(k, byId[k]))
+      for (const k of keys) node.set(k, norm(k, byId[k], projectionsBySession && projectionsBySession[k]))
 
       // Children by durable lineage, plus catalog children with no row of their own.
       const kids = new Map()
@@ -580,6 +798,9 @@ window.__ModuleLoader__.load({
             updatedAt: num(e.createdAt),
             catalog: null,
             mode: e.mode || 'unknown',
+            // Catalog-only children have no row (and no projections) of their
+            // own yet: no badge until a real row arrives. Never a placeholder.
+            meta: null,
             raw: null,
           })
           catalogOnly.set(e.id, true)
@@ -793,6 +1014,7 @@ window.__ModuleLoader__.load({
             expandable: children.length > 0,
             expanded,
             childCount: children.length,
+            meta: metaOf(n),
           })
           if (!expanded) return
           if (children.length === 0) {
@@ -876,6 +1098,7 @@ window.__ModuleLoader__.load({
                 tag: m.origin === 'subagent' ? t('subagent') : null,
                 expandable: false,
                 expanded: false,
+                meta: metaOf(m),
               })
             }
             return
@@ -926,14 +1149,14 @@ window.__ModuleLoader__.load({
         for (const n of roots) {
           if (!keep(n.id)) continue
           const label = labelFor(n)
-          if (matches(label, n.id)) out.push({ key: n.id, kind: 'session', depth: 0, id: n.id, label, labelIsFallback: isFallbackFor(n), secondary: secondaryFor(n), expandable: false, expanded: false, state: sessionState(statuses, n.id, n.running) })
+          if (matches(label, n.id)) out.push({ key: n.id, kind: 'session', depth: 0, id: n.id, label, labelIsFallback: isFallbackFor(n), secondary: secondaryFor(n), expandable: false, expanded: false, state: sessionState(statuses, n.id, n.running), meta: metaOf(n) })
         }
         for (const n of node.values()) {
           for (const c of kids.get(n.id) || EMPTY_ARR) {
             if (!keep(c.id)) continue
             const label = labelFor(c)
             if (matches(label, c.id)) {
-              out.push({ key: n.id + '/' + c.id, kind: 'subagent', depth: 1, id: c.id, parentId: n.id, mode: c.mode, label, labelIsFallback: isFallbackFor(c), secondary: secondaryFor(c), expandable: false, expanded: false, running: c.running, state: sessionState(statuses, c.id, c.running) })
+              out.push({ key: n.id + '/' + c.id, kind: 'subagent', depth: 1, id: c.id, parentId: n.id, mode: c.mode, label, labelIsFallback: isFallbackFor(c), secondary: secondaryFor(c), expandable: false, expanded: false, running: c.running, state: sessionState(statuses, c.id, c.running), meta: metaOf(c) })
             }
           }
         }
@@ -963,6 +1186,7 @@ window.__ModuleLoader__.load({
           expandable: children.length > 0,
           expanded,
           childCount: children.length,
+          meta: metaOf(n),
         })
         if (!expanded) return
         if (children.length === 0) {
@@ -1107,6 +1331,13 @@ window.__ModuleLoader__.load({
       const [hiddenWorkspaces, setHiddenWorkspaces] = useState(() => new Set(loadHiddenWorkspaces()))
       const [hiddenMode, setHiddenMode] = useState(() => loadHiddenMode())
       const requested = useRef(new Set())
+      // Metadata warm-up state (v1.4.0): the same "one read per session per
+      // connection" discipline as `requested`, plus a bounded queue so a cold
+      // tree never fires hundreds of simultaneous log reads.
+      const metaRequested = useRef(new Set())
+      const metaQueue = useRef([])
+      const metaTimer = useRef(null)
+      const metaRequestCount = useRef(0)
 
       const ensureLoaded = useCallback(
         (id) => {
@@ -1163,6 +1394,80 @@ window.__ModuleLoader__.load({
           step()
         },
         [ctx, byId],
+      )
+
+      /**
+       * Warm the FULL projection of visible rows that are missing their context
+       * percentage.
+       *
+       * `contextPressure` is `wire.summary:false`, so a cold session's tree row
+       * knows only model/effort until its full projection has been read. This
+       * asks `ctx.sessions.refreshProjections(id)` for the rows currently on
+       * screen: bounded by MAX_META_PRELOAD per connection, six per 60 ms tick,
+       * deduped forever, feature-detected and wholly best-effort. The store
+       * update re-renders the row by itself; a failure leaves the badge without
+       * a percentage — never a fabricated number.
+       */
+      const ensureMeta = useCallback(
+        (ids) => {
+          const svc = ctx && ctx.sessions
+          if (!svc || typeof svc.refreshProjections !== 'function') return
+          if (!Array.isArray(ids) || ids.length === 0) return
+          const queue = metaQueue.current
+          for (const id of ids) {
+            if (!id || metaRequested.current.has(id)) continue
+            if (metaRequestCount.current >= MAX_META_PRELOAD) break
+            metaRequested.current.add(id)
+            metaRequestCount.current += 1
+            queue.push(id)
+          }
+          if (queue.length === 0 || metaTimer.current !== null) return
+          const step = () => {
+            metaTimer.current = null
+            const batch = queue.splice(0, META_BATCH)
+            if (batch.length === 0) return
+            for (const id of batch) {
+              // A title warm-up may have requested the same session already.
+              if (requested.current.has(id)) continue
+              requested.current.add(id)
+              try {
+                const p = svc.refreshProjections(id)
+                if (p && typeof p.catch === 'function') p.catch(() => {})
+              } catch (e) {
+                /* silent: the badge simply keeps showing model/effort only */
+              }
+            }
+            if (queue.length > 0) {
+              try {
+                metaTimer.current = setTimeout(step, META_INTERVAL_MS)
+              } catch (e) {}
+            }
+          }
+          try {
+            // Defer the first batch past the current paint: warming must never
+            // compete with (or be observed by) the render that scheduled it.
+            // A host without timers simply does not warm (the badge stays
+            // model/effort-only until the store is seeded some other way).
+            if (typeof setTimeout !== 'function') return
+            metaTimer.current = setTimeout(step, 0)
+          } catch (e) {
+            metaTimer.current = null
+          }
+        },
+        [ctx],
+      )
+
+      /** Stop the queue's timer when the tree unmounts (no stray reads). */
+      useEffect(
+        () => () => {
+          if (metaTimer.current !== null) {
+            try {
+              clearTimeout(metaTimer.current)
+            } catch (e) {}
+            metaTimer.current = null
+          }
+        },
+        [],
       )
 
       const toggle = useCallback(
@@ -1397,6 +1702,33 @@ window.__ModuleLoader__.load({
         }),
         [byId, projectionsBySession, expandedIds, query, t, statuses, order, archives, archivedMode, pinned, titleMap, workspaceItems, collapsedGroups, workspaceOrder, hiddenWorkspaces, hiddenMode],
       )
+
+      /**
+       * Warm only what the frame actually rendered: rows whose context
+       * projection is still missing. Unexpanded children are never fetched, and
+       * `ensureMeta` dedupes/caps the queue, so this is one bounded read per
+       * visible cold session — not a poll.
+       */
+      useEffect(() => {
+        if (props.wide === false) return
+        const ids = []
+        for (const row of rows) {
+          if (row.kind !== 'session' && row.kind !== 'subagent') continue
+          if (row.meta && row.meta.pct !== null) continue
+          const raw = byId[row.id]
+          const snap = projectionsBySession[row.id]
+          const vals =
+            (raw && raw.projectionValues) ||
+            (raw && raw.projections && raw.projections.values) ||
+            (snap && snap.values) ||
+            null
+          // Already projected (live baseline / opened session): no read needed.
+          if (vals && vals.contextPressure) continue
+          ids.push(row.id)
+        }
+        ensureMeta(ids)
+      }, [rows, byId, projectionsBySession, ensureMeta, props.wide])
+
       /** Every parent id in the current map — the bound for "expand all". */
       const idsWithChildren = useMemo(() => {
         const s = new Set()
@@ -1655,6 +1987,7 @@ window.__ModuleLoader__.load({
                       { className: 'st-label' + (row.labelIsFallback ? ' st-label-fallback' : '') },
                       row.label,
                     ),
+                rowMetaElement(row, t),
                 row.tag ? h('span', { className: 'st-tag' }, row.tag) : null,
                 row.expandable && !row.expanded ? h('span', { className: 'st-count' }, String(row.childCount)) : null,
                 row.kind === 'subagent'
@@ -2038,6 +2371,10 @@ window.__ModuleLoader__.load({
 
         registerInspectProvider(ctx)
       },
+      // Pure derivation exposed as a test seam (`test/meta.test.cjs`). The
+      // module loader only consumes `inject`/`apply`, so this adds no runtime
+      // surface to the mounted plugin.
+      metaOf,
     }
   },
 })

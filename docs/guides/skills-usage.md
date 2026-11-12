@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.8.0**、`packages/dsh-session-tree` **v1.3.7** 及以上（公开插件仓同步 tag `v1.3.7`）。
+> 适用版本：`packages/dsh-tree-engine` **v0.8.0**、`packages/dsh-session-tree` **v1.4.0** 及以上（公开镜像当前 tag 仍为 `v1.3.7`；v1.4.0 待发布）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -261,11 +261,11 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.8.0 / `dsh-session-tree` 1.3.7（公开插件仓 tag `v1.3.7`）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.8.0 / `dsh-session-tree` 1.4.0（公开镜像当前 tag `v1.3.7`）。
 - **tree-engine 0.8.0**：新增第 9 个工具之后的组合修复版 —— ① per-leaf relay 开关（`tree_node {action:"set-relay", relay:"auto"|"off"}`，等待 flow/verify/长命令的 leaf 设 `off`，sweep 只跳过竹节）；② usagePct 测量端口修复（宿主 tokenMeter 安全获取 + 5 形状提取）；③ sweep 跨实例（热更僵尸）生命周期；④ relay parent 安全重解析；Skill 正文升到 **v2.2**；测试数 112→**165/165**。安装/重载后推荐先跑一次 `tree_doctor` 自检（见 §3）。
 - **tree-engine 0.7.0**：新增第 9 个工具（`tree_doctor`）之后的引擎收口版 —— ① W2.1 会话预算计入竹节链 `runtime.segmentChain`；② W2.3 RC2 兼容层单测 11 例；③ W2.6 root/主会话 id 归一化（可选 `session-` 前缀）；Skill 正文升到 **v2.1**；测试数 84→**112/112**。
 - **tree-engine 0.6.0**：新增第 9 个工具 **`tree_doctor`**（只读自检，7 检查项）+ leaf 写面护栏（`LEAF_WRITE_MATRIX`），测试数 67→84。
-- **Skill 版本差（v2.2）**：`tree-commander` / `tree-worker` SKILL 正文为 **v2.2**（随 tree-engine v0.8.0 分发：工具面 9 个、`session-` 前缀归一化、`max_sessions` 计入竹节链、per-leaf relay 开关）；`session-handoff` SKILL 随 session-tree v1.3.7（SKILL 文件本轮无改动）。
+- **Skill 版本差（v2.2）**：`tree-commander` / `tree-worker` SKILL 正文为 **v2.2**（随 tree-engine v0.8.0 分发：工具面 9 个、`session-` 前缀归一化、`max_sessions` 计入竹节链、per-leaf relay 开关）；`session-handoff` SKILL 随 session-tree **v1.4.0**（补 `tree_send` 仅同树 / 无 `parent` 入参说明）。
 - **版本差异速查**：
   - **1.3.0**：随包 `session-handoff` Skill + skill provider patch 行（此前无 Skill）；
   - **1.3.1**：接替提示语跟随 DSH 界面语言（zh/en；`lang=` + `interface_language`）；
@@ -274,7 +274,7 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
   - **1.3.4**：洁净室文档债清扫（语言验收表述、set-session 主体、英文触发词、版本矩阵）；
   - **1.3.5**：SKILL 补 `spawn:false` 例外说明；README root→grandchild 措辞修正；
   - **1.3.6**：文档按目录归档（`docs/README.md` 索引）+ 新增人类安装指南 / Agent 安装指南（`AGENT-INSTALL.md`）；无代码行为变化。
-  - **1.3.7**：W2.2 provider-conformance rc.2 fixture 显式解析（缺 fixture exit 2）随包发布；运行时行为不变（当前版本）。
+- **1.4.0**：**Q4 安全收紧**——`tree_send` 仅同树投递、移除 `parent` 入参、调用者谱系校验（跨树 `E_CROSS_TREE_SEND`）；`session-handoff` SKILL 同步说明（当前版本）。
 - 升级包后：宿主半/patch 有变化 → disable→enable；只改 Skill 正文 → 新会话直接读到。
 - 会话树公开插件仓：`orphiczhou/dsh-session-tree`（tag = 版本号）；本仓 `packages/dsh-session-tree` 是唯一源码事实源。
 

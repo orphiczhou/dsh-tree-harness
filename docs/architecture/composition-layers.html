@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>组合式编排：到底几层？谁管谁？</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#111c33; --panel-2:#0e1729; --line:#243b5c;
+    --text:#e2e8f0; --muted:#94a3b8; --dim:#64748b;
+    --blue:#38bdf8; --blue-bg:#0c2a3d;
+    --amber:#f59e0b; --amber-bg:#3a2a08;
+    --green:#34d399; --green-bg:#0b2f25;
+    --red:#f87171; --red-bg:#3a1212;
+    --purple:#a78bfa; --purple-bg:#241a3d;
+    --tree:#34d399; --flow:#38bdf8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:radial-gradient(1200px 700px at 20% -10%,#13233f 0%,var(--bg) 55%);color:var(--text);
+    font:15px/1.65 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;}
+  .wrap{max-width:1060px;margin:0 auto;padding:28px 22px 60px}
+  h1{font-size:24px;margin:0 0 6px;letter-spacing:.5px}
+  .sub{color:var(--muted);margin:0 0 18px;font-size:14px}
+  .sub b{color:#fbbf24}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 22px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .card .k{font-size:12px;color:var(--dim);letter-spacing:.5px}
+  .card .v{font-size:14px;margin-top:4px;color:var(--text)}
+  .card .v b{color:var(--blue)}
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}
+  .tabs button{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);
+    padding:8px 13px;border-radius:999px;font-size:13px;cursor:pointer;transition:.15s}
+  .tabs button:hover{color:var(--text);border-color:#3b5a86}
+  .tabs button.active{background:#173154;border-color:var(--blue);color:#e0f2fe;box-shadow:0 0 0 1px rgba(56,189,248,.25) inset}
+  .panel{display:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px}
+  .panel.active{display:block}
+  .panel h2{font-size:17px;margin:0 0 4px}
+  .panel .desc{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+  .chip{font-size:12px;border-radius:999px;padding:3px 10px;border:1px solid var(--line);color:var(--muted);background:var(--panel-2)}
+  .chip.good{border-color:rgba(52,211,153,.5);color:#a7f3d0;background:var(--green-bg)}
+  .chip.warn{border-color:rgba(245,158,11,.5);color:#fde68a;background:var(--amber-bg)}
+  .chip.bad{border-color:rgba(248,113,113,.5);color:#fecaca;background:var(--red-bg)}
+  .diagram{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px 14px 10px;margin:0 0 12px}
+  .row{display:flex;align-items:center;gap:9px;padding:6px 0;min-height:38px}
+  .depth{flex:none;width:34px;text-align:right;color:var(--dim);font:12px/1 ui-monospace,Consolas,monospace}
+  .indent{flex:none;width:calc(var(--d) * 26px)}
+  .branch{flex:none;width:22px;color:#3f5878;font:14px/1 ui-monospace,Consolas,monospace}
+  .node{flex:none;display:inline-flex;align-items:center;gap:8px;border-radius:10px;padding:8px 12px;
+    border:1px solid #2c4a72;background:var(--blue-bg);color:#dbeafe;font-size:13.5px;white-space:nowrap}
+  .node small{color:var(--muted);font-size:12px}
+  .node.anchor{border-color:var(--amber);background:var(--amber-bg);color:#fde68a;box-shadow:0 0 0 1px rgba(245,158,11,.25)}
+  .node.engine{border-style:dashed;border-color:#5b6b85;background:transparent;color:#a8b3c4}
+  .node.ghost{border-style:dashed;border-color:var(--red);background:var(--red-bg);color:#fecaca}
+  .node.flow{border-color:#245b7d;background:var(--blue-bg)}
+  .node.tree{border-color:#1f5f4a;background:var(--green-bg);color:#bbf7d0}
+  .tag{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:#0b1728;white-space:nowrap}
+  .tag.t-tree{border-color:rgba(52,211,153,.45);color:#6ee7b7}
+  .tag.t-flow{border-color:rgba(56,189,248,.45);color:#7dd3fc}
+  .tag.t-warn{border-color:rgba(245,158,11,.45);color:#fcd34d}
+  .tag.t-bad{border-color:rgba(248,113,113,.45);color:#fca5a5}
+  .note{color:var(--muted);font-size:12.5px;margin-left:8px}
+  .note b{color:#fbbf24;font-weight:600}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;color:var(--muted);font-size:12px;margin-top:8px;padding-top:10px;border-top:1px dashed var(--line)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid #2c4a72;background:var(--blue-bg)}
+  .sw.anchor{border-color:var(--amber);background:var(--amber-bg)}
+  .sw.engine{border-style:dashed;border-color:#5b6b85;background:transparent}
+  .sw.ghost{border-color:var(--red);background:var(--red-bg)}
+  .callout{display:flex;gap:12px;align-items:flex-start;background:#0d1b2f;border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:10px;padding:11px 14px;margin:12px 0 0;font-size:13.5px}
+  .callout.bad{border-left-color:var(--red)}
+  .callout.good{border-left-color:var(--green)}
+  .callout .big{font-size:15px;font-weight:700}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .col-title{font-size:13px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+  .col-title.bad{color:#fca5a5}.col-title.good{color:#6ee7b7}
+  .foot{color:var(--dim);font-size:12px;margin-top:26px;border-top:1px solid var(--line);padding-top:14px;line-height:1.8}
+  .foot b{color:var(--muted)}
+  .kbd{font:12px/1.4 ui-monospace,Consolas,monospace;background:#0b1728;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#cbd5e1}
+  @media (max-width:760px){.cards{grid-template-columns:1fr}.two{grid-template-columns:1fr}.node{white-space:normal}.note{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>组合式编排：到底几层？谁管谁？</h1>
+    <p class="sub">看文字容易觉得“多画了一层”——大概率是因为把 <b>引擎</b> 当成了 <b>会话</b>。这张图先把这两个东西分开：<b>引擎是插件/服务，不是会话，不占会话深度。</b></p>
+  </header>
+
+  <section class="cards">
+    <div class="card"><div class="k">组合层数怎么数</div><div class="v">按<b>引擎嵌套次数</b>：tree→flow = <b>2 层</b></div></div>
+    <div class="card"><div class="k">会话深度怎么变</div><div class="v">每嵌一层引擎，只在当前会话下面 <b>+1 层</b></div></div>
+    <div class="card"><div class="k">“管理者”是谁</div><div class="v">就是<b>调用内层引擎的那个会话本身</b>，不是新会话</div></div>
+  </section>
+
+  <nav class="tabs" id="tabs">
+    <button data-p="p1" class="active">① 只有 tree（单层引擎）</button>
+    <button data-p="p2">② 只有 flow（单层引擎）</button>
+    <button data-p="p3">★ 两层 A：tree 叶子带 flow</button>
+    <button data-p="p4">③ 两层 B：flow 节点带 tree</button>
+    <button data-p="p5">④ 三层：tree→flow→tree</button>
+    <button data-p="p6">⑤ 对照：多画一层 vs 实际</button>
+  </nav>
+
+  <!-- ============ ① 单层 tree ============ -->
+  <section class="panel active" id="p1">
+    <h2>① 只有 tree —— 单层引擎</h2>
+    <p class="desc">一个树引擎管一张任务树；“任务节点层级”是树自己的层级，体现为逐层派发出来的会话。</p>
+    <div class="chips"><span class="chip">组合层数：1</span><span class="chip" style="border-color:rgba(52,211,153,.45);color:#6ee7b7">引擎：tree</span></div>
+    <div class="diagram">
+      <div class="row"><span class="depth">d0</span><span class="indent" style="--d:0"></span><span class="node root" style="border-color:#31507a">根会话（root leaf 的 owner）</span><span class="tag t-tree">tree 账本起点</span></div>
+      <div class="row"><span class="depth">d1</span><span class="indent" style="--d:1"></span><span class="branch">└─</span><span class="node tree">指挥官 leaf 会话</span><span class="tag t-tree">commander</span><span class="note">tree_dispatch 起子会话</span></div>
+      <div class="row"><span class="depth">d2</span><span class="indent" style="--d:2"></span><span class="branch">└─</span><span class="node tree">执行 leaf 会话</span><span class="tag t-tree">worker</span><span class="note">干活 + tree_report 回报</span></div>
+      <div class="row"><span class="depth"></span><span class="indent" style="--d:0"></span><span class="node engine">tree 引擎（插件/服务，不是会话，不占层）</span><span class="note">维护任务树账本：依赖/DoD/派发/收割/竹节</span></div>
+    </div>
+    <div class="callout good"><span>📌</span><div><span class="big">一句话：</span>树的“两层”是<b>任务节点的层级</b>，会话按派发逐层 +1；<b>引擎本身不占一层会话</b>。</div></div>
+  </section>
+
+  <!-- ============ ② 单层 flow ============ -->
+  <section class="panel" id="p2">
+    <h2>② 只有 flow —— 单层引擎</h2>
+    <p class="desc">一个流程引擎跑一张 DAG；所有流程节点会话都挂在“调用 flow 的那个会话”下面，<b>是同级平铺</b>，不是一层套一层。</p>
+    <div class="chips"><span class="chip">组合层数：1</span><span class="chip" style="border-color:rgba(56,189,248,.45);color:#7dd3fc">引擎：flow</span></div>
+    <div class="diagram">
+      <div class="row"><span class="depth">d0</span><span class="indent" style="--d:0"></span><span class="node root" style="border-color:#31507a">根会话（调用 flow_run 的会话）</span><span class="tag t-flow">flow 引擎的父会话</span></div>
+      <div class="row"><span class="depth">d1</span><span class="indent" style="--d:1"></span><span class="branch">├─</span><span class="node flow">流程节点 N1 会话</span><span class="note">一次性会话</span></div>
+      <div class="row"><span class="depth">d1</span><span class="indent" style="--d:1"></span><span class="branch">├─</span><span class="node flow">流程节点 N2 会话</span><span class="note">一次性会话</span></div>
+      <div class="row"><span class="depth">d1</span><span class="indent" style="--d:1"></span><span class="branch">└─</span><span class="node flow">流程节点 N3 会话</span><span class="note">一次性会话</span></div>
+      <div class="row"><span class="depth"></span><span class="indent" style="--d:0"></span><span class="node engine">flow 引擎（插件/服务，不是会话，不占层）</span><span class="note">决定顺序/传值/journal/门禁</span></div>
+    </div>
+    <div class="callout good"><span>📌</span><div><span class="big">注意：</span>N1/N2/N3 是<b>同一个深度</b>的兄弟会话；flow 的“顺序”是引擎的调度逻辑，不是会话嵌套。</div></div>
+  </section>
+
+  <!-- ============ ③ 两层 A：tree 叶子带 flow ============ -->
+  <section class="panel" id="p3">
+    <h2>★ 两层 A：tree 的叶子会话带一张 flow</h2>
+    <p class="desc">叶子/commander 会话自己就是内层 flow 的父会话（管理者/锚点），flow 节点会话直接挂在它下面 +1 层。<b>中间没有“flow 管理者会话”。</b></p>
+    <div class="chips"><span class="chip">组合层数：2（tree + flow）</span><span class="chip good">✅ S1 真机已验证</span><span class="chip">最大会话深度：2</span></div>
+    <div class="diagram">
+      <div class="row"><span class="depth">d0</span><span class="indent" style="--d:0"></span><span class="node root" style="border-color:#31507a">根会话</span><span class="tag t-tree">tree 账本</span></div>
+      <div class="row"><span class="depth">d1</span><span class="indent" style="--d:1"></span><span class="branch">└─</span><span class="node anchor">tree 叶子会话 ★</span><span class="tag t-warn">= flow 的父会话 / 管理者</span><span class="note">它自己调 <b>flow_run</b> 并等结果</span></div>
+      <div class="row"><span class="depth">d2</span><span class="indent" style="--d:2"></span><span class="branch">├─</span><span class="node flow">flow 节点 N1 会话</span></div>
+      <div class="row"><span class="depth">d2</span><span class="indent" style="--d:2"></span><span class="branch">├─</span><span class="node flow">flow 节点 N2 会话</span></div>
+      <div class="row"><span class="depth">d2</span><span class="indent" style="--d:2"></span><span class="branch">└─</span><span class="node flow">flow 节点 N3 会话</span></div>
+      <div class="row"><span class="depth"></span><span class="indent" style="--d:0"></span><span class="node engine">tree 引擎（管 d0–d1 的任务树）</span><span class="note">不占层</span></div>
+      <div class="row"><span class="depth"></span><span class="indent" style="--d:0"></span><span class="node engine">flow 引擎（管 d2 的 DAG + journal）</span><span class="note">不占层</span></div>
+    </div>
+    <div class="callout"><span>🎯</span><div><span class="big">这就是“叶子直接驱动 +1 层流程会话”：</span>d1 的叶子既是 tree 的 leaf，也是 d2 那三个节点的父会话；<b>没有额外一层</b>。差别只在“谁做调度”——flow 引擎调度 d2，叶子只负责发包和收结果。</div></div>
+  </section>
+
+  <!-- ============ ④ 两层 B：flow 节点带 tree ============ -->
+  <section class="panel" id="p4">
+    <h2>③ 两层 B：flow 的一个节点会话带一棵 tree</h2>
+    <p class="desc">反向同样成立：<b>flow 的节点会话直接当 tree 的指挥官（真管理者）</b>，tree worker 挂在它下面 +1 层；也没有额外一层。</p>
+    <div class="chips"><span class="chip">组合层数：2（flow + tree）</span><span class="chip warn">⏳ 机制成立，待真机验证</span><span class="chip">最大会话深度：2</span></div>
+    <div class="diagram">
+      <div class="row"><span class="depth">d0</span><span class="indent" style="--d:0"></span><span class="node root" style="border-color:#31507a">根会话（调 flow_run）</span><span class="tag t-flow">flow 引擎</span></div>
+      <div class="row"><span class="depth">d1</span><span class="indent" style="--d:1"></span><span class="branch">└─</span><span class="node anchor">flow 节点会话 ★</span><span class="tag t-warn">= tree commander / 真管理者</span><span class="note">它调 <b>tree_plan / tree_dispatch / harvest / verify</b></span></div>
+      <div class="row"><span class="depth">d2</span><span class="indent" style="--d:2"></span><span class="branch">├─</span><span class="node tree">tree worker A 会话</span></div>
+      <div class="row"><span class="depth">d2</span><span class="indent" style="--d:2"></span><span class="branch">└─</span><span class="node tree">tree worker B 会话</span></div>
+      <div class="row"><span class="depth"></span><span class="indent" style="--d:0"></span><span class="node engine">flow 引擎（管 d0–d1 的流程）</span><span class="note">不占层</span></div>
+      <div class="row"><span class="depth"></span><span class="indent" style="--d:0"></span><span class="node engine">tree 引擎（管 d1–d2 的子树）</span><span class="note">不占层</span></div>
+    </div>
+    <div class="callout good"><span>📌</span><div><span class="big">不对称点：</span>d1 的节点会话是真的“调度员”（自己派、自己收、自己验）；而 A 图里的叶子只是“发包人”（内层顺序由 flow 引擎定）。两者都<b>不</b>额外占一层。</div></div>
+  </section>
+
+  <!-- ============ ⑤ 三层 ============ -->
+  <section class="panel" id="p5">
+    <h2>④ 三层：tree → flow → tree</h2>
+    <p class="desc">三层 = 引擎嵌套三次。<b>每嵌套一次仍然只 +1 层会话</b>；问题不是“多画层”，而是 <b>maxDepth=4 会被用满</b>。</p>
+    <div class="chips"><span class="chip">组合层数：3（tree + flow + tree）</span><span class="chip bad">⚠ 深度零余量</span><span class="chip">maxDepth=4</span></div>
+    <div class="diagram">
+      <div class="row"><span class="depth">d0</span><span class="indent" style="--d:0"></span><span class="node root" style="border-color:#31507a">根会话</span></div>
+      <div class="row"><span class="depth">d1</span><span class="indent" style="--d:1"></span><span class="branch">└─</span><span class="node tree">tree commander leaf 会话</span></div>
+      <div class="row"><span class="depth">d2</span><span class="indent" style="--d:2"></span><span class="branch">└─</span><span class="node anchor">tree worker 会话 ★</span><span class="tag t-warn">它调 flow_run（flow 的父会话）</span></div>
+      <div class="row"><span class="depth">d3</span><span class="indent" style="--d:3"></span><span class="branch">├─</span><span class="node flow">flow 节点会话</span></div>
+      <div class="row"><span class="depth">d3</span><span class="indent" style="--d:3"></span><span class="branch">└─</span><span class="node flow anchor">flow 节点会话（= 内层 tree commander）★</span></div>
+      <div class="row"><span class="depth">d4</span><span class="indent" style="--d:4"></span><span class="branch">├─</span><span class="node tree">内层 tree worker A 会话</span><span class="tag t-bad">第 4 层 = 满</span></div>
+      <div class="row"><span class="depth">d4</span><span class="indent" style="--d:4"></span><span class="branch">└─</span><span class="node tree">内层 tree worker B 会话</span><span class="tag t-bad">第 4 层 = 满</span></div>
+      <div class="row"><span class="depth">d5</span><span class="indent" style="--d:5"></span><span class="branch">✕</span><span class="node ghost">verify / judge / handoff / 再嵌一层 → 第 5 层</span><span class="tag t-bad">SubagentDepthError</span></div>
+    </div>
+    <div class="callout bad"><span>⚠️</span><div><span class="big">为什么三层危险：</span>不是“多了一层画”，而是<b>会话深度正好用满</b>。任何再起子会话的动作（验证评审、交接、再嵌）都会撞 <span class="kbd">maxDepth=4</span>。<br><b>换个挂载点可能放得下：</b>若 flow 挂在更浅的 d1 上（而不是 d2 的 worker），内层 worker 会在 d3、verify 在 d4 —— 刚好。所以“三层能不能跑”取决于<b>挂在哪一级叶子</b>，不是抽象的“三层”。</div></div>
+  </section>
+
+  <!-- ============ ⑥ 对照 ============ -->
+  <section class="panel" id="p6">
+    <h2>⑤ 对照：感觉“多画了一层”，多的是哪一层？</h2>
+    <p class="desc">多出来的是<b>一个并不存在的“管理者会话”</b>。实际结构里，管理者 = 调用内层引擎的那个会话本身（下图 d1 的叶子），它直接当 d2 节点的父会话。</p>
+    <div class="two">
+      <div>
+        <p class="col-title bad">❌ 错误理解：多画了一层“flow 管理者会话”</p>
+        <div class="diagram">
+          <div class="row"><span class="depth">d0</span><span class="indent" style="--d:0"></span><span class="node root" style="border-color:#31507a">根会话</span></div>
+          <div class="row"><span class="depth">d1</span><span class="indent" style="--d:1"></span><span class="branch">└─</span><span class="node tree">tree 叶子会话</span></div>
+          <div class="row"><span class="depth">d2</span><span class="indent" style="--d:2"></span><span class="branch">└─</span><span class="node ghost">“flow 管理者会话” ← 不存在</span></div>
+          <div class="row"><span class="depth">d3</span><span class="indent" style="--d:3"></span><span class="branch">├─</span><span class="node flow">flow 节点会话</span></div>
+          <div class="row"><span class="depth">d3</span><span class="indent" style="--d:3"></span><span class="branch">└─</span><span class="node flow">flow 节点会话</span></div>
+        </div>
+        <p class="col-title bad" style="margin-top:6px">多一层会话、总深度变成 3，且这个“管理者”没有任何真实身份。</p>
+      </div>
+      <div>
+        <p class="col-title good">✅ 实际结构：叶子自己就是父会话</p>
+        <div class="diagram">
+          <div class="row"><span class="depth">d0</span><span class="indent" style="--d:0"></span><span class="node root" style="border-color:#31507a">根会话</span></div>
+          <div class="row"><span class="depth">d1</span><span class="indent" style="--d:1"></span><span class="branch">└─</span><span class="node anchor">tree 叶子会话 ★ 管理者</span></div>
+          <div class="row"><span class="depth">d2</span><span class="indent" style="--d:2"></span><span class="branch">├─</span><span class="node flow">flow 节点会话</span></div>
+          <div class="row"><span class="depth">d2</span><span class="indent" style="--d:2"></span><span class="branch">└─</span><span class="node flow">flow 节点会话</span></div>
+        </div>
+        <p class="col-title good" style="margin-top:6px">只有 3 个深度层级（d0–d2），引擎在幕后记账，不占层。</p>
+      </div>
+    </div>
+    <div class="callout"><span>💡</span><div><span class="big">一句话纠正：</span>“管理者”不是第三种会话，而是<b>一个会话的两种身份</b>——d1 的叶子在 tree 里是 leaf，在 flow 里是父会话/管理者。所以两层组合只加 +1 层，不是 +2 层。</div></div>
+  </section>
+
+  <footer class="foot">
+    <b>证据：</b>S1 组合真机 E2E（tree leaf 内跑 3 节点 flow，flow 节点 depth=2，relay off 下 315 秒成功）·
+    v0.8.0 relay 开关 E2E（off 生效、auto 复现取消）· 组合评估文档 §4.3 深度算术（内层 worker 第 4 层 = 满）。<br>
+    <b>图例：</b><span class="sw"></span> 普通会话　<span class="sw anchor"></span> ★ 管理者/锚点会话　<span class="sw engine"></span> 引擎（不是会话）　<span class="sw ghost"></span> 不存在的会话/超限动作。<br>
+    <b>配套文档：</b>composition-layers-explainer.md（分层问答解说）· composable-orchestration.md（组合评估）· docs/README.md（索引）。本页归档于 docs/architecture/。
+  </footer>
+</div>
+
+<script>
+  const tabs = document.getElementById('tabs');
+  const panels = Array.from(document.querySelectorAll('.panel'));
+  tabs.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-p]');
+    if (!btn) return;
+    tabs.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    const id = btn.dataset.p;
+    panels.forEach(p => p.classList.toggle('active', p.id === id));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>
+</body>
+</html>
