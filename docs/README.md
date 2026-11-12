@@ -2,7 +2,7 @@
 
 > 本目录是 `dsh-tree-harness`（DSH 会话树体系）的**全部开发文档**。本文件是文档的**单一索引**，并规定新增/迁移/归档规则。
 > 改完文档必须跑：`node scripts/check-doc-links.mjs` 与 `node scripts/check-md-tables.mjs`。
-> 当前快照：2026-11-12 · tree-engine **v0.8.0**（9 工具 / 165-165 测试）· session-tree **v1.4.0**（本仓；公开镜像 tag 仍 `v1.3.7` = `91c177e`，v1.4.0 待发布）。组合修复：per-leaf relay 开关 / usagePct 端口修复 / sweep 跨实例生命周期 / tree_send 同树收紧 / 会话界面元数据条（子会话补 model·effort·context%，只读子会话 header chip）。
+> 当前快照：2026-11-12 · tree-engine **v0.8.0**（9 工具 / 165-165 测试）· session-tree **v1.4.0**（公开镜像 tag **v1.4.0 = `0343f0c`**，main + tag，**21/21 SHA**）。组合修复：per-leaf relay 开关 / usagePct 端口修复 / sweep 跨实例生命周期 / tree_send 同树收紧 / 会话界面元数据条（子会话补 model·effort·context%，只读子会话 header chip）。
 
 ## 0. 不同读者的入口
 
@@ -28,7 +28,8 @@
 | [session-tree-ui.md](architecture/session-tree-ui.md) | **会话树 UI 设计与迭代规范**：client.js 代码地图、改哪里的速查、GUI 迭代 7 步流程、UI 变更记录 | 现行（GUI 迭代单一方案） |
 | [composable-orchestration.md](architecture/composable-orchestration.md) | **组合式会话编排体系评估与设计（v0.1）**：会话树基础层 / tree-engine / 自由流程引擎的解耦、组合、递归嵌套与拆分策略；含平台约束、RACI、安全面、红队证伪修订与 5 步最小路线 | 候选·待用户决策（不是已批准决策） |
 | [composition-playbook.md](guides/composition-playbook.md) | **组合编排剧本（2026-11-12 正式版）**：relay 开关硬规则（R1–R8）、tree→flow / flow→tree / tree→flow→tree 三套剧本、maxDepth=5 深度算术、预算与并发、验证清单、一次性→非一次性会话说明、已知边界 | 现行·执行剧本 |
-| [session-metadata-display-2026-11-12.md](reports/session-metadata-display-2026-11-12.md) | **所有会话显示 model / reasoning effort / context 占用**：投影数据源（`modelSelection`/`contextPressure`/`agentPreset`/`tokenUsage`）、5 类会话覆盖矩阵、纯 client 半 MVP 实现计划（行内徽标 + 冷会话预热 + 标题栏槽位）、测试/GUI 验证、UNKNOWN | 研究报告（已转 task-9 实现） |
+| [session-tree-v1.4.0-release-2026-11-13.md](reports/session-tree-v1.4.0-release-2026-11-13.md) | **session-tree v1.4.0 发布记录**：21/21 SHA、镜像 tag `v1.4.0` = `0343f0c`、本仓发布提交 `d8b9f7c`、`ls-remote` 核对；含发布物内容、未验证项（GUI 可视化）与注意事项 | 发布记录 |
+| [session-metadata-display-2026-11-12.md](reports/session-metadata-display-2026-11-12.md) | **所有会话显示 model / reasoning effort / context 占用**：投影数据源（`modelSelection`/`contextPressure`/`agentPreset`/`tokenUsage`）、5 类会话覆盖矩阵、**§9 修正：改到会话界面底部（composer.dock 子会话条 + 只读子会话 header chip）**、测试/GUI 验证、UNKNOWN；GUI 可视化**未验证**（用户 2026-11-13 反馈看不到） | 研究报告 + 实现依据 |
 | [composition-layers-explainer.md](architecture/composition-layers-explainer.md) · [composition-layers.html](architecture/composition-layers.html) | **组合式编排分层问答解说（归档，2026-11-12）**：层数 vs 会话深度、管理者=父会话、root/commander/worker 角色、拆树与审计路径；含可交互 HTML 图解（6 个标签页：单层 tree / 单层 flow / 两层 tree→flow / 两层 flow→tree / 三层 / 多画一层对照） | 解说材料（基于 tree-engine v0.8.0 / 组合评估 v0.1） |
 | [merge-session-tree-2026-11-11.md](architecture/merge-session-tree-2026-11-11.md) | 双包 → 单包合并记录（方案 B⁺）、host/client 契约 | 历史性架构记录 |
 | [s0-decisions.md](architecture/s0-decisions.md) | S0 规范冻结的裁决记录 | 历史性架构记录 |
