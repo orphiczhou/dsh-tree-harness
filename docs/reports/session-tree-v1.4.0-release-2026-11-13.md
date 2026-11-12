@@ -53,5 +53,5 @@ ls-remote:
 ## 4. 发布后补验（2026-11-13，D21）
 
 - **真机三断言首次实际执行并 PASS**：`verify-handoff` 12/12、`verify-kickoff-language` zh、`collect-skills` 1/1（`scripts/e2e/artifacts/release-20261112T171827Z.json`）；首跑暴露验证器**英文-only 假 FAIL** 并已修复（语言无关识别 + 6 例单测；**包内容未变，不影响本发布**）。报告：[e2e-release-three-assertions-2026-11-13.md](e2e-release-three-assertions-2026-11-13.md)。
-- **GUI 可视化复核（D21）**：代码级已确认（root 不渲染、子会话 dock 条、只读子会话 chip；render 151/151、meta 41/41 全绿），但**用户逐项确认仍缺**（NOT VERIFIED 保持开放，见交接 §7.10h 六项点检）。
+- **GUI 可视化复核（D21）**：代码级已确认（root 不渲染、子会话 dock 条、只读子会话 chip；render 151/151、meta 41/41 全绿）；**活体截图（2026-11-13 01:42）确认 root 视图正常**（左侧会话树渲染、root composer 保留官方 `DeepSeek V4.1 Flash Max` + `20%` 上下文读数、root 无重复元数据条）；**子会话视图未确认**（复核时机器进入 Windows 锁屏，无法打开子会话点击验证）→ NOT VERIFIED 保持开放，见交接 §7.10h。
 - **镜像状态**：`release-all.mjs --dry-run` 对账 v1.4.0 = no-op（`files=21 match=21`、镜像 tag `v1.4.0` = `0343f0c`），发布物与源码仍逐字节一致。
