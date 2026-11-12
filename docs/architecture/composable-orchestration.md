@@ -79,7 +79,7 @@
 | 组件 | 版本/形态 | 工具面 | 状态落盘 | UI | 与其它组件的关系 |
 |---|---|---|---|---|---|
 | `@orphiczhou/dsh-session-tree` | v1.3.7，公开插件（镜像仓已发布） | `tree_send`、`session_handoff`（2 个） | 无自有状态（交接写工作区 `HANDOFF-*.md`） | 左栏会话谱系树（`sidebar.workspaces` 槽位，客户端半） | **0 代码依赖**任何引擎；UI 数据 100% 来自 DSH 客户端 slot props（`useSessions`），无 Host RPC |
-| `@local/dsh-tree-engine` | v0.7.0，本仓私有包 | 9 个 `tree_*` | `<profile>/tree-engine-data/<tree_id>/tree-state.json`（单文件全量状态） | 无（仅工具/Inspect 读数） | 依赖 DSH `subagents/sessionQuery/tools`；对 session-tree 仅**软依赖**（叙事 + 可选 `session_handoff` 兜底） |
+| `@local/dsh-tree-engine` | v0.8.0，本仓私有包 | 9 个 `tree_*` | `<profile>/tree-engine-data/<tree_id>/tree-state.json`（单文件全量状态） | 无（仅工具/Inspect 读数） | 依赖 DSH `subagents/sessionQuery/tools`；对 session-tree 仅**软依赖**（叙事 + 可选 `session_handoff` 兜底）；v0.8.0 已加 per-leaf relay 开关 |
 | `@local/dsh-flow-engine`（自由流程） | M1，独立项目 `D:\Codes\DSH动态流程引擎插件` | 4 个 `flow_*` | **profile 钉死的绝对路径单目录** `D:/Codes/…/.dsh-flow/runs/*.jsonl`（不是 per-workspace） | 自有右侧栏只读面板 | 0 代码依赖树/会话树；使用同一批 DSH 会话原语 |
 | `@deepseek-ai/dsh-experimental-agent-team`（平台内置，实验性） | DSH 自带 | `spawn_teammate` / `send_message` / 团队任务板工具 | 持久会话存储 + Lead journal（roster/tasks） | 平台自带 Team 视图（projection） | 平台原生"组织形态"第四种：roster + 扁平任务板（依赖 DAG、CAS）+ 冷恢复；上限 16 成员 / 256 任务；**非树、无验证、无预算** |
 
@@ -365,7 +365,9 @@ child.depth   = parent.depth + 1        # 当前硬上限 = profile maxDepth(4)�
 
 **判决**：**relay 会打断运行中的 flow（经 sweep/harvest 路径实证）**；§7.2 的 per-leaf relay 抑制开关因此是**必须项**，不能靠"宿主测量恰好不可用"兜底。本次也确认 flow 在 leaf 内可正常起（callerOrigin=subagent / permTier=safe / depth 未撞墙），组合的阻塞点不在权限/深度而在 **relay 语义 + 结果交付**。
 
-### 7.2 第 2 步（≤1 人日）｜tree 加 per-leaf relay 抑制开关（**S1 实测后必须项**）
+**v0.8.0 独立复验（2026-11-12，报告 [e2e-relay-switch-2026-11-12.md](../reports/e2e-relay-switch-2026-11-12.md)）**：① `relay:"off"` 生效——`rly8a` 树 leaf 关 relay 后 flow `RLY8A-R1` 跑满 **315.4s / succeeded / integrity=verified**，期间 ≥5 次定时 sweep + 1 次 harvest 均未触发 relay（segmentChain 空、drift 无 bamboo）；② auto 回归——`rly8b`（定时 sweep）与 `rly8c`（harvest）均触发 relay，flow `cancelled / E_RUN_CANCELLED`，复现 S1；③ set-relay 权限正负例 PASS（creator/root 可设、owner 拒 `E_BORROWED_IDENTITY`、非法值 `E_SCHEMA_INVALID`）；④ sweep 注册表对 v0.8.0 实例 PASS（5 次 `previous sweep disposed`），升级前 v0.7.0 僵尸需重启 DSH 清除（已知边界）；⑤ `usagePct` 服务获取已修但首轮 `measure()` 入参契约不匹配 → 仍恒 null（F3）；收口后改为**活 Session + `contextPressure`/`measure` 双读面**，活体 apply.log 已出现 `tokenMeter.measure shape: {"pressure":{"pressureTokens":52509,"contextWindow":1000000},...}`（P0-B 真机 PASS）；同时 `sweepTick` 改 `max(宿主测量, 自报)`，避免测量可用后覆盖自报触发（单测锁死）。
+
+### 7.2 第 2 步（≤1 人日）｜tree 加 per-leaf relay 抑制开关（**S1 实测后必须项；v0.8.0 已实现，D19**）
 
 `tree_node set-context` 已存在，加 `relay: 'auto' | 'off'`；`sweepTick` 的竹节分支读它（`src/engine.js:564-567`）。
 **验收**：同一用例在 `relay:'off'` 下跑到完成、`flow_run` 返回正常、`runtime.segmentChain` 为空；`relay:'auto'` 下复现第 1 步现象（证明开关确实起作用）。
@@ -457,7 +459,7 @@ child.depth   = parent.depth + 1        # 当前硬上限 = profile maxDepth(4)�
 | # | 事项 | 状态（2026-11-12） |
 |---|---|---|
 | 1 | 先做第 1 步**真机压测**（tree→flow，观察 relay 是否自主打断；需要一次真实会话/配额） | **✅ 已完成（2026-11-12）**：结论见 §7.1；报告 [e2e-composition-relay-2026-11-12.md](../reports/e2e-composition-relay-2026-11-12.md)（relay 会打断 flow；宿主测量恒 null；timer 路径不可靠） |
-| 2 | 给 tree-engine 加 **per-leaf relay 抑制开关**（唯一必须的代码改动，约 1 人日） | **已记录待决**（用户 2026-11-12 指示"等更多信息后决策"；**S1 实测后已确认必须**；前置信息已齐：§7.1 + 报告） |
+| 2 | 给 tree-engine 加 **per-leaf relay 抑制开关**（唯一必须的代码改动，约 1 人日） | **✅ 已实施并真机验收（2026-11-12，D19，tree-engine v0.8.0）**：`tree_node {action:"set-relay", relay:"auto"\|"off"}`；`off` 时 sweep 只跳过竹节；单测 165/165；E2E（[报告](../reports/e2e-relay-switch-2026-11-12.md)）：relay:'off' 长 flow 315.4s 穿越 ≥5 次 sweep 不被中断、auto 回归/权限正负例 PASS；同轮收口 F1 validate 假阳性、F2 validate TypeError、F3 usagePct measure 契约（活体 `tokenMeter.measure shape:` 已出现） |
 | 3 | **递归目标**：近期接受"tree→flow"两层组合（不改 maxDepth），还是明确要三层以上（需先调 `maxDepth`、写风险与回滚） | 待用户表态 |
 | 4 | **安全面**：`tree_send` 的显式 `parent` 注入面是否先加调用者/谱系校验（可能改变跨树消息用法） | 待用户表态 |
 | 5 | **拆仓/内核**：现在不拆仓、不建契约内核/注册表，挂两个触发器（npm 解冻 / 第二个独立消费方） | **已记录待决**（用户 2026-11-12 指示"等更多信息后决策"；触发器见 §6.4、§7.6） |

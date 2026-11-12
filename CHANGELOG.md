@@ -34,6 +34,19 @@
 
 ## [Unreleased]
 
+### 2026-11-12 · 组合编排 P0/P1 修复（tree-engine v0.8.0）
+
+**`packages/dsh-tree-engine`（`0.7.0` → `0.8.0`）**
+
+- **P0-A per-leaf relay 开关**：`tree_node` 新增 `action:"set-relay"`（`relay: "auto"|"off"`，缺省 auto，持久化 `leaf.relay`）；`off` 时 `sweepTick` 只跳过竹节（不 promptHandoff/interrupt、不改 runtime.state/owner/segmentChain），超时硬截止与 done 回流语义不变；写权 creator/root（owner 不得自关），越权 `E_BORROWED_IDENTITY`。背景：S1 真机实测 v0.7.0 的 relay 会打断运行中的 flow（journal `cancelled / E_RUN_CANCELLED`）。
+- **P0-B usagePct 端口修复**：新增 `src/token-meter.js`（`resolveTokenMeter` 逐路径独立 try；`extractUsagePct` 支持 `pct/contextPct/context.pct/pressure.pct/usage.pct`、0-1 归一、0-100 截断、非法 null）；修复原 `services.tokenMeter` 未 inject 即抛错导致测量恒 null 的缺陷；成功时首次打印 `tokenMeter.measure shape:`。
+- **P1-C sweep 跨实例生命周期**：新增 `src/sweep.js`（`globalThis[Symbol.for('dsh-tree-engine.sweeps')]` 按 dataDir 键；新 apply 先停旧实例、stop 幂等、异常不吞）+ `index.js` 挂 `ctx.on('dispose')`；热更不再留下僵尸 sweep（实测 reload 日志 `previous sweep disposed (hot-reload zombie)`）。
+- **P1-D relay parent 安全重解析**：relay dispatch 带持久 `parentSessionId`，缓存未命中经 `agents.get` 安全重解析，失败保持 `E_PORTS_PROTOCOL`。
+- **版本/文档**：包 README v0.8.0 节；两份 SKILL **v2.2**（补 relay 开关用法）；测试 **112 → 165/165**（19 个 `.test.js`；新增/更新 relay 12 + token-meter 17 + usage-port 7 + validate 9 + sweep 8）。
+- **独立真机 E2E**（`docs/reports/e2e-relay-switch-2026-11-12.md`）：relay:'off' 下长 flow（315.4s）穿越 ≥5 次 sweep 不被中断（PASS）；auto 回归（timer + harvest 两条路径）复现 `cancelled / E_RUN_CANCELLED`（PASS）；set-relay 权限正负例 PASS；v0.8.0 sweep 注册表每次 apply 均 `previous sweep disposed`（PASS；升级前旧僵尸需重启 DSH 清除）。
+- **E2E 发现的三个缺陷收口**：F1 validate 对已接力 leaf 假阳性 `session_duplicate`（修：当前 session 在自身 chain 中合法）；F2 `tree_status validate` 被 `toError` TypeError 掩盖 issues（修：`queryResultToTool` 原样返回 + render 展示）；F3 `tokenMeter.measure()` 入参契约不匹配（修：改用活 Session + `contextPressure`/`measure` 双读面；活体 apply.log 已出现 `tokenMeter.measure shape:`）。
+- **活体**：`include:tree-engine` disable→enable 后 `tree_doctor` 7/7 PASS · version=0.8.0；独立 E2E 见 `docs/reports/e2e-relay-switch-2026-11-12.md`。
+
 ### 2026-11-12 · Wave 2 收口（tree-engine v0.7.0 + 工具链/发布流程）
 
 **`packages/dsh-tree-engine`（`0.6.0` → `0.7.0`）**

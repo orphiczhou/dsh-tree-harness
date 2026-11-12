@@ -11,8 +11,8 @@
  * v0.2 边界（诚实声明）：
  *   - startContinuable / prompt / interrupt 的精确 spec 形状未 smoke（装载后用
  *     tree_dispatch 单节点实测修正——这正是 S1 smoke 清单第一项）；
- *   - usagePct 端口暂缺（tokenMeter 形状未定）→ 竹节依赖执行者自报（tree_report {context}），
- *     这正是源引擎的自报语义，宿主测量接入后自动生效（先到者生效）。
+ *   - ~~usagePct 端口暂缺（tokenMeter 形状未定）→ 竹节依赖执行者自报~~（v0.8.0 P0-B 修复：
+ *     tokenMeter 安全获取 + 形状防御提取；服务不可达时仍回落自报，先到者生效）。
  */
 import { createEngine } from './src/engine.js'
 import { createVerifier } from './src/verify.js'
@@ -21,6 +21,10 @@ import { fsStore } from './src/store.js'
 import { systemClock } from './src/clock.js'
 import { configFromEnv } from './src/config.js'
 import { runDoctor } from './src/doctor.js'
+// v0.8.0（P0-B）：tokenMeter 形状防御提取抽成纯函数模块（含安全服务获取 / 活 Session 解析）。
+import { resolveLiveSession, resolveTokenMeter, resolveUsagePct } from './src/token-meter.js'
+// v0.8.0（P1-C）：跨模块实例 sweep 注册表（热更 reload 后不再留僵尸 interval）。
+import { startManagedSweep } from './src/sweep.js'
 // W2.3（2026-11-12）：RC2 兼容层双形探测抽成纯逻辑模块（src/compat.js），此处只做装配。
 import {
   buildInterruptAuthorities, detectInterruptMechanism, detectStartMechanism,
@@ -38,7 +42,18 @@ const HANDOFF_INSTRUCTION =
   'K3 产物引用（文件路径或 tool:<name>@<seq>，逐行独立）/ K4 契约变更（无则写"无"）/ K5 继续执行指针），' +
   '然后停止工作等待收割。不要开始新的任务步骤。'
 
-function makePorts(services, log, opts = {}) {
+/** 安全 JSON 化（观测日志用）：循环引用/异常 getter 不抛穿。 */
+function safeJson(value) {
+  try {
+    const json = JSON.stringify(value)
+    return json === undefined ? String(value) : json
+  } catch {
+    try { return String(value) } catch { return '[unserializable]' }
+  }
+}
+
+/** 宿主 makePorts 装配（v0.8.0 起导出：P1-D parent Agent 重解析等可单测）。 */
+export function makePorts(services, log, opts = {}) {
   /** 派发者捕获表（E2E 实证 startContinuable 的 request.parent 必须是活 Agent；
    *  首派从工具 exec.agent 捕获，竹节接力复用；进程内引用，不序列化）。 */
   const parents = new Map()   // `${treeId}/${leafId}` → { agent, sessionId }
@@ -48,6 +63,7 @@ function makePorts(services, log, opts = {}) {
   const graceMs = Math.min(opts.graceMs ?? 12_000, 12_000)
   const pollMs = 2_000
   let usageShapeLogged = false
+  let usageFailLogged = false
 
   /** 从 readSession 快照防御性提取含 K1 标记的简报文本（形状未冻结——尽力提取，失败降级）。 */
   function extractHandoffBrief(snap) {
@@ -87,6 +103,19 @@ function makePorts(services, log, opts = {}) {
       if (!parentAgent) {
         const cached = parents.get(key)
         if (cached?.agent) ({ agent: parentAgent, sessionId: parentSessionId } = cached)
+      }
+      // v0.8.0（P1-D）：进程内缓存未命中（热更 reload 后 Map 为空）时，按 parentSessionId 从 agents
+      // 服务安全重解析活 Agent——否则 reload 后的自主竹节 relay 必失败。重解析失败保持原错误
+      // （E_PORTS_PROTOCOL：不伪造 parent、不静默降级）。
+      if (!parentAgent && parentSessionId) {
+        try { parentAgent = services?.agents?.get?.(parentSessionId) } catch { parentAgent = undefined }
+        if (!parentAgent) {
+          try {
+            const agents = resolveAgentsService(services)
+            parentAgent = agents?.get?.(parentSessionId)
+          } catch { parentAgent = undefined }
+        }
+        if (parentAgent) log(`relay parent Agent re-resolved from agents service (${String(parentSessionId).slice(0, 8)})`)
       }
       if (!parentAgent) {
         const err = new Error('no live parent Agent: dispatch must be invoked via tree_dispatch tool call (exec.agent); bamboo relay requires the dispatcher session still live')
@@ -176,22 +205,55 @@ function makePorts(services, log, opts = {}) {
         return typeof t === 'number' ? t : (t ? Date.parse(t) : null)
       } catch { return null }
     },
-    /** 宿主侧上下文测量（handoff §7 任务 5：tokenMeter.measure；形状防御性提取——
-     *  返回字段首次调用经 log 冻结；任何失败返回 null → 自报信号生效（先到者生效语义））。 */
+    /** 宿主侧上下文测量（handoff §7 任务 5：tokenMeter；任何失败返回 null → 自报信号生效）。
+     *  v0.8.0（P0-B）修复：旧实现对 `services.tokenMeter` 直接取属性——宿主代理对未 inject 的服务
+     *  访问即抛 `cannot get property "tokenMeter" without inject`，catch 后恒 null，`ctx.get` 兜底在
+     *  同一 try 内根本不可达（S1 E2E：usagePct 恒 null）。现改为 resolveTokenMeter 逐路径独立 try
+     *  安全获取 + src/token-meter.js 纯函数提取。
+     *  v0.8.0 收口（E2E F3）：`measure(session)` 的入参是**活 Session**（session.seq/eventAt/snapshotEvents），
+     *  不是 sessionQuery.readSession 快照（实测 `session.snapshotEvents is not a function`）。
+     *  现在：resolveLiveSession 取活 Session（ctx.get('sessions').get → Agent.session 兜底）→
+     *  contextPressure（provider 报量/容量，计算占用率）+ measure（replay 测量，首次成功打 shape 日志）→
+     *  resolveUsagePct 综合。无活 Session / 无容量 → null（回落自报），日志只打一次。 */
     async usagePct(sessionId) {
       try {
-        const meter = services.tokenMeter ?? (typeof ctxRef?.get === 'function' ? ctxRef.get('tokenMeter') : null) ?? ctxRef?.tokenMeter ?? null
-        if (!meter || typeof meter.measure !== 'function') return null
-        const snap = await services.sessionQuery.readSession(sessionId)
-        if (!snap) return null
-        const m = await meter.measure(snap)
-        if (!usageShapeLogged) { usageShapeLogged = true; log(`tokenMeter.measure shape: ${JSON.stringify(m).slice(0, 400)}`) }
-        // 候选字段防御提取：pct / context.pct / pressure.pct / usage.pct（0-100 或 0-1 归一）
-        const cands = [m?.pct, m?.contextPct, m?.context?.pct, m?.pressure?.pct, m?.usage?.pct]
-        for (const c of cands) if (typeof c === 'number' && c >= 0) return c <= 1 ? Math.round(c * 100) : Math.min(100, Math.round(c))
+        const meter = resolveTokenMeter({ services, ctx: ctxRef })
+        if (!meter) {
+          if (!usageFailLogged) { usageFailLogged = true; log('tokenMeter.measure unavailable: tokenMeter not reachable from inject scope → self-report only') }
+          return null
+        }
+        const liveSession = resolveLiveSession({ services, ctx: ctxRef }, sessionId)
+        if (!liveSession) {
+          if (!usageFailLogged) {
+            usageFailLogged = true
+            log(`tokenMeter.measure unavailable: no live Session for ${String(sessionId ?? '').slice(0, 8)} (persisted/inactive session) → self-report only`)
+          }
+          return null
+        }
+        /** @type {{ pressure?: any, measurement?: any, measureError?: any }} */
+        const readings = {}
+        if (typeof meter.contextPressure === 'function') {
+          try { readings.pressure = meter.contextPressure(liveSession) } catch { readings.pressure = undefined }
+        }
+        if (typeof meter.measure === 'function') {
+          try { readings.measurement = await meter.measure(liveSession) } catch (e) { readings.measureError = e }
+        }
+        const pct = resolveUsagePct({ measurement: readings.measurement, pressure: readings.pressure })
+        if (pct !== null || readings.measurement !== undefined || readings.pressure !== undefined) {
+          if (!usageShapeLogged) {
+            usageShapeLogged = true
+            log(`tokenMeter.measure shape: ${safeJson({ pressure: readings.pressure, measurement: readings.measurement }).slice(0, 400)}`)
+          }
+        }
+        if (pct !== null) return pct
+        if (!usageFailLogged) {
+          usageFailLogged = true
+          const reason = readings.measureError?.message ?? 'no pct/tokens+contextWindow shape'
+          log(`tokenMeter.measure unavailable: ${reason} → self-report only`)
+        }
         return null
       } catch (e) {
-        if (!usageShapeLogged) { usageShapeLogged = true; log(`tokenMeter.measure unavailable: ${e?.message ?? e} → self-report only`) }
+        if (!usageFailLogged) { usageFailLogged = true; log(`tokenMeter.measure unavailable: ${e?.message ?? e} → self-report only`) }
         return null
       }
     },
@@ -205,8 +267,8 @@ let engine = null
 let verifier = null
 /** 编排配置（apply 期由 TREE_ENGINE_CONFIG 填充；tree_doctor 报告 sweepMode/超时口径用）。 */
 let orchestraCfg = {}
-/** 当前 sweep 停止器（热更时清理上一代僵尸定时器——E2E#5）。 */
-let currentStopSweep = null
+// v0.8.0（P1-C）：模块级 `currentStopSweep` 已移除——热更 reload 后旧模块实例的变量不可达，
+// 旧 sweep interval 成为僵尸。停止器改由 src/sweep.js 的跨实例注册表（globalThis Symbol，按 dataDir 键）持有。
 
 /** 简易 glob（'*' 与双星展开为段匹配；够 artifact 判定，非全量 minimatch）。
  *  advtx E2E 修复：①双星支持零段匹配（cwd 顶层文件可命中「双星斜杠星.md」）②返回绝对路径
@@ -453,6 +515,21 @@ function toError(r) {
   return err
 }
 
+/**
+ * 引擎查询结果 → 工具结果（v0.8.0 收口 F2，E2E `tree_status{action:"validate"}` 回归）。
+ * `validate` 的失败形态是 `{ok:false, issues:[...]}`（不变式清单，不是异常结果）；
+ * 旧代码对查询统一 `throw toError(r)`，而 `toError` 读 `r.error.code` → `TypeError:
+ * Cannot read properties of undefined (reading 'code')`，用户看不到 issues。
+ * 现在：只有带 `error` 对象的失败才抛错；`{ok:false, issues}` 原样返回（工具面 render/JSON 可见）。
+ * @param {{ok?: boolean, error?: {code: string, message: string}, issues?: any[]} & Record<string, any>} r
+ * @param {string} [sweepMode] 附加只读运行态（工具面展示用）
+ * @returns {Record<string, any>}
+ */
+export function queryResultToTool(r, sweepMode) {
+  if (r && r.ok === false && r.error) throw toError(r)
+  return { ...r, ...(sweepMode !== undefined ? { sweepMode } : {}) }
+}
+
 const ok = (text) => (args, value) => [{ type: 'text', text: typeof text === 'function' ? text(value) : text }]
 
 const TREE_PLAN = {
@@ -486,14 +563,18 @@ const TREE_NODE = {
   description:
     'Node CRUD. add: {leaf_id, session_id, parent, path, role(commander|worker|auditor), added_by, dependencies?[], taskType?}; naming <prefix>-<Role><seq>-<name> (path segment must start uppercase). ' +
     'dependencies must be existing leaf_ids (cycle-checked; dispatch requires all deps done). taskType routes verification policy (research|question|doc|code-change|default). ' +
+    'set-relay: toggles the per-leaf bamboo-joint relay — {leaf_id, relay:"auto"|"off"} (default auto). relay="off" makes the periodic sweep skip bamboo relay for that leaf ' +
+    '(timeout/harvest semantics unchanged, runtime.state untouched) — use it for leaves waiting on external orchestration (flow run / tree_verify / long command) so a relay cannot interrupt them. ' +
+    'Only the leaf creator (added_by) or the root session may toggle it; the executor (owner) cannot. ' +
     'set-status: the closed state machine requires a done event first; the milestone commands are not exposed as tool actions, so set-status done is not reachable from the tool surface — ' +
     'settlement is the done event flowing runtime.state to succeeded plus tree_verify result (two gates, no third structure check).',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
-      action: { type: 'string', enum: ['add', 'get', 'list', 'list-all', 'set-status', 'set-session'] },
+      action: { type: 'string', enum: ['add', 'get', 'list', 'list-all', 'set-status', 'set-session', 'set-relay'] },
       tree_id: { type: 'string' }, leaf_id: { type: 'string' },
       leaf: { type: 'object' }, status: { type: 'string' }, session_id: { type: 'string' },
+      relay: { type: 'string', enum: ['auto', 'off'], description: 'set-relay target state (default auto): off = skip bamboo relay for this leaf.' },
     },
     required: ['action', 'tree_id'],
   },
@@ -505,7 +586,7 @@ const TREE_NODE = {
       const rt = l.runtime
       const rtText = rt ? ` · runtime[state=${rt.state} attempt=${rt.attempt} chain=${(rt.segmentChain ?? []).length} sess=${String(rt.subagentSessionId ?? '').slice(0, 8)}]` : ' · (未派发)'
       const ms = (l.milestones ?? []).length ? ` · ms[${l.milestones.map((m) => `${m.id}:${m.audit_pass ? 'pass' : '...'}`).join(',')}]` : ''
-      return `tree_node: ${l.leaf_id} status=${l.status}${rtText}${ms} ctx=${l.context_usage_pct ?? 0}%`
+      return `tree_node: ${l.leaf_id} status=${l.status}${rtText}${ms} relay=${l.relay ?? 'auto'} ctx=${l.context_usage_pct ?? 0}%`
     }),
   },
   execute: async (args, exec) => {
@@ -516,6 +597,7 @@ const TREE_NODE = {
       'list-all': { cmd: 'leaf:list-all', argv: (a) => [a.tree_id], caller: false },
       'set-status': { cmd: 'leaf:set-status', argv: (a) => [a.tree_id, a.leaf_id, a.status], caller: true },
       'set-session': { cmd: 'leaf:set-session', argv: (a) => [a.tree_id, a.leaf_id, a.session_id], caller: true },
+      'set-relay': { cmd: 'leaf:set-relay', argv: (a) => [a.tree_id, a.leaf_id, a.relay], caller: true },
     }
     const m = map[args.action]
     if (!m) throw new Error(`tree_node: unknown action "${args.action}"`)
@@ -533,7 +615,8 @@ const TREE_DISPATCH = {
     'dod is accepted for compatibility but does NOT reach the child prompt: the acceptance text comes from the leaf taskType policy ' +
     '(leaf.dod is only used by the verifier fallback). assignee.preset is accepted by the schema but is not applied to the child session (known limitation). ' +
     'node stays pending→running; bamboo-joint auto-relay runs inside running (context threshold 42%: brief → interrupt old → start successor; ' +
-    'v0.5.0 rebinds leaf.session_id to the successor so it can report done). cancel: first-wins vs timeout hard deadline.',
+    'v0.5.0 rebinds leaf.session_id to the successor so it can report done). For leaves that wait on external orchestration (flow run / tree_verify / long command), ' +
+    'disable bamboo first via tree_node {action:"set-relay", relay:"off"} (v0.8.0) so a relay cannot interrupt them. cancel: first-wins vs timeout hard deadline.',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
@@ -561,7 +644,9 @@ const TREE_REPORT = {
   name: 'tree_report',
   description:
     'Executor upward reporting. context: report context_usage_pct 0-100 (auto-triggers bamboo-joint relay at 42%; host-side tokenMeter measurement is also wired — ' +
-    'whichever signal arrives first wins). event: append brief_echo/plan/progress/blocked/done/... (12-type closed set; done requires the leaf owner as caller).',
+    'v0.8.0 fixes its safe acquisition; whichever signal arrives first wins, and the leaf self-report is the fallback when tokenMeter is unavailable). ' +
+    'relay="off" leaves record pct but skip the relay (see tree_node set-relay). ' +
+    'event: append brief_echo/plan/progress/blocked/done/... (12-type closed set; done requires the leaf owner as caller).',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
@@ -583,7 +668,7 @@ const TREE_REPORT = {
 
 const TREE_STATUS = {
   name: 'tree_status',
-  description: 'Query: overview (dump), validate (invariants), sessions (budget precheck), harvest (immediate sweep; the engine also sweeps periodically on its timer, or on an in-process interval when no timer service is available).',
+  description: 'Query: overview (dump), validate (invariants; a FAIL returns {ok:false, issues:[...]} with the issue list instead of throwing), sessions (budget precheck), harvest (immediate sweep; the engine also sweeps periodically on its timer, or on an in-process interval when no timer service is available).',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
@@ -592,7 +677,7 @@ const TREE_STATUS = {
     },
     required: ['action', 'tree_id'],
   },
-  output: { schema: { type: 'object' }, render: ok((v) => v?.swept ? `tree_status: harvest ${v.swept.map((s) => `${s.tree_id}:${(s.events ?? []).map((e) => e.event + (e.relay ? `(${e.relay})` : '')).join(',') || '∅'}`).join(' | ')} (sweepMode=${v.sweepMode})` : v?.issues ? `tree_status: validate ${v.ok ? 'PASS' : 'FAIL'} (${v.issues.length} issues)` : `tree_status: ok (sweepMode=${v?.sweepMode ?? '?'})`) },
+  output: { schema: { type: 'object' }, render: ok((v) => v?.swept ? `tree_status: harvest ${v.swept.map((s) => `${s.tree_id}:${(s.events ?? []).map((e) => e.event + (e.relay ? `(${e.relay})` : '')).join(',') || '∅'}`).join(' | ')} (sweepMode=${v.sweepMode})` : v?.issues ? `tree_status: validate ${v.ok ? 'PASS' : 'FAIL'} (${v.issues.length} issues${v.issues.length ? `: ${v.issues.slice(0, 3).map((i) => `${i.type}${i.leaf_id ? `@${i.leaf_id}` : ''}`).join('; ')}${v.issues.length > 3 ? '; …' : ''}` : ''})` : `tree_status: ok (sweepMode=${v?.sweepMode ?? '?'})`) },
   execute: async (args) => {
     if (args.action === 'harvest') {
       const r = await engine.sweepTick()
@@ -600,8 +685,8 @@ const TREE_STATUS = {
     }
     const cmd = { overview: 'treeDump', validate: 'validate', sessions: 'sessionCount' }[args.action]
     const r = await engine.call(cmd, [args.tree_id])
-    if (!r.ok) throw toError(r)
-    return { ...r, sweepMode: engine.sweepModeOf() }
+    // v0.8.0 收口（F2）：validate 失败 = {ok:false, issues}（无 error 对象）——不得走 toError（会 TypeError）
+    return queryResultToTool(r, engine.sweepModeOf())
   },
 }
 
@@ -804,7 +889,7 @@ export function apply(ctx) {
   /** 文件自诊断（Loader 缓存下唯一可靠观测通道）：apply 全程留痕 + 全程容错。 */
   const diagPath = path.join(dataDir, 'apply.log')
   const diag = (msg) => { try { fsp.mkdir(path.dirname(diagPath), { recursive: true }).then(() => fsp.appendFile(diagPath, `${new Date().toISOString()} ${msg}\n`)).catch(() => {}) } catch {} }
-  diag(`apply() entered (v0.7.0); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
+  diag(`apply() entered (v0.8.0); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
   try {
     ctx.inject(['tools', 'subagents', 'sessionQuery'], (scoped) => {
       try {
@@ -839,9 +924,27 @@ export function apply(ctx) {
 
         engine = createEngine({ store: fsStore(dataDir), clock, ...(Object.keys(envConfig.config).length ? { config: envConfig.config } : {}), ...(Object.keys(envConfig.orchestra).length ? { orchestra: envConfig.orchestra } : {}) })
         engine.attachPorts(makePorts(services, log, { ctx, graceMs: envConfig.orchestra.graceMs }))
-        const { sweepMode, stop } = engine.startSweep()
-        if (currentStopSweep) { try { currentStopSweep() } catch {} ; diag('previous sweep disposed (hot-reload zombie)') }   // E2E#5：僵尸 sweep 清理
-        currentStopSweep = stop
+        // v0.8.0（P1-C）：sweep 跨实例生命周期——注册表按 dataDir 键；新 apply 启动前先停旧实例
+        // （热更 reload 后旧 interval 不再是僵尸：S1 E2E 实测 24 条 inactive context / 14 条 sweep_error）。
+        // 同一 dataDir 只允许一个活跃 sweep；stop 异常经 onError 留痕（不静默制造第二个 sweep）。
+        const sweepKey = path.resolve(dataDir)
+        const sweep = startManagedSweep({
+          key: sweepKey,
+          start: () => engine.startSweep(),
+          onError: (e) => diag(`previous sweep stop failed (${sweepKey}): ${e?.message ?? e}`),
+        })
+        if (sweep.stoppedPrevious) diag('previous sweep disposed (hot-reload zombie)')
+        const { sweepMode } = sweep.value
+        // 卸载清理（ctx.on('dispose') 可用时）：dispose 后停本实例 sweep，避免 reload 后残留定时器。
+        try {
+          if (typeof ctx.on === 'function') {
+            ctx.on('dispose', () => {
+              try { if (sweep.stop()) diag('sweep stopped on dispose') } catch (e) { diag(`sweep stop on dispose failed: ${e?.message ?? e}`) }
+            })
+          } else {
+            diag('ctx.on unavailable: sweep ownership kept in dataDir registry (the next apply stops it)')
+          }
+        } catch (e) { diag(`dispose hook attach failed: ${e?.message ?? e}`) }
         verifier = createVerifier({ ports: { glob: hostGlob, readFile: (p) => fsp.readFile(p, 'utf-8'), exec: hostExec } })
         diag(`engine ready (sweepMode=${sweepMode})`)
 
@@ -850,7 +953,7 @@ export function apply(ctx) {
           try { services.tools.register(tool); okCount += 1; diag(`register OK: ${tool.name}`) }
           catch (e) { diag(`register FAILED: ${tool.name}: ${e?.message ?? e}`) }
         }
-        console.log(`[tree-engine] v0.7.0 registered ${okCount}/${TOOLS.length} tools (fs persistence @ ${dataDir}; sweepMode=${sweepMode})`)
+        console.log(`[tree-engine] v0.8.0 registered ${okCount}/${TOOLS.length} tools (fs persistence @ ${dataDir}; sweepMode=${sweepMode})`)
         diag(`apply complete: ${okCount}/${TOOLS.length} registered`)
       } catch (e) {
         diag(`inject callback THREW: ${e?.stack ?? e}`)

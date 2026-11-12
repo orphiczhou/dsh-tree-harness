@@ -4,7 +4,7 @@ description: '树节点执行者（worker）：按派发任务书与 DoD 完成�
 whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / DoD / 结算指令；用户说「按任务书干」「执行这个节点」「干完结算」「自报进度」「继续干，快到上限就交接」「上下文 50% 就交接」；你是树的执行层，需要知道能做什么/不能做什么、竹节协议和 50% 自主交接规则时。'
 ---
 
-# tree-worker SKILL（DSH 版 v2.1，随 tree-engine v0.7.0 分发）
+# tree-worker SKILL（DSH 版 v2.2，随 tree-engine v0.8.0 分发）
 
 > 你是被派发到树节点的**执行者（worker）**。树侧只依赖 tree-engine 的 9 个工具（实际只需 `tree_report` 上报）；
 > 你的工作面很窄：**干活 + 用 `tree_report` 上报 + 到点交接**。不要碰树的结构。
@@ -18,7 +18,7 @@ whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / Do
 - 你能用的工具（工具面）：
   - **必用**：`tree_report {action:"event"|"context", tree_id, leaf_id, …}`（上报）；
   - 只读查询可选：`tree_node {action:"get"|"list", …}`、`tree_log {action:"events"|"drift", …}`、`tree_status {action:"overview", …}`（读状态可以，**不要改**）；
-  - **不要用**：`tree_dispatch`（派发是 commander 职责；工具面不校验 caller 角色，但 worker 擅自派发会破坏树的账本）、`tree_node add/set-status/set-session`、`tree_plan`、`tree_maintain`。worker 不能有子节点——这条由引擎硬拦在 `tree_node add`（对 worker 建子节点 → `E_SCHEMA_INVALID`）。
+  - **不要用**：`tree_dispatch`（派发是 commander 职责；工具面不校验 caller 角色，但 worker 擅自派发会破坏树的账本）、`tree_node add/set-status/set-session/set-relay`、`tree_plan`、`tree_maintain`。worker 不能有子节点——这条由引擎硬拦在 `tree_node add`（对 worker 建子节点 → `E_SCHEMA_INVALID`）。
 
 ## 1. 开工四步（顺序不可倒）
 
@@ -61,6 +61,7 @@ whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / Do
 - `pct` 必须是 **0–100 的整数**（传小数会 `E_SCHEMA_INVALID`），诚实估计。
 - **`pct ≥ 42`（DSH 缺省阈值，可被 `TREE_ENGINE_CONFIG.ctx_segment_threshold` / `bambooThresholdPct` 覆盖）**：引擎会在收割时启动竹节接力——**先中断你的会话，再派新会话接手同一 leaf**（任务书 + 简报 + 同一 `taskType` 策略 DoD；leaf 不变、attempt 不变、链 +1）。这是正常机制，不是故障。若你的 leaf 已是 `active`，状态位会置 `segment_pending`；初始 `pending_brief` 时状态位可能不翻，但收割仍按自报 pct 触发——**别把「没看到 segment_pending」当没上报**。
 - **接力不会瞬间发生**：引擎启动即以 `sweepMode=timer` 注册 60s 周期 sweep（宿主 timer 服务缺失时用进程内 interval 兜底；启动日志里的「无宿主 timer、改用进程内 interval」提示，**不等于没有后台收割**）。你上报后继续干活、等交棒指令；commander 调 `tree_status {action:"harvest"}` 可立即强制扫一轮。
+- **竹节可能被指挥官关掉（v0.8.0）**：若本 leaf 的 `relay="off"`（`tree_node {action:"get"}` 的返回里可查；用于等待外部编排的节点），你的 `pct≥42` 上报仍会记录水位，但 sweep **不会接力**——继续按任务书干，接近 50% 时走 §4 `session_handoff` 兜底。**不要试图自己改 relay**：只有 leaf 的 creator/root 能改（`tree_node {action:"set-relay"}`），执行者调用会 `E_BORROWED_IDENTITY`。
 - 收到**交棒指令**（要求输出 K1–K5 简报）时：立即停止新任务步骤，输出简报：
 
   ```

@@ -2,7 +2,7 @@
 
 > 本目录是 `dsh-tree-harness`（DSH 会话树体系）的**全部开发文档**。本文件是文档的**单一索引**，并规定新增/迁移/归档规则。
 > 改完文档必须跑：`node scripts/check-doc-links.mjs` 与 `node scripts/check-md-tables.mjs`。
-> 当前快照：2026-11-12 · tree-engine **v0.7.0**（9 工具 / 112-112 测试）· session-tree **v1.3.7**（公开镜像 tag `v1.3.7` = `91c177e`）。
+> 当前快照：2026-11-12 · tree-engine **v0.8.0**（9 工具 / 165-165 测试）· session-tree **v1.3.7**（公开镜像 tag `v1.3.7` = `91c177e`）。组合修复：per-leaf relay 开关 / usagePct 端口修复 / sweep 跨实例生命周期 / relay parent 重解析。
 
 ## 0. 不同读者的入口
 
@@ -20,7 +20,7 @@
 
 | 文档 | 内容 | 状态 |
 |---|---|---|
-| [engine-spec.md](architecture/engine-spec.md) | tree-engine 行为规约（S0 冻结版）：树语义、状态机、收敛判据；**v0.7.0 修订：会话预算含 `runtime.segmentChain`；会话 id 归一化（可选 `session-` 前缀）**（§5 表后追加段） | 现行·权威 |
+| [engine-spec.md](architecture/engine-spec.md) | tree-engine 行为规约（S0 冻结版）：树语义、状态机、收敛判据；**v0.7.0 修订：会话预算含 `runtime.segmentChain`；会话 id 归一化（可选 `session-` 前缀）**；**v0.8.0 修订：per-leaf relay 开关（`set-relay`）、usagePct 端口修复、sweep 跨实例生命周期、relay parent 重解析**（§5 表后追加段） | 现行·权威 |
 | [tools-mapping.md](architecture/tools-mapping.md) | 上游工具 → 复合工具映射表（S0 设计稿）；**实际注册以 `packages/dsh-tree-engine/index.js` 的 schema 为准** | 设计稿（部分未实现） |
 | [segment-handoff.md](architecture/segment-handoff.md) | 竹节生长机制设计（pct≥42 同一 leaf 换会话、owner 重绑、链长 5） | 现行 |
 | [features-2026-11-11-spec.md](architecture/features-2026-11-11-spec.md) | 功能规格：会话自交接（A 节）+ 会话树 UI 工作区归档/隐藏/检索（B 节） | 已实现（UI 部分持续迭代） |
@@ -61,6 +61,7 @@
 | [wave2-closeout-2026-11-12.md](reports/wave2-closeout-2026-11-12.md) | **Wave 2 收口报告**：W2.1–W2.8 逐项结论与证据（测试数 84→112、29/29、版本一致性 23 checks、runner/发布脚本演练边界）、未执行项（真机三断言 / 真推）与下一轮候选 |
 | [composition-research-2026-11-12/](reports/composition-research-2026-11-12/README.md) | **组合式会话编排体系 · 专家取证报告集**：E1 仓库耦合 / E2 DSH 平台 asar 能力边界 / E3 自由流程引擎 / E4 SOTA 组合模式 / R5 红队证伪评审（2026-11-12 评估的原始证据；结论见 [architecture/composable-orchestration.md](architecture/composable-orchestration.md)） |
 | [e2e-composition-relay-2026-11-12.md](reports/e2e-composition-relay-2026-11-12.md) | **S1 真机 E2E**：竹节 relay 是否打断运行中的 flow（实测 `cancelled / E_RUN_CANCELLED`）、宿主 `usagePct` 恒 null（inject 缺陷）、timer 自主路径受 reload 残影影响、per-leaf relay 开关建议 |
+| [e2e-relay-switch-2026-11-12.md](reports/e2e-relay-switch-2026-11-12.md) | **v0.8.0 独立真机 E2E**：relay:'off' 长 flow 跑满 PASS / auto 回归复现暂停 / set-relay 权限正负例 / usagePct 服务获取已修但 measure 契约待收口 / v0.8.0 sweep 注册表 PASS + 旧僵尸已知边界；含 F1–F6 finding |
 
 ## 4. 归档（archive/）
 

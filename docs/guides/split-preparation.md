@@ -24,7 +24,7 @@
 | 包 | 源码位置 | 版本 | 在 hmr.root | git | 发布面 | 拆分前置（详见 §4） |
 |---|---|---|---|---|---|---|
 | `@orphiczhou/dsh-session-tree` | `packages/dsh-session-tree` | 1.3.7 | ✅ | 本仓 | 公开镜像 `orphiczhou/dsh-session-tree`（`main`=tag `v1.3.7`=`91c177e`） | 改 D1 决策；hmr 策略；A1–A13 引用点（≈3 人日量级） |
-| `@local/dsh-tree-engine` | `packages/dsh-tree-engine` | 0.7.0 | ✅ | 本仓 | 无（随本仓公开） | `@local`/`private`/元数据/CI；硬编码测试（B-7–B-10，≈6 人日量级） |
+| `@local/dsh-tree-engine` | `packages/dsh-tree-engine` | 0.8.0 | ✅ | 本仓 | 无（随本仓公开） | `@local`/`private`/元数据/CI；硬编码测试（B-7–B-10，≈6 人日量级） |
 | `@local/dsh-agent-introspect` | `packages/dsh-agent-introspect` | 0.1.0 | ✅ | 本仓 | 无 | **建议随本仓保留**（最小，无独立发布需求） |
 | `@local/dsh-flow-engine`（+`flow-core`） | `D:\Codes\DSH动态流程引擎插件\spike\{dsh-flow-plugin,flow-core}` | 0.1.0 | ❌ | 项目 git **无 remote** | 无 | **非自包含**：`lib/core-adapter.js:26` 相对路径加载 `../../flow-core`；profile 绝对 `storageDir`（B-12/B-13） |
 
@@ -77,9 +77,9 @@
 
 ### 4.2 `dsh-tree-engine`（工作量 L，≈6 人日 + 门禁追加）
 
-- **阻塞项**：`@local` scope 不可发布 + `private:true` + 缺 `repository/license/author`（四处联动：`package.json`、patch、`src/doctor.js:34`、`tests/doctor.test.js`）；无发布管线；`tests/diff.test.js:26,69` 硬编码 `D:/Codes/tree-harness/tree-engine.cjs`（无守卫→新仓 112 项中 3 项必挂）；`tests/skills.test.js` 仓根假设；`src/doctor.js` 提示串；版本一致性脚本以本包为"本仓"判据。
+- **阻塞项**：`@local` scope 不可发布 + `private:true` + 缺 `repository/license/author`（四处联动：`package.json`、patch、`src/doctor.js:34`、`tests/doctor.test.js`）；无发布管线；`tests/diff.test.js:26,69` 硬编码 `D:/Codes/tree-harness/tree-engine.cjs`（无守卫→新仓 165 项中 3 项必挂）；`tests/skills.test.js` 仓根假设；`src/doctor.js` 提示串；版本一致性脚本以本包为"本仓"判据。
 - **保留不变**：9 个工具名、`providerName: tree-engine`、状态目录名、SKILL 对 session-tree 的包名引用。
-- **验收**：新仓 112/112（或替换 diff 基准后全绿）+ `tree_doctor` 7 checks + 至少一次真机 dispatch/relay 复测。
+- **验收**：新仓 165/165（或替换 diff 基准后全绿）+ `tree_doctor` 7 checks + 至少一次真机 dispatch/relay 复测。
 
 ### 4.3 `dsh-flow-engine`（先解决自包含）
 
@@ -122,7 +122,7 @@
 ## 7. 验收清单（DoD）
 
 - [ ] 决策记录已更新（D1 反转/D19 或等价），并写清"事实源/发布通道/回滚"。
-- [ ] 源仓测试全绿快照 + 目标仓测试全绿（含原 112/112 或等价替换后的数字）。
+- [ ] 源仓测试全绿快照 + 目标仓测试全绿（含原 165/165 或等价替换后的数字）。
 - [ ] 硬编码路径清零或加守卫（源报告 §5.3 全表）。
 - [ ] profile `link:` / bundle / patch / skill provider 切换后活体验收（工具面 + Inspect + `apply.log`）。
 - [ ] hmr 策略落地（新仓加入 root 或接受 reload 并写进流程）。

@@ -67,6 +67,8 @@ STATUS_ENUM = [active, done, pruned, archived, segment_pending, pending_brief]
 
 > **修订（2026-11-12，tree-engine v0.7.0）**：本仓 DSH 实现（`packages/dsh-tree-engine`）对第 5 节表格的补充说明——**会话预算集合** = `leaf.session_id` ∪ `leaf.segment_chain` ∪ `leaf.runtime.segmentChain` ∪ `session_registry`（按归一化会话 id 去重；W2.1 起把竹节接力产生的会话计入，`src/guards.js` 预算口径与 `src/engine.js` `validate` 同步）；`leaf.runtime.history` 中**接力前**的旧会话暂不计入（已知边界，留待「`runtime.history` 预算口径」议题）。**会话 id 归一化**：可选 `session-` 前缀（DSH 根/主会话形态）与裸 UUID 视为同一会话，写入侧剥前缀 + 小写后存规范形，比较侧 `normalizeSessionId` / `sameSession` 归一化后再比较；**UUID v4 严格性不放宽**（归一化后非 v4 仍 `E_INVALID_UUID_STRICT`），历史带前缀旧值按归一化读取。本节以外的冻结正文不变。
 
+> **修订（2026-11-12，tree-engine v0.8.0）**：本仓 DSH 实现对第 5 节表格的补充说明（组合编排 P0/P1）——① **per-leaf relay 开关**：leaf 增加可选 `relay: 'auto' | 'off'`（缺省 `auto`，持久化）；写面 `tree_node {action:"set-relay"}` 仅 leaf 的 creator/root 可调（owner 不得自关），非法值 fail-closed；`relay:'off'` 时 `sweepTick` 的竹节分支**只跳过 relay**（不 `promptHandoff`、不 `interrupt`、不改 `runtime.state` / owner / segmentChain），超时硬截止与 done 回流语义保持不变。② **上下文测量端口**：`tokenMeter.measure` 经安全获取 + 形状提取（`src/token-meter.js`）；测量不可达时回落执行者自报（先到者生效语义不变），首次成功打印 `tokenMeter.measure shape:` 供复核。③ **sweep 生命周期**：`src/sweep.js` 跨模块实例注册表（按 dataDir 键）+ `ctx.on('dispose')`；新 apply 先停旧 sweep，热更新不再遗留僵尸 interval。④ **relay parent 重解析**：缓存未命中时经 `agents.get(parentSessionId)` 安全重解析，失败保持 `E_PORTS_PROTOCOL`。本节以外的冻结正文不变。
+
 ## 6. 并发与入口契约
 
 - **入口 `run(cmd, args, treesRoot?)`：永不 throw**；成功 `{ok:true,...}`，失败 `{ok:false, error:{code,message,help_topic?}}`——MCP handler 与测试共用唯一 choke point；per-call treesRoot try/finally 防跨请求污染。

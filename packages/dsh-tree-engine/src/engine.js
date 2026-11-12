@@ -88,6 +88,9 @@ export function createEngine(opts) {
       if (!state) treeError('E_TREE_NOT_FOUND', `tree "${treeId}" not found`)
       if (!leaf || typeof leaf !== 'object') treeError('E_SCHEMA_INVALID', 'leaf object required')
       const { leaf_id, session_id: rawSessionId, parent, path: leafPath, role, added_by: rawAddedBy } = leaf
+      // v0.8.0（P0-A）：per-leaf 竹节开关持久化；缺省 auto（参与竹节），仅接受 auto|off。
+      const relay = leaf.relay === undefined ? 'auto' : leaf.relay
+      if (relay !== 'auto' && relay !== 'off') treeError('E_SCHEMA_INVALID', `leaf.relay "${String(leaf.relay)}" must be "auto" or "off"`)
       // W2.6：会话 id / 创建者 id 归一化后再校验/存储（调用方传 `session-` 前缀形态也可）
       const session_id = rawSessionId == null ? rawSessionId : normalizeSessionId(rawSessionId)
       const added_by = normalizeSessionId(rawAddedBy)
@@ -150,7 +153,7 @@ export function createEngine(opts) {
       const ab = activeLeafBudget(state, cfg)
       if (ab.reached) treeError('E_NODE_BUDGET_EXCEEDED', `tree "${treeId}" active leaves ${ab.count + 1} > node_budget ${ab.max}`)
       state.leaves[leaf_id] = {
-        ...leaf, status: leaf.role === 'worker' ? 'pending_brief' : 'active',
+        ...leaf, relay, status: leaf.role === 'worker' ? 'pending_brief' : 'active',
         created_at: nowIso(clock), events: [], milestones: [], segment_chain: [], drift_history: [],
         context_usage_pct: 0, nudge_count: 0,
       }
@@ -232,6 +235,24 @@ export function createEngine(opts) {
       }
       await store.write(treeId, state)
       return { leaf: { leaf_id: leafId, verification: leaf.verification } }
+    })
+  }
+
+  // ── set-relay（v0.8.0 P0-A：per-leaf 竹节开关）────────────────
+  // 等待外部编排（flow / tree_verify / 长命令）的 leaf 可由指挥官把竹节关掉：
+  // leaf.relay='off' 时 sweep 跳过该 leaf 的竹节判定（超时/收割语义不变、不改 runtime.state），
+  // 避免 relay 在外部编排运行中 interrupt 旧会话把 flow 打断。
+  // 写权：LEAF_WRITE_MATRIX.relay = creator/root（owner 不得自关；root leaf 本身不参与竹节）。
+  async function setRelay(args, caller) {
+    const [treeId, leafId, relayRaw] = args
+    const relay = relayRaw === undefined ? 'auto' : relayRaw
+    if (relay !== 'auto' && relay !== 'off') treeError('E_SCHEMA_INVALID', `relay "${String(relayRaw)}" must be "auto" or "off"`)
+    return withTree(treeId, async (state) => {
+      const leaf = mustLeaf(state, leafId)
+      assertLeafWriter(state, leaf, caller, 'relay', state.leaves?.[`${treeId}-root`]?.session_id)
+      leaf.relay = relay
+      await store.write(treeId, state)
+      return { leaf: { leaf_id: leafId, relay, status: leaf.status } }
     })
   }
 
@@ -341,12 +362,25 @@ export function createEngine(opts) {
     const [treeId] = args
     return withTree(treeId, async (state) => {
       const issues = []
-      const seen = new Map()
-      // W2.1 + W2.6：会话唯一性按归一化比较，且 runtime.segmentChain（竹节接力历史）纳入校验
+      // W2.1 + W2.6：会话唯一性按归一化比较，且 runtime.segmentChain（竹节接力历史）纳入校验。
+      // v0.8.0 收口（E2E F1）：竹节 relay 的合法形态是「当前执行者 session_id 同时出现在本 leaf 的
+      // 接力链里」（relay 先 push 新会话进 runtime.segmentChain，再把它绑成 leaf.session_id）——
+      // 旧口径先记 session_id 再遍历 chain，会把这一合法形态误报成 session_duplicate（rly8b/s1rl1 复现）。
+      // 现在：每个 leaf 允许「自己的当前 session_id」在自己的会话集合中出现一次（selfChainSeen 去重）；
+      // 同一 id 在自有 chain 里重复出现、或跨 leaf 复用，仍是真重复（照旧 FAIL）。
+      const seen = new Map()            // normalized session id → 首次认领它的 leaf_id
+      const selfChainSeen = new Set()   // `${leaf_id}\u0000${normalized id}`：已豁免过一次的自身 chain 条目
       const noteSid = (leaf, sid, where) => {
         const norm = normalizeSessionId(sid)
-        if (seen.has(norm)) issues.push({ type: 'session_duplicate', leaf_id: leaf.leaf_id, detail: `${where} duplicates ${seen.get(norm)}` })
-        else seen.set(norm, leaf.leaf_id)
+        if (typeof norm !== 'string' || !norm) return
+        const firstOwner = seen.get(norm)
+        if (firstOwner === undefined) { seen.set(norm, leaf.leaf_id); return }
+        const selfKey = `${leaf.leaf_id}\u0000${norm}`
+        if (firstOwner === leaf.leaf_id && sameSession(norm, leaf.session_id) && !selfChainSeen.has(selfKey)) {
+          selfChainSeen.add(selfKey)
+          return
+        }
+        issues.push({ type: 'session_duplicate', leaf_id: leaf.leaf_id, detail: `${where} duplicates ${firstOwner}` })
       }
       for (const leaf of Object.values(state.leaves)) {
         if (leaf.session_id) noteSid(leaf, leaf.session_id, 'session_id')
@@ -503,6 +537,9 @@ export function createEngine(opts) {
       treeId, leafId: leaf.leaf_id, prompt: rt.taskPrompt ?? leaf.brief, dod: leaf.dod,
       assignee: leaf.assignee ?? (leaf.model && leaf.model !== 'unknown' ? { model: leaf.model } : undefined),
       handoffBrief: brief, segmentIndex: (rt.segmentChain ?? []).length + 1, attempt: rt.attempt,
+      // v0.8.0（P1-D）：持久父地址随 relay 传给宿主端口——热更后进程内 Agent 缓存丢失时，
+      // 宿主可经 agents.get(parentSessionId) 安全重解析活 Agent（否则 reload 后自主 relay 必失败）。
+      parentSessionId: rt.parentSessionId ?? null,
     })
     rt.history.push({ sessionId: rt.subagentSessionId, state: 'running', endedAt: clock.now(), note: 'bamboo-relay' })
     if (briefState === 'ok' || briefState === 'manual') rt.handoffBrief = brief
@@ -560,12 +597,21 @@ export function createEngine(opts) {
               continue
             }
             // 竹节检查
-            let usage = null
-            try { if (typeof ports.usagePct === 'function') usage = await ports.usagePct(rt.subagentSessionId) } catch { usage = null }
-            const pct = (typeof usage === 'number') ? usage : (leaf.context_usage_pct ?? 0)
-            if (pct >= orchCfg.bambooThresholdPct && leaf.role !== 'root') {
-              const r = await bambooRelay(treeId, leaf, rt, state)
-              events.push({ leaf_id: leaf.leaf_id, event: 'bamboo', ...r })
+            // v0.8.0（P0-A）：per-leaf relay 开关——leaf.relay==='off' 时跳过竹节（只跳过 relay，
+            // 超时/收割语义与 runtime.state 不变），供等待外部编排（flow/verify/长命令）的 leaf 使用。
+            if (leaf.relay !== 'off') {
+              let usage = null
+              try { if (typeof ports.usagePct === 'function') usage = await ports.usagePct(rt.subagentSessionId) } catch { usage = null }
+              // v0.8.0 收口（F3 生效后的口径）：宿主测量与自报是「∨ / 先到者生效」双信号——
+              // 任一信号达阈值即触发。旧写法在测量可用时**覆盖**自报（pct = usage ?? self），
+              // 会让「执行者自报已到点、但宿主测量尚未反映」的会话失去竹节；取高即保留两路信号。
+              const measured = (typeof usage === 'number') ? usage : -1
+              const selfReported = (typeof leaf.context_usage_pct === 'number') ? leaf.context_usage_pct : 0
+              const pct = Math.max(measured, selfReported)
+              if (pct >= orchCfg.bambooThresholdPct && leaf.role !== 'root') {
+                const r = await bambooRelay(treeId, leaf, rt, state)
+                events.push({ leaf_id: leaf.leaf_id, event: 'bamboo', ...r })
+              }
             }
           }
           await store.write(treeId, state)
@@ -757,7 +803,7 @@ export function createEngine(opts) {
     init, validate, treeDump, sessionCount,
     'leaf:add': leafAdd, 'leaf:get': leafGet, 'leaf:list-active': leafListActive, 'leaf:list-all': leafListAll,
     'leaf:set-status': setStatus, 'leaf:set-session': setSession, 'leaf:set-context': setContext,
-    'leaf:set-verification': setVerification,
+    'leaf:set-verification': setVerification, 'leaf:set-relay': setRelay,
     'event:append': eventAppend, 'event:list': eventList, 'segment:append': segmentAppend,
     'nudge:append': nudgeAppend, 'nudge:reset': nudgeReset,
     'drift:append': driftAppend, 'drift:list': driftList,

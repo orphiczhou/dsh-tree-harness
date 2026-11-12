@@ -134,6 +134,8 @@ export function assertCallerIs(/** @type {any} */ caller, /** @type {string} */ 
  *   cancel            ✅      ✅      ✅   dispatch:cancel：执行者/指挥官/root 均可止血
  *   status            ✅      ✅      ✅   保持既有语义（owner/creator/root）
  *   set-session       ❌      ✅      ❌   保持既有语义（仅 added_by 重绑；root 例外未开，避免扩大写面）
+ *   relay             ❌      ✅      ✅   v0.8.0 per-leaf 竹节开关（set-relay）：指挥官/root 决定节点是否参与竹节；
+ *                                          执行者（owner）不得自关——等待外部编排的 leaf 由派发方在派发前/后设置
  *
  * 判定 fail-closed：caller 必须是 owner/creator/root 中的非空会话 id 字符串之一；
  * 缺失/空串/非字符串（含 caller 提取失败）一律拒。
@@ -147,6 +149,8 @@ export const LEAF_WRITE_MATRIX = Object.freeze({
   cancel: Object.freeze({ owner: true, creator: true, root: true }),
   status: Object.freeze({ owner: true, creator: true, root: true }),
   'set-session': Object.freeze({ owner: false, creator: true, root: false }),
+  // v0.8.0（P0-A）：per-leaf 竹节开关。仅指挥官（creator）与 root 信任锚可改——owner 不得自关竹节。
+  relay: Object.freeze({ owner: false, creator: true, root: true }),
 })
 
 const isNonEmptyString = (v) => typeof v === 'string' && v.length > 0
@@ -165,7 +169,7 @@ function ruleForKind(kind) {
  * @param {object} state 当前树状态（用于在省略 rootSessionId 时解析 root 信任锚）
  * @param {object} leaf 目标 leaf（须已存在；缺失由调用方 mustLeaf 先处理）
  * @param {string} caller 调用会话 id
- * @param {'context'|'verification'|`event:${string}`|'cancel'|'status'|'set-session'} kind 写操作种类
+ * @param {'context'|'verification'|`event:${string}`|'cancel'|'status'|'set-session'|'relay'} kind 写操作种类
  * @param {string} [rootSessionId] root leaf 的 session_id（缺省从 state.tree_id 派生）
  * @returns {true}
  */

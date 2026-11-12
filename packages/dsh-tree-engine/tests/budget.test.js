@@ -221,19 +221,20 @@ test('接力 3 次（真实 bambooRelay）+ 新建 1 叶子：count 精确、own
   assert.equal((await engine.call('sessionCount', ['w21bud'])).count, 5)
 })
 
-// ── e. validate：runtime.segmentChain 纳入重复检测 ──────────────────
-test('validate：runtime.segmentChain 与 session_id 同会话（跨形态）→ session_duplicate；修复后 ok', async () => {
+// ── e. validate：runtime.segmentChain 纳入重复检测（F1 收口后口径）──────────
+test('validate：runtime.segmentChain 自身当前会话合法（F1）；跨 leaf 复用仍 session_duplicate', async () => {
   const { engine, store } = await newEngine({ max_sessions: 10 })
   await engine.call('init', ['w21bud', {}, {}, R])
   const state = await store.read('w21bud')
+  // F1 收口：竹节接力合法形态——当前执行者 session_id 同时出现在自己的 relay 链里 → PASS
   state.leaves['w21bud-C1-worker'] = leafOf('w21bud-C1-worker', S1, [], [P(S1)])
   await store.write('w21bud', state)
   let v = await engine.call('validate', ['w21bud'])
-  assert.equal(v.ok, false)
-  assert.ok(v.issues.some((i) => i.type === 'session_duplicate' && i.leaf_id === 'w21bud-C1-worker' && /runtime\.segmentChain/.test(String(i.detail))), JSON.stringify(v.issues))
-  // 换成不重复的接力历史 → 无 session_duplicate
-  state.leaves['w21bud-C1-worker'].runtime.segmentChain = [P(S2)]
+  assert.equal(v.ok, true, JSON.stringify(v.issues))
+  // 真重复：把 root 会话（别的 leaf）塞进本 leaf 的 relay 链 → 不被豁免，仍报 duplicate
+  state.leaves['w21bud-C1-worker'].runtime.segmentChain = [P(R)]
   await store.write('w21bud', state)
   v = await engine.call('validate', ['w21bud'])
-  assert.equal(v.ok, true, JSON.stringify(v.issues))
+  assert.equal(v.ok, false)
+  assert.ok(v.issues.some((i) => i.type === 'session_duplicate' && i.leaf_id === 'w21bud-C1-worker' && /runtime\.segmentChain/.test(String(i.detail))), JSON.stringify(v.issues))
 })

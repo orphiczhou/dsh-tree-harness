@@ -19,7 +19,7 @@
 
 | 包 | 版本 | 能力 | 测试 | 当前状态 |
 |---|---|---|---|---|
-| [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.7.0 | 执行层：9 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain` / **`tree_doctor` 只读自检**），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准、leaf 写面护栏（`LEAF_WRITE_MATRIX`）；Wave-2 增补：**W2.1** 会话预算计入竹节链（`runtime.segmentChain` 归一化去重）、**W2.3** RC2 兼容层抽 `src/compat.js`（双形探测 + 11 测）、**W2.6** root/主会话 id 归一化（`session-` 前缀与裸 UUID 等价比较）；**随包 tree-commander/tree-worker Skill v2.1** | **112/112** | ✅ 运行中（本机 desktop profile 已装载，活体 v0.7.0） |
+| [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.8.0 | 执行层：9 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain` / **`tree_doctor` 只读自检**），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准、leaf 写面护栏（`LEAF_WRITE_MATRIX`）；Wave-2 增补：**W2.1** 会话预算计入竹节链（`runtime.segmentChain` 归一化去重）、**W2.3** RC2 兼容层抽 `src/compat.js`（双形探测 + 11 测）、**W2.6** root/主会话 id 归一化（`session-` 前缀与裸 UUID 等价比较）；**v0.8.0 组合修复**：per-leaf relay 开关（`tree_node {action:"set-relay"}`）、tokenMeter 测量端口修复、sweep 跨实例（热更僵尸）生命周期、relay parent 重解析；**随包 tree-commander/tree-worker Skill v2.2** | **165/165** | ✅ 运行中（本机 desktop profile 已装载，活体 v0.8.0） |
 | [`packages/dsh-agent-introspect`](packages/dsh-agent-introspect/) | 0.1.0 | 自省层：`self_spec` 工具，投影当前会话的 model / permissions / sandbox / cwd / token 用量 | —（无单测） | ✅ 运行中 |
 | [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.3.7** | 会话树单包：左栏嵌套会话树 + `tree_send` 跨层级消息工具 + **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回 | 包内 6 个测试入口（handoff **41/41**、render 全绿、style-guard 22/22、verify-bundle 0 fail、provider-conformance **29/29**） | 🌐 GitHub 公开（**v1.3.7** = `91c177e`，镜像 `main` + tag，19/19 SHA）、社区市场已收录；**npm 未发布** |
 
@@ -98,7 +98,7 @@ plugin_manager({ action: "install_bundle", target: "D:/Codes/dsh-tree-harness/pa
 
 ```powershell
 cd packages/dsh-tree-engine
-node --test tests/*.test.js     # tests 112 / pass 112 / fail 0（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 11 compat + 10 identity + 7 budget）
+node --test tests/*.test.js     # tests 165 / pass 165 / fail 0（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 11 compat + 10 identity + 7 budget + 12 relay + 17 token-meter + 7 usage-port + 9 validate + 8 sweep）
 ```
 
 > 14 个 `.test.js`；Wave-2 新增 `tests/compat.test.js`（11）、`tests/identity.test.js`（10）、`tests/budget.test.js`（7），原 84 项不回归。
@@ -149,17 +149,17 @@ node test/provider-conformance.cjs [asar 解包目录]
 - 所有 DOM 副作用放在 `apply(ctx)` 里；
 - 客户端半热更会**残留旧实例**：用单例注册表 + 令牌仲裁压制，彻底干净仍需刷新一次页面。
 
-### 随包 Skill（SKILL 工程化，v0.7.0 / v1.3.7）
+### 随包 Skill（SKILL 工程化，v0.8.0 / v1.3.7）
 
 Skill 是插件工程的一部分，与工具同包、同版本、同发布：
 
 | 包 | 随包 Skill | 挂载方式 |
 |---|---|---|
-| `packages/dsh-tree-engine` v0.7.0 | `skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md` | `cordis.patch.yml` 第 2 行 insert `@deepseek-ai/dsh-skill-filesystem`（`providerName: tree-engine`、`includeDefaultRoots:false`、`bundledSkillDir` 经安装包身份解析到包内 `skills/`） |
+| `packages/dsh-tree-engine` v0.8.0 | `skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md` | `cordis.patch.yml` 第 2 行 insert `@deepseek-ai/dsh-skill-filesystem`（`providerName: tree-engine`、`includeDefaultRoots:false`、`bundledSkillDir` 经安装包身份解析到包内 `skills/`） |
 | `packages/dsh-session-tree` v1.3.7 | `skills/session-handoff/SKILL.md` | 同模式，`providerName: session-tree` |
 
 - 效果：新会话的 Skill 目录直接出现 `tree-commander` / `tree-worker` / `session-handoff`，模型在**极简提示词**下即可发现「分层分解 / 逐层干活 / 上下文 50% 自主交接」的用法，不需要先把工具名喂给它；真机验证见 [docs/reports/skill-e2e-2026-11-11.md](docs/reports/skill-e2e-2026-11-11.md)。
-- 版本：`tree-commander` / `tree-worker` 两份 SKILL 本轮随 tree-engine **v0.7.0 升到 Skill v2.1**（9 工具、会话 id 归一化、预算口径）；`session-handoff` SKILL 随会话树 **v1.3.7**（SKILL 文件本身未改）。
+- 版本：`tree-commander` / `tree-worker` 两份 SKILL 随 tree-engine **v0.8.0 升到 Skill v2.2**（9 工具、会话 id 归一化、预算口径、per-leaf relay 开关 `tree_node {action:"set-relay"}`）；`session-handoff` SKILL 随会话树 **v1.3.7**（SKILL 文件本身未改）。
 - 打包回归：`packages/dsh-tree-engine/tests/skills.test.js`（4 项）与 `packages/dsh-session-tree/test/skills.test.cjs`（3 项）校验 frontmatter、`package.json.files`、patch provider 行与旧路径清理。
 - 发布：会话树单包的 `skills/` 随 `package.json.files` 发布到公开插件仓（v1.3.7 = `91c177e`，release-plugin 19/19 SHA 一致）；tree-engine 为仓内插件，Skill 随本仓公开。
 - 热更：新增/修改 patch 行受 D12 约束——对相应 bundle entry 做一次 disable→enable 或重启 DSH。
@@ -177,7 +177,7 @@ DSH Loader 对**宿主模块按包名缓存**：
 
 ```
 packages/
-  dsh-tree-engine/       执行层：src/ 纯逻辑（含 compat.js / guards.js）+ index.js 宿主适配 + tests/（14 个 .test.js + 偏差登记）
+  dsh-tree-engine/       执行层：src/ 纯逻辑（含 compat.js / guards.js / token-meter.js / sweep.js）+ index.js 宿主适配 + tests/（19 个 .test.js + 偏差登记）
   dsh-agent-introspect/  自省层：index.js（self_spec）
   dsh-session-tree/      会话树单包（发布产物，与公开镜像仓同步；含 tree_send + session_handoff）
 docs/                    规约、设计、交接（operations/）、一次性报告（reports/）、发布与审计文档
@@ -226,7 +226,7 @@ scripts/                 asar-tool / release-plugin / release-all（W2.7 一条�
 
 1. **tree-engine sweep**：宿主 `timer` 服务可用时用它的 interval；不可用时 `systemClock()` 的**进程内 60s interval 兜底**（`sweepMode` 恒为 `timer`）。`tree_status {action:"harvest"}` 仍可立即强制一轮；不要假设 harvest 是唯一收割手段。（早期版本的 `degraded:no-timer` 说明已过时。）
 2. **npm 冻结（决策 D3）**：`@orphiczhou/*` 候选包名在 npm registry 均 404；安装只走 Git / `link:`。解冻需项目所有者显式批准（条件见 [docs/guides/publishing.md](docs/guides/publishing.md)）。
-3. **RC2 兼容层已补单测（v0.7.0）**：DSH 0.2.1-rc.2 起 `subagents.startContinuable` 被移除，tree-engine 的双形探测已抽到 `src/compat.js`，`tests/compat.test.js` **11 例**覆盖双形探测 / interrupt authority 顺序 / sendMessage-prompt 回退（全套 112/112）；宿主再升级仍建议先 `cordis_inspect_query` 读方法表。
+3. **RC2 兼容层已补单测（v0.7.0，后续 v0.8.0 全套 165/165）**：DSH 0.2.1-rc.2 起 `subagents.startContinuable` 被移除，tree-engine 的双形探测已抽到 `src/compat.js`，`tests/compat.test.js` **11 例**覆盖双形探测 / interrupt authority 顺序 / sendMessage-prompt 回退（全套 165/165）；宿主再升级仍建议先 `cordis_inspect_query` 读方法表。
 4. **provider-conformance 依赖 DSH asar 解包 fixture，且存在版本布局漂移**：fixture 解析顺序 `DSH_RC2_FIXTURE_DIR` → `%TEMP%\dsh-asar-inspect\out-rc2-compat` → `out`；rc.2 兼容布局（schema 引擎内联）→ **29/29**，缺 fixture 或只拿到当前宿主的 shared-chunk 拆包布局 → **exit 2 + 可操作报错**（不再崩溃）。属测试环境依赖，不是包内容缺陷；fixture 来源与 SHA-256 见 [docs/reports/conformance-rc2-2026-11-12.md](docs/reports/conformance-rc2-2026-11-12.md)，布局背景见 [docs/architecture/merge-session-tree-2026-11-11.md](docs/architecture/merge-session-tree-2026-11-11.md) §5。
 5. **Wave-2 预算口径边界**：`max_sessions` 已计入 `runtime.segmentChain`（W2.1），但接力前旧会话只存 `runtime.history`、暂不计（每个发生过接力的 leaf 约漏 1 个首派会话）；且 `bambooRelay` / `dispatch:start` 本身不预检预算，只有 `leaf:add` / `set-session` / `segment:append` / `tree:register-session` 拒绝超限——高频接力仍可静默越过上限。详见 [docs/operations/handoff-2026-11-12.md](docs/operations/handoff-2026-11-12.md) §7。
 6. 更细的历史边界（`artifact` glob 取首个匹配可能命中 `node_modules`、`leaf.status` 与 runtime 终态脱节、flash 审计积压、`tree_maintain gc` 未实现等）见 [docs/operations/handoff-2026-11-12.md](docs/operations/handoff-2026-11-12.md) §7。

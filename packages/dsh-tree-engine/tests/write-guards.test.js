@@ -177,6 +177,7 @@ test('assertLeafWriter 单元：矩阵快照 + root 派生 + 未知 kind fail-cl
     cancel: { owner: true, creator: true, root: true },
     status: { owner: true, creator: true, root: true },
     'set-session': { owner: false, creator: true, root: false },
+    relay: { owner: false, creator: true, root: true },
   })
   // root 由 state.tree_id 派生（省略第 5 参也可）
   assert.equal(assertLeafWriter(state, leaf, ROOT, 'context'), true)

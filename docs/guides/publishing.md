@@ -220,7 +220,7 @@ node scripts/release-all.mjs --push --mirror-dir <镜像 checkout> --skip-tests 
 
 ### 测试与一致性
 
-- [ ] `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **112/112**（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 11 compat + 10 identity + 7 budget），退出码 0；
+- [ ] `packages/dsh-tree-engine`：`node --test tests/*.test.js` → **165/165**（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 11 compat + 10 identity + 7 budget + 12 relay + 17 token-meter + 7 usage-port + 9 validate + 8 sweep），退出码 0；
 - [ ] `packages/dsh-session-tree`：`node test/handoff.test.js`（**41/41**）、`node test/skills.test.cjs`（**3/3**，随包 Skill 打包回归）、`node test/render.test.cjs`、`node test/style-guard.cjs`（**22/22**）、`node scripts/verify-bundle.mjs`（0 fail）、`node test/provider-conformance.cjs [rc.2 fixture 目录]`（fixture 解析顺序 `DSH_RC2_FIXTURE_DIR` → `%TEMP%\dsh-asar-inspect\out-rc2-compat` → `out`，缺 fixture exit 2 可操作报错；记录见 [conformance-rc2-2026-11-12.md](../reports/conformance-rc2-2026-11-12.md)）；
 - [ ] `packages/dsh-session-tree` 与公开插件仓逐文件 SHA 一致（`release-plugin.mjs`）；
 - [ ] 版本/文档一致性：`node scripts/check-version-consistency.mjs`（W2.4 产出；0 失败）；

@@ -4,7 +4,7 @@ description: '把复杂任务拆成多层任务树、派独立子会话执行并
 whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；任务可拆成可独立验证的中间产物；需要依赖拓扑（先 A 后 B）或并行推进；需要验收证据而不是一句「做完了」；任务长到单个会话装不下（要配合会话交接）；用户说「拆三层」「派人做」「多层分解」「任务树」「并行做」「分派子任务」「派一队人」「做完验收收口」「继续干，快到上限就交接」「根会话→中间层→执行层」「三层都能干活」「演示三层」。English speakers may say: split this into three layers, build the tree, dispatch workers, parallelize, verify and close the tree.'
 ---
 
-# tree-commander SKILL（DSH 版 v2.1，随 tree-engine v0.7.0 分发）
+# tree-commander SKILL（DSH 版 v2.2，随 tree-engine v0.8.0 分发）
 
 > 你是树节点的指挥官（commander）。与"脚本执行者"的根本区别：**你拿到的只有目标，没有结构**——
 > 分解成几个子节点、串行还是并行、谁依赖谁、各自什么 taskType，**全部由你自主决定**。
@@ -20,7 +20,7 @@ whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；�
 | 工具 | action | 用途 |
 |---|---|---|
 | `tree_plan` | `create` | 建树；root leaf `<tree_id>-root` 自动创建 |
-| `tree_node` | `add` / `get` / `list` / `list-all` / `set-status` / `set-session` | 建节点 / 读节点 / 列 active / 列全部 / 改状态 / 重绑 owner |
+| `tree_node` | `add` / `get` / `list` / `list-all` / `set-status` / `set-session` / `set-relay` | 建节点 / 读节点 / 列 active / 列全部 / 改状态 / 重绑 owner / 开关竹节（v0.8.0） |
 | `tree_dispatch` | `start` / `cancel` | 派发执行（起子会话）/ 取消 |
 | `tree_report` | `context` / `event` | 上报上下文水位 / 追加事件（progress/blocked/plan/brief_echo/done/…） |
 | `tree_status` | `overview` / `validate` / `sessions` / `harvest` | 全局 dump / 校验 / 会话预算 / **显式收割** |
@@ -131,6 +131,7 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
 - **收割**：引擎启动后即以 `sweepMode=timer` 注册周期 sweep（进程内 60s；宿主有 timer 服务时走宿主 timer）。启动日志若提示「宿主无 timer 服务、改用进程内 interval 兜底」，那只是提示——**不要据此假设没有后台收割**。轮询：先等 30–45s 再 `tree_status {action:"harvest"}` + `tree_node {action:"get"}`；harvest 立即强制扫一轮（不必等 60s 周期），但别假设毫秒级实时。
 - 看 `runtime.state`：`pending`/`running` → 继续等；`succeeded` → 收；`timeout`/`cancelled`/`frozen` → 读 `tree_log {action:"events"}` 分析，决定重派（同 leaf 再 start，attempt+1）或新建替代节点。
 - **竹节接力后的 owner 归属（v0.5.0 语义）**：接力成功后引擎会把 `leaf.session_id`（owner）**重绑给接手会话**，接手会话可以正常 `tree_report done`。若在旧版本/异常路径下接力会话写 done 被 `E_BORROWED_IDENTITY` 拒：a) 旧会话在交棒前先把当前阶段 done 写掉；或 b) 从 `tree_status {action:"harvest"}` 返回的 `swept[].events[]` 取 `event='bamboo'` 的 `sessionId`（接力会话 id），由你（creator）`tree_node {action:"set-session"}` 重绑 owner。
+- **等待外部编排的节点先关竹节（v0.8.0）**：如果这个 leaf 的执行会去跑 flow / `tree_verify` / 长命令，先关掉它的竹节——`tree_node {action:"set-relay", tree_id, leaf_id, relay:"off"}`（建点时也可在 `leaf` 对象里带 `relay:"off"`；缺省 `auto`）。`relay:"off"` 时 sweep **跳过该 leaf 的竹节**（超时/收割语义不变、不改 `runtime.state`），不会 interrupt 执行会话，避免把运行中的 flow 打断（S1 实测 flow journal `cancelled / E_RUN_CANCELLED`）。外部编排结束、`tree_node {action:"get"}` 确认后改回 `relay:"auto"` 恢复竹节。**写权：仅 leaf 的 creator（added_by）或 root 会话，执行者（owner）不能自关**，越权 `E_BORROWED_IDENTITY`。
 - 轮询预算：别死等一个节点；一个节点超时（nodeTimeoutMs 缺省 30 分钟）就按失败处理。
 - 事件 type 是 12 值闭集：`done` / `blocked` / `plan` / `brief_echo` / `heartbeat_reply` / `nudge` / `limit` / `status_check` / `review_round` / `subagent_spawn` / `progress` / `child_done`（自造 → `E_SCHEMA_INVALID`）。
 
@@ -171,7 +172,7 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
 
 ### 3.1 两套机制，别混
 
-- **竹节（tree-engine 主接力）**：长任务执行者用 `tree_report {action:"context", pct}` 自报水位；`pct≥42`（DSH 缺省阈值，可被 `TREE_ENGINE_CONFIG.ctx_segment_threshold` / `bambooThresholdPct` 覆盖）→（leaf 状态为 `active` 时）置 `segment_pending`，周期 sweep / `harvest` 先 interrupt 旧会话、再派新会话接手（简报 K1–K5 全文传递；leaf 不变、attempt 不变、链+1；链长 5 → `runtime.state=frozen`）。这是**同一 leaf 换会话**——v0.5.0 起引擎会把 owner（`leaf.session_id`）**重绑给接手会话**，接手会话可正常 `tree_report done`（旧版本/异常路径的兜底见 §1.3 与 §3.3）。
+- **竹节（tree-engine 主接力）**：长任务执行者用 `tree_report {action:"context", pct}` 自报水位；`pct≥42`（DSH 缺省阈值，可被 `TREE_ENGINE_CONFIG.ctx_segment_threshold` / `bambooThresholdPct` 覆盖）→（leaf 状态为 `active` 时）置 `segment_pending`，周期 sweep / `harvest` 先 interrupt 旧会话、再派新会话接手（简报 K1–K5 全文传递；leaf 不变、attempt 不变、链+1；链长 5 → `runtime.state=frozen`）。这是**同一 leaf 换会话**——v0.5.0 起引擎会把 owner（`leaf.session_id`）**重绑给接手会话**，接手会话可正常 `tree_report done`（旧版本/异常路径的兜底见 §1.3 与 §3.3）。**v0.8.0 起可 per-leaf 关掉竹节**：等待外部编排（flow / verify / 长命令）的 leaf 由你 `tree_node {action:"set-relay", relay:"off"}` 先关，结束再回 `auto`（见 §1.3）。
 - **会话自交接（`session_handoff`，会话层兜底）**：把你这层会话的工作写进 `HANDOFF-*.md`，启动**同层级**新会话接替（根→新根；子会话→同父兄弟；父不活→root + `degraded=parent-inactive`）。这是**换会话继续干**，不依赖 tree-engine。
 
 ### 3.2 规则（缺省 auto → 同父兄弟接替）
@@ -240,7 +241,7 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
 | `E_DEPTH_EXCEEDED` | 超过 3 层；把更细分解交给 worker 内部步骤，不要加层 |
 | `E_DEPENDENCY_NOT_MET` | 上游未 succeeded：等它收割，不是你的 bug |
 | `E_DEPENDENCY_CYCLE` | 依赖成环，装载期就拒；改拓扑 |
-| `E_BORROWED_IDENTITY` | 借身份：done 只由 owner 写；set-status 只由 owner/creator/root；set-session 只由 creator |
+| `E_BORROWED_IDENTITY` | 借身份：done 只由 owner 写；set-status 只由 owner/creator/root；set-session 只由 creator；**set-relay 只由 creator/root（v0.8.0）** |
 | `E_TS_NOT_MONOTONIC` | 事件时间倒挂（仅注入 ts 时可能触发；工具路径 ts 由引擎生成，通常不触发） |
 | `E_MAX_SESSIONS` / `E_NODE_BUDGET_EXCEEDED` / `E_SUBAGENT_BUDGET_EXCEEDED` | 预算护栏满：收口/剪枝后再建 |
 | `E_PORTS_NOT_WIRED` / `E_PORTS_PROTOCOL` | 宿主编排端口不可用：如实上报，不要伪造子会话 |

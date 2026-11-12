@@ -1,0 +1,15 @@
+{
+  "runId": "RLY8B-R1",
+  "tool": "flow_run",
+  "engine": "flow-core",
+  "engineInfo": {
+    "kind": "flow-core",
+    "entry": "D:\\Codes\\DSH动态流程引擎插件\\spike\\flow-core\\index.js",
+    "sha256": "5a313fe9067e4d4fedbf787d20e775614ecd2025d1a20a043fea9e90b4a285d0",
+    "evicted": false,
+    "importedAt": "2026-11-11T14:57:58.489Z"
+  },
+  "callerSessionId": "2088fb0c-0542-4a44-b902-d433abb252e3",
+  "cwd": "C:\\Users\\sir_c\\.dsh\\profiles\\desktop",
+  "at": "2026-11-12T09:59:22.994Z"
+}

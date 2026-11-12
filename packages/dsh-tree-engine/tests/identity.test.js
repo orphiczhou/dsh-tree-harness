@@ -162,9 +162,10 @@ test('validate：前缀/裸形态混存不误报；同一会话跨形态重复�
   let v = await engine.call('validate', ['w26id'])
   assert.equal(v.ok, false)
   assert.ok(v.issues.some((i) => i.type === 'session_duplicate' && i.leaf_id === 'w26id-C2-worker'))
-  // 修掉重复、把同一会话放进同 leaf 的 runtime.segmentChain → 仍报重复（W2.1 口径）
+  // 修掉跨 leaf 重复；把其它 leaf/root 的会话放进本 leaf 的 runtime.segmentChain → 仍报重复
+  // （W2.1 口径；v0.8.0 收口 F1 后只豁免「本 leaf 自己的当前 session_id」，跨 leaf 复用照旧 FAIL）
   state.leaves['w26id-C2-worker'].session_id = S2_BARE
-  state.leaves['w26id-C1-worker'].runtime.segmentChain = [S1_PREFIXED]
+  state.leaves['w26id-C1-worker'].runtime.segmentChain = [ROOT_PREFIXED]
   await store.write('w26id', state)
   v = await engine.call('validate', ['w26id'])
   assert.equal(v.ok, false)
