@@ -1,0 +1,71 @@
+{
+  "dslVersion": "0.1",
+  "id": "s1.relay.flow",
+  "name": "S1 relay x flow E2E：单节点长耗时、gate-free、两/三节点串行",
+  "description": "用于验证 tree-engine 竹节 relay 是否会打断 leaf 内正在 await 的 flow_run。每个 session 节点都要求输出较长结构化文本，使整个 run 持续约 60-150s。",
+  "vars": {},
+  "outputs": {
+    "node1": { "var": "nodes.N1.output" },
+    "node2": { "var": "nodes.N2.output" },
+    "node3": { "var": "nodes.N3.output" }
+  },
+  "defaults": { "nodeTimeoutMs": 300000 },
+  "limits": { "maxNodes": 8, "maxSessions": 8, "maxRunMs": 600000 },
+  "nodes": [
+    {
+      "id": "N1",
+      "type": "session",
+      "label": "N1：长文本-1",
+      "input": {
+        "prompt": "你是流程节点 N1。请只输出一个 JSON 对象，不要任何解释文字，格式为 {\"text\":\"<内容>\"}。其中 text 是一篇不少于 1200 字的中文说明文，主题：竹子为什么会一节一节地生长（竹节与居间分生组织）。"
+      },
+      "output": {
+        "var": "nodeN1",
+        "schema": {
+          "type": "object",
+          "required": ["text"],
+          "properties": { "text": { "type": "string" } }
+        }
+      },
+      "retry": { "maxAttempts": 2, "on": ["E_OUTPUT_INVALID"] }
+    },
+    {
+      "id": "N2",
+      "type": "session",
+      "label": "N2：长文本-2",
+      "input": {
+        "prompt": "你是流程节点 N2。上游节点 N1 的输出是：{{nodes.N1.output}}。请只输出一个 JSON 对象，不要任何解释文字，格式为 {\"text\":\"<内容>\"}。其中 text 是一篇不少于 1200 字的中文分析，点评 N1 的内容是否准确、可能遗漏了什么。"
+      },
+      "output": {
+        "var": "nodeN2",
+        "schema": {
+          "type": "object",
+          "required": ["text"],
+          "properties": { "text": { "type": "string" } }
+        }
+      },
+      "retry": { "maxAttempts": 2, "on": ["E_OUTPUT_INVALID"] }
+    },
+    {
+      "id": "N3",
+      "type": "session",
+      "label": "N3：长文本-3",
+      "input": {
+        "prompt": "你是流程节点 N3。请只输出一个 JSON 对象，不要任何解释文字，格式为 {\"text\":\"<内容>\"}。其中 text 是一篇不少于 1200 字的中文综述，主题：如果一棵竹子生长到一半被拦腰截断，它还能不能继续长高？请给出你的推理。"
+      },
+      "output": {
+        "var": "nodeN3",
+        "schema": {
+          "type": "object",
+          "required": ["text"],
+          "properties": { "text": { "type": "string" } }
+        }
+      },
+      "retry": { "maxAttempts": 2, "on": ["E_OUTPUT_INVALID"] }
+    }
+  ],
+  "edges": [
+    { "from": "N1", "to": "N2" },
+    { "from": "N2", "to": "N3" }
+  ]
+}

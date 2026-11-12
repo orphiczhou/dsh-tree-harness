@@ -1,0 +1,1081 @@
+2026-10-20T12:16:30.960Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-20T12:16:30.961Z inject callback entered
+2026-10-20T12:16:30.961Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-20T12:16:30.961Z engine ready (sweepMode=timer)
+2026-10-20T12:16:30.961Z timer resolve failed: cannot get property "timer" without inject
+2026-10-20T12:16:30.961Z register OK: tree_plan
+2026-10-20T12:16:30.961Z register OK: tree_dispatch
+2026-10-20T12:16:30.961Z register OK: tree_node
+2026-10-20T12:16:30.961Z register OK: tree_verify
+2026-10-20T12:16:30.961Z register OK: tree_report
+2026-10-20T12:16:30.961Z register OK: tree_maintain
+2026-10-20T12:16:30.961Z register OK: tree_status
+2026-10-20T12:16:30.961Z apply complete: 8/8 registered
+2026-10-20T12:16:30.961Z register OK: tree_log
+2026-10-21T13:16:39.010Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-21T13:16:39.013Z engine ready (sweepMode=timer)
+2026-10-21T13:16:39.013Z inject callback entered
+2026-10-21T13:16:39.013Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-21T13:16:39.013Z timer resolve failed: cannot get property "timer" without inject
+2026-10-21T13:16:39.013Z register OK: tree_plan
+2026-10-21T13:16:39.013Z register OK: tree_node
+2026-10-21T13:16:39.013Z register OK: tree_report
+2026-10-21T13:16:39.013Z register OK: tree_dispatch
+2026-10-21T13:16:39.013Z register OK: tree_status
+2026-10-21T13:16:39.013Z register OK: tree_log
+2026-10-21T13:16:39.013Z register OK: tree_maintain
+2026-10-21T13:16:39.013Z register OK: tree_verify
+2026-10-21T13:16:39.013Z apply complete: 8/8 registered
+2026-10-21T15:08:01.217Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-21T15:08:01.220Z engine ready (sweepMode=timer)
+2026-10-21T15:08:01.221Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-21T15:08:01.221Z register OK: tree_plan
+2026-10-21T15:08:01.221Z inject callback entered
+2026-10-21T15:08:01.221Z register OK: tree_node
+2026-10-21T15:08:01.221Z register OK: tree_dispatch
+2026-10-21T15:08:01.221Z register OK: tree_status
+2026-10-21T15:08:01.221Z timer resolve failed: cannot get property "timer" without inject
+2026-10-21T15:08:01.221Z register OK: tree_report
+2026-10-21T15:08:01.221Z register OK: tree_verify
+2026-10-21T15:08:01.221Z register OK: tree_maintain
+2026-10-21T15:08:01.221Z register OK: tree_log
+2026-10-21T15:08:01.221Z apply complete: 8/8 registered
+2026-10-21T15:31:01.549Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-21T15:31:01.553Z inject callback entered
+2026-10-21T15:31:01.553Z timer resolve failed: cannot get property "timer" without inject
+2026-10-21T15:31:01.553Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-21T15:31:01.553Z register OK: tree_plan
+2026-10-21T15:31:01.553Z engine ready (sweepMode=timer)
+2026-10-21T15:31:01.553Z register OK: tree_node
+2026-10-21T15:31:01.553Z register OK: tree_report
+2026-10-21T15:31:01.553Z register OK: tree_verify
+2026-10-21T15:31:01.553Z register OK: tree_status
+2026-10-21T15:31:01.553Z register OK: tree_log
+2026-10-21T15:31:01.554Z register OK: tree_dispatch
+2026-10-21T15:31:01.554Z register OK: tree_maintain
+2026-10-21T15:31:01.554Z apply complete: 8/8 registered
+2026-10-21T15:43:20.014Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-21T15:43:20.015Z inject callback entered
+2026-10-21T15:43:20.015Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-21T15:43:20.015Z engine ready (sweepMode=timer)
+2026-10-21T15:43:20.015Z register OK: tree_plan
+2026-10-21T15:43:20.015Z register OK: tree_report
+2026-10-21T15:43:20.015Z timer resolve failed: cannot get property "timer" without inject
+2026-10-21T15:43:20.015Z register OK: tree_node
+2026-10-21T15:43:20.015Z register OK: tree_dispatch
+2026-10-21T15:43:20.015Z register OK: tree_maintain
+2026-10-21T15:43:20.015Z register OK: tree_verify
+2026-10-21T15:43:20.015Z register OK: tree_status
+2026-10-21T15:43:20.016Z register OK: tree_log
+2026-10-21T15:43:20.016Z apply complete: 8/8 registered
+2026-10-21T16:00:05.787Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-21T16:00:05.788Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-21T16:00:05.788Z register OK: tree_plan
+2026-10-21T16:00:05.788Z inject callback entered
+2026-10-21T16:00:05.788Z engine ready (sweepMode=timer)
+2026-10-21T16:00:05.788Z register OK: tree_node
+2026-10-21T16:00:05.788Z register OK: tree_status
+2026-10-21T16:00:05.788Z timer resolve failed: cannot get property "timer" without inject
+2026-10-21T16:00:05.788Z register OK: tree_report
+2026-10-21T16:00:05.788Z register OK: tree_verify
+2026-10-21T16:00:05.788Z register OK: tree_dispatch
+2026-10-21T16:00:05.788Z register OK: tree_log
+2026-10-21T16:00:05.788Z register OK: tree_maintain
+2026-10-21T16:00:05.788Z apply complete: 8/8 registered
+2026-10-21T16:16:24.042Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-21T16:16:24.043Z engine ready (sweepMode=timer)
+2026-10-21T16:16:24.043Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-21T16:16:24.043Z register OK: tree_plan
+2026-10-21T16:16:24.043Z timer resolve failed: cannot get property "timer" without inject
+2026-10-21T16:16:24.043Z inject callback entered
+2026-10-21T16:16:24.043Z register OK: tree_node
+2026-10-21T16:16:24.043Z register OK: tree_report
+2026-10-21T16:16:24.043Z register OK: tree_status
+2026-10-21T16:16:24.043Z register OK: tree_log
+2026-10-21T16:16:24.043Z register OK: tree_verify
+2026-10-21T16:16:24.044Z register OK: tree_maintain
+2026-10-21T16:16:24.044Z register OK: tree_dispatch
+2026-10-21T16:16:24.044Z apply complete: 8/8 registered
+2026-10-22T03:16:59.143Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-22T03:16:59.144Z engine ready (sweepMode=timer)
+2026-10-22T03:16:59.144Z timer resolve failed: cannot get property "timer" without inject
+2026-10-22T03:16:59.144Z inject callback entered
+2026-10-22T03:16:59.144Z register OK: tree_plan
+2026-10-22T03:16:59.144Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-22T03:16:59.144Z register OK: tree_node
+2026-10-22T03:16:59.144Z register OK: tree_dispatch
+2026-10-22T03:16:59.144Z register OK: tree_status
+2026-10-22T03:16:59.144Z register OK: tree_report
+2026-10-22T03:16:59.144Z apply complete: 8/8 registered
+2026-10-22T03:16:59.144Z register OK: tree_log
+2026-10-22T03:16:59.144Z register OK: tree_verify
+2026-10-22T03:16:59.145Z register OK: tree_maintain
+2026-10-22T11:08:50.024Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-22T11:08:50.028Z inject callback entered
+2026-10-22T11:08:50.028Z timer resolve failed: cannot get property "timer" without inject
+2026-10-22T11:08:50.028Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-22T11:08:50.029Z register OK: tree_node
+2026-10-22T11:08:50.029Z register OK: tree_dispatch
+2026-10-22T11:08:50.029Z register OK: tree_report
+2026-10-22T11:08:50.029Z engine ready (sweepMode=timer)
+2026-10-22T11:08:50.029Z register OK: tree_plan
+2026-10-22T11:08:50.029Z register OK: tree_status
+2026-10-22T11:08:50.029Z register OK: tree_verify
+2026-10-22T11:08:50.029Z register OK: tree_log
+2026-10-22T11:08:50.029Z register OK: tree_maintain
+2026-10-22T11:08:50.029Z apply complete: 8/8 registered
+2026-10-23T08:17:47.461Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-23T08:17:47.465Z inject callback entered
+2026-10-23T08:17:47.465Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-23T08:17:47.465Z engine ready (sweepMode=timer)
+2026-10-23T08:17:47.465Z register OK: tree_plan
+2026-10-23T08:17:47.465Z timer resolve failed: cannot get property "timer" without inject
+2026-10-23T08:17:47.465Z register OK: tree_node
+2026-10-23T08:17:47.465Z register OK: tree_dispatch
+2026-10-23T08:17:47.465Z register OK: tree_status
+2026-10-23T08:17:47.466Z register OK: tree_maintain
+2026-10-23T08:17:47.465Z register OK: tree_verify
+2026-10-23T08:17:47.465Z register OK: tree_report
+2026-10-23T08:17:47.466Z apply complete: 8/8 registered
+2026-10-23T08:17:47.466Z register OK: tree_log
+2026-10-23T08:37:29.221Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-23T08:37:29.222Z inject callback entered
+2026-10-23T08:37:29.222Z timer resolve failed: cannot get property "timer" without inject
+2026-10-23T08:37:29.222Z engine ready (sweepMode=timer)
+2026-10-23T08:37:29.222Z register OK: tree_dispatch
+2026-10-23T08:37:29.222Z register OK: tree_plan
+2026-10-23T08:37:29.222Z register OK: tree_status
+2026-10-23T08:37:29.222Z register OK: tree_report
+2026-10-23T08:37:29.222Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-23T08:37:29.222Z register OK: tree_log
+2026-10-23T08:37:29.222Z register OK: tree_verify
+2026-10-23T08:37:29.222Z register OK: tree_node
+2026-10-23T08:37:29.222Z register OK: tree_maintain
+2026-10-23T08:37:29.222Z apply complete: 8/8 registered
+2026-10-23T11:02:34.600Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-23T11:02:34.602Z timer resolve failed: cannot get property "timer" without inject
+2026-10-23T11:02:34.602Z engine ready (sweepMode=timer)
+2026-10-23T11:02:34.602Z register OK: tree_node
+2026-10-23T11:02:34.602Z register OK: tree_dispatch
+2026-10-23T11:02:34.602Z register OK: tree_plan
+2026-10-23T11:02:34.602Z inject callback entered
+2026-10-23T11:02:34.602Z register OK: tree_verify
+2026-10-23T11:02:34.602Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-23T11:02:34.602Z register OK: tree_report
+2026-10-23T11:02:34.602Z register OK: tree_maintain
+2026-10-23T11:02:34.602Z register OK: tree_status
+2026-10-23T11:02:34.602Z register OK: tree_log
+2026-10-23T11:02:34.602Z apply complete: 8/8 registered
+2026-10-23T11:51:09.025Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-23T11:51:09.029Z inject callback entered
+2026-10-23T11:51:09.029Z timer resolve failed: cannot get property "timer" without inject
+2026-10-23T11:51:09.029Z engine ready (sweepMode=timer)
+2026-10-23T11:51:09.029Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-23T11:51:09.029Z register OK: tree_plan
+2026-10-23T11:51:09.029Z register OK: tree_node
+2026-10-23T11:51:09.030Z register OK: tree_dispatch
+2026-10-23T11:51:09.030Z register OK: tree_verify
+2026-10-23T11:51:09.030Z register OK: tree_report
+2026-10-23T11:51:09.030Z register OK: tree_maintain
+2026-10-23T11:51:09.030Z register OK: tree_status
+2026-10-23T11:51:09.030Z apply complete: 8/8 registered
+2026-10-23T11:51:09.030Z register OK: tree_log
+2026-10-23T12:47:07.265Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-23T12:47:07.267Z timer resolve failed: cannot get property "timer" without inject
+2026-10-23T12:47:07.267Z inject callback entered
+2026-10-23T12:47:07.267Z engine ready (sweepMode=timer)
+2026-10-23T12:47:07.267Z register OK: tree_dispatch
+2026-10-23T12:47:07.267Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-23T12:47:07.267Z register OK: tree_node
+2026-10-23T12:47:07.267Z register OK: tree_report
+2026-10-23T12:47:07.267Z register OK: tree_status
+2026-10-23T12:47:07.267Z register OK: tree_verify
+2026-10-23T12:47:07.267Z register OK: tree_plan
+2026-10-23T12:47:07.267Z register OK: tree_maintain
+2026-10-23T12:47:07.267Z apply complete: 8/8 registered
+2026-10-23T12:47:07.267Z register OK: tree_log
+2026-10-23T14:11:08.412Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-23T14:11:08.413Z inject callback entered
+2026-10-23T14:11:08.413Z timer resolve failed: cannot get property "timer" without inject
+2026-10-23T14:11:08.413Z engine ready (sweepMode=timer)
+2026-10-23T14:11:08.413Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-23T14:11:08.413Z register OK: tree_plan
+2026-10-23T14:11:08.413Z register OK: tree_report
+2026-10-23T14:11:08.413Z register OK: tree_dispatch
+2026-10-23T14:11:08.413Z register OK: tree_status
+2026-10-23T14:11:08.413Z register OK: tree_node
+2026-10-23T14:11:08.413Z register OK: tree_verify
+2026-10-23T14:11:08.413Z apply complete: 8/8 registered
+2026-10-23T14:11:08.413Z register OK: tree_log
+2026-10-23T14:11:08.413Z register OK: tree_maintain
+2026-10-23T14:23:08.600Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-23T14:23:08.602Z inject callback entered
+2026-10-23T14:23:08.602Z timer resolve failed: cannot get property "timer" without inject
+2026-10-23T14:23:08.603Z engine ready (sweepMode=timer)
+2026-10-23T14:23:08.603Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-23T14:23:08.603Z register OK: tree_plan
+2026-10-23T14:23:08.603Z register OK: tree_node
+2026-10-23T14:23:08.603Z register OK: tree_report
+2026-10-23T14:23:08.603Z register OK: tree_dispatch
+2026-10-23T14:23:08.603Z register OK: tree_status
+2026-10-23T14:23:08.603Z register OK: tree_verify
+2026-10-23T14:23:08.603Z register OK: tree_maintain
+2026-10-23T14:23:08.603Z register OK: tree_log
+2026-10-23T14:23:08.603Z apply complete: 8/8 registered
+2026-10-23T15:17:48.436Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-23T15:17:48.438Z inject callback entered
+2026-10-23T15:17:48.438Z timer resolve failed: cannot get property "timer" without inject
+2026-10-23T15:17:48.438Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-23T15:17:48.438Z engine ready (sweepMode=timer)
+2026-10-23T15:17:48.438Z register OK: tree_report
+2026-10-23T15:17:48.438Z register OK: tree_dispatch
+2026-10-23T15:17:48.438Z register OK: tree_plan
+2026-10-23T15:17:48.438Z register OK: tree_status
+2026-10-23T15:17:48.438Z register OK: tree_verify
+2026-10-23T15:17:48.438Z register OK: tree_node
+2026-10-23T15:17:48.438Z register OK: tree_log
+2026-10-23T15:17:48.438Z register OK: tree_maintain
+2026-10-23T15:17:48.438Z apply complete: 8/8 registered
+2026-10-23T15:33:53.117Z timer resolve failed: cannot get property "timer" without inject
+2026-10-23T15:33:53.117Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-23T15:33:53.117Z engine ready (sweepMode=timer)
+2026-10-23T15:33:53.115Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-23T15:33:53.117Z register OK: tree_plan
+2026-10-23T15:33:53.117Z inject callback entered
+2026-10-23T15:33:53.117Z register OK: tree_status
+2026-10-23T15:33:53.117Z register OK: tree_node
+2026-10-23T15:33:53.117Z register OK: tree_dispatch
+2026-10-23T15:33:53.117Z register OK: tree_report
+2026-10-23T15:33:53.117Z register OK: tree_verify
+2026-10-23T15:33:53.117Z register OK: tree_log
+2026-10-23T15:33:53.117Z register OK: tree_maintain
+2026-10-23T15:33:53.117Z apply complete: 8/8 registered
+2026-10-24T00:27:47.252Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-24T00:27:47.254Z timer resolve failed: cannot get property "timer" without inject
+2026-10-24T00:27:47.254Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-24T00:27:47.254Z inject callback entered
+2026-10-24T00:27:47.254Z engine ready (sweepMode=timer)
+2026-10-24T00:27:47.254Z register OK: tree_plan
+2026-10-24T00:27:47.254Z register OK: tree_status
+2026-10-24T00:27:47.254Z register OK: tree_report
+2026-10-24T00:27:47.254Z register OK: tree_verify
+2026-10-24T00:27:47.254Z register OK: tree_node
+2026-10-24T00:27:47.254Z register OK: tree_log
+2026-10-24T00:27:47.254Z register OK: tree_dispatch
+2026-10-24T00:27:47.254Z register OK: tree_maintain
+2026-10-24T00:27:47.254Z apply complete: 8/8 registered
+2026-10-24T03:07:11.598Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-24T03:07:11.602Z inject callback entered
+2026-10-24T03:07:11.602Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-24T03:07:11.602Z engine ready (sweepMode=timer)
+2026-10-24T03:07:11.602Z register OK: tree_plan
+2026-10-24T03:07:11.602Z register OK: tree_dispatch
+2026-10-24T03:07:11.602Z timer resolve failed: cannot get property "timer" without inject
+2026-10-24T03:07:11.602Z register OK: tree_node
+2026-10-24T03:07:11.602Z register OK: tree_status
+2026-10-24T03:07:11.602Z register OK: tree_report
+2026-10-24T03:07:11.602Z register OK: tree_verify
+2026-10-24T03:07:11.602Z register OK: tree_maintain
+2026-10-24T03:07:11.603Z register OK: tree_log
+2026-10-24T03:07:11.603Z apply complete: 8/8 registered
+2026-10-24T13:48:37.508Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-24T13:48:37.509Z inject callback entered
+2026-10-24T13:48:37.509Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-24T13:48:37.509Z engine ready (sweepMode=timer)
+2026-10-24T13:48:37.509Z timer resolve failed: cannot get property "timer" without inject
+2026-10-24T13:48:37.509Z register OK: tree_report
+2026-10-24T13:48:37.509Z register OK: tree_node
+2026-10-24T13:48:37.509Z register OK: tree_log
+2026-10-24T13:48:37.509Z register OK: tree_status
+2026-10-24T13:48:37.509Z register OK: tree_dispatch
+2026-10-24T13:48:37.509Z register OK: tree_verify
+2026-10-24T13:48:37.509Z register OK: tree_maintain
+2026-10-24T13:48:37.509Z apply complete: 8/8 registered
+2026-10-24T13:48:37.509Z register OK: tree_plan
+2026-10-24T13:49:11.081Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-24T13:49:11.083Z timer resolve failed: cannot get property "timer" without inject
+2026-10-24T13:49:11.083Z inject callback entered
+2026-10-24T13:49:11.083Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-24T13:49:11.083Z register OK: tree_status
+2026-10-24T13:49:11.083Z engine ready (sweepMode=timer)
+2026-10-24T13:49:11.083Z register OK: tree_verify
+2026-10-24T13:49:11.083Z register OK: tree_plan
+2026-10-24T13:49:11.083Z register OK: tree_node
+2026-10-24T13:49:11.083Z register OK: tree_log
+2026-10-24T13:49:11.083Z register OK: tree_dispatch
+2026-10-24T13:49:11.083Z register OK: tree_maintain
+2026-10-24T13:49:11.083Z register OK: tree_report
+2026-10-24T13:49:11.083Z apply complete: 8/8 registered
+2026-10-24T13:50:51.635Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-24T13:50:51.637Z inject callback entered
+2026-10-24T13:50:51.637Z timer resolve failed: cannot get property "timer" without inject
+2026-10-24T13:50:51.637Z engine ready (sweepMode=timer)
+2026-10-24T13:50:51.637Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-24T13:50:51.637Z register OK: tree_node
+2026-10-24T13:50:51.637Z register OK: tree_plan
+2026-10-24T13:50:51.637Z register OK: tree_status
+2026-10-24T13:50:51.637Z register OK: tree_dispatch
+2026-10-24T13:50:51.637Z register OK: tree_report
+2026-10-24T13:50:51.637Z register OK: tree_verify
+2026-10-24T13:50:51.637Z register OK: tree_maintain
+2026-10-24T13:50:51.637Z register OK: tree_log
+2026-10-24T13:50:51.637Z apply complete: 8/8 registered
+2026-10-24T13:51:26.980Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-24T13:51:26.981Z timer resolve failed: cannot get property "timer" without inject
+2026-10-24T13:51:26.981Z engine ready (sweepMode=timer)
+2026-10-24T13:51:26.981Z register OK: tree_report
+2026-10-24T13:51:26.981Z register OK: tree_node
+2026-10-24T13:51:26.981Z inject callback entered
+2026-10-24T13:51:26.981Z register OK: tree_plan
+2026-10-24T13:51:26.982Z register OK: tree_log
+2026-10-24T13:51:26.981Z register OK: tree_status
+2026-10-24T13:51:26.981Z register OK: tree_dispatch
+2026-10-24T13:51:26.982Z register OK: tree_maintain
+2026-10-24T13:51:26.981Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-24T13:51:26.982Z register OK: tree_verify
+2026-10-24T13:51:26.982Z apply complete: 8/8 registered
+2026-10-24T13:51:54.044Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-24T13:51:54.045Z inject callback entered
+2026-10-24T13:51:54.045Z timer resolve failed: cannot get property "timer" without inject
+2026-10-24T13:51:54.046Z register OK: tree_plan
+2026-10-24T13:51:54.046Z engine ready (sweepMode=timer)
+2026-10-24T13:51:54.045Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-24T13:51:54.046Z register OK: tree_dispatch
+2026-10-24T13:51:54.046Z register OK: tree_node
+2026-10-24T13:51:54.046Z register OK: tree_status
+2026-10-24T13:51:54.046Z register OK: tree_report
+2026-10-24T13:51:54.046Z register OK: tree_verify
+2026-10-24T13:51:54.046Z register OK: tree_log
+2026-10-24T13:51:54.046Z register OK: tree_maintain
+2026-10-24T13:51:54.046Z apply complete: 8/8 registered
+2026-10-24T14:03:48.999Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-24T14:03:49.000Z inject callback entered
+2026-10-24T14:03:49.001Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-24T14:03:49.001Z timer resolve failed: cannot get property "timer" without inject
+2026-10-24T14:03:49.001Z register OK: tree_node
+2026-10-24T14:03:49.001Z engine ready (sweepMode=timer)
+2026-10-24T14:03:49.001Z register OK: tree_plan
+2026-10-24T14:03:49.001Z register OK: tree_dispatch
+2026-10-24T14:03:49.001Z register OK: tree_report
+2026-10-24T14:03:49.001Z register OK: tree_verify
+2026-10-24T14:03:49.001Z register OK: tree_maintain
+2026-10-24T14:03:49.001Z register OK: tree_status
+2026-10-24T14:03:49.001Z apply complete: 8/8 registered
+2026-10-24T14:03:49.001Z register OK: tree_log
+2026-10-24T14:24:11.944Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-24T14:24:11.945Z inject callback entered
+2026-10-24T14:24:11.945Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-24T14:24:11.945Z engine ready (sweepMode=timer)
+2026-10-24T14:24:11.945Z timer resolve failed: cannot get property "timer" without inject
+2026-10-24T14:24:11.945Z register OK: tree_report
+2026-10-24T14:24:11.945Z register OK: tree_node
+2026-10-24T14:24:11.945Z register OK: tree_plan
+2026-10-24T14:24:11.945Z register OK: tree_status
+2026-10-24T14:24:11.945Z register OK: tree_dispatch
+2026-10-24T14:24:11.945Z register OK: tree_verify
+2026-10-24T14:24:11.945Z register OK: tree_log
+2026-10-24T14:24:11.945Z register OK: tree_maintain
+2026-10-24T14:24:11.945Z apply complete: 8/8 registered
+2026-10-24T20:31:42.640Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-24T20:31:42.641Z timer resolve failed: cannot get property "timer" without inject
+2026-10-24T20:31:42.641Z engine ready (sweepMode=timer)
+2026-10-24T20:31:42.641Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-24T20:31:42.641Z inject callback entered
+2026-10-24T20:31:42.641Z register OK: tree_report
+2026-10-24T20:31:42.641Z register OK: tree_plan
+2026-10-24T20:31:42.641Z register OK: tree_verify
+2026-10-24T20:31:42.641Z register OK: tree_node
+2026-10-24T20:31:42.641Z register OK: tree_dispatch
+2026-10-24T20:31:42.641Z register OK: tree_maintain
+2026-10-24T20:31:42.641Z register OK: tree_status
+2026-10-24T20:31:42.641Z apply complete: 8/8 registered
+2026-10-24T20:31:42.641Z register OK: tree_log
+2026-10-26T09:38:25.962Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-26T09:38:25.965Z inject callback entered
+2026-10-26T09:38:25.966Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-26T09:38:25.966Z register OK: tree_node
+2026-10-26T09:38:25.965Z timer resolve failed: cannot get property "timer" without inject
+2026-10-26T09:38:25.966Z engine ready (sweepMode=timer)
+2026-10-26T09:38:25.966Z register OK: tree_plan
+2026-10-26T09:38:25.966Z register OK: tree_report
+2026-10-26T09:38:25.966Z register OK: tree_dispatch
+2026-10-26T09:38:25.966Z register OK: tree_status
+2026-10-26T09:38:25.966Z register OK: tree_verify
+2026-10-26T09:38:25.966Z register OK: tree_log
+2026-10-26T09:38:25.966Z register OK: tree_maintain
+2026-10-26T09:38:25.966Z apply complete: 8/8 registered
+2026-10-26T12:35:18.961Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-26T12:35:18.965Z inject callback entered
+2026-10-26T12:35:18.965Z timer resolve failed: cannot get property "timer" without inject
+2026-10-26T12:35:18.965Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-26T12:35:18.966Z register OK: tree_plan
+2026-10-26T12:35:18.966Z register OK: tree_dispatch
+2026-10-26T12:35:18.966Z register OK: tree_node
+2026-10-26T12:35:18.966Z engine ready (sweepMode=timer)
+2026-10-26T12:35:18.966Z register OK: tree_report
+2026-10-26T12:35:18.966Z register OK: tree_verify
+2026-10-26T12:35:18.966Z register OK: tree_log
+2026-10-26T12:35:18.966Z register OK: tree_maintain
+2026-10-26T12:35:18.966Z register OK: tree_status
+2026-10-26T12:35:18.966Z apply complete: 8/8 registered
+2026-10-26T12:39:26.995Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-26T12:39:26.996Z timer resolve failed: cannot get property "timer" without inject
+2026-10-26T12:39:26.996Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-26T12:39:26.996Z inject callback entered
+2026-10-26T12:39:26.997Z engine ready (sweepMode=timer)
+2026-10-26T12:39:26.997Z register OK: tree_node
+2026-10-26T12:39:26.997Z register OK: tree_dispatch
+2026-10-26T12:39:26.997Z register OK: tree_plan
+2026-10-26T12:39:26.997Z register OK: tree_report
+2026-10-26T12:39:26.997Z register OK: tree_status
+2026-10-26T12:39:26.997Z register OK: tree_verify
+2026-10-26T12:39:26.997Z register OK: tree_log
+2026-10-26T12:39:26.997Z apply complete: 8/8 registered
+2026-10-26T12:39:26.997Z register OK: tree_maintain
+2026-10-26T12:52:34.702Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-26T12:52:34.703Z inject callback entered
+2026-10-26T12:52:34.703Z timer resolve failed: cannot get property "timer" without inject
+2026-10-26T12:52:34.704Z register OK: tree_plan
+2026-10-26T12:52:34.704Z engine ready (sweepMode=timer)
+2026-10-26T12:52:34.704Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-26T12:52:34.704Z register OK: tree_dispatch
+2026-10-26T12:52:34.704Z register OK: tree_report
+2026-10-26T12:52:34.704Z register OK: tree_node
+2026-10-26T12:52:34.704Z register OK: tree_verify
+2026-10-26T12:52:34.704Z register OK: tree_status
+2026-10-26T12:52:34.704Z register OK: tree_log
+2026-10-26T12:52:34.704Z apply complete: 8/8 registered
+2026-10-26T12:52:34.704Z register OK: tree_maintain
+2026-10-27T01:11:34.235Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-27T01:11:34.239Z inject callback entered
+2026-10-27T01:11:34.240Z timer resolve failed: cannot get property "timer" without inject
+2026-10-27T01:11:34.240Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-27T01:11:34.240Z register OK: tree_plan
+2026-10-27T01:11:34.240Z engine ready (sweepMode=timer)
+2026-10-27T01:11:34.240Z register OK: tree_dispatch
+2026-10-27T01:11:34.240Z register OK: tree_report
+2026-10-27T01:11:34.240Z register OK: tree_status
+2026-10-27T01:11:34.240Z register OK: tree_log
+2026-10-27T01:11:34.240Z register OK: tree_node
+2026-10-27T01:11:34.240Z register OK: tree_maintain
+2026-10-27T01:11:34.240Z apply complete: 8/8 registered
+2026-10-27T01:11:34.241Z register OK: tree_verify
+2026-10-28T09:05:16.489Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-28T09:05:16.490Z engine ready (sweepMode=timer)
+2026-10-28T09:05:16.490Z timer resolve failed: cannot get property "timer" without inject
+2026-10-28T09:05:16.490Z inject callback entered
+2026-10-28T09:05:16.490Z register OK: tree_plan
+2026-10-28T09:05:16.490Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-28T09:05:16.490Z register OK: tree_status
+2026-10-28T09:05:16.490Z register OK: tree_dispatch
+2026-10-28T09:05:16.490Z register OK: tree_node
+2026-10-28T09:05:16.490Z register OK: tree_verify
+2026-10-28T09:05:16.490Z register OK: tree_maintain
+2026-10-28T09:05:16.490Z register OK: tree_report
+2026-10-28T09:05:16.490Z apply complete: 8/8 registered
+2026-10-28T09:05:16.490Z register OK: tree_log
+2026-10-30T11:13:40.789Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-30T11:13:40.793Z timer resolve failed: cannot get property "timer" without inject
+2026-10-30T11:13:40.793Z inject callback entered
+2026-10-30T11:13:40.793Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-30T11:13:40.793Z engine ready (sweepMode=timer)
+2026-10-30T11:13:40.793Z register OK: tree_plan
+2026-10-30T11:13:40.793Z register OK: tree_node
+2026-10-30T11:13:40.793Z register OK: tree_report
+2026-10-30T11:13:40.793Z register OK: tree_dispatch
+2026-10-30T11:13:40.793Z register OK: tree_status
+2026-10-30T11:13:40.793Z register OK: tree_verify
+2026-10-30T11:13:40.794Z register OK: tree_log
+2026-10-30T11:13:40.794Z apply complete: 8/8 registered
+2026-10-30T11:13:40.794Z register OK: tree_maintain
+2026-10-30T11:27:19.731Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-30T11:27:19.732Z inject callback entered
+2026-10-30T11:27:19.732Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-30T11:27:19.732Z engine ready (sweepMode=timer)
+2026-10-30T11:27:19.732Z timer resolve failed: cannot get property "timer" without inject
+2026-10-30T11:27:19.732Z register OK: tree_plan
+2026-10-30T11:27:19.732Z register OK: tree_dispatch
+2026-10-30T11:27:19.732Z register OK: tree_node
+2026-10-30T11:27:19.732Z register OK: tree_status
+2026-10-30T11:27:19.732Z register OK: tree_report
+2026-10-30T11:27:19.732Z register OK: tree_log
+2026-10-30T11:27:19.732Z register OK: tree_verify
+2026-10-30T11:27:19.732Z register OK: tree_maintain
+2026-10-30T11:27:19.732Z apply complete: 8/8 registered
+2026-10-30T11:33:44.873Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-10-30T11:33:44.876Z inject callback entered
+2026-10-30T11:33:44.876Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-10-30T11:33:44.876Z timer resolve failed: cannot get property "timer" without inject
+2026-10-30T11:33:44.876Z register OK: tree_plan
+2026-10-30T11:33:44.876Z engine ready (sweepMode=timer)
+2026-10-30T11:33:44.876Z register OK: tree_node
+2026-10-30T11:33:44.876Z register OK: tree_dispatch
+2026-10-30T11:33:44.877Z register OK: tree_report
+2026-10-30T11:33:44.877Z register OK: tree_status
+2026-10-30T11:33:44.877Z register OK: tree_verify
+2026-10-30T11:33:44.877Z register OK: tree_log
+2026-10-30T11:33:44.877Z register OK: tree_maintain
+2026-10-30T11:33:44.877Z apply complete: 8/8 registered
+2026-11-02T03:51:37.328Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-02T03:51:37.329Z timer resolve failed: cannot get property "timer" without inject
+2026-11-02T03:51:37.329Z inject callback entered
+2026-11-02T03:51:37.329Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-02T03:51:37.329Z engine ready (sweepMode=timer)
+2026-11-02T03:51:37.329Z register OK: tree_node
+2026-11-02T03:51:37.329Z register OK: tree_plan
+2026-11-02T03:51:37.329Z register OK: tree_dispatch
+2026-11-02T03:51:37.329Z register OK: tree_report
+2026-11-02T03:51:37.329Z register OK: tree_status
+2026-11-02T03:51:37.329Z register OK: tree_log
+2026-11-02T03:51:37.329Z register OK: tree_maintain
+2026-11-02T03:51:37.329Z register OK: tree_verify
+2026-11-02T03:51:37.330Z apply complete: 8/8 registered
+2026-11-02T04:41:53.610Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-02T04:41:53.616Z inject callback entered
+2026-11-02T04:41:53.616Z timer resolve failed: cannot get property "timer" without inject
+2026-11-02T04:41:53.616Z engine ready (sweepMode=timer)
+2026-11-02T04:41:53.616Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-02T04:41:53.616Z register OK: tree_plan
+2026-11-02T04:41:53.616Z register OK: tree_dispatch
+2026-11-02T04:41:53.616Z register OK: tree_status
+2026-11-02T04:41:53.616Z register OK: tree_node
+2026-11-02T04:41:53.616Z register OK: tree_report
+2026-11-02T04:41:53.616Z register OK: tree_verify
+2026-11-02T04:41:53.616Z register OK: tree_maintain
+2026-11-02T04:41:53.616Z register OK: tree_log
+2026-11-02T04:41:53.616Z apply complete: 8/8 registered
+2026-11-02T05:38:34.941Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-02T05:38:34.944Z inject callback entered
+2026-11-02T05:38:34.944Z timer resolve failed: cannot get property "timer" without inject
+2026-11-02T05:38:34.944Z engine ready (sweepMode=timer)
+2026-11-02T05:38:34.944Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-02T05:38:34.944Z register OK: tree_node
+2026-11-02T05:38:34.944Z register OK: tree_report
+2026-11-02T05:38:34.944Z register OK: tree_plan
+2026-11-02T05:38:34.944Z register OK: tree_dispatch
+2026-11-02T05:38:34.945Z register OK: tree_verify
+2026-11-02T05:38:34.945Z register OK: tree_status
+2026-11-02T05:38:34.945Z register OK: tree_log
+2026-11-02T05:38:34.945Z apply complete: 8/8 registered
+2026-11-02T05:38:34.945Z register OK: tree_maintain
+2026-11-02T06:22:43.889Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-02T06:22:43.890Z timer resolve failed: cannot get property "timer" without inject
+2026-11-02T06:22:43.890Z engine ready (sweepMode=timer)
+2026-11-02T06:22:43.890Z inject callback entered
+2026-11-02T06:22:43.890Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-02T06:22:43.890Z register OK: tree_plan
+2026-11-02T06:22:43.890Z register OK: tree_status
+2026-11-02T06:22:43.890Z register OK: tree_dispatch
+2026-11-02T06:22:43.890Z register OK: tree_verify
+2026-11-02T06:22:43.890Z register OK: tree_report
+2026-11-02T06:22:43.890Z register OK: tree_log
+2026-11-02T06:22:43.890Z register OK: tree_node
+2026-11-02T06:22:43.890Z register OK: tree_maintain
+2026-11-02T06:22:43.890Z apply complete: 8/8 registered
+2026-11-02T06:28:46.757Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-02T06:28:46.758Z engine ready (sweepMode=timer)
+2026-11-02T06:28:46.758Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-02T06:28:46.758Z inject callback entered
+2026-11-02T06:28:46.758Z timer resolve failed: cannot get property "timer" without inject
+2026-11-02T06:28:46.758Z register OK: tree_plan
+2026-11-02T06:28:46.758Z register OK: tree_dispatch
+2026-11-02T06:28:46.758Z register OK: tree_node
+2026-11-02T06:28:46.758Z register OK: tree_verify
+2026-11-02T06:28:46.758Z register OK: tree_report
+2026-11-02T06:28:46.758Z register OK: tree_status
+2026-11-02T06:28:46.758Z register OK: tree_log
+2026-11-02T06:28:46.758Z register OK: tree_maintain
+2026-11-02T06:28:46.758Z apply complete: 8/8 registered
+2026-11-04T10:17:19.798Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-04T10:17:19.807Z inject callback entered
+2026-11-04T10:17:19.807Z engine ready (sweepMode=timer)
+2026-11-04T10:17:19.807Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-04T10:17:19.807Z timer resolve failed: cannot get property "timer" without inject
+2026-11-04T10:17:19.807Z register OK: tree_plan
+2026-11-04T10:17:19.807Z register OK: tree_node
+2026-11-04T10:17:19.813Z register OK: tree_dispatch
+2026-11-04T10:17:19.813Z register OK: tree_report
+2026-11-04T10:17:19.814Z register OK: tree_status
+2026-11-04T10:17:19.814Z register OK: tree_verify
+2026-11-04T10:17:19.814Z register OK: tree_log
+2026-11-04T10:17:19.814Z register OK: tree_maintain
+2026-11-04T10:17:19.814Z apply complete: 8/8 registered
+2026-11-06T06:15:35.528Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-06T11:09:01.672Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-06T11:09:01.677Z timer resolve failed: cannot get property "timer" without inject
+2026-11-06T11:09:01.676Z inject callback entered
+2026-11-06T11:09:01.677Z engine ready (sweepMode=timer)
+2026-11-06T11:09:01.677Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-06T11:09:01.677Z register OK: tree_plan
+2026-11-06T11:09:01.677Z register OK: tree_node
+2026-11-06T11:09:01.677Z register OK: tree_report
+2026-11-06T11:09:01.677Z register OK: tree_dispatch
+2026-11-06T11:09:01.677Z register OK: tree_status
+2026-11-06T11:09:01.678Z register OK: tree_maintain
+2026-11-06T11:09:01.677Z register OK: tree_log
+2026-11-06T11:09:01.677Z register OK: tree_verify
+2026-11-06T11:09:01.678Z apply complete: 8/8 registered
+2026-11-06T12:03:49.024Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-06T12:03:49.030Z inject callback entered
+2026-11-06T12:03:49.030Z engine ready (sweepMode=timer)
+2026-11-06T12:03:49.030Z timer resolve failed: cannot get property "timer" without inject
+2026-11-06T12:03:49.030Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-06T12:03:49.030Z register OK: tree_plan
+2026-11-06T12:03:49.030Z register OK: tree_node
+2026-11-06T12:03:49.030Z register OK: tree_report
+2026-11-06T12:03:49.030Z register OK: tree_dispatch
+2026-11-06T12:03:49.030Z register OK: tree_status
+2026-11-06T12:03:49.030Z register OK: tree_log
+2026-11-06T12:03:49.030Z register OK: tree_maintain
+2026-11-06T12:03:49.031Z apply complete: 8/8 registered
+2026-11-06T12:03:49.030Z register OK: tree_verify
+2026-11-06T12:04:10.332Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-06T12:04:10.334Z inject callback entered
+2026-11-06T12:04:10.334Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-06T12:04:10.334Z timer resolve failed: cannot get property "timer" without inject
+2026-11-06T12:04:10.334Z engine ready (sweepMode=timer)
+2026-11-06T12:04:10.334Z register OK: tree_node
+2026-11-06T12:04:10.334Z register OK: tree_dispatch
+2026-11-06T12:04:10.334Z register OK: tree_plan
+2026-11-06T12:04:10.334Z register OK: tree_status
+2026-11-06T12:04:10.334Z register OK: tree_report
+2026-11-06T12:04:10.334Z register OK: tree_verify
+2026-11-06T12:04:10.334Z register OK: tree_log
+2026-11-06T12:04:10.334Z register OK: tree_maintain
+2026-11-06T12:04:10.334Z apply complete: 8/8 registered
+2026-11-08T05:41:06.098Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-08T05:41:06.100Z inject callback entered
+2026-11-08T05:41:06.100Z engine ready (sweepMode=timer)
+2026-11-08T05:41:06.100Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-08T05:41:06.100Z timer resolve failed: cannot get property "timer" without inject
+2026-11-08T05:41:06.100Z register OK: tree_node
+2026-11-08T05:41:06.100Z register OK: tree_plan
+2026-11-08T05:41:06.101Z register OK: tree_dispatch
+2026-11-08T05:41:06.101Z register OK: tree_report
+2026-11-08T05:41:06.101Z register OK: tree_log
+2026-11-08T05:41:06.101Z register OK: tree_status
+2026-11-08T05:41:06.101Z register OK: tree_verify
+2026-11-08T05:41:06.101Z register OK: tree_maintain
+2026-11-08T05:41:06.101Z apply complete: 8/8 registered
+2026-11-08T05:46:13.785Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-08T05:46:13.787Z inject callback entered
+2026-11-08T05:46:13.787Z timer resolve failed: cannot get property "timer" without inject
+2026-11-08T05:46:13.787Z register OK: tree_plan
+2026-11-08T05:46:13.787Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-08T05:46:13.787Z register OK: tree_node
+2026-11-08T05:46:13.787Z register OK: tree_dispatch
+2026-11-08T05:46:13.787Z engine ready (sweepMode=timer)
+2026-11-08T05:46:13.787Z register OK: tree_status
+2026-11-08T05:46:13.787Z register OK: tree_verify
+2026-11-08T05:46:13.787Z register OK: tree_report
+2026-11-08T05:46:13.787Z register OK: tree_maintain
+2026-11-08T05:46:13.787Z register OK: tree_log
+2026-11-08T05:46:13.787Z apply complete: 8/8 registered
+2026-11-09T04:32:24.641Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-09T07:41:04.699Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-09T07:41:04.701Z timer resolve failed: cannot get property "timer" without inject
+2026-11-09T07:41:04.701Z engine ready (sweepMode=timer)
+2026-11-09T07:41:04.702Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-09T07:41:04.701Z inject callback entered
+2026-11-09T07:41:04.702Z register OK: tree_node
+2026-11-09T07:41:04.702Z register OK: tree_dispatch
+2026-11-09T07:41:04.702Z register OK: tree_report
+2026-11-09T07:41:04.702Z register OK: tree_status
+2026-11-09T07:41:04.702Z register OK: tree_verify
+2026-11-09T07:41:04.702Z register OK: tree_plan
+2026-11-09T07:41:04.702Z register OK: tree_maintain
+2026-11-09T07:41:04.703Z apply complete: 8/8 registered
+2026-11-09T07:41:04.702Z register OK: tree_log
+2026-11-10T02:29:59.483Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-10T02:29:59.485Z timer resolve failed: cannot get property "timer" without inject
+2026-11-10T02:29:59.485Z inject callback entered
+2026-11-10T02:29:59.485Z register OK: tree_plan
+2026-11-10T02:29:59.485Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-10T02:29:59.485Z engine ready (sweepMode=timer)
+2026-11-10T02:29:59.485Z register OK: tree_report
+2026-11-10T02:29:59.485Z register OK: tree_node
+2026-11-10T02:29:59.486Z register OK: tree_maintain
+2026-11-10T02:29:59.485Z register OK: tree_dispatch
+2026-11-10T02:29:59.486Z apply complete: 8/8 registered
+2026-11-10T02:29:59.486Z register OK: tree_status
+2026-11-10T02:29:59.486Z register OK: tree_verify
+2026-11-10T02:29:59.486Z register OK: tree_log
+2026-11-10T11:23:49.395Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-10T11:23:49.399Z inject callback entered
+2026-11-10T11:23:49.399Z timer resolve failed: cannot get property "timer" without inject
+2026-11-10T11:23:49.399Z register OK: tree_plan
+2026-11-10T11:23:49.399Z register OK: tree_node
+2026-11-10T11:23:49.399Z engine ready (sweepMode=timer)
+2026-11-10T11:23:49.399Z register OK: tree_dispatch
+2026-11-10T11:23:49.399Z register OK: tree_status
+2026-11-10T11:23:49.399Z register OK: tree_report
+2026-11-10T11:23:49.399Z register OK: tree_log
+2026-11-10T11:23:49.399Z register OK: tree_verify
+2026-11-10T11:23:49.399Z register OK: tree_maintain
+2026-11-10T11:23:49.399Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-10T11:23:49.399Z apply complete: 8/8 registered
+2026-11-11T07:29:47.000Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T07:35:55.976Z inject callback entered
+2026-11-11T07:35:55.976Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-11T07:35:55.976Z engine ready (sweepMode=timer)
+2026-11-11T07:35:55.976Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T07:35:55.976Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-11T07:35:55.976Z register OK: tree_node
+2026-11-11T07:35:55.976Z register OK: tree_plan
+2026-11-11T07:35:55.976Z register OK: tree_dispatch
+2026-11-11T07:35:55.976Z register OK: tree_verify
+2026-11-11T07:35:55.976Z register OK: tree_status
+2026-11-11T07:35:55.976Z register OK: tree_report
+2026-11-11T07:35:55.976Z register OK: tree_log
+2026-11-11T07:35:55.976Z register OK: tree_maintain
+2026-11-11T07:35:55.976Z apply complete: 8/8 registered
+2026-11-11T07:36:03.801Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-11T07:36:03.801Z inject callback entered
+2026-11-11T07:36:03.801Z apply() entered (v0.4.0); PROFILE_DIR=?
+2026-11-11T07:36:03.801Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T07:36:03.801Z register OK: tree_node
+2026-11-11T07:36:03.801Z engine ready (sweepMode=timer)
+2026-11-11T07:36:03.801Z register OK: tree_report
+2026-11-11T07:36:03.801Z register OK: tree_dispatch
+2026-11-11T07:36:03.801Z register OK: tree_plan
+2026-11-11T07:36:03.801Z register OK: tree_verify
+2026-11-11T07:36:03.801Z register OK: tree_status
+2026-11-11T07:36:03.801Z register OK: tree_log
+2026-11-11T07:36:03.801Z apply complete: 8/8 registered
+2026-11-11T07:36:03.801Z register OK: tree_maintain
+2026-11-11T07:36:18.677Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T07:36:18.677Z inject callback entered
+2026-11-11T07:36:18.677Z sweep:degraded:no-timer — harvest relies on tool calls / tree_status {action:"harvest"}
+2026-11-11T07:36:18.677Z apply() entered (v0.5.0); PROFILE_DIR=?
+2026-11-11T07:36:18.677Z register OK: tree_plan
+2026-11-11T07:36:18.677Z engine ready (sweepMode=timer)
+2026-11-11T07:36:18.677Z register OK: tree_node
+2026-11-11T07:36:18.677Z register OK: tree_report
+2026-11-11T07:36:18.677Z register OK: tree_dispatch
+2026-11-11T07:36:18.677Z register OK: tree_status
+2026-11-11T07:36:18.677Z register OK: tree_log
+2026-11-11T07:36:18.677Z register OK: tree_maintain
+2026-11-11T07:36:18.677Z register OK: tree_verify
+2026-11-11T07:36:18.677Z apply complete: 8/8 registered
+2026-11-11T07:36:45.626Z inject callback entered
+2026-11-11T07:36:45.626Z apply() entered (v0.5.0); PROFILE_DIR=?
+2026-11-11T07:36:45.626Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T07:36:45.626Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T07:36:45.626Z register OK: tree_plan
+2026-11-11T07:36:45.626Z engine ready (sweepMode=timer)
+2026-11-11T07:36:45.626Z register OK: tree_report
+2026-11-11T07:36:45.626Z register OK: tree_dispatch
+2026-11-11T07:36:45.626Z register OK: tree_status
+2026-11-11T07:36:45.626Z register OK: tree_node
+2026-11-11T07:36:45.626Z register OK: tree_verify
+2026-11-11T07:36:45.626Z apply complete: 8/8 registered
+2026-11-11T07:36:45.626Z register OK: tree_log
+2026-11-11T07:36:45.626Z register OK: tree_maintain
+2026-11-11T07:36:52.549Z apply() entered (v0.5.0); PROFILE_DIR=?
+2026-11-11T07:36:52.549Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T07:36:52.549Z inject callback entered
+2026-11-11T07:36:52.549Z engine ready (sweepMode=timer)
+2026-11-11T07:36:52.549Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T07:36:52.549Z register OK: tree_plan
+2026-11-11T07:36:52.549Z register OK: tree_report
+2026-11-11T07:36:52.549Z register OK: tree_dispatch
+2026-11-11T07:36:52.549Z register OK: tree_node
+2026-11-11T07:36:52.549Z register OK: tree_status
+2026-11-11T07:36:52.549Z register OK: tree_log
+2026-11-11T07:36:52.549Z register OK: tree_maintain
+2026-11-11T07:36:52.549Z apply complete: 8/8 registered
+2026-11-11T07:36:52.549Z register OK: tree_verify
+2026-11-11T07:36:55.976Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T07:37:03.806Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T07:37:18.680Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T07:37:24.947Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T07:37:45.626Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T13:11:21.358Z apply() entered (v0.5.0); PROFILE_DIR=?
+2026-11-11T13:11:21.358Z inject callback entered
+2026-11-11T13:11:21.358Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T13:11:21.358Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T13:11:21.358Z engine ready (sweepMode=timer)
+2026-11-11T13:11:21.358Z register OK: tree_report
+2026-11-11T13:11:21.358Z register OK: tree_plan
+2026-11-11T13:11:21.358Z register OK: tree_status
+2026-11-11T13:11:21.358Z register OK: tree_verify
+2026-11-11T13:11:21.358Z register OK: tree_dispatch
+2026-11-11T13:11:21.358Z register OK: tree_maintain
+2026-11-11T13:11:21.358Z register OK: tree_node
+2026-11-11T13:11:21.358Z register OK: tree_log
+2026-11-11T13:11:21.358Z apply complete: 8/8 registered
+2026-11-11T13:11:42.604Z inject callback entered
+2026-11-11T13:11:42.604Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T13:11:42.604Z apply() entered (v0.5.0); PROFILE_DIR=?
+2026-11-11T13:11:42.604Z engine ready (sweepMode=timer)
+2026-11-11T13:11:42.604Z register OK: tree_plan
+2026-11-11T13:11:42.604Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T13:11:42.604Z register OK: tree_report
+2026-11-11T13:11:42.604Z register OK: tree_status
+2026-11-11T13:11:42.604Z register OK: tree_verify
+2026-11-11T13:11:42.604Z register OK: tree_dispatch
+2026-11-11T13:11:42.604Z register OK: tree_node
+2026-11-11T13:11:42.604Z register OK: tree_log
+2026-11-11T13:11:42.604Z register OK: tree_maintain
+2026-11-11T13:11:42.604Z apply complete: 8/8 registered
+2026-11-11T13:12:21.381Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T13:12:42.679Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T13:18:07.340Z apply() entered (v0.5.0); PROFILE_DIR=?
+2026-11-11T13:18:07.340Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T13:18:07.340Z engine ready (sweepMode=timer)
+2026-11-11T13:18:07.340Z inject callback entered
+2026-11-11T13:18:07.340Z register OK: tree_plan
+2026-11-11T13:18:07.340Z register OK: tree_dispatch
+2026-11-11T13:18:07.340Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T13:18:07.340Z register OK: tree_node
+2026-11-11T13:18:07.340Z register OK: tree_verify
+2026-11-11T13:18:07.340Z register OK: tree_status
+2026-11-11T13:18:07.340Z register OK: tree_report
+2026-11-11T13:18:07.340Z register OK: tree_maintain
+2026-11-11T13:18:07.340Z register OK: tree_log
+2026-11-11T13:18:07.340Z apply complete: 8/8 registered
+2026-11-11T13:18:32.038Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T13:18:32.038Z engine ready (sweepMode=timer)
+2026-11-11T13:18:32.038Z apply() entered (v0.5.0); PROFILE_DIR=?
+2026-11-11T13:18:32.038Z inject callback entered
+2026-11-11T13:18:32.038Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T13:18:32.038Z register OK: tree_dispatch
+2026-11-11T13:18:32.038Z register OK: tree_node
+2026-11-11T13:18:32.038Z register OK: tree_report
+2026-11-11T13:18:32.038Z register OK: tree_log
+2026-11-11T13:18:32.038Z register OK: tree_status
+2026-11-11T13:18:32.038Z register OK: tree_maintain
+2026-11-11T13:18:32.038Z register OK: tree_verify
+2026-11-11T13:18:32.038Z register OK: tree_plan
+2026-11-11T13:18:32.038Z apply complete: 8/8 registered
+2026-11-11T13:19:07.362Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T13:19:09.280Z inject callback entered
+2026-11-11T13:19:09.280Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T13:19:09.280Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T13:19:09.280Z apply() entered (v0.6.0); PROFILE_DIR=?
+2026-11-11T13:19:09.280Z inject callback THREW: ReferenceError: TOOLS is not defined
+    at Object.callback (file:///D:/Codes/dsh-tree-harness/packages/dsh-tree-engine/index.js:816:28)
+    at Fiber.execute (file:///D:/DSHarness/resources/app.asar/dsh/node_modules/@deepseek-ai/cordis/lib/index.js:365:28)
+    at file:///D:/DSHarness/resources/app.asar/dsh/node_modules/@deepseek-ai/cordis/lib/index.js:436:34
+    at composeError (file:///D:/DSHarness/resources/app.asar/dsh/node_modules/@deepseek-ai/cordis/lib/index.js:205:18)
+    at Fiber._execute (file:///D:/DSHarness/resources/app.asar/dsh/node_modules/@deepseek-ai/cordis/lib/index.js:431:10)
+    at Fiber._reload (file:///D:/DSHarness/resources/app.asar/dsh/node_modules/@deepseek-ai/cordis/lib/index.js:677:52)
+2026-11-11T13:19:09.280Z engine ready (sweepMode=timer)
+2026-11-11T13:19:23.571Z apply() entered (v0.6.0); PROFILE_DIR=?
+2026-11-11T13:19:23.571Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T13:19:23.571Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T13:19:23.571Z register OK: tree_node
+2026-11-11T13:19:23.571Z register OK: tree_plan
+2026-11-11T13:19:23.571Z inject callback entered
+2026-11-11T13:19:23.571Z register OK: tree_dispatch
+2026-11-11T13:19:23.571Z engine ready (sweepMode=timer)
+2026-11-11T13:19:23.571Z register OK: tree_report
+2026-11-11T13:19:23.571Z register OK: tree_verify
+2026-11-11T13:19:23.571Z register OK: tree_status
+2026-11-11T13:19:23.571Z register OK: tree_log
+2026-11-11T13:19:23.571Z register OK: tree_maintain
+2026-11-11T13:19:23.571Z apply complete: 9/9 registered
+2026-11-11T13:19:23.571Z register OK: tree_doctor
+2026-11-11T13:19:32.063Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T13:20:09.298Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T13:20:23.669Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T14:22:25.229Z apply() entered (v0.6.0); PROFILE_DIR=?
+2026-11-11T14:22:25.232Z inject callback entered
+2026-11-11T14:22:25.232Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T14:22:25.232Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T14:22:25.232Z engine ready (sweepMode=timer)
+2026-11-11T14:22:25.232Z register OK: tree_plan
+2026-11-11T14:22:25.235Z register OK: tree_node
+2026-11-11T14:22:25.235Z register OK: tree_report
+2026-11-11T14:22:25.235Z register OK: tree_dispatch
+2026-11-11T14:22:25.235Z register OK: tree_verify
+2026-11-11T14:22:25.235Z register OK: tree_status
+2026-11-11T14:22:25.235Z register OK: tree_log
+2026-11-11T14:22:25.235Z register OK: tree_maintain
+2026-11-11T14:22:25.235Z register OK: tree_doctor
+2026-11-11T14:22:25.235Z apply complete: 9/9 registered
+2026-11-11T14:25:32.639Z apply() entered (v0.6.0); PROFILE_DIR=?
+2026-11-11T14:25:32.643Z inject callback entered
+2026-11-11T14:25:32.643Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T14:25:32.643Z engine ready (sweepMode=timer)
+2026-11-11T14:25:32.643Z register OK: tree_plan
+2026-11-11T14:25:32.643Z register OK: tree_node
+2026-11-11T14:25:32.643Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T14:25:32.643Z register OK: tree_dispatch
+2026-11-11T14:25:32.643Z register OK: tree_report
+2026-11-11T14:25:32.643Z register OK: tree_status
+2026-11-11T14:25:32.643Z register OK: tree_verify
+2026-11-11T14:25:32.643Z register OK: tree_log
+2026-11-11T14:25:32.643Z register OK: tree_maintain
+2026-11-11T14:25:32.643Z register OK: tree_doctor
+2026-11-11T14:25:32.643Z apply complete: 9/9 registered
+2026-11-11T14:47:45.843Z apply() entered (v0.6.0); PROFILE_DIR=?
+2026-11-11T14:47:45.845Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T14:47:45.845Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T14:47:45.845Z engine ready (sweepMode=timer)
+2026-11-11T14:47:45.845Z inject callback entered
+2026-11-11T14:47:45.845Z register OK: tree_plan
+2026-11-11T14:47:45.845Z register OK: tree_node
+2026-11-11T14:47:45.845Z register OK: tree_report
+2026-11-11T14:47:45.845Z register OK: tree_dispatch
+2026-11-11T14:47:45.845Z register OK: tree_doctor
+2026-11-11T14:47:45.845Z register OK: tree_verify
+2026-11-11T14:47:45.845Z register OK: tree_log
+2026-11-11T14:47:45.845Z register OK: tree_status
+2026-11-11T14:47:45.845Z register OK: tree_maintain
+2026-11-11T14:47:45.845Z apply complete: 9/9 registered
+2026-11-11T15:39:34.624Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T15:39:34.624Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T15:39:34.624Z inject callback entered
+2026-11-11T15:39:34.624Z apply() entered (v0.6.0); PROFILE_DIR=?
+2026-11-11T15:39:34.624Z previous sweep disposed (hot-reload zombie)
+2026-11-11T15:39:34.624Z engine ready (sweepMode=timer)
+2026-11-11T15:39:34.624Z register OK: tree_plan
+2026-11-11T15:39:34.624Z register OK: tree_dispatch
+2026-11-11T15:39:34.624Z register OK: tree_status
+2026-11-11T15:39:34.624Z register OK: tree_report
+2026-11-11T15:39:34.624Z register OK: tree_log
+2026-11-11T15:39:34.624Z register OK: tree_maintain
+2026-11-11T15:39:34.624Z register OK: tree_node
+2026-11-11T15:39:34.624Z register OK: tree_doctor
+2026-11-11T15:39:34.624Z apply complete: 9/9 registered
+2026-11-11T15:39:34.624Z register OK: tree_verify
+2026-11-11T16:38:35.108Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T16:41:01.094Z apply() entered (v0.6.0); PROFILE_DIR=?
+2026-11-11T16:41:01.094Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T16:41:01.094Z engine ready (sweepMode=timer)
+2026-11-11T16:41:01.094Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T16:41:01.094Z inject callback entered
+2026-11-11T16:41:01.094Z register OK: tree_status
+2026-11-11T16:41:01.094Z register OK: tree_plan
+2026-11-11T16:41:01.094Z register OK: tree_node
+2026-11-11T16:41:01.094Z register OK: tree_dispatch
+2026-11-11T16:41:01.094Z register OK: tree_report
+2026-11-11T16:41:01.094Z register OK: tree_verify
+2026-11-11T16:41:01.094Z register OK: tree_log
+2026-11-11T16:41:01.094Z register OK: tree_doctor
+2026-11-11T16:41:01.094Z apply complete: 9/9 registered
+2026-11-11T16:41:01.094Z register OK: tree_maintain
+2026-11-11T16:42:01.278Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T16:42:28.854Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T16:42:28.854Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T16:42:28.854Z inject callback entered
+2026-11-11T16:42:28.854Z apply() entered (v0.6.0); PROFILE_DIR=?
+2026-11-11T16:42:28.854Z register OK: tree_plan
+2026-11-11T16:42:28.854Z engine ready (sweepMode=timer)
+2026-11-11T16:42:28.854Z register OK: tree_dispatch
+2026-11-11T16:42:28.854Z register OK: tree_node
+2026-11-11T16:42:28.855Z register OK: tree_status
+2026-11-11T16:42:28.855Z register OK: tree_verify
+2026-11-11T16:42:28.855Z register OK: tree_report
+2026-11-11T16:42:28.855Z register OK: tree_log
+2026-11-11T16:42:28.855Z register OK: tree_doctor
+2026-11-11T16:42:28.855Z register OK: tree_maintain
+2026-11-11T16:42:28.855Z apply complete: 9/9 registered
+2026-11-11T16:43:29.093Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T16:46:21.360Z apply() entered (v0.6.0); PROFILE_DIR=?
+2026-11-11T16:46:21.360Z engine ready (sweepMode=timer)
+2026-11-11T16:46:21.360Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T16:46:21.360Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T16:46:21.360Z inject callback entered
+2026-11-11T16:46:21.360Z register OK: tree_node
+2026-11-11T16:46:21.360Z register OK: tree_dispatch
+2026-11-11T16:46:21.360Z register OK: tree_plan
+2026-11-11T16:46:21.360Z register OK: tree_report
+2026-11-11T16:46:21.360Z register OK: tree_log
+2026-11-11T16:46:21.360Z register OK: tree_verify
+2026-11-11T16:46:21.360Z register OK: tree_status
+2026-11-11T16:46:21.360Z register OK: tree_maintain
+2026-11-11T16:46:21.360Z register OK: tree_doctor
+2026-11-11T16:46:21.360Z apply complete: 9/9 registered
+2026-11-11T16:46:32.657Z apply() entered (v0.6.0); PROFILE_DIR=?
+2026-11-11T16:46:32.657Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T16:46:32.657Z inject callback entered
+2026-11-11T16:46:32.657Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T16:46:32.657Z register OK: tree_plan
+2026-11-11T16:46:32.657Z engine ready (sweepMode=timer)
+2026-11-11T16:46:32.657Z register OK: tree_node
+2026-11-11T16:46:32.657Z register OK: tree_dispatch
+2026-11-11T16:46:32.657Z register OK: tree_report
+2026-11-11T16:46:32.657Z register OK: tree_status
+2026-11-11T16:46:32.657Z register OK: tree_verify
+2026-11-11T16:46:32.657Z register OK: tree_log
+2026-11-11T16:46:32.657Z register OK: tree_maintain
+2026-11-11T16:46:32.657Z register OK: tree_doctor
+2026-11-11T16:46:32.657Z apply complete: 9/9 registered
+2026-11-11T16:47:21.429Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T16:47:31.242Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T16:52:17.305Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T16:52:17.305Z apply() entered (v0.6.0); PROFILE_DIR=?
+2026-11-11T16:52:17.305Z inject callback entered
+2026-11-11T16:52:17.305Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T16:52:17.305Z register OK: tree_plan
+2026-11-11T16:52:17.305Z engine ready (sweepMode=timer)
+2026-11-11T16:52:17.305Z register OK: tree_node
+2026-11-11T16:52:17.305Z register OK: tree_dispatch
+2026-11-11T16:52:17.305Z register OK: tree_report
+2026-11-11T16:52:17.305Z register OK: tree_verify
+2026-11-11T16:52:17.305Z register OK: tree_status
+2026-11-11T16:52:17.305Z register OK: tree_log
+2026-11-11T16:52:17.305Z register OK: tree_maintain
+2026-11-11T16:52:17.305Z register OK: tree_doctor
+2026-11-11T16:52:17.306Z apply complete: 9/9 registered
+2026-11-11T16:52:47.495Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T16:52:47.495Z apply() entered (v0.7.0); PROFILE_DIR=?
+2026-11-11T16:52:47.495Z inject callback entered
+2026-11-11T16:52:47.495Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T16:52:47.495Z engine ready (sweepMode=timer)
+2026-11-11T16:52:47.495Z register OK: tree_plan
+2026-11-11T16:52:47.495Z register OK: tree_dispatch
+2026-11-11T16:52:47.495Z register OK: tree_node
+2026-11-11T16:52:47.495Z register OK: tree_report
+2026-11-11T16:52:47.496Z register OK: tree_status
+2026-11-11T16:52:47.496Z register OK: tree_verify
+2026-11-11T16:52:47.496Z register OK: tree_log
+2026-11-11T16:52:47.496Z register OK: tree_maintain
+2026-11-11T16:52:47.496Z register OK: tree_doctor
+2026-11-11T16:52:47.496Z apply complete: 9/9 registered
+2026-11-11T16:53:17.568Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T16:53:47.695Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-11T17:00:29.029Z inject callback entered
+2026-11-11T17:00:28.996Z apply() entered (v0.7.0); PROFILE_DIR=?
+2026-11-11T17:00:29.029Z engine ready (sweepMode=timer)
+2026-11-11T17:00:29.029Z timer resolve failed: cannot get property "timer" without inject
+2026-11-11T17:00:29.029Z register OK: tree_plan
+2026-11-11T17:00:29.029Z sweep: no host timer service — using the in-process interval fallback (sweepMode=timer); tree_status {action:"harvest"} still triggers an immediate sweep
+2026-11-11T17:00:29.030Z register OK: tree_node
+2026-11-11T17:00:29.030Z register OK: tree_dispatch
+2026-11-11T17:00:29.030Z register OK: tree_status
+2026-11-11T17:00:29.030Z register OK: tree_verify
+2026-11-11T17:00:29.030Z register OK: tree_log
+2026-11-11T17:00:29.030Z register OK: tree_doctor
+2026-11-11T17:00:29.030Z register OK: tree_report
+2026-11-11T17:00:29.030Z register OK: tree_maintain
+2026-11-11T17:00:29.030Z apply complete: 9/9 registered
+2026-11-11T17:01:29.241Z tokenMeter.measure unavailable: cannot get property "tokenMeter" without inject → self-report only
+2026-11-12T09:14:00.341Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:14:00.341Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "subagents" in inactive context
+2026-11-12T09:14:12.464Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:14:12.464Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "subagents" in inactive context
+2026-11-12T09:14:30.371Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:14:30.371Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "subagents" in inactive context
+2026-11-12T09:14:36.066Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:14:36.066Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "subagents" in inactive context
+2026-11-12T09:14:50.411Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:14:50.411Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "subagents" in inactive context
+2026-11-12T09:14:50.411Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "subagents" in inactive context
+2026-11-12T09:14:50.411Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:14:50.416Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:14:50.416Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "subagents" in inactive context
+2026-11-12T09:15:00.339Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:15:00.339Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service "subagents" in inactive context
+2026-11-12T09:15:03.686Z handoff brief: grace 12000ms expired for 5b815d47 → no-handoff-summary
+2026-11-12T09:15:12.480Z ports.interrupt failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service "subagents" in inactive context
+2026-11-12T09:15:12.480Z ports.promptHandoff failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:15:30.383Z ports.interrupt failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service "subagents" in inactive context
+2026-11-12T09:15:30.383Z ports.promptHandoff failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:15:36.021Z ports.promptHandoff failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:15:36.021Z ports.interrupt failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service "subagents" in inactive context
+2026-11-12T09:15:45.690Z handoff brief: grace 12000ms expired for d257b262 → no-handoff-summary
+2026-11-12T09:16:00.359Z ports.promptHandoff failed for c5cd5492-b8db-4614-bdeb-c6fba092d7e2: cannot get required service "sessionQuery" in inactive context
+2026-11-12T09:16:00.359Z ports.interrupt failed for c5cd5492-b8db-4614-bdeb-c6fba092d7e2: cannot get required service "subagents" in inactive context

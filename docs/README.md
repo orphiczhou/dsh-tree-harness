@@ -26,6 +26,7 @@
 | [features-2026-11-11-spec.md](architecture/features-2026-11-11-spec.md) | 功能规格：会话自交接（A 节）+ 会话树 UI 工作区归档/隐藏/检索（B 节） | 已实现（UI 部分持续迭代） |
 | [session-handoff-2026-11-11.md](architecture/session-handoff-2026-11-11.md) | 会话自交接设计与交付记录（v0.1.0 → v1.2.0 并入 → v1.3.5） | 现行·详细 |
 | [session-tree-ui.md](architecture/session-tree-ui.md) | **会话树 UI 设计与迭代规范**：client.js 代码地图、改哪里的速查、GUI 迭代 7 步流程、UI 变更记录 | 现行（GUI 迭代单一方案） |
+| [composable-orchestration.md](architecture/composable-orchestration.md) | **组合式会话编排体系评估与设计（v0.1）**：会话树基础层 / tree-engine / 自由流程引擎的解耦、组合、递归嵌套与拆分策略；含平台约束、RACI、安全面、红队证伪修订与 5 步最小路线 | 候选·待用户决策（不是已批准决策） |
 | [merge-session-tree-2026-11-11.md](architecture/merge-session-tree-2026-11-11.md) | 双包 → 单包合并记录（方案 B⁺）、host/client 契约 | 历史性架构记录 |
 | [s0-decisions.md](architecture/s0-decisions.md) | S0 规范冻结的裁决记录 | 历史性架构记录 |
 
@@ -36,6 +37,7 @@
 | [guides/install-guide.md](guides/install-guide.md) | **人类安装指南**：三种安装路线（Git 镜像仓 / 本地 monorepo / 市场）、组件矩阵、验证、升级卸载 | 随安装方式变化更新 |
 | [guides/skills-usage.md](guides/skills-usage.md) | 三个随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）：发现、触发、参数、验收、42% vs 50%、升级、排障 | 随 Skill 改动更新 |
 | [guides/publishing.md](guides/publishing.md) | 发布流程与规则：唯一源码事实源、镜像仓同步、`release-plugin.mjs`、版本纪律 D6、市场/npm 现状 | 每次发版追加记录 |
+| [guides/split-preparation.md](guides/split-preparation.md) | **拆分准备指南（向导，不表示已决定拆分）**：12 插件源码目录地图 / 开发会话索引 / 决策前置（D1 反转、hmr.root、门禁）/ 8 步拆分工作流 / 单包清单 / DoD 与回滚 / 触发器 | 拆分决策变化或目录漂移时更新 |
 | [operations/handoff-2026-11-12.md](operations/handoff-2026-11-12.md) | **当前交接/运维手册**：架构、关键路径、测试与验活命令、发布现状、已知边界、下一轮议程 | 每轮收口刷新；旧版进 archive |
 | [operations/wave2-plan-2026-11-12.md](operations/wave2-plan-2026-11-12.md) | **Wave 2 开发计划**：项目地图 §9 建议与波次 + Wave-1 剩余项 + 新发现（root id 兼容、GUI 规范），含 DoD/风险/执行方式；**✅ 已执行（W2.1–W2.8），证据见 [reports/wave2-closeout-2026-11-12.md](reports/wave2-closeout-2026-11-12.md)** | 计划为历史事实；完成情况见文首「执行状态」 |
 
@@ -57,6 +59,8 @@
 | [e2e-release-runner-2026-11-12.md](reports/e2e-release-runner-2026-11-12.md) | W2.5 发布前真机 E2E 统一 runner：三条断言的编排/汇总/artifacts 布局、离线故障注入、replay 边界与真机触发方式 |
 | [release-automation-2026-11-12.md](reports/release-automation-2026-11-12.md) | W2.7 发布自动化：一条命令（预检 → 同步/SHA → 本仓 commit → 镜像 commit/tag → `ls-remote`）、失败即停与回滚提示、凭据纪律、隔离沙箱演练 |
 | [wave2-closeout-2026-11-12.md](reports/wave2-closeout-2026-11-12.md) | **Wave 2 收口报告**：W2.1–W2.8 逐项结论与证据（测试数 84→112、29/29、版本一致性 23 checks、runner/发布脚本演练边界）、未执行项（真机三断言 / 真推）与下一轮候选 |
+| [composition-research-2026-11-12/](reports/composition-research-2026-11-12/README.md) | **组合式会话编排体系 · 专家取证报告集**：E1 仓库耦合 / E2 DSH 平台 asar 能力边界 / E3 自由流程引擎 / E4 SOTA 组合模式 / R5 红队证伪评审（2026-11-12 评估的原始证据；结论见 [architecture/composable-orchestration.md](architecture/composable-orchestration.md)） |
+| [e2e-composition-relay-2026-11-12.md](reports/e2e-composition-relay-2026-11-12.md) | **S1 真机 E2E**：竹节 relay 是否打断运行中的 flow（实测 `cancelled / E_RUN_CANCELLED`）、宿主 `usagePct` 恒 null（inject 缺陷）、timer 自主路径受 reload 残影影响、per-leaf relay 开关建议 |
 
 ## 4. 归档（archive/）
 

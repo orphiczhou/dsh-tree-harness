@@ -1,0 +1,433 @@
+{
+  "tree": {
+    "tree_id": "s1rl1",
+    "created_at": "2026-11-12T09:13:09.020Z",
+    "leaf": {
+      "leaf_id": "s1rl1-C1-relay",
+      "status": "segment_pending",
+      "context_usage_pct": 45,
+      "session_id": "c5cd5492-b8db-4614-bdeb-c6fba092d7e2",
+      "runtime": {
+        "state": "succeeded",
+        "subagentSessionId": "c5cd5492-b8db-4614-bdeb-c6fba092d7e2",
+        "attempt": 1,
+        "segmentChain": [
+          "d257b262-2ca0-4d63-8ebd-7c32e3ac737e",
+          "c5cd5492-b8db-4614-bdeb-c6fba092d7e2"
+        ],
+        "lastHandoffAt": 1794474945726,
+        "handoffBrief": null,
+        "history": [
+          {
+            "sessionId": null,
+            "state": "pending",
+            "endedAt": 1794474818946
+          },
+          {
+            "sessionId": "5b815d47-ee6f-4348-abba-461be0eb2c0c",
+            "state": "running",
+            "endedAt": 1794474903754,
+            "note": "bamboo-relay"
+          },
+          {
+            "sessionId": "d257b262-2ca0-4d63-8ebd-7c32e3ac737e",
+            "state": "running",
+            "endedAt": 1794474945726,
+            "note": "bamboo-relay"
+          },
+          {
+            "sessionId": "c5cd5492-b8db-4614-bdeb-c6fba092d7e2",
+            "state": "running",
+            "endedAt": 1794474966143,
+            "note": "done event"
+          }
+        ]
+      },
+      "drift_history": [
+        {
+          "ts": "2026-11-12T09:13:52.170Z",
+          "kind": "rhythm",
+          "severity": "high",
+          "action": "handoff",
+          "reason": "context_usage_pct 45% >= threshold 42%, auto segment_pending (bamboo-joint handoff)"
+        },
+        {
+          "ts": "2026-11-12T09:15:03.754Z",
+          "kind": "rhythm",
+          "severity": "low",
+          "action": "handoff",
+          "reason": "bamboo relay #1 (no-handoff-summary)",
+          "to_session": "d257b262-2ca0-4d63-8ebd-7c32e3ac737e"
+        },
+        {
+          "ts": "2026-11-12T09:15:45.726Z",
+          "kind": "rhythm",
+          "severity": "low",
+          "action": "handoff",
+          "reason": "bamboo relay #2 (no-handoff-summary)",
+          "to_session": "c5cd5492-b8db-4614-bdeb-c6fba092d7e2"
+        }
+      ],
+      "events": [
+        {
+          "ts": "2026-11-12T09:16:06.143Z",
+          "type": "done",
+          "meta": {
+            "summary": "flow_run 失败(错误码 E_RUN_EXISTS)：run \"S1RELAY-R1\" 已存在 journal（禁止复用；续跑请用 flow_resume）"
+          }
+        }
+      ]
+    },
+    "drift_log": [
+      {
+        "ts": "2026-11-12T09:13:52.170Z",
+        "leaf_id": "s1rl1-C1-relay",
+        "action": "handoff",
+        "reason": "context_usage_pct 45% >= threshold 42%, auto segment_pending (bamboo-joint handoff)"
+      },
+      {
+        "ts": "2026-11-12T09:15:03.754Z",
+        "leaf_id": "s1rl1-C1-relay",
+        "action": "handoff",
+        "reason": "bamboo relay #1 (no-handoff-summary)",
+        "to_session": "d257b262-2ca0-4d63-8ebd-7c32e3ac737e"
+      },
+      {
+        "ts": "2026-11-12T09:15:45.726Z",
+        "leaf_id": "s1rl1-C1-relay",
+        "action": "handoff",
+        "reason": "bamboo relay #2 (no-handoff-summary)",
+        "to_session": "c5cd5492-b8db-4614-bdeb-c6fba092d7e2"
+      }
+    ]
+  },
+  "flow": {
+    "journalPath": "D:\\Codes\\DSH动态流程引擎插件\\.dsh-flow\\runs\\S1RELAY-R1.jsonl",
+    "journalBytes": 20435,
+    "seqCount": 15,
+    "runCreated": 1794474841810,
+    "events": [
+      {
+        "seq": 1,
+        "ts": 1794474841810,
+        "event": "run/created",
+        "flowId": "s1.relay.flow",
+        "callerOrigin": "subagent",
+        "storageRoot": "D:\\Codes\\DSH动态流程引擎插件\\.dsh-flow",
+        "runCwd": "D:\\Codes\\dsh-tree-harness",
+        "runCwdSource": "workingDirectory"
+      },
+      {
+        "seq": 2,
+        "ts": 1794474841818,
+        "event": "perm/tier-resolved"
+      },
+      {
+        "seq": 3,
+        "ts": 1794474841819,
+        "event": "run/started"
+      },
+      {
+        "seq": 4,
+        "ts": 1794474841820,
+        "event": "var/init"
+      },
+      {
+        "seq": 5,
+        "ts": 1794474841822,
+        "event": "node/start",
+        "node": "__start"
+      },
+      {
+        "seq": 6,
+        "ts": 1794474841824,
+        "event": "node/settled",
+        "node": "__start",
+        "status": "succeeded",
+        "durationMs": 2,
+        "sessionId": null
+      },
+      {
+        "seq": 7,
+        "ts": 1794474841825,
+        "event": "edge/selected"
+      },
+      {
+        "seq": 8,
+        "ts": 1794474841826,
+        "event": "node/start",
+        "node": "N1"
+      },
+      {
+        "seq": 9,
+        "ts": 1794474841866,
+        "event": "node/spawned",
+        "node": "N1"
+      },
+      {
+        "seq": 10,
+        "ts": 1794474880473,
+        "event": "node/settled",
+        "node": "N1",
+        "status": "succeeded",
+        "durationMs": 38646,
+        "sessionId": "b4f38486-4b95-4b3a-b041-ae694943bdb8"
+      },
+      {
+        "seq": 11,
+        "ts": 1794474880474,
+        "event": "edge/selected"
+      },
+      {
+        "seq": 12,
+        "ts": 1794474880475,
+        "event": "node/start",
+        "node": "N2"
+      },
+      {
+        "seq": 13,
+        "ts": 1794474880510,
+        "event": "node/spawned",
+        "node": "N2"
+      },
+      {
+        "seq": 14,
+        "ts": 1794474903670,
+        "event": "node/settled",
+        "node": "N2",
+        "status": "failed",
+        "error": "E_RUN_CANCELLED",
+        "durationMs": 0,
+        "sessionId": "6512f116-58a6-43fb-8fb2-31aa191f89bc"
+      },
+      {
+        "seq": 15,
+        "ts": 1794474903674,
+        "event": "run/ended",
+        "status": "cancelled",
+        "error": "E_RUN_CANCELLED",
+        "durationMs": 61863,
+        "nodeExecutions": 3,
+        "permTier": "safe",
+        "outputs": null
+      }
+    ]
+  },
+  "applyLog": {
+    "path": "C:\\Users\\sir_c\\.dsh\\profiles\\desktop\\tree-engine-data\\apply.log",
+    "bytes": 69335,
+    "tokenMeterLines": [
+      {
+        "line": 603,
+        "text": "2026-11-06T06:15:35.528Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 674,
+        "text": "2026-11-09T04:32:24.641Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 717,
+        "text": "2026-11-11T07:29:47.000Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 788,
+        "text": "2026-11-11T07:36:55.976Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 789,
+        "text": "2026-11-11T07:37:03.806Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 790,
+        "text": "2026-11-11T07:37:18.680Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 791,
+        "text": "2026-11-11T07:37:24.947Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 792,
+        "text": "2026-11-11T07:37:45.626Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 821,
+        "text": "2026-11-11T13:12:21.381Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 822,
+        "text": "2026-11-11T13:12:42.679Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 851,
+        "text": "2026-11-11T13:19:07.362Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 879,
+        "text": "2026-11-11T13:19:32.063Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 880,
+        "text": "2026-11-11T13:20:09.298Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 881,
+        "text": "2026-11-11T13:20:23.669Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 943,
+        "text": "2026-11-11T16:38:35.108Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 959,
+        "text": "2026-11-11T16:42:01.278Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 975,
+        "text": "2026-11-11T16:43:29.093Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 1006,
+        "text": "2026-11-11T16:47:21.429Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 1007,
+        "text": "2026-11-11T16:47:31.242Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 1038,
+        "text": "2026-11-11T16:53:17.568Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 1039,
+        "text": "2026-11-11T16:53:47.695Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      },
+      {
+        "line": 1055,
+        "text": "2026-11-11T17:01:29.241Z tokenMeter.measure unavailable: cannot get property \"tokenMeter\" without inject → self-report only"
+      }
+    ],
+    "handoffGraceLines": [
+      {
+        "line": 1072,
+        "text": "2026-11-12T09:15:03.686Z handoff brief: grace 12000ms expired for 5b815d47 → no-handoff-summary"
+      },
+      {
+        "line": 1079,
+        "text": "2026-11-12T09:15:45.690Z handoff brief: grace 12000ms expired for d257b262 → no-handoff-summary"
+      }
+    ],
+    "inactiveContextFailures": [
+      {
+        "line": 1056,
+        "text": "2026-11-12T09:14:00.341Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1057,
+        "text": "2026-11-12T09:14:00.341Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"subagents\" in inactive context"
+      },
+      {
+        "line": 1058,
+        "text": "2026-11-12T09:14:12.464Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1059,
+        "text": "2026-11-12T09:14:12.464Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"subagents\" in inactive context"
+      },
+      {
+        "line": 1060,
+        "text": "2026-11-12T09:14:30.371Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1061,
+        "text": "2026-11-12T09:14:30.371Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"subagents\" in inactive context"
+      },
+      {
+        "line": 1062,
+        "text": "2026-11-12T09:14:36.066Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1063,
+        "text": "2026-11-12T09:14:36.066Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"subagents\" in inactive context"
+      },
+      {
+        "line": 1064,
+        "text": "2026-11-12T09:14:50.411Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1065,
+        "text": "2026-11-12T09:14:50.411Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"subagents\" in inactive context"
+      },
+      {
+        "line": 1066,
+        "text": "2026-11-12T09:14:50.411Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"subagents\" in inactive context"
+      },
+      {
+        "line": 1067,
+        "text": "2026-11-12T09:14:50.411Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1068,
+        "text": "2026-11-12T09:14:50.416Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1069,
+        "text": "2026-11-12T09:14:50.416Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"subagents\" in inactive context"
+      },
+      {
+        "line": 1070,
+        "text": "2026-11-12T09:15:00.339Z ports.promptHandoff failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1071,
+        "text": "2026-11-12T09:15:00.339Z ports.interrupt failed for 5b815d47-ee6f-4348-abba-461be0eb2c0c: cannot get required service \"subagents\" in inactive context"
+      },
+      {
+        "line": 1073,
+        "text": "2026-11-12T09:15:12.480Z ports.interrupt failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service \"subagents\" in inactive context"
+      },
+      {
+        "line": 1074,
+        "text": "2026-11-12T09:15:12.480Z ports.promptHandoff failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1075,
+        "text": "2026-11-12T09:15:30.383Z ports.interrupt failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service \"subagents\" in inactive context"
+      },
+      {
+        "line": 1076,
+        "text": "2026-11-12T09:15:30.383Z ports.promptHandoff failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1077,
+        "text": "2026-11-12T09:15:36.021Z ports.promptHandoff failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1078,
+        "text": "2026-11-12T09:15:36.021Z ports.interrupt failed for d257b262-2ca0-4d63-8ebd-7c32e3ac737e: cannot get required service \"subagents\" in inactive context"
+      },
+      {
+        "line": 1080,
+        "text": "2026-11-12T09:16:00.359Z ports.promptHandoff failed for c5cd5492-b8db-4614-bdeb-c6fba092d7e2: cannot get required service \"sessionQuery\" in inactive context"
+      },
+      {
+        "line": 1081,
+        "text": "2026-11-12T09:16:00.359Z ports.interrupt failed for c5cd5492-b8db-4614-bdeb-c6fba092d7e2: cannot get required service \"subagents\" in inactive context"
+      }
+    ],
+    "applyEnteredCount": 73,
+    "lastApplyEntered": [
+      {
+        "line": 1009,
+        "text": "2026-11-11T16:52:17.305Z apply() entered (v0.6.0); PROFILE_DIR=?"
+      },
+      {
+        "line": 1024,
+        "text": "2026-11-11T16:52:47.495Z apply() entered (v0.7.0); PROFILE_DIR=?"
+      },
+      {
+        "line": 1041,
+        "text": "2026-11-11T17:00:28.996Z apply() entered (v0.7.0); PROFILE_DIR=?"
+      }
+    ]
+  }
+}
