@@ -1,4 +1,4 @@
-# 进度地图（2026-11-13 20:1x 快照）
+# 进度地图（2026-11-13 22:1x 快照 · D27 接续会话更新）
 
 > 给用户对齐用的一页进度图。**先对齐本图，再决定下一步推进**（用户 2026-11-13 指示：交接新会话后先沟通进度地图）。
 > 权威细节：状态/决策以 [agent.md](../../agent.md) 与 [handoff-2026-11-12.md](handoff-2026-11-12.md) 为准；本文件只做「一眼看懂」的汇总。
@@ -7,7 +7,7 @@
 
 ## 0. 一句话
 
-**引擎与插件全部就绪、发布物与公开镜像逐字节一致；D21 清掉「真机 E2E + 三层组合试点 + 发布测试门禁 + 会话元数据 GUI」，D22 完成组合编排 v2 + v0.8.1 深度预算修复，D23（2026-11-13 晚）完成用户点名的 1-4 四项**：深度 6 拒绝真机回归 PASS、flash 审计三条高危修复、发布前 E2E 门禁收紧、`tree_log` 机读化 + 验证授权委托；**D24 完成 flow 回执落地 + 平台 issue 草稿 + flash 审计第二批（#8/#15/#20/#21/#22/#28/#30）**，tree-engine 升到 **v0.10.0**（225/225），flow 续接试点任务书就绪（等 flow 真机）。剩余以「组合编排继续深挖 / 历史边界清理」为主，无阻塞性缺陷。
+**引擎与插件全部就绪、发布物与公开镜像逐字节一致；D21 清掉「真机 E2E + 三层组合试点 + 发布测试门禁 + 会话元数据 GUI」，D22 完成组合编排 v2 + v0.8.1 深度预算修复，D23（2026-11-13 晚）完成用户点名的 1-4 四项**：深度 6 拒绝真机回归 PASS、flash 审计三条高危修复、发布前 E2E 门禁收紧、`tree_log` 机读化 + 验证授权委托；**D24 完成 flow 回执落地 + 平台 issue 草稿 + flash 审计第二批（#8/#15/#20/#21/#22/#28/#30）**，tree-engine 升到 **v0.10.0**（225/225）；**D25 batch1 复核收口合回主干（3196f33）**；**D27（进行中）**：batch2（约 24 条）按用户指示**列入计划暂不开工**，flow 续接试点 E2E **方案已成文待用户批准**，且**发现新阻断**——宿主 18:17–21:45 升级 0.2.2-rc.1→rc.3 × flow 插件未适配 → 所有 session 节点 `E_SESSION_START_FAILED`（修复属 flow 仓，等适配）。
 
 ---
 
@@ -73,18 +73,27 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 | 3 | flash 审计第二批 P0/P1（#8/#15/#20/#21/#22/#28/#30，顺带 #23） | **完成 + D25 复核跟进收口（tree-engine v0.10.0）**：依赖闸**只认正向结算信号（三重闸 done ∨ verification.pass=true；自报 done 不再放行下游，主旁路闭合）**+ stale-done 判据、`set-verification` verdicts/pass 一致性 + 空 verdicts 无证据 PASS 拒绝、竹节接力会话预算预检 + 唯一性回滚 + 单账本口径、`audit_meta` 严格校验 + 消费键放宽留痕/recorded-only 键上调拒收/编排键拒收 + 阈值回退修复、`event:subagent_spawn` 仅 owner、`fsStore.read` `.tmp` 灾备 + 损坏取证副本与 call-log 留痕、`tree_maintain {action:"gc"}` + call-log 10MB 滚动；测试 **213 → 225/225**；R1 复核 PASS_WITH_RISKS 的 P1-1/P2-2/P2-3/P3-3/P3-4 已收口，D25 二次复核（deepseek-v4-pro）无新增 P1/P2；D12 活体 doctor 7/7·v0.10.0 + gc 计数/drift 留痕（明细见报告 §六） | `docs/reports/review-p2a-batch1-2026-11-13.md`、tree-engine README v0.10.0 节 |
 | 4 | flow 续接受控试点任务书 | **就绪（待执行）**：前置 = flow T-1/T-6 真机 PASS + 用户时间窗；含调用方=发起 `flow_run` 的会话、relay off、深度链 ≤5、journal 双读验收 | [d24-flow-continuation-pilot-taskbook.md](taskbooks/d24-flow-continuation-pilot-taskbook.md) |
 
+## 2.4 D27 轮进行中（2026-11-13 晚，session_handoff 接替会话 `D27-FLOW-E2E-PILOT`）
+
+| # | 事项 | 结果 | 证据 |
+|---|---|---|---|
+| 1 | batch2 登记开工门（用户 21:48 指示：列入计划、暂不开工、等指令） | **已登记**：agent.md 路线图 R15 + 本图 §3-6；清单 = [review-p2a-batch1 §三/§六](../reports/review-p2a-batch1-2026-11-13.md)（P2-1/P3-1/P3-2/P3-5/UNKNOWN-1/4 + 二次复核 P3-7~P3-13，其中 P3-12 已当场消解、P3-13 设计内可接受）+ P3-9 语义取舍 | agent.md §3 R15 行 |
+| 2 | flow 续接试点 E2E 测试方案（先方案后测试） | **成文待用户批准**：范围/五道执行闸（新增 P0）/八用例矩阵/步骤/验收 A1–A9/模型纪律（flash 档）/止损 | [E2E-PLAN-2026-11-13-flow-continuation-pilot.md](E2E-PLAN-2026-11-13-flow-continuation-pilot.md) |
+| 3 | **新发现：宿主升级回归阻断试点**（FACT） | 宿主 18:17–21:45 升级 **0.2.2-rc.1→rc.3** × flow 插件 `session-executor.js` 仍按 rc.1 形状调 `startActivation` → 所有 session 节点 1ms `E_SESSION_START_FAILED`；两次真机失败 run（21:46 `R-m12-e2e-20261113-2146` + 探针 `R-m12-sop-2146`）；失败面仅插件旧形状路径，宿主 spawn 与本仓 `tree_*` 不受影响（doctor 7/7·v0.10.0 复验）。修复属 **flow 仓责任域**，本仓不改 flow 代码 | flow 仓 `probe-sop/PROBE-REPORT.md` §2、[REQ §附 A 复查 #4](REQ-2026-11-13-flow-node-continuable-session.md) |
+
 ## 3. 下一步候选（按建议优先级）
 
 | # | 事项 | 为什么值得做 | 需要谁定 |
 |---|---|---|---|
 | 0 | ~~tree-engine 深度预算修复 + depth 6 真机回归~~ | **D22 修复（v0.8.1）+ D23 真机回归 PASS（v0.9.0，213/213 → 现 v0.10.0 225/225）** | — |
 | 1 | ~~组合编排深挖（内层树现场创建 + maxDepth 边界）~~ | **D22 已完成** | — |
-| 2 | **flow 节点续接（`flow_send` 冷恢复）+ flow 侧深度封口** | **flow 侧 M1.2 离线交付已提交（`2918fba`/`13776bc`，kernel 287 · plugin 175）**；**T-1 探针 / T-6 真机待收口**（需用户在场+重载）→ 本仓续接试点等真机 PASS + 用户时间窗 | flow 项目组真机收口；本仓试点待信号 |
+| 2 | **flow 节点续接（`flow_send` 冷恢复）+ flow 侧深度封口** | flow 侧 M1.2 离线交付已提交（`2918fba`/`13776bc`，kernel 287 · plugin 175）；T-1 探针 flow 路径 **BLOCKED**（rc.3 回归，见 §2.4-3）；T-6 真机未执行。**本仓 E2E 方案已成文待批准**，执行闸五道（P0=插件适配 rc.3 smoke PASS → P1=T-6 → P2=用户批准方案 → P3=本仓门禁 → P4=夹具语义） | flow 项目组适配 rc.3 + T-6 收口；用户批准 E2E 方案 |
 | 3 | ~~发布门禁再收紧 + flash 审计三条高危~~ | **D23 已完成（v0.9.0）**：真机 E2E 门禁写前强制 + 12 项检查实现（artifact 8 项 + CLI）；三条审计修复 + R1/R2 复核修复 | — |
 | 4 | 只读子会话底部 Phase 2（chain 覆盖官方只读 composer） | 当前只读子会话元数据在标题栏 chip；用户未明确要求底部 | 仅用户要求时做 |
 | 5 | 已知边界清理：artifact 验证对象错位、`runtime.history` 预算口径；D22 两项（`tree_log events` 可机读、现场建树验证归属）**D23 已完成**；**`tree_maintain gc` D24-2 已完成（archived 账本截断 + call-log 10MB 滚动）** | 历史欠账，非阻塞 | Lead 排期 |
+| 6 | **batch2（约 24 条审计项）——已计划、暂不开工（用户 21:48 指示，等指令）** | 清单 = review-p2a-batch1 §三/§六 + P3-9；开工顺序建议 = P2-1 stale-done 窄窗 → P3-1 relay 自链重复 → P3-2/P3-5 gc 与滚动 → UNKNOWN-1/4 裁决 → P3-7~P3-11/P3-13 | 仅用户指令开工 |
 
-**三个问题当前状态**：① 已做（v2 PASS + v3 深度回归 PASS）；② 需求单**已受理（B 档）**，flow 项目组 M1.2 进行中（回执 2026-11-13 16:21；深度项首批、`flow_send` 随后）；③ 暂不对外（用户 2026-11-13 拍板）。
+**三个问题当前状态**：① 已做（v2 PASS + v3 深度回归 PASS）；② 需求单**已受理（B 档）**，M1.2 **离线交付已提交**（kernel 287 · plugin 175），T-1 探针 flow 路径被 rc.3 回归阻断、T-6 真机未执行——插件适配 rc.3 属 flow 仓下一修复项；③ 暂不对外（用户 2026-11-13 拍板）。
 
 ---
 
@@ -95,3 +104,4 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 - 顶层记忆：真机操作类结论必须有活体读数/截图；UI 结论本轮已闭环（代码级 + 截图 + 用户确认）。
 - D23 平台侧边界（非本仓可修）：HMR 重载竞态导致工具面瞬态 `unknown tool`；tree 派发跨模型 `maxTokens` 继承调用方（小上限供应商 400，当前绕行）。两者均已在 v3 报告 §6 记录，并升级为平台 issue 草稿（[①](ISSUE-draft-hmr-reload-race.md)、[②](ISSUE-draft-max-tokens-inheritance.md)，未对外提交）。
 - flow 侧 M1.2 **真机未收口**前，不得引用 `flow_send` 为「可依赖」；本仓试点亦不得抢跑（详见 REQ §附 F）。
+- **D27 新增（2026-11-13 21:5x）**：宿主 0.2.2-rc.1→rc.3 升级 × flow 插件未适配 → 所有 flow session 节点 `E_SESSION_START_FAILED`；在 flow 插件适配 rc.3 并重载 smoke PASS 前，**任何 flow run 的 session 节点都无法启动**，试点/联调一律不可行（证据：[REQ §附 A 复查 #4](REQ-2026-11-13-flow-node-continuable-session.md)、flow 仓 probe-sop/PROBE-REPORT.md）。另注：rc.3 上宿主自身 spawn 与本仓 `tree_*` 工具正常（doctor 7/7·v0.10.0）。

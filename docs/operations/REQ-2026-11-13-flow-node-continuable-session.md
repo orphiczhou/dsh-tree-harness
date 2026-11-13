@@ -110,6 +110,8 @@ flow 执行器构造 request 时**未传 `maxDepth`**（`spike/dsh-flow-plugin/l
 
 | **2026-11-13 21:00（D26 接续会话复查 #3，只读）** | flow 仓 `git log`/`git status` 只读 + `evidence/m1/T-m1.2/` 目录清单 + 联调夹具全文核对；本仓 `tree_doctor` 与 225 测试基线复跑 | flow 仓 HEAD 仍=`13776bc`（main），工作树仅历史 HANDOFF×5 与报告 HTML 未跟踪，**无新提交**；`evidence/m1/T-m1.2/` 仍只有 T-2/T-3/T-4 离线证据 + 夹具 + GLM 复核，**无 T-6 真机文件 → 试点前置② 仍未满足，维持等待态不抢跑**；夹具 `m12-continuable-e2e.flow.json` 与 §附 F 描述逐字一致（n1→n2 两 session 节点；n1 首轮 prompt 出 `{"first":"m12-ready"}`、schema required `first:string`；n2 出 `{"second":true}`、required `second:boolean`；**无显式 start/end**——试点任务书 §8 的 UNKNOWN 未消解，届时以 flow 方说明为准，不改夹具）；本仓门禁：`tree_doctor` 7/7 · v0.10.0、`node --test` 225/225（4.7s）、master=4338bd0 与 wip/d24-p2a-batch1=699e02d 均与 origin 同步（0/0）、树 clean。T-1 续接探针同样未见执行痕迹 | flow 仓 git 只读 + 证据目录 glob + fixtures 只读 + `tree_doctor {action:"run"}` + `node --test tests/*.test.js` |
 
+| **2026-11-13 21:5x（D27 接续会话复查 #4，只读）** | flow 仓 `git log`/`git status` + `evidence/m1/T-m1.2/probe-sop/` 新增目录只读 + 本仓 flow run 清单（`flow_list`）+ `tree_doctor` 复验 | **T-1 探针已执行但 flow 路径被环境回归阻断**：宿主于 18:17–21:45 之间升级 **0.2.2-rc.1 → 0.2.2-rc.3**，flow 插件 `spike/dsh-flow-plugin/lib/session-executor.js` L295–301 仍按 rc.1 形状调 `startActivation`（`request:{parent,...}` 嵌套），rc.3 契约在 spec 顶层读 `spec.parent` → **所有 session 节点 1ms 内 `E_SESSION_START_FAILED`**。两次真机失败 run（同分钟同错误）：`R-m12-e2e-20261113-2146`（21:46，callerOrigin=user）+ `R-m12-sop-2146`（21:46，callerOrigin=subagent，探针 run），均 `integrity=verified`、无 `node/spawned`。失败面收敛：**仅插件旧形状调用路径断**；宿主自身 spawn 通道与本仓 `tree_*` 工具不受影响（`tree_doctor` 7/7 · v0.10.0 于 rc.3 上复验通过）。flow 仓 HEAD 仍=`13776bc`，`probe-sop/`（探针证据，PROBE-REPORT §2 含 asar 源码行号定位）与 `reports/project-map-2026-11-13.html` 为 untracked 新文件。**影响：试点前置在 §附 F 两条之上新增「插件适配 rc.3」P0 闸；修复属 flow 仓责任域，本仓不改 flow 代码，已在 [E2E-PLAN-2026-11-13-flow-continuation-pilot.md](E2E-PLAN-2026-11-13-flow-continuation-pilot.md) §1/§3 登记** | flow 仓 git/evidence 只读 + `flow_list` + probe-sop/PROBE-REPORT.md 只读 + `tree_doctor {action:"run"}` |
+
 ### B. 回执要点（FACT，以 flow 回执原文为准）
 
 | 来函项 | flow 结论 | 排期/条件 |
@@ -158,5 +160,5 @@ tree-harness 侧**不修改 flow 仓代码**、不代提交流；本文件与 fl
 **离线联调夹具（已可取，只读）**：`D:\Codes\DSH动态流程引擎插件\evidence\m1\T-m1.2\fixtures\m12-continuable-e2e.flow.json`（n1→n2 两 session 节点，节点 n1 首轮出 `{"first":"m12-ready"}`；真机 E2E 时父会话对 n1 sessionId 发第二条消息）。**注意**：该夹具无显式 `start`/`end` 节点（flow-core 对首尾节点的隐式处理），试点时若用本仓夹具需先经 flow 侧确认编译语义，不自行猜测。
 
 **本仓下一步（等信号，不抢跑）**：
-- 触发条件 = flow 侧 T-6 真机 PASS 且用户给出试点时间窗；届时按 P1-A 第 3 条做 tree→flow 续接受控试点（relay=off、深度链 ≤5、树 validate 0 issues、journal+`flow_send` 双读、报告落 `docs/reports/`）。
-- 在那之前只做**离线准备**：组合剧本 §6/§9 已可按 §3 口径引用；不执行任何 `flow_send` 活体调用。
+- 触发条件（2026-11-13 21:5x 更新）= **① flow 插件适配宿主 rc.3 `startActivation` spec 形状并重载后单节点 smoke run PASS（21:5x 新增，当前 BLOCKED，见 §附 A 复查 #4）+ ② flow 侧 T-6 真机 PASS + ③ 用户批准 [E2E 测试方案](E2E-PLAN-2026-11-13-flow-continuation-pilot.md)并给出试点时间窗**；届时按 E2E 方案与试点任务书执行 tree→flow 续接受控试点（relay=off、深度链 ≤5、树 validate 0 issues、journal+`flow_send` 双读、报告落 `docs/reports/`）。
+- 在那之前只做**离线准备**：组合剧本 §6/§9 已可按 §3 口径引用；**不执行任何 `flow_run`/`flow_send` 活体调用**（21:46 的两次失败 run 已证明当前环境下 session 节点必然启动失败）。
