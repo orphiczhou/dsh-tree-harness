@@ -9,11 +9,12 @@
 - **flow 项目组受理回执到达**（2026-11-13 16:21，flow 仓 `evidence/requirements/RECEIPT-2026-11-13-to-tree-harness.md`）：**已受理、用户裁决 B 档**——需求一采纳为 **`flow_send` 工具**（发起 `flow_run` 的父会话 → 该 run 节点会话，冷恢复 + 回读输出；**不提供**"节点结束不销毁/保持活句柄"驻留语义），需求二采纳且更正为「**不传 `maxDepth` = 完全不校验（无上限）**」，M1.2 起按 provider 能力感知传值 + fail-closed（`E_SESSION_DEPTH_EXCEEDED`）；排期 M1.2（3–5 人日，M1.1 之后）。
 - **回执三处事实更正**（本仓文档已按此改写）：① 无 `startContinuable`（唯一启动 `startActivation`；续接 `subagents.sendMessage` → `coldResume`）；② `dispose()` ≠ 销毁会话（只释放驻留+槽位；可靠形态 = 保留 `sessionId` 冷恢复，前置目标子会话直接父 Agent 存活）；③ 深度配置值由工具层注入，插件直呼 `startActivation` 须自行 `resolveMaxDepth(...)` 后显式传。
 - **本仓同步**：[REQ §附](docs/operations/REQ-2026-11-13-flow-node-continuable-session.md) 重写为受理跟进 + 回执摘要 + 三处更正 + 我方配合待办；[composition-playbook.md](docs/guides/composition-playbook.md) §4/§5/§6/§7/§9/§10 按回执 §3 口径改写（"非一次性"措辞作废，改为 `flow_send` 冷恢复 + 硬限制清单：父会话必须存活 / 续接轮无结构化 schema / 不写 journal / `flow_resume` 仍不续接原会话）；**未改 flow 仓代码**。
-- **待办**：M1.2 落地后（a）按新口径补一次 tree→flow **续接**受控试点（调用方必须是发起 `flow_run` 的会话本身，跨会话不支持）；（b）向 flow 方取 `flow_send` 联调夹具（`evidence/m1/T-m1.2/`）。
+- **待办（2026-11-13 19:0x 只读复查更新）**：flow 侧 **M1.2 离线交付已提交**（`2918fba` 18:49:28 代码+证据+测试 / `13776bc` 18:53:52 文档口径；HEAD=`13776bc`，分支 `main`；kernel **287/287** · plugin **175/175** · qa-gate PASS，floor 287/175），18:52 记录的 `m1-judge.test.mjs:140`「4 件套→5」计数残留**已修**（插件 170→175 全绿）；**T-1 续接探针 / T-6 真机 E2E 仍未执行**（flow 仓 HANDOFF-M1 明写需用户在场 + 最后一次重载，未执行前不得写真机 PASS）。本仓已取联调夹具 `evidence/m1/T-m1.2/fixtures/m12-continuable-e2e.flow.json`，并与回执 §3「可依赖/不可依赖」逐条核对**无实质出入**（见 [REQ §附 F](docs/operations/REQ-2026-11-13-flow-node-continuable-session.md)）；**（a）续接受控试点改为「等 flow 真机 PASS + 用户时间窗」再启动（不抢跑）**。**未改 flow 仓代码。**
 
 ### 验证
 
 - 只读核查：flow 仓 `git log/status`、回执原文、`M1.2-intake-assessment-2026-11-13.md`（B 档选项/硬限制/更正）。
+- 2026-11-13 19:0x 复查（只读）：flow 仓 `git show --stat 2918fba/13776bc`、`evidence/m1/T-m1.2/`（三份任务报告 + 两份 GLM 复核 + `raw/` 测试原文）、`lib/continuation.js` / `lib/tools.js#flow_send` 实现核对。
 - 文档门禁：`check-doc-links` / `check-md-tables` / `check-version-consistency` 全绿。
 
 ## [Unreleased] — 2026-11-13 · D23：硬安全与可观测性收口（tree-engine 0.8.1 → **0.9.0**）

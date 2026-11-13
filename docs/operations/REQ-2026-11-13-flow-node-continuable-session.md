@@ -2,7 +2,7 @@
 
 > **提出方**：`D:\Codes\dsh-tree-harness`（tree-engine / session-tree 项目，Lead 会话）
 > **受理方**：`D:\Codes\DSH动态流程引擎插件`（自由流程引擎项目组）
-> **日期**：2026-11-13 · **状态**：**已受理**（flow 项目组 2026-11-13 16:21 回执；用户裁决 **B 档**；M1.2 进行中）——本文件只登记需求，不改动 flow 仓任何代码/配置
+> **日期**：2026-11-13 · **状态**：**已受理并对接受控**（flow 项目组 2026-11-13 16:21 回执；用户裁决 **B 档**；flow 侧 **M1.2 离线交付已提交**（`2918fba`/`13776bc`，kernel 287/287 · plugin 175/175），**真机 T-6 待收口**）——本文件只登记需求，不改动 flow 仓任何代码/配置
 > **用户指示**（2026-11-13）："不要改动，这话不是你这个项目的活，你把需求写下来，联系那边项目组响应。"
 >
 > 本仓镜像（权威副本）：`dsh-tree-harness/docs/operations/REQ-2026-11-13-flow-node-continuable-session.md`
@@ -106,6 +106,8 @@ flow 执行器构造 request 时**未传 `maxDepth`**（`spike/dsh-flow-plugin/l
 | 2026-11-13 18:41（本仓复查） | flow 仓 `git log` 仍未见 M1.2 提交；**回执已到、正在做**（用户告知） | flow 仓 `git status`/`git log` 只读 |
 | **2026-11-13 18:52（本仓复查，只读）** | flow 仓工作树 `git status` + `evidence/m1/T-m1.2/` + `spike/dsh-flow-plugin/lib/continuation.js` | **M1.2 已实质实现（未提交）**：① 深度封口 `session-executor.js`（`resolveProfileMaxDepth` + provider 能力守卫 + `E_SESSION_DEPTH_EXCEEDED` 映射，证据 `T-2-DEPTH.md`）；② `flow_send` 续接入口 `lib/continuation.js`（纯函数抽象：授权→发送→轮询→抽取；不写 journal；证据 `T-4-FLOW-SEND.md`）；③ 证据与 mutation 原始输出在 `evidence/m1/T-m1.2/`（含 T-3-SESSION-MODE、GLM 复核两份）；④ 插件套件当前 `169/170`，唯一失败 = `m1-judge.test.mjs:140` 的「4 件套」计数断言（`flow_send` 加入后工具面 4→5 的已知残留，待 flow Lead 裁决）。**回执 §1 排期正在兑现。** | flow 仓工作树/证据目录只读核查 |
 
+| **2026-11-13 19:0x（D24 接续会话复查 #2，只读）** | flow 仓 `git log`/`git status`/`evidence/m1/T-m1.2/`/`lib/continuation.js` 只读核查 | **M1.2 离线交付已提交**：`2918fba`（2026-11-13 18:49:28，T-2/T-3/T-4 代码+证据+测试）+ `13776bc`（18:53:52，docs/11 v1.37 与口径同步）；HEAD=`13776bc`（分支 `main`），工作树仅剩历史 HANDOFF 与报告 HTML 未跟踪，**无未提交代码**。基线：内核 **287/287**、插件 **175/175**、qa-gate PASS（floor 287/175）；18:52 记的 `m1-judge.test.mjs:140` 4→5 计数残留**已修**（插件 170→175 全绿）。**未完成**：T-1 续接探针、T-6 真机 E2E（flow 仓 HANDOFF-M1 明写「需用户在场 + 最后一次重载；未执行前不得写真机 PASS」）。**结论：回执 §1 排期已兑现到「离线交付」；真机未收口，不等同可依赖。** 详见 §附 F。 | flow 仓 `git show --stat 2918fba/13776bc`、`evidence/m1/T-m1.2/raw/lead-*.txt`、`HANDOFF-M1.md` 只读 |
+
 ### B. 回执要点（FACT，以 flow 回执原文为准）
 
 | 来函项 | flow 结论 | 排期/条件 |
@@ -124,9 +126,35 @@ flow 执行器构造 request 时**未传 `maxDepth`**（`spike/dsh-flow-plugin/l
 
 1. ✅ 组合剧本 [composition-playbook.md](../guides/composition-playbook.md) §6 已按回执 §3 口径改写（"非一次性"措辞作废，改为 `flow_send` 冷恢复 + 硬限制清单）。
 2. ⏳ 若 tree-engine 侧要跨"父会话存活期"续接 flow 节点：调用方必须是**发起 `flow_run` 的会话本身**（tree→flow 场景即该 tree worker），跨会话（sibling/root 代发）不在支持面——待 M1.2 联调时在试点中确认。
-3. ⏳ M1.2 离线落地后可向 flow 方取 `flow_send` 联调夹具（`evidence/m1/T-m1.2/`）。
+3. ✅ M1.2 离线落地后已取得联调夹具（`evidence/m1/T-m1.2/fixtures/m12-continuable-e2e.flow.json`）与三份任务证据 + 两份 GLM 复核；口径核对见 §附 F。
 4. ✅ 回执已双份留存：本仓 [RECEIPT-2026-11-13-from-flow-engine.md](RECEIPT-2026-11-13-from-flow-engine.md)（SHA256 与 flow 仓副本一致）+ flow 仓 `evidence/requirements/RECEIPT-2026-11-13-to-tree-harness.md`。
 
 ### E. 约束（延续用户指示）
 
 tree-harness 侧**不修改 flow 仓代码**、不代提交流；本文件与 flow 仓副本保持同源。flow 侧 M1.2 的实现与真机证据由 flow 项目组负责（其 `evidence/m1/T-m1.2/`）。本仓后续动作：M1.2 落地后（a）按新口径补一次 tree→flow 续接受控试点；（b）若 flow_send 形态与 §3 口径有出入，再更新本节与 playbook。
+
+### F. M1.2 离线交付核对（tree 侧只读，2026-11-13 19:0x；供试点前复用）
+
+**结论先行**：回执 §3 的「可依赖 / 不可依赖」口径与本仓只读看到的实现**一致**（无实质出入，仅两处实现细节需在试点报告里如实标注）；**T-6 真机未完成前不做续接试点**（避免把「离线绿」误当「可依赖」）。
+
+| 回执 §3 条目 | flow 实现（FACT，只读核对） | 判定 |
+|---|---|---|
+| 可依赖① `sessionId` 可见且 `node/spawned` 落 journal | `lib/tools.js` `flow_send` 执行器调 `inspectRunIntegrity` 后由 `findSpawnedSessionId(entries,{nodeId,attempt})` 解析；**不允许调用方直接传 sessionId** | ✅ 一致（比回执更严：解析失败 `E_INVALID_ARGUMENT`） |
+| 可依赖② `flow_send` 仅发起 run 的直接父会话可用 | `lib/continuation.js:262` `header.parentSession === caller` 才放行，否则 `E_PERM_DENIED`；`live===true` → `E_SESSION_BUSY`；发送前快照+轮询 `readSession` 至新 `turn/end` | ✅ 一致（跨会话/兄弟/root 代发均被 parentSession 检查拒） |
+| 可依赖③ 深度上限封口 | `lib/session-executor.js` 取 `resolveMaxDepth(undefined)`（profile=5）+ provider `capabilities.depthLimit` 能力守卫；`SubagentDepthError` → 新具名 `E_SESSION_DEPTH_EXCEEDED` | ✅ 一致 |
+| 不可依赖① 跨进程/跨重启续接 | 未涉及（`flow_send` 依赖调用期 `exec.agent` + 宿主 `sendMessage` 冷恢复，父 Agent 不存活即不可用） | ✅ 一致（真机未验） |
+| 不可依赖② 不提供「节点结束不销毁」驻留语义 | 未实现驻留；仅「保留 sessionId → 冷恢复」 | ✅ 一致 |
+| 不可依赖③ 续接轮无结构化 `outputSchema` | `flow_send` 输出 = 新 `turn/end` 且 `reason.kind==='completed'` 后、基线下标之后的末条 assistant text（无 schema 投影） | ✅ 一致 |
+| 不可依赖④ `flow_send` 不写 journal / 不改 run 终态 | `execute` 仅 `resolveRunTarget(create:false)` + `inspectRunIntegrity`（读路径）+ `readSession`；用例 7 做磁盘 journal 字节级断言 | ✅ 一致 |
+| 不可依赖⑤ `flow_resume` 仍不续接原会话 | 本批未改 `flow_resume` 语义 | ✅ 一致 |
+
+**实现细节差异（试点报告需如实标注，不影响口径）**：
+1. 新增错误码 `E_SESSION_BUSY` / `E_CONTINUE_TIMEOUT` 为**插件层** `E_*`，未登记 flow-core `errors.js`（与 `E_SESSION_START_FAILED`/`E_ADOPT_*` 同属插件层，不进内核闭集）；
+2. `flow_send` 渲染首行用 `attempt=<n>`/`stopReason=<…>` 替代契约建议的 `turn=<n>`（返回契约无 turn 字段）；
+3. 消息上限 `MAX_MESSAGE_CHARS=256KB`（回执未写，属 flow 侧对抗复核新增的防滥用约束——本仓组合剧本引用时应写「≤256KB」）。
+
+**离线联调夹具（已可取，只读）**：`D:\Codes\DSH动态流程引擎插件\evidence\m1\T-m1.2\fixtures\m12-continuable-e2e.flow.json`（n1→n2 两 session 节点，节点 n1 首轮出 `{"first":"m12-ready"}`；真机 E2E 时父会话对 n1 sessionId 发第二条消息）。**注意**：该夹具无显式 `start`/`end` 节点（flow-core 对首尾节点的隐式处理），试点时若用本仓夹具需先经 flow 侧确认编译语义，不自行猜测。
+
+**本仓下一步（等信号，不抢跑）**：
+- 触发条件 = flow 侧 T-6 真机 PASS 且用户给出试点时间窗；届时按 P1-A 第 3 条做 tree→flow 续接受控试点（relay=off、深度链 ≤5、树 validate 0 issues、journal+`flow_send` 双读、报告落 `docs/reports/`）。
+- 在那之前只做**离线准备**：组合剧本 §6/§9 已可按 §3 口径引用；不执行任何 `flow_send` 活体调用。
