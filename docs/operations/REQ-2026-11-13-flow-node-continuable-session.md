@@ -160,5 +160,5 @@ tree-harness 侧**不修改 flow 仓代码**、不代提交流；本文件与 fl
 **离线联调夹具（已可取，只读）**：`D:\Codes\DSH动态流程引擎插件\evidence\m1\T-m1.2\fixtures\m12-continuable-e2e.flow.json`（n1→n2 两 session 节点，节点 n1 首轮出 `{"first":"m12-ready"}`；真机 E2E 时父会话对 n1 sessionId 发第二条消息）。**注意**：该夹具无显式 `start`/`end` 节点（flow-core 对首尾节点的隐式处理），试点时若用本仓夹具需先经 flow 侧确认编译语义，不自行猜测。
 
 **本仓下一步（等信号，不抢跑）**：
-- 触发条件（2026-11-13 21:5x 更新）= **① flow 插件适配宿主 rc.3 `startActivation` spec 形状并重载后单节点 smoke run PASS（21:5x 新增，当前 BLOCKED，见 §附 A 复查 #4）+ ② flow 侧 T-6 真机 PASS + ③ 用户批准 [E2E 测试方案](E2E-PLAN-2026-11-13-flow-continuation-pilot.md)并给出试点时间窗**；届时按 E2E 方案与试点任务书执行 tree→flow 续接受控试点（relay=off、深度链 ≤5、树 validate 0 issues、journal+`flow_send` 双读、报告落 `docs/reports/`）。
+- 触发条件（2026-11-13 22:1x 更新）= **① flow 插件适配宿主 rc.3 `startActivation` spec 形状并重载后单节点 smoke run PASS（当前 BLOCKED，跟进单已交用户转交 flow 项目组，见 §附 A 复查 #4）+ ② flow 侧 T-6 真机 PASS**；~~③ 用户批准 E2E 测试方案并给出试点时间窗~~（**✅ 22:1x 已批准 v1.1 = P2 通过**：方案定稿 + 时间窗开启 + 双维成本授权）。①②齐备后按 [E2E 方案 v1.1](E2E-PLAN-2026-11-13-flow-continuation-pilot.md)（续接维 TC-1..8 + 混合维 TC-9..11）执行 tree→flow 续接受控试点（relay=off、深度链 ≤5、树 validate 0 issues、journal+`flow_send` 双读、报告落 `docs/reports/`）。
 - 在那之前只做**离线准备**：组合剧本 §6/§9 已可按 §3 口径引用；**不执行任何 `flow_run`/`flow_send` 活体调用**（21:46 的两次失败 run 已证明当前环境下 session 节点必然启动失败）。

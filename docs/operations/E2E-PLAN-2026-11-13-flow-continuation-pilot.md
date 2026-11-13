@@ -1,6 +1,6 @@
 # E2E 测试方案：flow 续接 + flow×tree 混合流程试点（`flow_send` 冷恢复 · D27-FLOW-E2E-PILOT）
 
-> **性质**：测试方案（PLAN）。**状态 = 待用户批准（AWAITING APPROVAL，v1.1）——批准前不得执行任何 `flow_run`/`flow_send` 活体调用**（用户 2026-11-13 21:48 指示「先方案后测试」；22:0x 用户指示**补充 flow×tree 混合流程测试维**，见 §4.2）。
+> **性质**：测试方案（PLAN）。**状态 = 已批准（APPROVED v1.1 · 2026-11-13 22:1x 用户批准，P2 闸通过：方案定稿 + 时间窗开启 + 双维成本授权）——开测仍以 P0/P1 齐备为前提，批准 ≠ 开测**（用户 2026-11-13 21:48 指示「先方案后测试」；22:0x 指示补充 flow×tree 混合流程测试维 §4.2）。
 > 执行单 = [d24-flow-continuation-pilot-taskbook.md](taskbooks/d24-flow-continuation-pilot-taskbook.md)（续接维步骤与派发任务书正文，本方案只做口径与门禁的权威化，不重复其全文）。
 > 起草：D27 接续会话（session_handoff 接替，zai/glm-5.3-flash · max）· 2026-11-13 22:0x · v1.1 同日补混合维。
 
@@ -37,7 +37,7 @@
 |---|---|---|---|
 | **P0** | **flow 插件适配宿主 rc.3**（本方案新增） | `session-executor.js` 按 rc.3 spec 形状调 `startActivation`（`parent`/`maxDepth`/`outputSchema` 提到顶层，或按宿主版本分支）；flow 仓提交修复 → 受控 disable→enable 重载 → **单节点 smoke run PASS**（session 节点能启动、journal 出现 `node/spawned`） | ❌ **BLOCKED**（21:5x 两次真机失败 run 为证） |
 | P1 | flow 仓 T-6 真机 E2E PASS | `evidence/m1/T-m1.2/` 出现 T-6 真机证据（`flow_send` 真机通过 + 深度拒绝负例），flow 仓 HANDOFF 撤销「未执行前不得写真机 PASS」悬置 | ❌ 未满足 |
-| P2 | 用户试点时间窗 + 成本授权 | 用户批准本方案即视为时间窗开启；成本上限（v1.1 双维合计）= **外层树 3 个 leaf**（commander + 续接维 worker + 混合维 worker）+ **2 个 flow run**（R1 续接夹具 / R2 混合夹具）+ **4 个 flow 派生会话**（n1、INNER、t27b 内层树两 leaf）+ 每维失败最多重试 1 次，不刷 run | ⏳ 待批准本方案（v1.1） |
+| P2 | 用户试点时间窗 + 成本授权 | 用户批准本方案即视为时间窗开启；成本上限（v1.1 双维合计）= **外层树 3 个 leaf**（commander + 续接维 worker + 混合维 worker）+ **2 个 flow run**（R1 续接夹具 / R2 混合夹具）+ **4 个 flow 派生会话**（n1、INNER、t27b 内层树两 leaf）+ 每维失败最多重试 1 次，不刷 run | ✅ **已通过**（2026-11-13 22:1x 用户批准 v1.1） |
 | P3 | 本仓门禁 | `tree_doctor` 7/7、`node --test` 225/225、master 与 origin 同步、工作树 clean（22:0x 已复验 doctor 7/7·v0.10.0；试点当日全部复跑） | ✅ 当前满足（当日复跑为准） |
 | P4 | 夹具编译语义确认 | 夹具 `m12-continuable-e2e.flow.json` 无显式 `start/end` 的 UNKNOWN 以 flow 方说明为准，不改夹具；探针夹具 `sop.flow.json` 已证明显式 `edges` 收口可编译通过（PROBE-REPORT §1 偏离1）——试点优先直接用仓内夹具，编译失败再按此降级为显式 edges 形态并记录偏离 | ⏳ 试点时向 flow 方确认 |
 
@@ -138,3 +138,4 @@ Lead/root 会话（depth 0，本会话；发起 tree_plan d27fl；不直接调 f
 |---|---|---|
 | v1.0 | 2026-11-13 22:0x | D27 接续会话起草；纳入 rc.3 回归新事实（P0 新增闸）；待用户批准 |
 | v1.1 | 2026-11-13 22:1x | **应用户指示补充 flow×tree 混合流程测试维**：新增 §4.2（TC-9 混合链回归 / TC-10 续接×内层树 / TC-11 深度+depth-6 负例）、验收 A10–A12、执行结构加 C1a2 worker 与 t27b 内层树、成本授权更新（3 leaf + 2 run + 4 flow 派生会话）、止损加「depth-6 未被拒=宿主回归新证据」条款；配合《rc.3 回归跟进单》成文 |
+| — | 2026-11-13 22:1x | **用户批准 v1.1（P2 通过）**：方案定稿 + 时间窗开启 + 双维成本授权；开测等 P0（flow 插件适配 rc.3 + 受控重载 + 单节点 smoke PASS）+ P1（flow T-6 真机 PASS），届时 D27 会话自行组队（flash 档）执行 |
