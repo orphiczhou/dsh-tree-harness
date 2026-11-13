@@ -125,6 +125,7 @@ v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 / v1.3.6 实测（文档补全 + spawn:false �
 
 标准发布流程：
 
+0. **（W2.8 强制）** 跑真机三断言 runner 生成新鲜 artifact（`run-release-e2e.mjs --wait 120000`），发布前由 `release-all.mjs` 预检硬校验，见 §5.2；
 1. 跑测试全绿（见 §6 测试项）；
 2. 内容有变则 bump `packages/dsh-session-tree/package.json` 的 version（D6）；
 3. `node scripts/release-plugin.mjs --target <公开仓工作副本>` → 要求 `RESULT: OK`（全部字节一致）；
@@ -147,7 +148,8 @@ v1.3.2 / v1.3.3 / v1.3.4 / v1.3.5 / v1.3.6 实测（文档补全 + spawn:false �
 - 镜像仓本地 checkout 干净、在 `main` 分支，用 `--mirror-dir <dir>` 或环境变量 `DSH_MIRROR_DIR` 指定（脚本不硬编码开发机路径）；
 - 包内容有变化时先在 `packages/dsh-session-tree/package.json` bump version（D6）；**版本未 bump 时真实运行拒绝**，并提示「包内容无变化不需要发布」；
 - 推送需要 **User 环境变量 `GH_TOKEN`**（脚本只在 push 时读取；dry-run 完全不读）；
-- 若 `scripts/check-version-consistency.mjs`（W2.4）存在则自动调用，失败即门禁。
+- 若 `scripts/check-version-consistency.mjs`（W2.4）存在则自动调用，失败即门禁；
+- **真机 E2E 三断言 artifact 新鲜**（W2.8）：`scripts/e2e/artifacts/` 下最新的 `release-*.json` 三条必需断言全 PASS、`overall.verdict=PASS`、且距今 ≤ `168h`（可用 `--max-e2e-age-hours` 覆盖）。不满足则真实运行在任何写操作之前 exit 1（详见 §5.2）。
 
 ### 用法
 
@@ -175,12 +177,20 @@ node scripts/release-all.mjs --push --mirror-dir <镜像 checkout> --skip-tests 
 | `--skip-tests` | 跳过包测试（仍执行 `check-version-consistency.mjs`） |
 | `--summary <text>` | 本仓发布 commit 摘要（模板 `feat/release: <pkg> vX.Y.Z — <摘要>`） |
 | `--require-clean` | 工作树必须 clean；默认把未提交改动列为 WARN（会随 `git add -A` 进入发布提交） |
+| `--e2e-artifact <path>` | 指定真机 E2E 汇总 artifact；缺省自动取 `scripts/e2e/artifacts/` 下文件名时间戳最新的 `release-*.json` |
+| `--max-e2e-age-hours <n>` | E2E artifact 新鲜度上限（小时，正数），缺省 `168`（7 天） |
+| `--skip-e2e-gate` | 显式豁免真机 E2E 门禁（仅限紧急；必须与 `--skip-e2e-reason` 成对出现，否则用法错误 exit 2） |
+| `--skip-e2e-reason <text>` | 豁免理由；运行输出留下醒目 `!! E2E GATE SKIPPED: <理由>` 记录，发布报告必须携带 |
+
+### 真机 E2E 门禁（强制，W2.8）
+
+见 §5.2：`release-all.mjs` 在任何写操作之前校验「三条真机断言全 PASS + artifact 新鲜度」，失败即拒绝真实运行。
 
 ### 步骤、失败处理与回滚
 
 | 步骤 | 动作 | 失败时脚本给出的回滚（节选） |
 |---|---|---|
-| 0 预检 | 仓库/分支/remote、镜像分支与 tag、版本关系、`--check` 内容对账、一致性脚本、测试计划 | 未产生写入；修复 GATE 后重跑 |
+| 0 预检 | **真机 E2E 门禁（§5.2）**、仓库/分支/remote、镜像分支与 tag、版本关系、`--check` 内容对账、一致性脚本、测试计划 | 未产生写入；修复 GATE 后重跑 |
 | 2 同步 | `release-plugin --check` → `--prune` → `--check`，要求 `files=N match=N`（当前 19） | `git -C <mirror> checkout -- . && git -C <mirror> clean -fd` |
 | 3 本仓 | `git add -A` + `git commit`（`feat/release: <pkg> vX.Y.Z — <摘要>`）；`--push` 时 `git push origin master` | 未推送：`git reset --soft HEAD~1`；已推送：`git revert --no-edit <sha>` + `git push origin master` |
 | 4 镜像 | `git -C <mirror> add -A` + commit + `tag vX.Y.Z`；`--push` 时 push `main` 与 tag | 未推送：`git reset --soft <sha>` / `git tag -d vX.Y.Z`；已推送：revert + 删远端 tag（确认无消费者后） |
@@ -198,6 +208,59 @@ node scripts/release-all.mjs --push --mirror-dir <镜像 checkout> --skip-tests 
 ### 实测（2026-11-12）
 
 真实仓 `--dry-run`：exit 0，本仓 HEAD（`e09f39b`）与镜像 HEAD（`298298d`）均未改变，输出含完整 5 步计划与预检结果；失败路径（`--mirror-dir` 指向不存在路径）exit 1 并给出 clone 命令。隔离沙箱（`git archive HEAD` 副本）完成未 bump 拒绝（exit 1，0 写入）与 bump 后 `--skip-push` 全链路成功（同步 **19/19 SHA**、本仓 commit、镜像 commit + tag `v1.3.7`），远端 `main`/tag 未变化（证明未 push）。完整原始输出摘要见 [release-automation-2026-11-12.md](../reports/release-automation-2026-11-12.md)。
+
+## 5.2 发布前真机 E2E 门禁（强制，W2.8）
+
+§6 检查清单里的「真机 E2E 三断言」从本轮起**固化为机器门禁**：`scripts/release-all.mjs` 在预检阶段、**任何写操作之前**校验真机证据，失败即拒绝发布。门禁逻辑是纯函数模块 `scripts/e2e/lib/release-gate.mjs`（无副作用、可注入时钟），单测 `node --test scripts/e2e/lib/release-gate.test.mjs`（10/10，已加入 release-all 工具链回归测试清单）。
+
+### 校验内容（对最新 `scripts/e2e/artifacts/release-*.json`，文件名 UTC 戳最新者）
+
+| 检查项 | 判据（artifact 实际字段） |
+|---|---|
+| `artifact-found` | 找到最新 `release-*.json`（或 `--e2e-artifact` 指定文件存在） |
+| `schema` | JSON 可解析，且含 `steps[]` 与 `overall` 汇总字段 |
+| `overall-pass` | `overall.verdict === "PASS"` 且 `overall.failed === 0` |
+| `required-steps-pass` | 全部 `required: true` 步骤 `status === "PASS"` |
+| `assert-handoff` | `verify-handoff` 步骤 PASS 且 `evidence`：`verdict=PASS`、`failedCount=0`、`passed===total>0`（断言计数通过） |
+| `assert-kickoff-language` | `verify-kickoff-language` 步骤 PASS 且 `evidence.language === evidence.expect`（语种断言） |
+| `assert-collect-skills` | `collect-skills` 步骤 PASS 且 `evidence.verdict=PASS`、`missingSessions=0`（会话/skill 计数断言） |
+| `freshness` | 内部 `timestamp`（回退文件名 UTC 戳）距今 ≤ `--max-e2e-age-hours`（缺省 **168h=7 天**）；时间在未来按不新鲜处理 |
+
+### 正确顺序
+
+```powershell
+# 1) 先跑真机三断言 runner（接替会话首轮完成后），生成新鲜汇总 artifact
+node scripts/e2e/run-release-e2e.mjs --source <被交接会话id> --successor <接替会话id> --expect-kind root|sibling --expect-lang zh --wait 120000
+#    → 落盘 scripts/e2e/artifacts/release-<UTC>.json（+ 同名子目录存逐步证据）
+
+# 2) 再走一条命令发布：release-all 预检会自动校验上述 artifact
+node scripts/release-all.mjs --dry-run --mirror-dir <镜像 checkout>   # 演练同样执行门禁
+node scripts/release-all.mjs --push --mirror-dir <镜像 checkout>      # 真实发布
+```
+
+### 失败处理
+
+- **真实运行（`--push`/`--skip-push`/`--apply`）**：任一项 FAIL → 预检阶段立即 `exit 1`（`步骤: 真机 E2E 门禁`），**仓库与镜像均未改变**（no-op 状态的运行同样先拒绝——不放行"没有新鲜证据的发布动作"）；
+- **dry-run**：门禁照常执行并打印每条 `[OK]/[GATE]` + 提示；FAIL 计入 BLOCKED，但 dry-run 本身保持 `exit 0`（演练语义不变）；
+- 失败提示固定给出可操作命令：先跑 `node scripts/e2e/run-release-e2e.mjs --source <id> --successor <id> --wait 120000` 生成新 artifact 再重跑。
+
+实测（2026-11-13，临时目录镜像 `v1.4.0` 与源一致）：
+
+- 新鲜真实 artifact（`release-20261112T171827Z.json`，age 14.6h）→ dry-run 与真实模式门禁均 `[OK] … 真机 E2E 门禁 PASS`，8 项检查全绿；
+- 构造过期 artifact（timestamp 回拨 200h）→ dry-run 打 `[GATE] E2E[freshness] 过期：age 200h > 168h` + 提示；真实模式 `exit 1`，`已完成: 无（尚未进入写操作）`；
+- 构造断言失败 artifact（kickoff FAIL + overall FAIL）→ 真实模式 `exit 1`，点名 `overall-pass, required-steps-pass, assert-kickoff-language`；
+- 两种失败注入均实测前后 `git rev-parse HEAD` 不变（本仓与镜像零写入）。
+
+### 豁免纪律
+
+`--skip-e2e-gate` **仅限紧急情况**（如 runner 依赖的会话日志被轮转、门禁自身缺陷待修），且必须成对携带 `--skip-e2e-reason "<理由>"`（缺一律按用法错误 `exit 2`）。豁免时运行输出留下醒目记录，发布报告与变更记录**必须原样携带该行**，事后应在下一轮补跑 runner 结清：
+
+```
+!! E2E GATE SKIPPED: <理由>
+!! 本次发布没有新鲜真机三断言证据；理由已留痕，发布报告必须携带此行。
+```
+
+豁免不是静默跳过：无 `--skip-e2e-reason` 无法豁免；带理由豁免则留下可审计记录。
 
 ---
 
@@ -225,6 +288,8 @@ node scripts/release-all.mjs --push --mirror-dir <镜像 checkout> --skip-tests 
 - [ ] `packages/dsh-session-tree` 与公开插件仓逐文件 SHA 一致（`release-plugin.mjs`）；
 - [ ] 版本/文档一致性：`node scripts/check-version-consistency.mjs`（W2.4 产出；0 失败）；
 - [ ] 真机 E2E 三断言（W2.5）：`node scripts/e2e/run-release-e2e.mjs --source <id> --successor <id> --expect-kind root|sibling --expect-lang zh --wait 120000` → 三条断言全 PASS 且 `scripts/e2e/artifacts/release-<ts>.json` 落盘（失败注入演练证据见 [e2e-release-runner-2026-11-12.md](../reports/e2e-release-runner-2026-11-12.md)）；
+- [ ] **发布前真机 E2E 门禁（W2.8，强制，见 §5.2）**：`release-all.mjs` 预检自动校验三断言全 PASS + artifact 新鲜（≤168h）；真实运行失败即 exit 1 零写入；豁免仅 `--skip-e2e-gate --skip-e2e-reason "<理由>"` 且必须在发布报告留下 `E2E GATE SKIPPED` 记录；
+- [ ] 门禁逻辑单测（W2.8）：`node --test scripts/e2e/lib/release-gate.test.mjs` → **10/10**，退出码 0（已列入 release-all 工具链回归测试计划）；
 - [ ] 真机 E2E：`scripts/e2e/verify-handoff.mjs` 对 root/sibling 接替会话断言全 PASS（报告 [e2e-handoff-2026-11-11.md](../reports/e2e-handoff-2026-11-11.md)）；
 - [ ] README / handoff / publishing 中的路径、数字、状态与实际一致（版本号、测试数、装配状态、npm 404 结论）。
 
@@ -254,3 +319,4 @@ node scripts/release-all.mjs --push --mirror-dir <镜像 checkout> --skip-tests 
 - 2026-11-12（v1.3.7，Wave-2 W2.2）：`test/provider-conformance.cjs` rc.2 fixture 显式解析（缺 fixture exit 2，29/29）→ **19/19 SHA**，tag `v1.3.7` = **`91c177e`**（运行时/客户端行为不变）。
 - 2026-11-13（v1.4.0，Q4 + 会话元数据）：`tree_send` 仅同树（移除 `parent`、调用者谱系校验）+ 会话界面元数据（composer.dock 子会话条 + 只读子会话 header chip）→ **21/21 SHA**，tag `v1.4.0` = **`0343f0c`**（main+tag=本地，`ls-remote` 核对通过；本仓发布提交 `d8b9f7c`）。
 - 2026-11-12（W2.7）：新增 `scripts/release-all.mjs` 一条命令发布（预检 → `release-plugin` 同步/SHA 对账 → 本仓 commit → 镜像 commit/tag → `ls-remote` 核对；默认 dry-run、`--push` 才真推、失败即停并给回滚提示）；本文件新增 §5.1，§6 清单接入版本一致性、发布 E2E 两条固定命令。演练证据见 [release-automation-2026-11-12.md](../reports/release-automation-2026-11-12.md)。
+- 2026-11-13（W2.8 / d23x-A3）：**真机 E2E 三断言 + artifact 归档固化为发布前硬门禁**——新增纯逻辑 `scripts/e2e/lib/release-gate.mjs`（三断言 + overall + 新鲜度 ≤168h，8 项检查，不抛异常）与单测（10/10）；`release-all.mjs` 预检最先执行门禁（真实运行失败即 exit 1 零写入，含 no-op；dry-run 同跑并标注 BLOCKED），新增 `--e2e-artifact` / `--max-e2e-age-hours` / `--skip-e2e-gate`+`--skip-e2e-reason`（豁免必留痕）；本文件新增 §5.2，§5 标准流程加第 0 步，§6 清单接入门禁与单测两条。既有发布步骤语义不变（同步/SHA/commit/tag/ls-remote 顺序保持）。

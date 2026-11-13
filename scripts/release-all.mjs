@@ -3,11 +3,19 @@
  * release-all.mjs — 会话树单包「一条命令发布」（W2.7）
  *
  * 把 docs/guides/publishing.md 的发布流程串成一条命令：
- *   预检（版本 / 分支 / remote / 镜像状态 / SHA 对账 / 一致性 / 测试）
+ *   预检（真机 E2E 门禁 / 版本 / 分支 / remote / 镜像状态 / SHA 对账 / 一致性 / 测试）
  *   → release-plugin 单向同步 + SHA-256 对账
  *   → 本仓 git add -A + commit（只有 --push 才 push）
  *   → 镜像仓 commit + tag vX.Y.Z（只有 --push 才 push）
  *   → git ls-remote 核对远端 main/tag 与本地一致
+ *
+ * 真机 E2E 门禁（W2.8，见 scripts/e2e/lib/release-gate.mjs）：在任何写操作之前的预检阶段执行。
+ *   - 校验最新（或 --e2e-artifact 指定）的 release-*.json artifact：
+ *     三条必需断言全 PASS + overall PASS + artifact 距今 ≤ --max-e2e-age-hours（缺省 168h）。
+ *   - 真实运行（--push/--skip-push/--apply）：任一项失败 → 立即 exit 1（no-op 状态同样先拒绝），
+ *     仓库与镜像均未改变。
+ *   - dry-run：同样执行并打印 PASS/FAIL（门禁有效性演示）；FAIL 计入 BLOCKED，dry-run 本身仍 exit 0。
+ *   - --skip-e2e-gate + --skip-e2e-reason "<理由>"：显式豁免（仅限紧急，输出留醒目记录）。
  *
  * 唯一源码事实源 = 本仓 packages/<pkg>/；公开镜像 = orphiczhou/dsh-session-tree。
  * 同步只走 scripts/release-plugin.mjs（单向），本脚本不手工双写任何文件。
@@ -38,13 +46,17 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { checkReleaseGate, DEFAULT_MAX_AGE_HOURS } from './e2e/lib/release-gate.mjs'
+
 const SCRIPT_PATH = fileURLToPath(import.meta.url)
 const SCRIPT_DIR = dirname(SCRIPT_PATH)
 const REPO_ROOT = dirname(SCRIPT_DIR)
 const RELEASE_PLUGIN = join(SCRIPT_DIR, 'release-plugin.mjs')
 const CONSISTENCY_SCRIPT = join(SCRIPT_DIR, 'check-version-consistency.mjs')
+// 发布前真机 E2E 门禁：runner 汇总 artifact 目录 + 纯逻辑模块（scripts/e2e/lib/release-gate.mjs）。
+const E2E_ARTIFACTS_DIR = join(SCRIPT_DIR, 'e2e', 'artifacts')
 // 工具链自身的回归测试（repo 相对路径，cwd = 仓库根）：发布门禁顺便验证发布/取证脚本。
-const REPO_TEST_CANDIDATES = [join('scripts', 'e2e', 'lib', 'handoff-prompt.test.mjs')]
+const REPO_TEST_CANDIDATES = [join('scripts', 'e2e', 'lib', 'handoff-prompt.test.mjs'), join('scripts', 'e2e', 'lib', 'release-gate.test.mjs')]
 
 const SOURCE_REPO_SLUG = 'orphiczhou/dsh-tree-harness'
 const DEFAULT_PKG = '@orphiczhou/dsh-session-tree'
@@ -78,6 +90,10 @@ const USAGE = `release-all.mjs — 一条命令发布 packages/<pkg> 到公开�
   --skip-tests         跳过包测试（发布提速；仍会跑 check-version-consistency.mjs）
   --summary <text>     本仓发布 commit 的摘要（模板 feat/release: <pkg> vX.Y.Z — <摘要>）
   --require-clean      工作树必须 clean（默认把未提交改动列为 WARN：它们会随 git add -A 进入发布提交）
+  --e2e-artifact <p>   指定真机三断言 E2E 汇总 artifact（缺省=自动取 scripts/e2e/artifacts 下最新 release-*.json）
+  --max-e2e-age-hours <n>  E2E artifact 新鲜度上限（小时，正数；缺省 168=7 天）
+  --skip-e2e-gate      显式豁免真机 E2E 门禁（仅限紧急；必须同时给 --skip-e2e-reason）
+  --skip-e2e-reason <t>  豁免理由（与 --skip-e2e-gate 成对出现，缺一律按用法错误 exit 2）
   -h, --help           显示本帮助
 
 退出码: 0 = 成功/no-op/dry-run 完成；1 = 失败、被门禁拒绝或预检环境错误（如镜像 checkout 不存在）；2 = 用法错误（未知参数/缺参数值）
@@ -396,6 +412,10 @@ function parseArgs(argv) {
     summary: null,
     requireClean: false,
     help: false,
+    e2eArtifact: null,
+    maxE2eAgeHours: DEFAULT_MAX_AGE_HOURS,
+    skipE2eGate: false,
+    skipE2eReason: null,
   }
 
   for (let i = 0; i < argv.length; i++) {
@@ -413,6 +433,13 @@ function parseArgs(argv) {
     else if (arg.startsWith('--pkg=')) opts.pkg = requiredValue('--pkg', arg.slice('--pkg='.length))
     else if (arg === '--summary') opts.summary = requiredValue(arg, argv[++i])
     else if (arg.startsWith('--summary=')) opts.summary = requiredValue('--summary', arg.slice('--summary='.length))
+    else if (arg === '--e2e-artifact') opts.e2eArtifact = requiredValue(arg, argv[++i])
+    else if (arg.startsWith('--e2e-artifact=')) opts.e2eArtifact = requiredValue('--e2e-artifact', arg.slice('--e2e-artifact='.length))
+    else if (arg === '--max-e2e-age-hours') opts.maxE2eAgeHours = requiredPositiveNumber('--max-e2e-age-hours', argv[++i])
+    else if (arg.startsWith('--max-e2e-age-hours=')) opts.maxE2eAgeHours = requiredPositiveNumber('--max-e2e-age-hours', arg.slice('--max-e2e-age-hours='.length))
+    else if (arg === '--skip-e2e-gate') opts.skipE2eGate = true
+    else if (arg === '--skip-e2e-reason') opts.skipE2eReason = requiredValue(arg, argv[++i])
+    else if (arg.startsWith('--skip-e2e-reason=')) opts.skipE2eReason = requiredValue('--skip-e2e-reason', arg.slice('--skip-e2e-reason='.length))
     else throw new UsageError(`未知参数: ${arg}`)
   }
 
@@ -421,6 +448,12 @@ function parseArgs(argv) {
     throw new UsageError('--dry-run 不能与 --push / --apply / --skip-push 同时使用')
   }
   if (opts.push && opts.skipPush) throw new UsageError('--push 与 --skip-push 互斥')
+  if (opts.skipE2eGate && !opts.skipE2eReason) {
+    throw new UsageError('--skip-e2e-gate 必须同时提供 --skip-e2e-reason "<理由>"（豁免需留痕）')
+  }
+  if (!opts.skipE2eGate && opts.skipE2eReason) {
+    throw new UsageError('--skip-e2e-reason 只有在 --skip-e2e-gate 时才有意义')
+  }
   if (!opts.mirrorDir && process.env.DSH_MIRROR_DIR) opts.mirrorDir = process.env.DSH_MIRROR_DIR
   opts.execute = opts.apply || opts.push || opts.skipPush
   opts.dryRun = !opts.execute
@@ -428,7 +461,58 @@ function parseArgs(argv) {
   return opts
 }
 
+/** 要求一个正数参数（用于 --max-e2e-age-hours）。 */
+function requiredPositiveNumber(flag, raw) {
+  const value = requiredValue(flag, raw)
+  const number = Number(value)
+  if (!Number.isFinite(number) || number <= 0) {
+    throw new UsageError(`${flag} 需要一个正数（小时），收到: ${value}`)
+  }
+  return number
+}
+
 // ------------------------------------------------------------------ preflight
+
+/**
+ * 发布前真机 E2E 门禁（W2.8）：三断言（handoff 计数 / kickoff 语种 / skills 计数）+ artifact 新鲜度。
+ * 在任何写操作之前的预检阶段执行；真实模式失败立即抛 ReleaseError（exit 1，零写入），
+ * dry-run 失败记入 info.gates 并打印 BLOCKED（exit 0 保持演练语义）。
+ * --skip-e2e-gate 必须带 --skip-e2e-reason（parseArgs 已强制），输出醒目「E2E GATE SKIPPED」。
+ */
+function runE2EGate(opts, record, gate) {
+  log('  -- 发布前真机 E2E 门禁（三断言 + artifact 新鲜度，scripts/e2e/lib/release-gate.mjs）')
+  if (opts.skipE2eGate) {
+    const reason = String(opts.skipE2eReason ?? '').trim()
+    log('')
+    log(`  !! E2E GATE SKIPPED: ${reason}`)
+    log('  !! 本次发布没有新鲜真机三断言证据；理由已留痕，发布报告必须携带此行。')
+    log('')
+    record('skip', `真机 E2E 门禁被显式豁免（理由: ${reason}）`)
+    return true
+  }
+  const result = checkReleaseGate({
+    artifactsDir: E2E_ARTIFACTS_DIR,
+    artifactPath: opts.e2eArtifact ? resolve(opts.e2eArtifact) : null,
+    maxAgeHours: opts.maxE2eAgeHours,
+  })
+  const ageText = result.ageHours == null ? '未知' : `${result.ageHours}h`
+  for (const item of result.checks) {
+    record(item.ok ? 'ok' : 'gate', `E2E[${item.name}] ${item.detail}`)
+  }
+  if (result.ok) {
+    record('ok', `真机 E2E 门禁 PASS（artifact ${relative(REPO_ROOT, result.artifactPath).replace(/\\/g, '/')}，age ${ageText} ≤ ${opts.maxE2eAgeHours}h）`)
+    return true
+  }
+  const failedNames = result.checks.filter((item) => !item.ok).map((item) => item.name).join(', ')
+  const message = `真机 E2E 门禁 FAIL（artifact=${result.artifactPath ?? '无'}，age ${ageText}，未通过: ${failedNames}）`
+  if (opts.execute) {
+    // 真实模式：硬性拒绝——立即抛错（先于 noop 分支与所有写操作），即使内容对账为 no-op。
+    throw new ReleaseError(message, { step: '真机 E2E 门禁', hint: result.hint })
+  }
+  gate(message)
+  log(`  提示: ${result.hint}`)
+  return false
+}
 
 function createState() {
   return {
@@ -481,6 +565,9 @@ function preflight(opts) {
   }
 
   log('== 0. 预检（只读） ==')
+
+  // --- 真机 E2E 门禁（放在最前：先证明发布证据，再做其余预检）---------------
+  info.e2eGatePassed = runE2EGate(opts, record, gate)
 
   // --- repository -----------------------------------------------------------
   if (!existsSync(RELEASE_PLUGIN)) fail(`缺少同步脚本: ${RELEASE_PLUGIN}`, '确认在 dsh-tree-harness 仓库内运行。')
@@ -782,6 +869,8 @@ function printPlan(opts, info) {
   log('')
   log('== 步骤计划 ==')
   log('  1. 预检（只读；上方已执行，GATE 项会阻止真实运行）')
+  if (opts.skipE2eGate) log(`  1a. 真机 E2E 门禁：[已豁免 --skip-e2e-gate，理由: ${opts.skipE2eReason}]`)
+  else log(`  1a. 真机 E2E 门禁：${info.e2eGatePassed ? 'PASS' : 'FAIL（真实运行在任何写操作之前 exit 1）'}（三断言 + artifact 新鲜度 ≤ ${opts.maxE2eAgeHours}h）`)
   if (opts.skipTests) log('  1b. 测试：[跳过 --skip-tests]')
   else if (info.testCommands.length) {
     log('  1b. 测试（包目录内 + 工具链回归）:')
@@ -815,6 +904,9 @@ function printDryRunResult(opts, info) {
   log('== DRY-RUN RESULT ==')
   if (info.noop) {
     log('NO-OP — 包内容无变化不需要发布；真实运行不会做任何写操作。')
+    if (info.e2eGatePassed === false) {
+      log('!! 注意：真机 E2E 门禁 FAIL——真实运行（包括这种 no-op 运行）同样会在预检阶段被拒绝 exit 1；发布前先跑 runner 生成新鲜 artifact。')
+    }
   } else if (info.gates.length) {
     log(`BLOCKED — ${info.gates.length} 个发布门禁未通过；真实运行会在任何写操作之前停止（exit 1）：`)
     for (const gate of info.gates) log(`  - ${gate}`)
