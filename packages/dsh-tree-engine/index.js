@@ -27,7 +27,7 @@ import { resolveLiveSession, resolveTokenMeter, resolveUsagePct } from './src/to
 import { startManagedSweep } from './src/sweep.js'
 // W2.3（2026-11-12）：RC2 兼容层双形探测抽成纯逻辑模块（src/compat.js），此处只做装配。
 import {
-  buildInterruptAuthorities, buildStartRequest, detectInterruptMechanism, detectStartMechanism,
+  buildActivationSpec, buildInterruptAuthorities, buildStartRequest, detectInterruptMechanism, detectStartMechanism,
   NO_START_MECHANISM_MESSAGE, resolveActivationResult, resolveContinuableResult,
 } from './src/compat.js'
 import path from 'node:path'
@@ -87,9 +87,10 @@ export function makePorts(services, log, opts = {}) {
   }
 
   return {
-    /** 派发/接力新会话（≅ subagents.startContinuable）。权威形状（asar 源 + E2E 实证）：
-     *  ContinuableStartSpec = { provider*, label*, childId?, request{ prompt: ContentBlock[], parent: Agent }, signal }
-     *  → ContinuableStart = { childId, messageId }。parent 必须是 ctx.agents 中的活 Agent（非字符串 id）。 */
+    /** 派发/接力新会话（≅ subagents.startContinuable / startActivation）。权威形状（asar 源 + E2E 实证）：
+     *  legacy：ContinuableStartSpec = { provider*, label*, childId?, request{ prompt: ContentBlock[], parent: Agent }, signal }
+     *  rc.3 activation（v0.10.1）：扁平 spec = { provider*, label*, signal, delivery, prompt, parent: Agent, agentOptions?, maxDepth? }
+     *  → 两者返回 { childId } | { sessionId }。parent 必须是 ctx.agents 中的活 Agent（非字符串 id）。 */
     async dispatch(spec) {
       const dodText = verifier ? verifier.dodPrompt(spec.policyId ?? spec.taskType ?? 'default') : `[DoD] ${JSON.stringify(spec.dod ?? {})}`
       const settleText = `\n\n[结算指令] 你是树节点 ${spec.treeId}/${spec.leafId} 的执行者。任务完成（含结论自述与关键产出）后，必须调用工具 tree_report {action:"event", tree_id:"${spec.treeId}", leaf_id:"${spec.leafId}", type:"done", meta:{summary:"<一句话结论>"}} 登记完成；失败/无法完成时同样回报 done 并在 summary 写明失败原因。除此之外不得操作树。`
@@ -355,10 +356,12 @@ const DEFAULT_MECHANISM = process.env.TREE_ENGINE_MECHANISM ?? 'spawn'
 
 /** 宿主 subagents 服务兼容层（2026-10-17 DSH 0.2.1-rc.2 升级后实测）：
  *  - legacy 基线（引擎 v0.4.0 编写期）：startContinuable(spec) / interrupt(id,{kind:'parent',parentSessionId}) / prompt(req)
- *  - 现役 rc.2：startActivation({provider,label,request,signal,delivery}) / interrupt(id,{kind:'ancestor'|'user',...}) / sendMessage(parentAgent,childId,content,{signal})
+ *  - rc.2（嵌套形状，已被 rc.3 删除）：startActivation({provider,label,request,signal,delivery}) / interrupt(id,{kind:'ancestor'|'user',...}) / sendMessage(parentAgent,childId,content,{signal})
+ *  - 现役 rc.3（v0.10.1 适配）：startActivation 扁平 spec（provider/label/signal/delivery + prompt/parent/agentOptions?/maxDepth? 顶层；经 buildActivationSpec 展开）；interrupt 三形 authority 与 sendMessage 形状 rc.3 不变
  *  双形探测：legacy 优先（不改变旧宿主行为），缺席时走现役；两形都缺 → fail-closed 报协议错。
  *  缺陷出处：树仓 handoff §7 任务 4「startContinuable/prompt/interrupt 精确形状待 smoke」——
- *  本次 nanju live E2E 首次真机派发即暴露（rc.2 已删除 startContinuable）。 */
+ *  本次 nanju live E2E 首次真机派发即暴露（rc.2 已删除 startContinuable）；
+ *  rc.3 嵌套形状全量失败（真机 2026-11-13 22:2x `reading 'id'`）由 D27 E2E 指挥官派发暴露。 */
 function resolveAgentsService(services) {
   try {
     if (services && typeof services.agents?.get === 'function') return services.agents
@@ -386,7 +389,12 @@ async function startChildSession(services, { provider, label, parent, promptText
     return resolveContinuableResult(r)
   }
   if (mechanism === 'activation') {
-    const r = await services.subagents.startActivation({ provider, label, request, signal, delivery: 'parent' })
+    // v0.10.1（D28，rc.3 适配）：startActivation spec 自 rc.3 起为扁平形状——request 字段必须展开到
+    // spec 顶层（宿主 dsh-subagent index.js:3021/3024/3025 读 spec.maxDepth/spec.parent.id/spec.outputSchema；
+    // 权威参考调用方 dsh-tool-subagent:454-475 以 ...request 展开）。rc.1/rc.2 的嵌套 request 形状在
+    // rc.3 下 spec.parent===undefined → TypeError "reading 'id'" → 派发全量失败（真机 2026-11-13 22:2x
+    // E_PORTS_PROTOCOL 实证；同日 flow 插件同款修复见 flow 仓 T-2b-RC3-ADAPTER.md）。legacy 嵌套形状不变。
+    const r = await services.subagents.startActivation(buildActivationSpec({ provider, label, request, signal, delivery: 'parent' }))
     return resolveActivationResult(r)
   }
   throw new Error(NO_START_MECHANISM_MESSAGE)

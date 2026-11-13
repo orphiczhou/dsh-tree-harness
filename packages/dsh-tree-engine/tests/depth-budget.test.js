@@ -7,7 +7,9 @@
  *
  * 修复口径：`DEFAULT_GUARDS.max_subagent_depth = 5`（可经 `TREE_ENGINE_CONFIG.max_subagent_depth` 覆盖）；
  * `dispatch:start` 与竹节 relay 的 `ports.dispatch` spec 均携带 `maxDepth`；
- * `index.js startChildSession` 经 `buildStartRequest` 把它写入宿主 `request.maxDepth`（纯函数单测在 compat.test.js）。
+ * `index.js startChildSession` 经 `buildStartRequest` 构造后写入宿主 maxDepth
+ * （legacy = 嵌套 `request.maxDepth`；rc.3 activation = 扁平 `spec.maxDepth`，v0.10.1 D28 适配；
+ * 纯函数单测在 compat.test.js）。
  */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'

@@ -7,7 +7,7 @@
 
 ## 0. 一句话
 
-**引擎与插件全部就绪、发布物与公开镜像逐字节一致；D21 清掉「真机 E2E + 三层组合试点 + 发布测试门禁 + 会话元数据 GUI」，D22 完成组合编排 v2 + v0.8.1 深度预算修复，D23（2026-11-13 晚）完成用户点名的 1-4 四项**：深度 6 拒绝真机回归 PASS、flash 审计三条高危修复、发布前 E2E 门禁收紧、`tree_log` 机读化 + 验证授权委托；**D24 完成 flow 回执落地 + 平台 issue 草稿 + flash 审计第二批（#8/#15/#20/#21/#22/#28/#30）**，tree-engine 升到 **v0.10.0**（225/225）；**D25 batch1 复核收口合回主干（3196f33）**；**D27（进行中）**：batch2（约 24 条）按用户指示**列入计划暂不开工**，flow 续接试点 E2E **方案已成文待用户批准**，且**发现新阻断**——宿主 18:17–21:45 升级 0.2.2-rc.1→rc.3 × flow 插件未适配 → 所有 session 节点 `E_SESSION_START_FAILED`（修复属 flow 仓，等适配）。
+**引擎与插件全部就绪、发布物与公开镜像逐字节一致；D21 清掉「真机 E2E + 三层组合试点 + 发布测试门禁 + 会话元数据 GUI」，D22 完成组合编排 v2 + v0.8.1 深度预算修复，D23（2026-11-13 晚）完成用户点名的 1-4 四项**：深度 6 拒绝真机回归 PASS、flash 审计三条高危修复、发布前 E2E 门禁收紧、`tree_log` 机读化 + 验证授权委托；**D24 完成 flow 回执落地 + 平台 issue 草稿 + flash 审计第二批（#8/#15/#20/#21/#22/#28/#30）**，tree-engine 升到 **v0.10.0**（225/225）；**D25 batch1 复核收口合回主干（3196f33）**；**D27（进行中）**：batch2（约 24 条）按用户指示**列入计划暂不开工**，flow 续接试点 E2E **方案已成文待用户批准**，且**发现新阻断**——宿主 18:17–21:45 升级 0.2.2-rc.1→rc.3 × flow 插件未适配 → 所有 session 节点 `E_SESSION_START_FAILED`（修复属 flow 仓，等适配）。**D28**：tree-engine **v0.10.1** 宿主 rc.3 扁平 spec 适配（E2E 指挥官派发暴露 `reading 'id'`，227/227，受控重载后生效）。
 
 ---
 
@@ -15,7 +15,7 @@
 
 | 组件 | 版本 | 状态 | 测试 |
 |---|---|---|---|
-| `packages/dsh-tree-engine` | **v0.10.0** | 运行中（9 个 `tree_*` 工具 + 随包 2 份 Skill v2.3；活体 7/7 · v0.10.0） | **225/225**（26 个 `.test.js`）；发布门禁单测 14/14 |
+| `packages/dsh-tree-engine` | **v0.10.1** | 运行中（9 个 `tree_*` 工具 + 随包 2 份 Skill v2.3；活体 7/7 · v0.10.1） | **227/227**（26 个 `.test.js`）；发布门禁单测 14/14 |
 | `packages/dsh-session-tree` | **v1.4.0** | 运行中（`tree_send` 仅同树 + `session_handoff` + 会话界面元数据） | handoff 41/41、tree-send 25/25、meta 41/41、render 151/151+9+11、style-guard 26/26、skills 3/3、verify-bundle 0 fail、provider-conformance 29/29 |
 | `packages/dsh-agent-introspect` | v0.1.0 | 运行中（`self_spec`） | — |
 | 公开镜像 `orphiczhou/dsh-session-tree` | tag **v1.4.0 = `0343f0c`** | main + tag 已推送，21/21 SHA 一致 | — |

@@ -2,7 +2,7 @@
 
 > 本目录是 `dsh-tree-harness`（DSH 会话树体系）的**全部开发文档**。本文件是文档的**单一索引**，并规定新增/迁移/归档规则。
 > 改完文档必须跑：`node scripts/check-doc-links.mjs` 与 `node scripts/check-md-tables.mjs`。
-> 当前快照：2026-11-13 · tree-engine **v0.10.0**（9 工具 / 225-225 测试）· session-tree **v1.4.0**（公开镜像 tag **v1.4.0 = `0343f0c`**，main + tag，**21/21 SHA**）。组合修复：per-leaf relay 开关 / usagePct 端口修复 / sweep 跨实例生命周期 / tree_send 同树收紧 / 会话界面元数据条（子会话补 model·effort·context%，只读子会话 header chip）；**v0.8.1 深度预算**：tree 派发/接力显式传 `request.maxDepth`（D22 真机发现插件派发路径无平台深度兜底后修复）；**v0.9.0 硬安全与可观测性**：跨进程 `.lock` 文件锁 / nudge 强制 prune 走状态机 / `leaf:add` 13 键白名单 / `tree_log` 事件 meta 机读化 / `tree_maintain {action:"verify-delegate"}` 验证授权委托；**v0.10.0 flash 审计第二批**：依赖闸「已验证失败不放行」/ `set-verification` 一致性 / 竹节预算与唯一性 / `audit_meta` 校验与留痕 / `subagent_spawn` 仅 owner / `.tmp` 灾备 / `tree_maintain {action:"gc"}` + call-log 滚动。
+> 当前快照：2026-11-13 · tree-engine **v0.10.1**（9 工具 / 227-227 测试）· session-tree **v1.4.0**（公开镜像 tag **v1.4.0 = `0343f0c`**，main + tag，**21/21 SHA**）。组合修复：per-leaf relay 开关 / usagePct 端口修复 / sweep 跨实例生命周期 / tree_send 同树收紧 / 会话界面元数据条（子会话补 model·effort·context%，只读子会话 header chip）；**v0.8.1 深度预算**：tree 派发/接力显式传 `maxDepth`（D22 真机发现插件派发路径无平台深度兜底后修复）；**v0.9.0 硬安全与可观测性**：跨进程 `.lock` 文件锁 / nudge 强制 prune 走状态机 / `leaf:add` 13 键白名单 / `tree_log` 事件 meta 机读化 / `tree_maintain {action:"verify-delegate"}` 验证授权委托；**v0.10.0 flash 审计第二批**：依赖闸「已验证失败不放行」/ `set-verification` 一致性 / 竹节预算与唯一性 / `audit_meta` 校验与留痕 / `subagent_spawn` 仅 owner / `.tmp` 灾备 / `tree_maintain {action:"gc"}` + call-log 滚动；**v0.10.1 宿主 rc.3 适配**：`startActivation` 扁平 spec（D28 真机暴露的嵌套形状全量失败修复）。
 
 ## 0. 不同读者的入口
 

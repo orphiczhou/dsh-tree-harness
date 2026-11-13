@@ -2,6 +2,7 @@
 
 > **性质**：跨仓跟进单（tree-harness → flow 项目组，2026-11-13 22:1x）。**单向材料**：tree 侧不改 flow 仓代码（用户硬约束），本单供 flow 侧核实与修复排期；全部证据可只读复核。
 > 送达方式：由用户转交。调查与成文：D27 接续会话（zai/glm-5.3-flash·max）；根因定位的源码行号取证来自 flow 仓 T-1 探针报告（agent-1，21:45–21:55）。
+> **回执与状态更新（2026-11-13 22:3x）**：flow 项目组已回执（本目录 `FOLLOWUP-RESPONSE-2026-11-13-rc3-adapted.md`）——**已修复入库（`0f60e18`/`1fae8fc`）**；P4 已答（夹具无显式 start/end 合法，引擎自动合成 `__start/__end`）；节点模型可经 DSL `input.agentOptions` 指定；E_BORROWED_IDENTITY × TC-9 撞线预登记；对账口径（t27b 两 leaf = INNER 经 tree_dispatch 派生的孙会话）。我方 P0 smoke `D27-SMOKE-RC3-001`（22:2x）PASS 实证适配已生效。本单 §1#2 耗时按回执勘误已按 run 分标。
 
 ---
 
@@ -14,7 +15,7 @@
 | # | 事实 | 证据 |
 |---|---|---|
 | 1 | 两次真机失败 run（同分钟 21:46、逐字节相同错误）：tree 侧 Lead 会话的 `R-m12-e2e-20261113-2146`（callerOrigin=user）+ flow 仓 T-1 探针 `R-m12-sop-2146`（callerOrigin=subagent） | flow 仓 `.dsh-flow/runs/R-m12-*.jsonl`（只读） |
-| 2 | 失败形态：run 总耗时 12ms；失败节点 `durationMs=1`、`sessionId:null`、`E_SESSION_START_FAILED`；journal 10 条事件、integrity=verified、**无任何 `node/spawned`**（计数=0） | journal seq9 原文见 §7 |
+| 2 | 失败形态（**按 run 分标，2026-11-13 22:3x 回执勘误**）：探针 run `R-m12-sop-2146` 总耗时 12ms、失败节点 `durationMs=1`；Lead 侧 `R-m12-e2e-20261113-2146` 实为 **18ms/2ms**。两者均 `sessionId:null`、`E_SESSION_START_FAILED`；journal integrity=verified、**无任何 `node/spawned`**（计数=0） | journal seq9 原文见 §7 |
 | 3 | 错误原文：`startActivation(spawn) failed: Cannot read properties of undefined (reading 'id')` | 同上 |
 | 4 | 排除调用者维度：user 与 subagent 两种 callerOrigin 同分钟同错；今天凌晨同形状（`R-mrun2-20261113-02`，01:54，callerOrigin=subagent）SUCCEEDED → 是**环境变化**而非调用者形状误判 | `flow_list` + journal |
 | 5 | 宿主版本：asar 内 `@deepseek-ai/*` 全部 **0.2.2-rc.3**；flow 仓 AGENTS.md 冻结基线仍 rc.1；最后已知成功 = M1.1 真机 18:17（`R-m11-ui-20261113-1817` succeeded），最早观测失败 = 21:46 | asar 只读 + `flow_list` |

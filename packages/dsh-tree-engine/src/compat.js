@@ -8,10 +8,18 @@
  *       startContinuable({ provider, label, signal, request })
  *       返回 { childId } | { sessionId } | { session: { id } }；
  *       interrupt(id, { kind: 'parent', parentSessionId })
- *   - 现役 rc.2：
+ *   - 现役 rc.2（嵌套形状，已被 rc.3 删除）：
  *       startActivation({ provider, label, request, signal, delivery })
  *       返回 { childId } | { sessionId }；
  *       interrupt(id, { kind: 'ancestor', agent } | { kind: 'user', parentSessionId })
+ *   - 现役 rc.3（扁平形状，D28 真机实测 2026-11-13）：
+ *       startActivation({ provider, label, signal, delivery, prompt, parent, agentOptions?, maxDepth? })
+ *       —— `request` 字段展开到 spec 顶层（权威参考调用方 `dsh-tool-subagent:454-475` 用
+ *       `...request` 展开；宿主 `dsh-subagent/lib/index.js:3021/3024/3025` 读
+ *       `spec.maxDepth` / `spec.parent.id` / `spec.outputSchema` 顶层）。
+ *       嵌套形状在 rc.3 下 `spec.parent === undefined` → TypeError "reading 'id'"
+ *       → 所有派发 1 次调用内失败（真机 2026-11-13 22:2x E_PORTS_PROTOCOL 实证）。
+ *       返回与 interrupt 形状 rc.2 → rc.3 不变（interrupt 三形 authority 兼容）。
  *
  * 分支表（冻结）
  *   detectStartMechanism(subagents)
@@ -25,6 +33,7 @@
  *   resolveContinuableResult(r)  → r.childId ?? r.sessionId ?? r.session?.id；全空 → 抛错（证据 ≤200 字符）
  *   resolveActivationResult(r)   → r.childId ?? r.sessionId；全空 → 抛错（证据 ≤200 字符）
  *   buildStartRequest({...})     → 起始请求体（v0.8.1：注入 maxDepth；非法值 fail-closed）
+ *   buildActivationSpec({...})   → rc.3 扁平 startActivation spec（v0.10.1：request 展开到顶层）
  *   buildInterruptAuthorities({ parentSessionId, liveAncestorAgent })
  *     → [{ kind: 'ancestor', agent }] → [{ kind: 'user', parentSessionId }] → [{ kind: 'parent', parentSessionId }]
  *
@@ -109,6 +118,32 @@ export function buildStartRequest({ promptText, parent, agentOptions, maxDepth }
   if (agentOptions) request.agentOptions = agentOptions
   if (maxDepth !== undefined) request.maxDepth = maxDepth
   return request
+}
+
+/**
+ * rc.3 扁平 startActivation spec（v0.10.1 / D28，2026-11-13 真机实测）。
+ *
+ * rc.3 起 `startActivation` 的 spec 为**扁平形状**：`request` 里的 prompt/parent/agentOptions/maxDepth
+ * 必须展开到 spec 顶层（权威参考调用方 `dsh-tool-subagent/lib/index.js:454-475` 以 `...request` 展开；
+ * 宿主 `dsh-subagent/lib/index.js:3018-3036` 直接读 `spec.maxDepth`/`spec.parent.id`/`spec.outputSchema`）。
+ * rc.1/rc.2 的嵌套 `request:{...}` 形状在 rc.3 下 `spec.parent === undefined`
+ * → TypeError `Cannot read properties of undefined (reading 'id')` → 派发全量失败
+ * （tree-engine 真机 2026-11-13 22:2x `E_PORTS_PROTOCOL` 实证；flow 插件同款问题同日修复，见
+ * flow 仓 T-2b-RC3-ADAPTER.md）。
+ *
+ * legacy（`startContinuable`）仍为嵌套 request 形状——本函数只服务 activation 分支；
+ * `buildStartRequest` 仍是字段构造的唯一入口（含 maxDepth fail-closed），本函数只做展开。
+ *
+ * @param {{ provider?: string, label?: string, request?: object, signal?: AbortSignal, delivery?: string }} [input]
+ * @returns {object} 扁平 spec：provider/label/signal/delivery 保留 + request 字段展开到顶层（不含 `request` 键）
+ */
+export function buildActivationSpec({ provider, label, request, signal, delivery } = {}) {
+  const spec = {}
+  if (provider !== undefined) spec.provider = provider
+  if (label !== undefined) spec.label = label
+  if (signal !== undefined) spec.signal = signal
+  if (delivery !== undefined) spec.delivery = delivery
+  return Object.assign(spec, request ?? {})
 }
 
 /**

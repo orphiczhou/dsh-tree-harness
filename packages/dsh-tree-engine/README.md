@@ -2,6 +2,14 @@
 
 树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/architecture/engine-spec.md](../../docs/architecture/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 9 个工具 schema 为准（[docs/architecture/tools-mapping.md](../../docs/architecture/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
 
+## v0.10.1 增量：宿主 rc.3 扁平 spec 适配（`startActivation` 形状漂移真机修复）
+
+**背景（2026-11-13 D27 E2E 指挥官派发真机暴露）**：DSH 宿主当日 18:17–21:45 间自动升级 **0.2.2-rc.1 → rc.3**，`subagents.startActivation` 的 spec 从「`request:{prompt,parent,...}` 嵌套」改为「**扁平**」（`spec.parent`/`spec.maxDepth`/`spec.outputSchema` 在顶层；宿主 `dsh-subagent/lib/index.js:3021/3024/3025` 直接读顶层；权威参考调用方 `dsh-tool-subagent:454-475` 以 `...request` 展开）。本插件 `startChildSession` 仍按嵌套形状调用 → `spec.parent === undefined` → TypeError `reading 'id'` → **所有 `tree_dispatch` 真机派发 1 次调用内失败**（`E_PORTS_PROTOCOL`；与 flow 插件同款问题，flow 仓同日已修，见其 `T-2b-RC3-ADAPTER.md`）。
+
+- **修复**：`startChildSession` 的 activation 分支改用新纯函数 **`buildActivationSpec`**（`src/compat.js`）把 request 字段展开到 spec 顶层（provider/label/signal/delivery 保留 + prompt/parent/agentOptions/maxDepth 顶层、无 `request` 键）；**legacy（`startContinuable`）嵌套形状不变**；`buildStartRequest` 仍是字段构造唯一入口（maxDepth fail-closed 不回归）。interrupt 三形 authority 与返回解析经 asar 复核 rc.3 兼容，未动。
+- **测试 225 → 227/227**（`compat.test.js` +2：扁平展开形状断言（宿主读取面 `spec.parent`/`spec.maxDepth`/`spec.prompt` 顶层）+ 缺省安全/不产键；嵌套键 `request` 不复存在的 mutation 守卫）。
+- **暴露渠道备注**：本缺陷离线 225 全绿不可见（引擎单测用 fake ports，不触真机形状）——真机 E2E（D27 派发指挥官）为唯一暴露面；`tree_doctor` 的 env/version 检查不覆盖宿主 API 形状。教训与「重载前后核对宿主版本 + API 形状」纪律同源（flow 仓 AGENTS §6 同款）。
+
 ## v0.10.0 增量：flash 审计第二批（信任闸 / 竹节预算与唯一性 / 护栏注入面 / 灾备 / GC）
 
 **背景（2026-11-13 D24 轮 / `docs/archive/flaudit-report.md` 剩余项）**：D23 已修 #1/#7/#19；本轮修 **#8**（done 事件回流使依赖闸可绕过三重闸）、**#15**（验证裁决落账无一致性校验）、**#20**（竹节接力绕过会话唯一/预算、账目分裂）、**#21**（audit_meta 护栏可放宽/可写坏）、**#22**（subagent_spawn 预算事件无 owner 归属）、**#28**（fsStore 损坏不可恢复）、**#30**（无 GC / call-log 无界），顺带修 **#23**（竹节阈值回退键名死回退）。**测试 213 → 225/225**（新增 `audit-p2a.test.js` 12 例；`write-guards` 矩阵快照 +1 键）。

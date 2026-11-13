@@ -18,9 +18,9 @@
 |---|---|---|
 | 1 | 宿主于 2026-11-13 18:17–21:45 之间从 **0.2.2-rc.1 升级到 0.2.2-rc.3**（asar 内 `@deepseek-ai/*` 全部 0.2.2-rc.3；AGENTS.md 冻结基线仍是 rc.1） | flow 仓 `evidence/m1/T-m1.2/probe-sop/PROBE-REPORT.md` §2（agent-1 探针，21:45–21:55） |
 | 2 | flow 插件 `spike/dsh-flow-plugin/lib/session-executor.js` L295–301 仍按 rc.1 形状调 `startActivation`（`request:{prompt,parent,...}` 嵌套）；rc.3 契约改为 spec 顶层 `spec.parent`/`spec.maxDepth`/`spec.outputSchema`（asar `dsh-subagent/lib/index.js` L3021–3025）→ **所有 session 节点 1ms 内 `E_SESSION_START_FAILED`**（`Cannot read properties of undefined (reading 'id')`） | 同上 §2（源码行号定位）+ journal seq9 原文 |
-| 3 | 两次真机失败 run（同分钟、同错误）：旧 Lead 的 `R-m12-e2e-20261113-2146`（callerOrigin=user，21:46）与探针的 `R-m12-sop-2146`（callerOrigin=subagent，21:46）——总耗时 12ms/…，`integrity=verified`，无任何 `node/spawned` | `flow_list` + flow 仓 `.dsh-flow/runs/*.jsonl` 只读 |
-| 4 | 失败面收敛：**只有插件这条旧形状调用路径断**。宿主自身 spawn 通道（`subagent` 工具）不受影响（探针会话本身即 rc.3 派生的活会话，§5 降级探针成功派出孙子会话）；本仓 `tree_*` 工具活体 `tree_doctor` **7/7 · v0.10.0** 正常（22:0x 复验） | PROBE-REPORT §2/§5 + 本仓 `tree_doctor {action:"run"}` |
-| 5 | flow 仓 HEAD 仍 = `13776bc`（main），无新提交；`probe-sop/`（T-1 探针证据）与 `reports/project-map-2026-11-13.html` 为 untracked 新文件 | flow 仓 `git log`/`git status` 只读 |
+| 3 | 两次真机失败 run（同分钟、同错误）：旧 Lead 的 `R-m12-e2e-20261113-2146`（callerOrigin=user，21:46，18ms/2ms）与探针的 `R-m12-sop-2146`（callerOrigin=subagent，21:46，12ms/1ms——**回执勘误：两 run 耗时分标**），均 `integrity=verified`，无任何 `node/spawned` | `flow_list` + flow 仓 `.dsh-flow/runs/*.jsonl` 只读 |
+| 4 | 失败面收敛：**只有插件这条旧形状调用路径断**。宿主自身 spawn 通道（`subagent` 工具）不受影响（探针会话本身即 rc.3 派生的活会话，§5 降级探针成功派出孙子会话）；**同款问题存在于本仓 tree-engine 派发路径，已由 D28 修复（v0.10.1 `buildActivationSpec` 扁平化，227/227）** | PROBE-REPORT §2/§5 + 本仓 `tree_doctor` + agent.md D28 行 |
+| 5 | flow 仓修复已入库（22:0x）：**HEAD 含 `0f60e18`（rc.3 适配）+ `1fae8fc`（落账）**——回执 `FOLLOWUP-RESPONSE-2026-11-13-rc3-adapted.md` 确认（原「HEAD 仍 13776bc」表述过时，据 22:3x 回执勘误更新）；`probe-sop/` 探针证据已随修复提交入库 | flow 仓 `git log` 只读 + 回执文件 |
 
 **归位**：这是 **DSH rc.1→rc.3 宿主 API 漂移 × flow 插件未适配** 的兼容性回归，修复属 flow 仓（`spike/dsh-flow-plugin`）责任域；本仓不改 flow 仓代码（用户 2026-11-13 硬约束），只登记与跟进。T-1 探针的「flow 路径」三问因此全部 BLOCKED（其降级 subagent 路径半区见探针报告 §5，回填状态以该文件为准）。
 
@@ -35,10 +35,10 @@
 
 | # | 闸门 | 内容 | 当前状态 |
 |---|---|---|---|
-| **P0** | **flow 插件适配宿主 rc.3**（本方案新增） | `session-executor.js` 按 rc.3 spec 形状调 `startActivation`（`parent`/`maxDepth`/`outputSchema` 提到顶层，或按宿主版本分支）；flow 仓提交修复 → 受控 disable→enable 重载 → **单节点 smoke run PASS**（session 节点能启动、journal 出现 `node/spawned`） | ❌ **BLOCKED**（21:5x 两次真机失败 run 为证） |
-| P1 | flow 仓 T-6 真机 E2E PASS | `evidence/m1/T-m1.2/` 出现 T-6 真机证据（`flow_send` 真机通过 + 深度拒绝负例），flow 仓 HANDOFF 撤销「未执行前不得写真机 PASS」悬置 | ❌ 未满足 |
+| **P0** | **flow 插件适配宿主 rc.3**（本方案新增） | `session-executor.js` 按 rc.3 spec 形状调 `startActivation`（`parent`/`maxDepth`/`outputSchema` 提到顶层，或按宿主版本分支）；flow 仓提交修复 → 受控 disable→enable 重载 → **单节点 smoke run PASS**（session 节点能启动、journal 出现 `node/spawned`） | ✅ **已通过**（flow 仓 `0f60e18` 修复 + 我方 smoke `D27-SMOKE-RC3-001` 22:2x PASS：succeeded/7336ms/`node/spawned` 落 journal/integrity=verified——实证重载 #5 已生效） |
+| P1 | flow 仓 T-6 真机 E2E PASS | `evidence/m1/T-m1.2/` 出现 T-6 真机证据（`flow_send` 真机通过 + 深度拒绝负例），flow 仓 HANDOFF 撤销「未执行前不得写真机 PASS」悬置 | ↘ **按用户 22:2x 指令并入本试点执行**（TC-1/TC-10 + TC-11 深度负例即 T-6 实质；flow 侧补跑留证可后置） |
 | P2 | 用户试点时间窗 + 成本授权 | 用户批准本方案即视为时间窗开启；成本上限（v1.1 双维合计）= **外层树 3 个 leaf**（commander + 续接维 worker + 混合维 worker）+ **2 个 flow run**（R1 续接夹具 / R2 混合夹具）+ **4 个 flow 派生会话**（n1、INNER、t27b 内层树两 leaf）+ 每维失败最多重试 1 次，不刷 run | ✅ **已通过**（2026-11-13 22:1x 用户批准 v1.1） |
-| P3 | 本仓门禁 | `tree_doctor` 7/7、`node --test` 225/225、master 与 origin 同步、工作树 clean（22:0x 已复验 doctor 7/7·v0.10.0；试点当日全部复跑） | ✅ 当前满足（当日复跑为准） |
+| P3 | 本仓门禁 | `tree_doctor` 7/7、`node --test` 227/227（v0.10.1）、master 与 origin 同步、工作树 clean | ✅ 满足（22:3x 复验 doctor 7/7；227/227 见 D28 修复批） |
 | P4 | 夹具编译语义确认 | 夹具 `m12-continuable-e2e.flow.json` 无显式 `start/end` 的 UNKNOWN 以 flow 方说明为准，不改夹具；探针夹具 `sop.flow.json` 已证明显式 `edges` 收口可编译通过（PROBE-REPORT §1 偏离1）——试点优先直接用仓内夹具，编译失败再按此降级为显式 edges 形态并记录偏离 | ⏳ 试点时向 flow 方确认 |
 
 ## 4. 测试矩阵

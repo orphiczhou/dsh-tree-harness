@@ -5,6 +5,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  buildActivationSpec,
   buildInterruptAuthorities,
   buildStartRequest,
   detectInterruptMechanism,
@@ -164,4 +165,37 @@ test('buildStartRequest：非法 maxDepth fail-closed（非整数 / 负数 / 字
       'maxDepth=' + String(bad) + ' must be rejected',
     )
   }
+})
+
+// ── v0.10.1（D28，rc.3 扁平 spec 适配）：buildActivationSpec ───────────────
+// 真机背景：rc.3 startActivation 读 spec.parent.id/spec.maxDepth/spec.outputSchema 顶层
+// （dsh-subagent/lib/index.js:3021/3024/3025）；嵌套 request 形状在 rc.3 下派发全量失败
+// （2026-11-13 22:2x E_PORTS_PROTOCOL "reading 'id'"，D27 E2E 指挥官派发暴露）。
+
+test('buildActivationSpec：request 字段展开到顶层 + provider/label/signal/delivery 保留，无 request 键', () => {
+  const parent = { id: 'agent-1' }
+  const signal = Symbol('signal') // 用任意对象断言引用保留
+  const request = buildStartRequest({ promptText: 'hello', parent, agentOptions: { model: 'm' }, maxDepth: 5 })
+  const spec = buildActivationSpec({ provider: 'spawn', label: 'tree:t/x', request, signal, delivery: 'parent' })
+  // rc.3 宿主读取面：spec.parent.id / spec.maxDepth / spec.prompt 必须在顶层
+  assert.equal(spec.parent, parent)
+  assert.equal(spec.maxDepth, 5)
+  assert.deepEqual(spec.prompt, [{ type: 'text', text: 'hello' }])
+  assert.deepEqual(spec.agentOptions, { model: 'm' })
+  assert.equal(spec.provider, 'spawn')
+  assert.equal(spec.label, 'tree:t/x')
+  assert.equal(spec.delivery, 'parent')
+  assert.equal(spec.signal, signal)
+  // 嵌套键不复存在（rc.1/rc.2 嵌套形状在 rc.3 下致命）
+  assert.equal('request' in spec, false)
+})
+
+test('buildActivationSpec：request 缺省安全、缺省字段不产键（宿主端可选字段语义保持）', () => {
+  const spec = buildActivationSpec({ provider: 'spawn', label: 'l', delivery: 'parent' })
+  assert.deepEqual(spec, { provider: 'spawn', label: 'l', delivery: 'parent' })
+  assert.equal('parent' in spec, false)
+  assert.equal('maxDepth' in spec, false)
+  assert.equal('signal' in spec, false)
+  const empty = buildActivationSpec({})
+  assert.deepEqual(empty, {})
 })

@@ -81,6 +81,16 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [0.10.1] — 2026-11-13 · D28：宿主 rc.3 扁平 spec 适配（真机派发全量失败修复，无发布）
+
+### 变更
+
+- **版本**：`packages/dsh-tree-engine` `0.10.0` → **`0.10.1`**（仓内插件，非 npm 发布；`dsh-session-tree` 1.4.0 / `dsh-agent-introspect` 0.1.0 不变）。
+- **根因**：DSH 宿主 2026-11-13 自动升级 rc.1→rc.3，`startActivation` spec 扁平化（`spec.parent` / `spec.maxDepth` / `spec.outputSchema` 移到顶层），插件嵌套 `request` 形状真机全量失败（`E_PORTS_PROTOCOL: reading 'id'`，D27 E2E 指挥官派发暴露）。
+- **修复**：`src/compat.js` 新增纯函数 `buildActivationSpec`（`request` 展开到顶层）；`index.js` `startChildSession` activation 分支改扁平调用（legacy `startContinuable` 嵌套形状不变；interrupt 三形 authority 经 asar 复核兼容未动）。
+- **测试**：225 → **227/227**（`tests/compat.test.js` +2：扁平展开形状断言 + 缺省安全/无 request 键守卫）。
+- 与 flow 插件同款问题同日各自修复（flow 仓 `T-2b-RC3-ADAPTER.md`）。
+
 ## [1.3.7] — 2026-11-12 · provider-conformance rc.2 fixture 解析（session-tree）
 
 ### 变更

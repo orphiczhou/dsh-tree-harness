@@ -1,0 +1,30 @@
+{
+  "dslVersion": "0.1",
+  "id": "t27-inner-tree-live-create",
+  "title": "D27 混合维：flow 节点现场建树 + depth 6 拒绝回归（宿主 rc.3 × flow 插件适配后）",
+  "vars": {},
+  "limits": {
+    "maxNodes": 8,
+    "maxRunMs": 900000
+  },
+  "defaults": {
+    "nodeTimeoutMs": 600000
+  },
+  "nodes": [
+    {
+      "id": "INNER",
+      "type": "session",
+      "title": "INNER：自标识 → tree_plan 现场建 t27b → 派发 commander → 等待收口",
+      "timeoutMs": 600000,
+      "input": {
+        "prompt": "读取 D:\\Codes\\dsh-tree-harness\\demo\\t27pilot\\inner-node.prompt.md，并严格按其步骤执行。只读该文件，不要修改它，不要写任何文件。",
+        "agentOptions": { "provider": "zai-coding-cn", "model": "glm-5.3-flash", "reasoningEffort": "high" }
+      },
+      "output": {
+        "var": "innerResult",
+        "extract": "text"
+      }
+    }
+  ],
+  "edges": []
+}
