@@ -2,24 +2,24 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
-## [Unreleased] — 2026-11-13 · D24-2：flash 审计第二批修复（tree-engine 0.9.0 → **0.10.0**）+ flow 续接试点任务书（**无发布**）
+## [Unreleased] — 2026-11-13 · D24-2/D25：flash 审计第二批修复 + R1 复核跟进收口（tree-engine 0.9.0 → **0.10.0**）+ flow 续接试点任务书（**无发布**）
 
 ### 变更
 
 - **版本**：`packages/dsh-tree-engine` `0.9.0` → **`0.10.0`**（仓内插件，非 npm 发布；`dsh-session-tree` 1.4.0 / `dsh-agent-introspect` 0.1.0 不变）。测试 **213 → 225/225**（新增 `tests/audit-p2a.test.js` 12 例；`tests/write-guards.test.js` 矩阵快照 +1 键）。
-- **#8 依赖闸与 done 回流（信任闸）**：`dispatch:start` 的依赖判定新增「**已验证失败不得放行**」——依赖 leaf `verification.pass===false` 时 `E_DEPENDENCY_NOT_MET`（message 标 `verification=FAIL`）；`sweep` 的 done 事件回流增加**当前 attempt 判据**（`event.ts >= runtime.dispatchedAt`，`dispatchedAt=0` 兼容旧状态）——重派/接力后旧 done 不再把新 attempt 直接判 succeeded（封堵 stale-done 旁路）。
-- **#15 验证裁决落账一致性**：`leaf:set-verification` 校验 `policyId` 类型、`verdicts`（每项须带 boolean `pass`）、**`pass` 必须等于 verdicts 的 AND**（伪造 `{pass:true, verdicts:[{pass:false}]}` → `E_SCHEMA_INVALID`）、`rounds` 形状；creator/root/delegate 鉴权与 owner 自验禁令不回归。
+- **#8 依赖闸与 done 回流（信任闸，R1 复核 P1-1 收口）**：`dispatch:start` 的依赖判定改为**只认正向结算信号**——依赖 leaf `status==='done'`（done 三重闸正门）**或** `verification.pass===true` 才放行；`verification.pass===false` 时 `E_DEPENDENCY_NOT_MET`（message 标 `verification=FAIL`）永不放行；**「自报 done 事件翻出的 `runtime.succeeded`」不再结算依赖**——原主旁路（worker 只需 owner 自报一条 done 即零验证放行下游，R1 复核实证）闭合。选型说明：复核者「只认 status==='done'」方案会拦死 tree_verify PASS 后的正常推进、「回流过 milestone 闸」对无 milestones 的 worker 仍留洞，故取两路正向判据并集；操作契约（指挥官验证后推进下游）已同步 SKILL。`sweep` 的 done 事件回流增加**当前 attempt 判据**（`event.ts >= runtime.dispatchedAt`，`dispatchedAt=0` 兼容旧状态）——重派/接力后旧 done 不再把新 attempt 直接判 succeeded（封堵 stale-done 旁路）。
+- **#15 验证裁决落账一致性（R1 复核 P3-3 收口）**：`leaf:set-verification` 校验 `policyId` 类型、`verdicts`（每项须带 boolean `pass`）、**`pass` 必须等于 verdicts 的 AND**（伪造 `{pass:true, verdicts:[{pass:false}]}` → `E_SCHEMA_INVALID`）、**显式空 `verdicts` + `pass:true` 拒绝**（无证据 PASS；省略 verdicts 的受信方自证保持兼容）、`rounds` 形状；creator/root/delegate 鉴权与 owner 自验禁令不回归。
 - **#20 竹节接力预算与唯一性**：`bambooRelay` 接力前 `sessionBudget` 探针（满额 → `frozen` + `security/high` drift，不静默烧链）；接力 dispatch 返回 sessionId 过 `findSessionConflict`（冲突 → interrupt 回滚 + `frozen` + `security/high` drift，不绑定冲突会话）。账本口径写死：接力账本 = `runtime.segmentChain`（唯一写入点）、`leaf.segment_chain` = 手写 segment 通道，两者互斥（`validate` F1③ 强制），预算/唯一性判定取并集。
-- **#21/#23 护栏注入与阈值死回退**：`src/config.js` 新增 `validateAuditMeta()`——`engine init` 第 5 参 `audit_meta` 与 Config 同款严格校验（未知键/类型/范围 fail-closed），「比基线更宽松」的上调写 `security/high` drift（`audit_meta uplift: key base -> value`）；`set-context` 阈值回退键由 camelCase `cfg.ctxSegmentThreshold`（恒 undefined）改为 `cfg.ctx_segment_threshold`，并对旧树非法阈值（字符串/越界）防御性回退，不再静默失效。
+- **#21/#23 护栏注入与阈值死回退（R1 复核 P2-2/P3-4 收口）**：`src/config.js` 新增 `validateAuditMeta()`——`engine init` 第 5 参 `audit_meta` 与 Config 同款严格校验（未知键/类型/范围 fail-closed），**编排键（nodeTimeoutMs 等）显式拒收**；「比基线更宽松」的上调**只允许真正被逐树消费的 `ctx_segment_threshold`**（写 `security/high` drift：`audit_meta uplift: key base -> value`），**recorded-only 键（node_budget 等）的上调一律拒绝**——「已放宽」留痕不得指向不会被消费的护栏（误导审计真相）；`set-context` 阈值回退键由 camelCase `cfg.ctxSegmentThreshold`（恒 undefined）改为 `cfg.ctx_segment_threshold`，并对旧树非法阈值（字符串/越界）防御性回退，不再静默失效。
 - **#22 spawn 预算事件归属**：`LEAF_WRITE_MATRIX` 新增 `event:subagent_spawn` = **仅 owner**（creator/root 代写 → `E_BORROWED_IDENTITY`），封堵向他人 leaf 注入 spawn 事件耗尽 15 次预算的 DoS；普通事件语义不变。
-- **#28 fsStore 灾备恢复**：`read` 在主文件损坏/缺失时回退 `.tmp` 原子写副本（`writeFile` 成功、`rename` 前崩溃留下的最新完整态），两者均坏才抛原错误（不静默返回 null）；下次写把修复后 state 落回主文件。
+- **#28 fsStore 灾备恢复（R1 复核 P2-3 收口）**：`read` 在主文件损坏/缺失时回退 `.tmp` 原子写副本（`writeFile` 成功、`rename` 前崩溃留下的最新完整态），两者均坏才抛原错误（不静默返回 null）；下次写把修复后 state 落回主文件。**恢复不再静默**：损坏路径恢复前先把损坏原件复制为 `.corrupt-<时间戳>` 取证副本，并向 `call-log.jsonl` 追加 `state.recovered` 留痕（来源/损坏副本路径/解析错误摘要）。
 - **#30 GC 与观测滚动**：`tree_maintain` 新增 `action:"gc"`（`keep` 缺省 20、钳制 0–500；**仅 root**）——只截断 **archived** 叶子 `events`（保留最近 `keep` + 全部 `done`）/`drift_history`/`runtime.history`，`tree.drift_log` 截到 `keep×5`（下限 100），gc 自身留 `security/low` drift；非 archived 叶子零改动。`fsStore.appendCallLog` **10MB 滚动**（`call-log.jsonl` → `.1`）。
 - **flow 续接试点任务书（新）**：[docs/operations/taskbooks/d24-flow-continuation-pilot-taskbook.md](docs/operations/taskbooks/d24-flow-continuation-pilot-taskbook.md)——**待执行**（前置 = flow T-1/T-6 真机 PASS + 用户时间窗）；含调用方=发起 `flow_run` 的会话、relay off、深度链 ≤5、journal 双读验收（A1–A9）、失败处置与报告要求。**未执行、未改 flow 仓代码。**
 
 ### 验证
 
 - 单测：`cd packages/dsh-tree-engine; node --test tests/*.test.js` → **225/225**（新增 audit-p2a 12 例覆盖 #8/#15/#20/#21/#22/#28/#30；原 213 例不回归）。
-- 异族独立复核（DeepSeek-V4-Pro，`docs/reports/review-p2a-batch1-2026-11-13.md`）：结论与 P 级发现见该报告。
+- 异族独立复核（DeepSeek-V4-Pro，`docs/reports/review-p2a-batch1-2026-11-13.md`）：**PASS_WITH_RISKS**；P1-1（#8 主旁路）/ P2-2（#21 误导留痕）/ P2-3（#28 恢复无痕）/ P3-3（空 verdicts 无证据 PASS）/ P3-4（audit_meta 编排键 inert）已于 D25 跟进收口（见上文各条与报告 §六），P2-1/P3-1/P3-2/P3-5 等残留按报告 §六登记后续。
 - 活体：`include:tree-engine` 受控 disable→enable 后 `tree_doctor` 7/7 · **v0.10.0**；活体 `tree_maintain {action:"gc"}` 返回计数 + `drift_log` security 留痕。
 - 文档门禁：`check-doc-links` / `check-md-tables` / `check-version-consistency` 全绿。
 

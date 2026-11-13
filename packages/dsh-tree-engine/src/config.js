@@ -15,11 +15,6 @@ export const CONFIG_SCHEMA = {
   // 缺省 5 与 desktop profile `subagent.maxDepth=5` 对齐；宿主仅在调用方显式传该字段时校验。
   max_subagent_depth: { type: 'integer', min: 1, max: 100 },
   ctx_segment_threshold: { type: 'integer', min: 1, max: 100 },
-  // flash 审计 #8（R1 复核 P1-1 收敛）：依赖闸是否要求依赖 leaf 「已验证 PASS」才放行。
-  // 缺省 false = 保持既有自报信任模型（SKILL 契约「依赖未 succeeded → E_DEPENDENCY_NOT_MET」）；
-  // true = 严格模式（dep.verification.pass===true 才放行，自报 done 不再放行下游）。
-  // 默认关闭是**已文档化的信任模型取舍**，切换默认值需用户裁决。
-  require_dependency_verification: { type: 'boolean' },
   segment_max_chain_length: { type: 'integer', min: 1, max: 10 },
   // 编排面（orchestra）
   nodeTimeoutMs: { type: 'integer', min: 1_000, max: 24 * 3600_000 },

@@ -228,7 +228,7 @@ test('dependencies 环检测：既有环上挂新依赖不误伤（DFS 纵深防
   assert.equal(r.ok, true, JSON.stringify(r.error))
 })
 
-test('依赖闸：dependencies 未全部 done → dispatch 拒；全 done → 放行；taskType 透传派发端口', async () => {
+test('依赖闸：dependencies 未 done/未验证 → dispatch 拒；三重闸 done 或验证 PASS 放行；自报 done（裸 succeeded）不再放行；taskType 透传', async () => {
   const { engine, store } = await seeded({ node_budget: 5 })
   const mk = (id, deps, taskType) => engine.call('leaf:add', ['macp2', { leaf_id: id, session_id: null, parent: 'macp2-root', role: 'worker', added_by: ROOT, ...(deps ? { dependencies: deps } : {}), ...(taskType ? { taskType } : {}) }], ROOT)
   await mk('macp2-C3-worker', ['macp2-C1-worker'], 'code-change')
@@ -255,14 +255,23 @@ test('依赖闸：dependencies 未全部 done → dispatch 拒；全 done → �
   r = await engine.call('dispatch:start', ['macp2', 'macp2-C4-worker', { prompt: 'p' }], undefined)
   assert.equal(r.ok, true, JSON.stringify(r.error))
   assert.equal(seen.at(-1).taskType, undefined)
-  // runtime succeeded（工具面正常路径：worker 报 done 事件 → 回流 succeeded，无需 status done）也满足依赖闸
+  // R1 复核 P1-1 收敛（2026-11-13 D25）：自报 done → runtime.succeeded（无验证、无 status done）
+  // **不再**满足依赖闸（原主旁路实证：worker 只需 owner 自报一条 done 即放行下游，全程零验证）
   const st2 = await store.read('macp2')
   st2.leaves['macp2-C4-worker'].runtime = { state: 'succeeded', subagentSessionId: 'sess-2', history: [] }
   await store.write('macp2', st2)
   const r5 = await engine.call('leaf:add', ['macp2', { leaf_id: 'macp2-C6-worker', session_id: null, parent: 'macp2-root', role: 'worker', added_by: ROOT, dependencies: ['macp2-C4-worker'] }], ROOT)
   assert.equal(r5.ok, true, JSON.stringify(r5.error))
   const r6 = await engine.call('dispatch:start', ['macp2', 'macp2-C6-worker', { prompt: 'p' }], undefined)
-  assert.equal(r6.ok, true, JSON.stringify(r6.error))
+  assert.equal(r6.ok, false, 'self-reported done (bare runtime.succeeded, no verification) must NOT settle dependencies')
+  assert.equal(r6.error.code, 'E_DEPENDENCY_NOT_MET')
+  assert.match(r6.error.message, /macp2-C4-worker/)
+  assert.match(r6.error.message, /verification=none/)
+  // creator 落 PASS 裁决（正向判据②）→ 放行
+  const vp = await engine.call('leaf:set-verification', ['macp2', 'macp2-C4-worker', { pass: true, policyId: 'self-report', verdicts: [{ mode: 'self-report', pass: true }] }], ROOT)
+  assert.equal(vp.ok, true, JSON.stringify(vp.error))
+  const r7 = await engine.call('dispatch:start', ['macp2', 'macp2-C6-worker', { prompt: 'p' }], undefined)
+  assert.equal(r7.ok, true, JSON.stringify(r7.error))
 })
 
 // ── §7 任务2：taskType 验证策略路由 + 裁决落账 ─────────────

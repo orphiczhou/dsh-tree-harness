@@ -600,30 +600,31 @@ export function createEngine(opts) {
       if (leaf.role === 'root') treeError('E_SCHEMA_INVALID', 'cannot dispatch root leaf')
       const rt = runtimeOf(leaf)
       if (rt.state === 'running') treeError('E_SCHEMA_INVALID', `node "${leafId}" already running (cancel or wait harvest first)`)
-      // 依赖闸（§7 任务1；flash 审计 #8 加固 + R1 复核 P1-1 收敛）：
-      // 结算信号 = runtime 成功终态 ∨ status=done（工具面正常路径是 done 事件回流 runtime）。
-      // 两级加固：
-      //   ① 已验证失败（verification.pass===false）的依赖**永不放行**；
-      //   ② `config.require_dependency_verification=true`（严格模式，缺省关）时，依赖必须
-      //      `verification.pass===true` 才放行——把「自报 done → succeeded」从放行改为拦截。
-      //      缺省关是**已文档化的自报信任模型取舍**（SKILL 契约/既有编排依赖此语义），切换默认值需用户裁决。
+      // 依赖闸（§7 任务1；flash 审计 #8 加固 + R1 复核 P1-1 收敛收口（2026-11-13 D25））：
+      // 结算信号只认**正向判据**，两路任一：
+      //   ① `status === 'done'`——done 三重闸正门（done 事件 + milestones 全 audit_pass + set-status done）；
+      //   ② `verification.pass === true`——验证裁决 PASS（creator/root/delegate 落账，owner 不得自验）。
+      // 「自报 done 事件 → runtime.succeeded」**不再**作为依赖结算信号（原主旁路：worker 只需 owner 身份
+      // 自报一条 done 即可放行下游，全程零验证——R1 复核 P1-1 实证）。已验证失败（pass===false）的依赖
+      // 仍然永不放行。选型说明：复核者曾建议「只认 status==='done'」或「回流过 milestone 闸」，前者会把
+      // tree_verify PASS 后的正常收口也拦死（操作契约是指挥官验证后推进下游），后者对无 milestones 的
+      // worker 节点仍留洞；本实现取两者并集的正向判据，信任模型影响已同步 SKILL 契约与文档。
       if (Array.isArray(leaf.dependencies) && leaf.dependencies.length > 0) {
-        const requireVerified = cfg.require_dependency_verification === true
         const depState = (d) => {
           const dep = state.leaves[d]
           if (!dep) return 'missing'
           if (dep.verification && dep.verification.pass === false) return 'verification_failed'
-          if (!(dep.status === 'done' || dep.runtime?.state === 'succeeded')) return 'not_done'
-          if (requireVerified && dep.verification?.pass !== true) return 'verification_required'
-          return 'done'
+          if (dep.status === 'done' || dep.verification?.pass === true) return 'done'
+          return 'not_done'
         }
         const unmet = leaf.dependencies.filter((d) => depState(d) !== 'done')
         if (unmet.length > 0) {
-          treeError('E_DEPENDENCY_NOT_MET', `node "${leafId}" dispatch blocked: dependencies not succeeded [${unmet.map((d) => {
+          treeError('E_DEPENDENCY_NOT_MET', `node "${leafId}" dispatch blocked: dependencies not settled (status=done via triple gate, or verification.pass=true required) [${unmet.map((d) => {
             const s = depState(d)
+            const dep = state.leaves[d]
+            const vState = dep?.verification ? (dep.verification.pass === true ? 'PASS' : 'FAIL') : 'none'
             if (s === 'verification_failed') return `${d}(verification=FAIL)`
-            if (s === 'verification_required') return `${d}(verification=required-not-passed; require_dependency_verification=true)`
-            return `${d}(status=${state.leaves[d]?.status ?? 'missing'},runtime=${state.leaves[d]?.runtime?.state ?? 'none'})`
+            return `${d}(status=${dep?.status ?? 'missing'},runtime=${dep?.runtime?.state ?? 'none'},verification=${vState})`
           }).join(', ')}]`)
         }
       }

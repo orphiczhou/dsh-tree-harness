@@ -186,27 +186,44 @@ test('#20 竹节接力会话唯一性：接力返回冲突 sessionId → frozen 
 // #21 audit_meta 护栏覆盖：严格校验 + 放宽留痕 + 阈值回退
 // ══════════════════════════════════════════════════════════════════════════
 
-test('#21 validateAuditMeta：未知键/类型/范围拒绝；比基线宽松的上调被识别', () => {
+test('#21 validateAuditMeta：未知键/类型/范围/编排键拒绝；recorded-only 键的上调拒绝；仅消费键可放宽（留痕由调用方写）', () => {
   assert.throws(() => validateAuditMeta({ ctx_segment_threshold: '200' }, { ctx_segment_threshold: 42 }), /audit_meta/)
   assert.throws(() => validateAuditMeta({ unknown_key: 1 }, {}), /unknown config key/)
   assert.throws(() => validateAuditMeta({ node_budget: 0 }, { node_budget: 20 }), /out of range/)
   assert.throws(() => validateAuditMeta([1, 2], {}), /object required/)
+  // R1 复核 P3-4：编排键由 engine orchestra 消费，audit_meta 永不生效 → 显式拒收
+  assert.throws(() => validateAuditMeta({ nodeTimeoutMs: 1000 }, {}), /orchestration keys/)
   assert.deepEqual(validateAuditMeta(undefined, {}), { meta: {}, uplifted: [] })
-  const up = validateAuditMeta({ node_budget: 500, max_sessions: 50 }, { node_budget: 20, max_sessions: 50 })
-  assert.deepEqual(up.uplifted, [{ key: 'node_budget', base: 20, value: 500 }], 'only relaxed (larger) guards are flagged')
+  // R1 复核 P2-2：recorded-only 键（node_budget 等）的上调拒绝——「已放宽」留痕不得谎报
+  // 不会被逐树消费的护栏（误导审计真相）；这些键经 TREE_ENGINE_CONFIG 放宽会另有 config uplift 留痕。
+  assert.throws(() => validateAuditMeta({ node_budget: 500 }, { node_budget: 20 }), /recorded-only/)
+  assert.throws(() => validateAuditMeta({ node_budget: 500, max_sessions: 50 }, { node_budget: 20, max_sessions: 50 }), /recorded-only/)
+  // 唯一被逐树消费的键（竹节阈值）允许放宽，由调用方写 security/high drift 留痕
+  const up = validateAuditMeta({ ctx_segment_threshold: 100 }, { ctx_segment_threshold: 42 })
+  assert.deepEqual(up.uplifted, [{ key: 'ctx_segment_threshold', base: 42, value: 100 }], 'only the consumed guard may be relaxed (and flagged)')
+  // 等值 / 更严格（下调）：合法且不产 uplift
+  assert.deepEqual(validateAuditMeta({ node_budget: 20, max_sessions: 50 }, { node_budget: 20, max_sessions: 50 }).uplifted, [])
+  assert.deepEqual(validateAuditMeta({ node_budget: 10 }, { node_budget: 20 }).uplifted, [])
 })
 
-test('#21 init：audit_meta 非法 → E_SCHEMA_INVALID；放宽护栏 → security/high drift 留痕', async () => {
+test('#21 init：audit_meta 非法 / recorded-only 键上调 → E_SCHEMA_INVALID；消费键放宽 → security/high drift 留痕', async () => {
   const { engine } = await setup()
   const bad = await engine.call('init', ['aud21a', {}, {}, ROOT, { ctx_segment_threshold: '200' }])
   assert.equal(bad.ok, false)
   assert.equal(bad.error.code, 'E_SCHEMA_INVALID')
   assert.match(bad.error.message, /audit_meta/)
-  const ok = await engine.call('init', ['aud21b', {}, {}, ROOT, { node_budget: 500, ctx_segment_threshold: 42 }])
+  // R1 复核 P2-2：recorded-only 键的上调在 init 入口即拒（与 validateAuditMeta 同口径）
+  const relaxedRecordedOnly = await engine.call('init', ['aud21b', {}, {}, ROOT, { node_budget: 500 }])
+  assert.equal(relaxedRecordedOnly.ok, false, 'uplifting a recorded-only guard via audit_meta must be rejected')
+  assert.equal(relaxedRecordedOnly.error.code, 'E_SCHEMA_INVALID')
+  assert.match(relaxedRecordedOnly.error.message, /recorded-only/)
+  // 唯一消费键放宽 → ok + drift 留痕；recorded-only 键等值快照不产 drift
+  const ok = await engine.call('init', ['aud21b2', {}, {}, ROOT, { node_budget: 20, ctx_segment_threshold: 100 }])
   assert.equal(ok.ok, true, JSON.stringify(ok.error))
-  const st = await engine.call('treeDump', ['aud21b'])
-  assert.equal(st.tree.audit_meta.node_budget, 500)
-  assert.ok(st.tree.drift_log.some((d) => d.kind === 'security' && d.severity === 'high' && String(d.reason).includes('audit_meta uplift: node_budget')), JSON.stringify(st.tree.drift_log))
+  const st = await engine.call('treeDump', ['aud21b2'])
+  assert.equal(st.tree.audit_meta.node_budget, 20)
+  assert.equal(st.tree.audit_meta.ctx_segment_threshold, 100)
+  assert.ok(st.tree.drift_log.some((d) => d.kind === 'security' && d.severity === 'high' && String(d.reason).includes('audit_meta uplift: ctx_segment_threshold')), JSON.stringify(st.tree.drift_log))
   // 未放宽（等于基线/更严格）不产 drift
   const strict = await engine.call('init', ['aud21c', {}, {}, ROOT, { node_budget: 10 }])
   assert.equal(strict.ok, true)
@@ -269,6 +286,17 @@ test('#28 fsStore：主文件半截 JSON + .tmp 完整副本 → read 恢复；�
     await fsp.writeFile(main + '.tmp', JSON.stringify({ recovered: true }))
     await fsp.writeFile(main, '{"broken":')
     assert.deepEqual(await store.read('t1'), { recovered: true })
+    // R1 复核 P2-3：灾备恢复不得静默——损坏原件保留 .corrupt-* 副本（取证）+ call-log 留痕（来源/损坏副本/错误摘要）
+    const dirEntries = await fsp.readdir(path.join(dir, 't1'))
+    const corruptCopy = dirEntries.find((e) => e.startsWith('tree-state.json.corrupt-'))
+    assert.ok(corruptCopy, 'corrupt original must be preserved for forensics')
+    assert.equal(await fsp.readFile(path.join(dir, 't1', corruptCopy), 'utf-8'), '{"broken":')
+    const logRaw = await fsp.readFile(path.join(dir, 't1', 'call-log.jsonl'), 'utf-8')
+    const rec = JSON.parse(logRaw.trim().split('\n').at(-1))
+    assert.equal(rec.event, 'state.recovered')
+    assert.ok(String(rec.source).endsWith('.tmp'))
+    assert.ok(rec.corrupt_copy.includes(corruptCopy))
+    assert.ok(typeof rec.error === 'string' && rec.error.length > 0, 'parse-error summary must be recorded')
     // (b) 两者均坏 → 抛错（不静默返回 null）
     await fsp.writeFile(main + '.tmp', 'nope')
     await assert.rejects(() => store.read('t1'))

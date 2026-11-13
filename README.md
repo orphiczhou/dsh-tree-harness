@@ -179,7 +179,7 @@ DSH Loader 对**宿主模块按包名缓存**：
 
 ```
 packages/
-  dsh-tree-engine/       执行层：src/ 纯逻辑（含 compat.js / lock.js / guards.js / token-meter.js / sweep.js）+ index.js 宿主适配 + tests/（25 个 .test.js + 偏差登记）
+  dsh-tree-engine/       执行层：src/ 纯逻辑（含 compat.js / lock.js / guards.js / token-meter.js / sweep.js）+ index.js 宿主适配 + tests/（26 个 .test.js + 偏差登记）
   dsh-agent-introspect/  自省层：index.js（self_spec）
   dsh-session-tree/      会话树单包（发布产物，与公开镜像仓同步；含 tree_send + session_handoff）
 docs/                    规约、设计、交接（operations/）、一次性报告（reports/）、发布与审计文档

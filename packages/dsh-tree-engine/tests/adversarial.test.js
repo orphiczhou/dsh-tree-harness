@@ -79,7 +79,12 @@ test('engine:leaf:set-verification 透传 rounds(adversarial 裁决落账)', asy
   const engine = createEngine({ store: memoryStore(), clock: new VirtualClock(0) })
   await engine.call('init', ['macp2', {}, {}, ROOT])
   await engine.call('leaf:add', ['macp2', { leaf_id: 'macp2-C1-worker', session_id: S1_, parent: 'macp2-root', path: 'C1', role: 'worker', added_by: ROOT }], ROOT)
-  const result = { policyId: 'doc+adversarial', pass: true, verdicts: [], rounds: [{ round: 1, attack: { pass: false, findings: ['a'] } }, { round: 2, attack: { pass: true, findings: [] } }] }
+  // #15（R1 复核 P3-3）：显式空 verdicts + pass=true = 无证据 PASS → E_SCHEMA_INVALID；
+  // adversarial.js 的真实产出 = structural verdicts + llm-judge 项（与 pass AND 一致）——按真实形状落账。
+  const empty = await engine.call('leaf:set-verification', ['macp2', 'macp2-C1-worker', { policyId: 'doc+adversarial', pass: true, verdicts: [], rounds: [{ round: 1 }] }], ROOT)
+  assert.equal(empty.ok, false, 'explicit empty verdicts with pass=true must be rejected (no-evidence PASS)')
+  assert.equal(empty.error.code, 'E_SCHEMA_INVALID')
+  const result = { policyId: 'doc+adversarial', pass: true, verdicts: [{ mode: 'llm-judge', pass: true, detail: 'no findings' }], rounds: [{ round: 1, attack: { pass: false, findings: ['a'] } }, { round: 2, attack: { pass: true, findings: [] } }] }
   const r = await engine.call('leaf:set-verification', ['macp2', 'macp2-C1-worker', result], ROOT)
   assert.equal(r.ok, true)
   const leaf = (await engine.call('leaf:get', ['macp2', 'macp2-C1-worker'])).leaf

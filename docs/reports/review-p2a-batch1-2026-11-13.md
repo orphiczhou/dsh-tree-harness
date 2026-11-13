@@ -179,3 +179,31 @@ node --test tests/*.test.js
 
 - **正向**：本批 7 项修复实现质量整体扎实，校验均 fail-closed、留痕方向正确、无回归（225/225）；#15/#20/#22/#23 基本闭合；#28/#30 从「不可恢复/无界」变为「可恢复/有界」。
 - **最需跟进**：P1-1（#8 主旁路未闭合）——本轮只补了「FAIL 拒绝」，未补「PASS 才放行」，原审计标记「严重」的信任边界洞仍然存在；建议下一批优先按「正向 verification.pass===true 判据」收口，并同步评估回归面（UNKNOWN-3）。
+
+---
+
+## 六、复核跟进（2026-11-13 D25 收口记录）
+
+接手会话 `D25-AUDIT-P2A-FINISH` 按本报告跟进，收口情况如下（全部改动见分支 `wip/d24-p2a-batch1`，合回 master 前 225/225 + 门禁全绿）：
+
+### P1-1（#8 主旁路）——已闭合，选型说明
+
+- **最终形态**：`dispatch:start` 依赖闸只认**正向结算信号**：`dep.status === 'done'`（三重闸正门）**或** `dep.verification?.pass === true`；`verification.pass===false` 永不放行（保留）；**裸 `runtime.state==='succeeded'` 不再结算依赖**。中途态的 `require_dependency_verification` 配置开关（缺省关）已删除——信任闸不提供「配置即可 reopen」的降级口（原审计 #8 定级「严重」，可配置回退等于把洞留在默认路径上）。
+- **取舍**：复核者两备选——①「依赖闸只认 status==='done'」：会把「`tree_verify` PASS 后指挥官推进下游」这一正常操作契约也拦死（下游派发将强制要求额外一次 `leaf:set-status done`），且与既有 verify-delegate 流程冲突面更大；②「done 事件回流过 milestone 闸」：worker 叶子普遍无 milestones，自报 done 路径仍零验证，洞只缩小未闭合。故取**两路正向判据并集**：三重闸（人工/编排显式收口）与验证 PASS（机器裁决落账）都是强信号，缺一不放行。
+- **信任模型影响（UNKNOWN-3 回答）**：「无验证 happy path」从放行改为拦截。回归面实测：既有 225 用例中仅 `engine.test.js` 依赖闸用例的最后一段依赖旧语义（runtime.succeeded 直改放行），已按新契约改写为「拦截 → 落 PASS → 放行」；`audit-p2a` #8 用例天然兼容（FAIL 拒 / PASS 放）。操作契约同步：`tree-commander` SKILL §切分判据与错误码表、`skills-usage.md` §9、包 README v0.10.0 节、CHANGELOG——指挥官推进下游前的标准动作 = 收割上游 → `tree_verify` 落 PASS → 再派。
+
+### P2-2（#21 误导留痕）——已闭合（取建议 (a) 的拒绝分支）
+
+`validateAuditMeta` 只允许**真正被逐树消费**的 `ctx_segment_threshold` 放宽（留 drift）；recorded-only 键（`node_budget` 等）的上调一律 `E_SCHEMA_INVALID`（message 标 recorded-only）；编排键显式拒收（顺带闭合 P3-4）。未取建议 (b)（audit_meta 全量接线）：护栏逐树覆盖会把「部署级护栏」降格为「任何 init 调用方可变」，与 #21 的 fail-closed 方向相悖；部署方放宽走 `TREE_ENGINE_CONFIG`，由 init 的 `config uplift` 留痕兜底。
+
+### P2-3（#28 恢复无痕）——已闭合
+
+损坏路径恢复：先复制损坏原件为 `.corrupt-<时间戳>` 取证副本（下次 write 覆盖主文件前保住现场），再向 `call-log.jsonl` 追加 `state.recovered`（来源 / 损坏副本路径 / 解析错误摘要，双层吞错铁律保持）。取 call-log 而非 `state.drift_log`：`read` 必须保持只读（恢复发生在读路径，写 state 会引入锁序问题）。测试补齐留痕断言（audit-p2a #28 用例 (a)）。
+
+### P3-3（空 verdicts 无证据 PASS）——已闭合
+
+`leaf:set-verification`：显式空 `verdicts` + `pass:true` → `E_SCHEMA_INVALID`（无证据 PASS）；省略 `verdicts` 的旧调用（受信方自证）保持兼容（verify.js 各模式实际产出恒带 verdicts；adversarial 透传路径实证不受影响——其真实产出恒含 llm-judge 项）。
+
+### 未跟进（登记后续批次）
+
+P2-1（stale-done 的 `>=` 等值/时钟回拨窄窗口）、P3-1（relay 自链重复）、P3-2（gc keep=0 破坏强度确认）、P3-5（call-log keep 浮点/并发）、UNKNOWN-1（两本账互斥口径裁决）、UNKNOWN-4（`.tmp` 陈旧副本理论风险）——按本报告 §三 原建议留 batch2，不在本批扩散。
