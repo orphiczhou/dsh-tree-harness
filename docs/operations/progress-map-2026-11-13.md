@@ -38,17 +38,31 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 
 ---
 
+## 2.1 D22 轮已完成（2026-11-13 下午，用户拍板「组合编排深挖现在做」后）
+
+| 事项 | 结果 | 证据 |
+|---|---|---|
+| 组合编排 v2：flow 节点内 `tree_plan` **现场建树**（补 v1 偏离 D1） | **PASS**：`t3c4-root.session_id` = flow 节点会话 `263d4c4e`；自标识 `self_spec` 与 `$env:DSH_SESSION_ID` 双通道一致 | [v2 报告 §2/§4](../reports/composition-pilot-v2-live-create-2026-11-13.md)、[demo/t3cpilot2](../../demo/t3cpilot2) |
+| 深度链压到 5（`maxDepth=5`） | **PASS**：depth 1→2→3→4→5，由 6 个会话 header `delegationDepth` 逐条实证 | 同报告 §2；`~/.dsh/sessions/…/session.v4.jsonl.zstd` |
+| flow 收口 + 完整性 | **PASS**：`T3C3-R1` succeeded/integrity=verified（339.3s）；两树 validate 0 issues；无 drift/chain | 同报告 §4 |
+| **发现：`maxDepth` 在插件派发路径不生效** | 深度 6 探针**未被拒绝**（子会话创建成功，`delegationDepth=6`）——`subagent.maxDepth=5` 只是模型工具 `subagent` 的策略；tree 派发与 flow 执行器都未传 `request.maxDepth` | 同报告 §5（含 asar 代码行） |
+| **发现：现场建树的验证归属缺口** | 内层叶 creator=flow 会话、结束即 dispose → Lead 事后 `tree_verify` 被 `E_BORROWED_IDENTITY` 拒；验收口径暂用 runtime+validate | 同报告 §6 |
+| 跨仓需求单（用户指示：只写单不代改 flow 仓） | **已写并递交**：flow 节点 continuable + 深度上限两需求 → [REQ](REQ-2026-11-13-flow-node-continuable-session.md)；副本在 flow 仓 `evidence/requirements/` | 本文 §3 末尾问题 ② |
+
+**用户 2026-11-13 对三个问题的拍板**：① 组合编排深挖 **现在就做 → 已完成（v2 PASS）**；② flow 一次性→非一次性 **不改代码**，写需求单交 flow 项目组响应 → **已成单递交**；③ 三层组合**暂不对外**。
+
 ## 3. 下一步候选（按建议优先级）
 
 | # | 事项 | 为什么值得做 | 需要谁定 |
 |---|---|---|---|
-| 1 | **组合编排深挖（第二层）**：内层树由 flow 节点内 `tree_plan` 现场创建；压 maxDepth=5 边界 | D21 试点证明三层可行，但内层树是 Lead 预置的（一次性 flow 节点拿不到自身 session id 填 `added_by`）；补上后剧本 C 才算完整 | Lead 可先做技术方案；是否投入试点由用户定 |
-| 2 | **flow 一次性→非一次性会话**（用户已授权方向） | 若节点需多轮/续接，当前一次性语义是硬限制；属 flow 仓变更（改 `lib/session-executor.js`，需重测 journal/锁/取消） | 用户定时机（建议 D21 之后再排） |
-| 3 | **发布门禁再收紧**：把三断言 E2E 做成「发布前必跑 + artifact 归档」流程；文件锁 / nudge / leafAdd 白名单三条 flash 审计高危项 | 提升发布可重复性与引擎健壮性 | Lead 可排期 |
-| 4 | **只读子会话底部 Phase 2**（chain 覆盖官方只读 composer） | 当前只读子会话元数据在标题栏 chip；用户未明确要求底部 | 仅用户要求时做 |
-| 5 | **已知边界清理**：artifact 验证对象错位、`runtime.history` 预算口径、`tree_maintain gc` | 历史欠账，非阻塞 | Lead 排期 |
+| 0 | **tree-engine 深度预算修复**（D22 新发现，建议优先）：`dispatch` 构造 request 时传 `maxDepth`（候选 `TREE_ENGINE_CONFIG` 缺省 5）+ 单测/回归（depth 6 应被拒） | 目前 tree/flow 组合的深度无平台兜底，靠人工算术；修复后深度语义恢复 | Lead 排期（需 bump v0.8.1） |
+| 1 | ~~组合编排深挖（内层树现场创建 + maxDepth 边界）~~ | **D22 已完成** | — |
+| 2 | **flow 一次性→非一次性会话** | 已写需求单，属 flow 仓变更 | 用户定时机（本周期不动 flow 代码） |
+| 3 | **发布门禁再收紧**：三断言 E2E 作成发布前必跑 + artifact 归档；flash 审计三条高危（.lock 文件锁 / nudge 绕 assertTransition / leafAdd 白名单） | 提升发布可重复性与引擎健壮性 | Lead 可排期 |
+| 4 | 只读子会话底部 Phase 2（chain 覆盖官方只读 composer） | 当前只读子会话元数据在标题栏 chip；用户未明确要求底部 | 仅用户要求时做 |
+| 5 | 已知边界清理：artifact 验证对象错位、`runtime.history` 预算口径、`tree_maintain gc`；D22 新增：`tree_log events` 可机读、现场建树验证归属 | 历史欠账，非阻塞 | Lead 排期 |
 
-**需要用户拍板的三个问题**：① 第 1 项是否现在就做（预计一次受控试点，~15 分钟 + 5 个子会话）；② 第 2 项是否本周期启动（属另一个仓的改动）；③ 是否把「三层组合」写进产品能力/文档对外口径（当前只是内部试点证据）。
+**三个问题当前状态**：① 已做（v2 PASS）；② 需求单已递交，待 flow 项目组响应；③ 暂不对外（用户 2026-11-13 拍板）。
 
 ---
 

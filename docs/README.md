@@ -27,7 +27,7 @@
 | [session-handoff-2026-11-11.md](architecture/session-handoff-2026-11-11.md) | 会话自交接设计与交付记录（v0.1.0 → v1.2.0 并入 → v1.3.5） | 现行·详细 |
 | [session-tree-ui.md](architecture/session-tree-ui.md) | **会话树 UI 设计与迭代规范**：client.js 代码地图、改哪里的速查、GUI 迭代 7 步流程、UI 变更记录 | 现行（GUI 迭代单一方案） |
 | [composable-orchestration.md](architecture/composable-orchestration.md) | **组合式会话编排体系评估与设计（v0.1）**：会话树基础层 / tree-engine / 自由流程引擎的解耦、组合、递归嵌套与拆分策略；含平台约束、RACI、安全面、红队证伪修订与 5 步最小路线 | 候选·待用户决策（不是已批准决策） |
-| [composition-playbook.md](guides/composition-playbook.md) | **组合编排剧本（2026-11-12 正式版）**：relay 开关硬规则（R1–R8）、tree→flow / flow→tree / tree→flow→tree 三套剧本、maxDepth=5 深度算术、预算与并发、验证清单、一次性→非一次性会话说明、已知边界 | 现行·执行剧本 |
+| [composition-playbook.md](guides/composition-playbook.md) | **组合编排剧本（2026-11-12 正式版；2026-11-13 v2 实证修正）**：relay 开关硬规则（R1–R8）、tree→flow / flow→tree / tree→flow→tree 三套剧本、深度算术（**纪律口径：`maxDepth` 仅对模型工具 `subagent` 生效**）、预算与并发、验证清单、一次性→非一次性会话说明（含跨仓需求单入口）、已知边界 9 条 | 现行·执行剧本 |
 | [session-tree-v1.4.0-release-2026-11-13.md](reports/session-tree-v1.4.0-release-2026-11-13.md) | **session-tree v1.4.0 发布记录**：21/21 SHA、镜像 tag `v1.4.0` = `0343f0c`、本仓发布提交 `d8b9f7c`、`ls-remote` 核对；含发布物内容、**GUI 可视化已验证（2026-11-13 13:28 关闭 NOT VERIFIED）**与注意事项 | 发布记录 |
 | [session-metadata-display-2026-11-12.md](reports/session-metadata-display-2026-11-12.md) | **所有会话显示 model / reasoning effort / context 占用**：投影数据源（`modelSelection`/`contextPressure`/`agentPreset`/`tokenUsage`）、5 类会话覆盖矩阵、**§9 修正：改到会话界面底部（composer.dock 子会话条 + 只读子会话 header chip）**、测试/GUI 验证、UNKNOWN；**GUI 可视化已验证（用户 2026-11-13 13:28 确认子会话数据可见，NOT VERIFIED 关闭）** | 研究报告 + 实现依据 |
 | [composition-layers-explainer.md](architecture/composition-layers-explainer.md) · [composition-layers.html](architecture/composition-layers.html) | **组合式编排分层问答解说（归档，2026-11-12）**：层数 vs 会话深度、管理者=父会话、root/commander/worker 角色、拆树与审计路径；含可交互 HTML 图解（6 个标签页：单层 tree / 单层 flow / 两层 tree→flow / 两层 flow→tree / 三层 / 多画一层对照） | 解说材料（基于 tree-engine v0.8.0 / 组合评估 v0.1） |
@@ -43,7 +43,8 @@
 | [guides/publishing.md](guides/publishing.md) | 发布流程与规则：唯一源码事实源、镜像仓同步、`release-plugin.mjs`、版本纪律 D6、市场/npm 现状 | 每次发版追加记录 |
 | [guides/split-preparation.md](guides/split-preparation.md) | **拆分准备指南（向导，不表示已决定拆分）**：12 插件源码目录地图 / 开发会话索引 / 决策前置（D1 反转、hmr.root、门禁）/ 8 步拆分工作流 / 单包清单 / DoD 与回滚 / 触发器 | 拆分决策变化或目录漂移时更新 |
 | [operations/handoff-2026-11-12.md](operations/handoff-2026-11-12.md) | **当前交接/运维手册**：架构、关键路径、测试与验活命令、发布现状、已知边界、下一轮议程 | 每轮收口刷新；旧版进 archive |
-| [operations/progress-map-2026-11-13.md](operations/progress-map-2026-11-13.md) | **进度地图（2026-11-13 快照）**：组件/版本/测试矩阵、D21 轮已完成四项欠账、下一步候选与需用户拍板的三个问题 | 给用户对齐用；每轮收口刷新 |
+| [operations/progress-map-2026-11-13.md](operations/progress-map-2026-11-13.md) | **进度地图（2026-11-13 快照）**：组件/版本/测试矩阵、D21 四项欠账、**§2.1 D22 组合编排 v2 已完成（flow 现场建树 + 深度链 1..5 + `maxDepth` 失效发现）**、下一步候选（#0 深度预算修复优先）与三个问题的用户拍板结果 | 给用户对齐用；每轮收口刷新 |
+| [operations/REQ-2026-11-13-flow-node-continuable-session.md](operations/REQ-2026-11-13-flow-node-continuable-session.md) | **跨仓需求单（tree-harness → flow 项目组）**：flow 节点会话 continuable（`sessionMode`，缺省兼容）+ 深度上限（flow 执行器未传 `request.maxDepth` 的同源问题）；含现状代码行、场景、非目标、建议验收标准与受理方式 | 待 flow 项目组响应；改动由用户裁决 |
 | [operations/wave2-plan-2026-11-12.md](operations/wave2-plan-2026-11-12.md) | **Wave 2 开发计划**：项目地图 §9 建议与波次 + Wave-1 剩余项 + 新发现（root id 兼容、GUI 规范），含 DoD/风险/执行方式；**✅ 已执行（W2.1–W2.8），证据见 [reports/wave2-closeout-2026-11-12.md](reports/wave2-closeout-2026-11-12.md)** | 计划为历史事实；完成情况见文首「执行状态」 |
 
 ## 3. 一次性报告（reports/）
@@ -66,6 +67,7 @@
 | [wave2-closeout-2026-11-12.md](reports/wave2-closeout-2026-11-12.md) | **Wave 2 收口报告**：W2.1–W2.8 逐项结论与证据（测试数 84→112、29/29、版本一致性 23 checks、runner/发布脚本演练边界）、未执行项（真机三断言 / 真推）与下一轮候选 |
 | [e2e-release-three-assertions-2026-11-13.md](reports/e2e-release-three-assertions-2026-11-13.md) | **发布前三断言真机 E2E（D21）**：首次实际执行 PASS（verify-handoff 12/12、kickoff zh、skills 1/1）；首跑暴露并修复验证器**英文-only 假 FAIL**（语言无关识别 + 6 例单测）；release-all 测试门禁 5→9 条 |
 | [composition-pilot-tree-flow-tree-2026-11-13.md](reports/composition-pilot-tree-flow-tree-2026-11-13.md) | **三层组合受控试点（tree→flow→tree，D21）**：flow `T3C1-R1` integrity=verified、两树 validate 0 issues、深度 max=4、约 179s；偏离（内层树预置 / relay 42% 未触发）与复现步骤；配置见 [demo/t3cpilot/](../demo/t3cpilot/README.md) |
+| [composition-pilot-v2-live-create-2026-11-13.md](reports/composition-pilot-v2-live-create-2026-11-13.md) | **三层组合 v2（D22）**：flow 节点内 `tree_plan` **现场建树**（自标识双通道）、深度链 **1..5** 会话 header 实证、flow `T3C3-R1` succeeded/integrity=verified；**发现 `subagent.maxDepth` 在插件编程派发路径不生效**（depth 6 未被拒，含 asar 代码行根因）、现场建树验证归属缺口、`tree_log events` 不可机读；配置见 [demo/t3cpilot2/](../demo/t3cpilot2/README.md) |
 | [composition-research-2026-11-12/](reports/composition-research-2026-11-12/README.md) | **组合式会话编排体系 · 专家取证报告集**：E1 仓库耦合 / E2 DSH 平台 asar 能力边界 / E3 自由流程引擎 / E4 SOTA 组合模式 / R5 红队证伪评审（2026-11-12 评估的原始证据；结论见 [architecture/composable-orchestration.md](architecture/composable-orchestration.md)） |
 | [e2e-composition-relay-2026-11-12.md](reports/e2e-composition-relay-2026-11-12.md) | **S1 真机 E2E**：竹节 relay 是否打断运行中的 flow（实测 `cancelled / E_RUN_CANCELLED`）、宿主 `usagePct` 恒 null（inject 缺陷）、timer 自主路径受 reload 残影影响、per-leaf relay 开关建议 |
 | [e2e-relay-switch-2026-11-12.md](reports/e2e-relay-switch-2026-11-12.md) | **v0.8.0 独立真机 E2E**：relay:'off' 长 flow 跑满 PASS / auto 回归复现暂停 / set-relay 权限正负例 / usagePct 服务获取已修但 measure 契约待收口 / v0.8.0 sweep 注册表 PASS + 旧僵尸已知边界；含 F1–F6 finding |

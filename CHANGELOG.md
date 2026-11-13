@@ -2,6 +2,21 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [Unreleased] — 2026-11-13 · 组合编排 v2 试点 + 跨仓需求单（**无版本变更、未发布**）
+
+### 变更
+
+- **组合编排 v2 受控试点 PASS**（`tree→flow→tree` 完整版）：flow 节点在自身一次性会话内用 `tree_plan` **现场创建**内层树（`session_id`/`added_by` 自标识），深度链 **1→2→3→4→5** 由会话 header `delegationDepth` 逐条实证；flow `T3C3-R1` succeeded/integrity=verified；两树 `validate` 0 issues。配置入仓 [demo/t3cpilot2/](demo/t3cpilot2/)，证据 [docs/reports/composition-pilot-v2-live-create-2026-11-13.md](docs/reports/composition-pilot-v2-live-create-2026-11-13.md)。
+- **发现（安全，待修）**：`subagent.maxDepth=5` 仅在模型工具 `subagent` 路径生效；tree 派发与 flow 节点会话未传 `request.maxDepth` → 深度 6 子会话被成功创建（非预期）。修复候选：tree-engine `dispatch` 传 `request.maxDepth`（候选 v0.8.1，未实施）。
+- **跨仓需求单**：[REQ-2026-11-13-flow-node-continuable-session.md](docs/operations/REQ-2026-11-13-flow-node-continuable-session.md)（flow 节点 continuable + 深度上限），副本递交 flow 仓 `evidence/requirements/`；按用户指示**不修改 flow 仓代码**。
+- **文档修正**：[composition-playbook.md](docs/guides/composition-playbook.md) §1 R4、§3（深度算术改为纪律口径 + 实测）、§5（剧本 C 状态与自标识通道）、§6（需求单入口）、§7、§9（新增 3 条边界）；进度地图标注 D22 与用户拍板结果。
+- **packages 版本不变**（`dsh-tree-engine` 0.8.0 / `dsh-session-tree` 1.4.0 / `dsh-agent-introspect` 0.1.0），未触发发布。
+
+### 验证
+
+- `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
+- `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
+
 ## [1.3.7] — 2026-11-12 · provider-conformance rc.2 fixture 解析（session-tree）
 
 ### 变更
