@@ -46,6 +46,7 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 | 深度链压到 5（`maxDepth=5`） | **PASS**：depth 1→2→3→4→5，由 6 个会话 header `delegationDepth` 逐条实证 | 同报告 §2；`~/.dsh/sessions/…/session.v4.jsonl.zstd` |
 | flow 收口 + 完整性 | **PASS**：`T3C3-R1` succeeded/integrity=verified（339.3s）；两树 validate 0 issues；无 drift/chain | 同报告 §4 |
 | **发现：`maxDepth` 在插件派发路径不生效** | 深度 6 探针**未被拒绝**（子会话创建成功，`delegationDepth=6`）——`subagent.maxDepth=5` 只是模型工具 `subagent` 的策略；tree 派发与 flow 执行器都未传 `request.maxDepth` | 同报告 §5（含 asar 代码行） |
+| **修复：tree-engine v0.8.1 深度预算**（用户 2026-11-13 拍板「现在就修」） | **已完成**：`DEFAULT_GUARDS.max_subagent_depth=5`（`TREE_ENGINE_CONFIG` 可覆盖）、dispatch/竹节接力/攻击审计会话显式传 `request.maxDepth`、新增 `buildStartRequest` 纯函数；测试 **172/172**（+4 depth-cap、+3 compat）；活体 reload 后 `tree_doctor` version=0.8.1 | [CHANGELOG](../../CHANGELOG.md) v0.8.1 节、[包 README](../../packages/dsh-tree-engine/README.md) |
 | **发现：现场建树的验证归属缺口** | 内层叶 creator=flow 会话、结束即 dispose → Lead 事后 `tree_verify` 被 `E_BORROWED_IDENTITY` 拒；验收口径暂用 runtime+validate | 同报告 §6 |
 | 跨仓需求单（用户指示：只写单不代改 flow 仓） | **已写并递交**：flow 节点 continuable + 深度上限两需求 → [REQ](REQ-2026-11-13-flow-node-continuable-session.md)；副本在 flow 仓 `evidence/requirements/` | 本文 §3 末尾问题 ② |
 
@@ -55,7 +56,7 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 
 | # | 事项 | 为什么值得做 | 需要谁定 |
 |---|---|---|---|
-| 0 | **tree-engine 深度预算修复**（D22 新发现，建议优先）：`dispatch` 构造 request 时传 `maxDepth`（候选 `TREE_ENGINE_CONFIG` 缺省 5）+ 单测/回归（depth 6 应被拒） | 目前 tree/flow 组合的深度无平台兜底，靠人工算术；修复后深度语义恢复 | Lead 排期（需 bump v0.8.1） |
+| 0 | ~~tree-engine 深度预算修复~~ | **D22 已完成（v0.8.1，2026-11-13）**：dispatch/接力显式传 `maxDepth`（缺省 5），测试 172/172 | — |
 | 1 | ~~组合编排深挖（内层树现场创建 + maxDepth 边界）~~ | **D22 已完成** | — |
 | 2 | **flow 一次性→非一次性会话** | 已写需求单，属 flow 仓变更 | 用户定时机（本周期不动 flow 代码） |
 | 3 | **发布门禁再收紧**：三断言 E2E 作成发布前必跑 + artifact 归档；flash 审计三条高危（.lock 文件锁 / nudge 绕 assertTransition / leafAdd 白名单） | 提升发布可重复性与引擎健壮性 | Lead 可排期 |

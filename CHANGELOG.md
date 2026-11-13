@@ -10,7 +10,7 @@
 - **发现（安全，待修）**：`subagent.maxDepth=5` 仅在模型工具 `subagent` 路径生效；tree 派发与 flow 节点会话未传 `request.maxDepth` → 深度 6 子会话被成功创建（非预期）。修复候选：tree-engine `dispatch` 传 `request.maxDepth`（候选 v0.8.1，未实施）。
 - **跨仓需求单**：[REQ-2026-11-13-flow-node-continuable-session.md](docs/operations/REQ-2026-11-13-flow-node-continuable-session.md)（flow 节点 continuable + 深度上限），副本递交 flow 仓 `evidence/requirements/`；按用户指示**不修改 flow 仓代码**。
 - **文档修正**：[composition-playbook.md](docs/guides/composition-playbook.md) §1 R4、§3（深度算术改为纪律口径 + 实测）、§5（剧本 C 状态与自标识通道）、§6（需求单入口）、§7、§9（新增 3 条边界）；进度地图标注 D22 与用户拍板结果。
-- **packages 版本不变**（`dsh-tree-engine` 0.8.0 / `dsh-session-tree` 1.4.0 / `dsh-agent-introspect` 0.1.0），未触发发布。
+- **packages 版本**：`dsh-tree-engine` 0.8.0 → **0.8.1**（深度预算修复，见下节）；`dsh-session-tree` 1.4.0 / `dsh-agent-introspect` 0.1.0 不变；未触发发布（镜像/npm 由 Lead 发布时执行）。
 
 ### 验证
 
@@ -79,6 +79,17 @@
 
 - 9 条测试实跑：handoff 41/41、skills 3/3、style-guard 26/26、render 151/151+9/9+11/11、meta 41/41、tree-send 25/25、provider-conformance 29/29（rc.2 fixture）、verify-bundle 0 fail、handoff-prompt 6/6 —— 全部 exit 0。
 - `node scripts/release-all.mjs --dry-run --mirror-dir <镜像 checkout>` → exit 0（v1.4.0 no-op、21/21 SHA 一致、测试计划 9 条）；`node scripts/check-version-consistency.mjs` → 23 checks OK。
+
+### 2026-11-13 · D22 深度预算修复（tree-engine v0.8.1）
+
+**`packages/dsh-tree-engine`（`0.8.0` → `0.8.1`）**
+
+- **新增 `max_subagent_depth` 配置**（`src/guards.js` 缺省 **5** + `src/config.js` 键校验 1–100；`TREE_ENGINE_CONFIG` 可覆盖，非法值装载期失败含键名），并随 `audit_meta` 持久化。
+- **派发/竹节接力/攻击审计会话显式传 `request.maxDepth`**：`src/engine.js` 的 `dispatch:start` 与 bamboo relay 的 `ports.dispatch` spec 均带 `maxDepth`（接力不绕过上限）；`index.js` 的 `startChildSession` 改用新增纯函数 `src/compat.js#buildStartRequest` 生成宿主请求（`maxDepth` 缺省不产生该字段、非法值 fail-closed）；`runAttackSession` 走同一构造。
+- **背景/证据**：D22 三层组合 v2 真机实测——深度 5 的 worker 再起子会话（应为 depth 6）**未被拒**；asar 实证宿主 `dsh-subagent` 仅在调用方显式传 `request.maxDepth` 时校验（`lib/index.js:1402/1405`；`resolveMaxDepth` 只给模型工具用）。报告：`docs/reports/composition-pilot-v2-live-create-2026-11-13.md` §5。
+- **测试**：新增 `tests/depth-budget.test.js`（4 例：缺省 5 / 配置覆盖 + audit_meta / relay 同样携带 / 配置非法值拒绝）；`tests/compat.test.js` 11 → 14 例（`buildStartRequest` 三种形态）。全量 `node --test tests/*.test.js` = **172/172**（20 个 `.test.js`）。
+- **文档**：包 README `v0.8.1` 节；两份 SKILL 头部版本引用；根 README 组件行与验证块、`docs/README.md` 快照、`docs/guides/skills-usage.md`、`docs/project-map-2026-11-11.html` 当前口径、`agent.md` D22 行与状态快照同步。
+- **边界（不在本包修复）**：flow 节点会话的 spawn 由 flow 引擎执行器发起（同样未传 `maxDepth`），按用户指示写成跨仓需求单（`docs/operations/REQ-2026-11-13-flow-node-continuable-session.md` §9）。
 
 ### 2026-11-12 · 组合编排 P0/P1 修复（tree-engine v0.8.0）
 

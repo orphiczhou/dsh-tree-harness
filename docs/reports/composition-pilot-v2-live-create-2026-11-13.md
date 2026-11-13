@@ -120,10 +120,34 @@
 
 **影响面**：tree→flow→tree 嵌套、flow→tree 嵌套、tree 内 verify/judge/handoff 的另起会话均在“无上限”侧；若编排失控可突破 24 并发预算之外的**深度**预期（并发预算 `maxActiveSubagents` 仍会兜住总量，但深度语义已变）。
 
-**建议修复（候选，未实施）**：
-1. tree-engine：`dispatch` 构造 request 时传 `maxDepth`（来源候选：`TREE_ENGINE_CONFIG.max_subagent_depth` 缺省 5；注意本仓不读 profile 私有路径）。
-2. flow 执行器（转 flow 项目组需求单）：`session-executor` 构造 request 时传 `maxDepth`（来源：flow 配置项，缺省 5）。
+**建议修复（2026-11-13 当晚：第 1、3 项已实施，第 2 项转需求单）**：
+1. ~~tree-engine：`dispatch` 构造 request 时传 `maxDepth`~~ → **已实施（tree-engine v0.8.1）**：`DEFAULT_GUARDS.max_subagent_depth=5`（`TREE_ENGINE_CONFIG` 可覆盖，1–100 校验）、`dispatch:start`/竹节 relay/攻击审计会话均显式传 `request.maxDepth`、`src/compat.js` 新增 `buildStartRequest` 纯函数（`index.js startChildSession` 统一走它）；新增 `tests/depth-budget.test.js`（4 例）与 compat 3 例，全量 **172/172**。
+2. flow 执行器（转 flow 项目组需求单）：`session-executor` 构造 request 时传 `maxDepth`（来源：flow 配置项，缺省 5）——**未实施，不得代改 flow 仓**；已写入 [REQ-2026-11-13](../operations/REQ-2026-11-13-flow-node-continuable-session.md) §9。
 3. 文档：修正 playbook §3/§7 的“硬上限”表述（本轮已改）。
+
+**修复后的行为边界（FACT/INFERENCE）**：tree 派发的子会话现在会带 `request.maxDepth=5`（或配置值）→ 从根深度 0 起最多到 depth 5；若在 flow 节点（如 depth 3）内建树再派发，到 depth 5 为止、再派发将以 `E_PORTS_PROTOCOL` fail-closed（宿主 `SubagentDepthError`）。**flow 节点 spawn 本身的深度仍不受 tree 修复影响**（属 flow 执行器，仍无上限），故 tree→flow→tree 组合里「最深 worker 再起 flow 节点」仍是未封口路径，直到 flow 侧修复。
+
+---
+
+## 5.1 修复落地与活体验证（2026-11-13 晚，tree-engine v0.8.1）
+
+用户 2026-11-13 拍板「现在就修」。**代码**（`packages/dsh-tree-engine`，`0.8.0` → **`0.8.1`**）：
+
+| 改动 | 位置 | 说明 |
+|---|---|---|
+| 新增配置 `max_subagent_depth`（缺省 **5**，1–100 校验） | `src/guards.js` / `src/config.js` | `TREE_ENGINE_CONFIG` 可覆盖；非法值装载期失败含键名；随 `audit_meta` 持久化 |
+| 派发/接力 spec 携带 `maxDepth` | `src/engine.js`（`dispatch:start`、`bambooRelay`） | 接力不能绕过上限 |
+| 请求体构造抽纯函数 `buildStartRequest` | `src/compat.js` | `maxDepth` 缺省不产生字段（旧宿主形状）；非法值 fail-closed |
+| 子会话启动统一注入 | `index.js`（`startChildSession` / `subagentDepthCap` / `runAttackSession`） | apply 期解析配置，攻击审计会话同样受限 |
+
+**测试**：新增 `tests/depth-budget.test.js`（4 例：缺省 5 / 配置覆盖 + `audit_meta` / 竹节 relay 携带 / 配置非法值拒绝）；`tests/compat.test.js` 11 → 14 例（`buildStartRequest` 三形态）。全量 `node --test tests/*.test.js` = **172/172**（20 个 `.test.js`）。
+
+**活体验证（FACT）**：
+- bundle `@local/dsh-tree-engine` **disable → enable**（`plugin_manager set_bundle`，`application=applied`）后：`tree_doctor` → **7/7 PASS · version=0.8.1**；`apply.log` 出现 `apply() entered (v0.8.1)`、`subagent depth cap: 5 (request.maxDepth injected on every child session start)`、`previous sweep disposed (hot-reload zombie)`、9/9 工具注册。
+- **冒烟派发**：新建树 `dlv1` → dispatch `dlv1-C1-worker` → 子会话 `688f025e` `runtime=succeeded`，其会话 header `delegationDepth=1`、`parentSession=session-831faad8…`（root）；done meta `env_id` 与自报一致 → 注入 `maxDepth` 未破坏派发链路。
+- 既有试点树 `t3c3` / `t3c4` 与 `dlv1` 在重载后 `tree_status validate` 均 **PASS (0 issues)**。
+
+**未覆盖（诚实边界）**：① 深度 6 **拒绝**的真机回归未做——需要重建一条 depth 4→5 的链路再去 spawn depth 6（成本约一次三层试点）；当前证据 = 单测覆盖「dispatch/relay spec 携带 maxDepth」+「buildStartRequest 注入值」+ 宿主 asar 代码路径（`request.maxDepth` 超限即 `SubagentDepthError`）；② flow 节点 spawn 仍不受 tree 修复约束（属 flow 执行器，见 §5 第 2 项与 REQ §9）。
 
 ---
 
@@ -166,7 +190,7 @@
 
 ## 10. 后续建议（按优先级）
 
-1. **tree-engine 深度预算修复**（本仓，候选 v0.8.1）：dispatch 传 `request.maxDepth`；补单测与 E2E 回归（depth 6 应被拒）。
+1. ~~**tree-engine 深度预算修复**（候选 v0.8.1）~~ → **已完成（tree-engine v0.8.1，2026-11-13 晚）**：dispatch/竹节接力/攻击会话显式传 `request.maxDepth`（缺省 5，可配 `max_subagent_depth`）+ `buildStartRequest` 纯函数；单测 172/172（depth-cap 4 + compat 3）。活体验证需 reload 后 `tree_doctor` version=0.8.1；深度 6 拒绝的真机回归需另起一次含 depth-5 链的受控试点（本轮未重复烧会话）。
 2. **flow 执行器同问题**：已写入跨仓需求单（见 [REQ-2026-11-13](../operations/REQ-2026-11-13-flow-node-continuable-session.md) §附），由 flow 项目组响应。
 3. **现场建树验收归属**：设计 flow 节点收口前 verify 或「验证授权委托」。
 4. 工具面可机读性：`tree_log events` 返回事件 meta（或 `tree_node get` 返回 events 摘要）。

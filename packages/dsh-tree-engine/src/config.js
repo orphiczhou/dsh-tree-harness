@@ -11,6 +11,9 @@ export const CONFIG_SCHEMA = {
   max_sessions: { type: 'integer', min: 1, max: 1000 },
   max_subagent_spawn_per_leaf: { type: 'integer', min: 1, max: 100 },
   commander_max_depth: { type: 'integer', min: 1, max: 5 },
+  // v0.8.1（D22）：tree 派发子会话的绝对深度上限（传给宿主 request.maxDepth）。
+  // 缺省 5 与 desktop profile `subagent.maxDepth=5` 对齐；宿主仅在调用方显式传该字段时校验。
+  max_subagent_depth: { type: 'integer', min: 1, max: 100 },
   ctx_segment_threshold: { type: 'integer', min: 1, max: 100 },
   segment_max_chain_length: { type: 'integer', min: 1, max: 10 },
   // 编排面（orchestra）

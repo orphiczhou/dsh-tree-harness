@@ -449,6 +449,8 @@ export function createEngine(opts) {
         taskType: spec?.taskType ?? leaf.taskType,
         parentAgent: spec?.parentAgent, parentSessionId: spec?.parentSessionId ?? caller,
         attempt: rt.attempt + 1,
+        // v0.8.1（D22）：显式携带绝对深度上限（宿主只在显式传入时校验；不传=无上限）
+        maxDepth: cfg.max_subagent_depth,
       })
       if (!session || typeof session !== 'object') treeError('E_PORTS_PROTOCOL', 'ports.dispatch must resolve {sessionId}')
       rt.history.push({ sessionId: rt.subagentSessionId, state: rt.state, endedAt: clock.now() })
@@ -540,6 +542,8 @@ export function createEngine(opts) {
       // v0.8.0（P1-D）：持久父地址随 relay 传给宿主端口——热更后进程内 Agent 缓存丢失时，
       // 宿主可经 agents.get(parentSessionId) 安全重解析活 Agent（否则 reload 后自主 relay 必失败）。
       parentSessionId: rt.parentSessionId ?? null,
+      // v0.8.1（D22）：接力会话同样携带深度上限（否则接力可绕过派发侧上限）
+      maxDepth: cfg.max_subagent_depth,
     })
     rt.history.push({ sessionId: rt.subagentSessionId, state: 'running', endedAt: clock.now(), note: 'bamboo-relay' })
     if (briefState === 'ok' || briefState === 'manual') rt.handoffBrief = brief

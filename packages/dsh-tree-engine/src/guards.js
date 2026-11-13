@@ -59,6 +59,10 @@ export const DEFAULT_GUARDS = /** @type {const} */ ({
   max_subagent_spawn_per_leaf: 15,
   max_sessions: 50,             // ≈ node_budget × 2.5，留量给 segment 交接/auditor
   commander_max_depth: 3,
+  // v0.8.1（D22）：派发子会话的绝对深度上限（写入宿主 `request.maxDepth`）。
+  // 宿主 dsh-subagent 仅在调用方显式传该字段时校验；tree 派发此前缺省不传 → 无上限（D22 实测 depth 6 未被拒）。
+  // 缺省与 desktop profile `subagent.maxDepth=5` 对齐。
+  max_subagent_depth: 5,
   ctx_segment_threshold: 85,    // 源缺省；DSH 配置缺省 42（PLAN §7）在引擎构造时注入
 })
 

@@ -6,6 +6,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   buildInterruptAuthorities,
+  buildStartRequest,
   detectInterruptMechanism,
   detectStartMechanism,
   NO_START_MECHANISM_MESSAGE,
@@ -131,4 +132,36 @@ test('buildInterruptAuthorities 边界：无活祖先收敛为 user → parent�
 
 test('两形都缺的协议错文案冻结（与 index.js L327 逐字一致）', () => {
   assert.equal(NO_START_MECHANISM_MESSAGE, 'host subagents service exposes neither startContinuable nor startActivation')
+})
+
+// ── v0.8.1（D22）：起始请求体构建（maxDepth 注入）──────────────
+
+test('buildStartRequest：显式 maxDepth 原样注入；构造 prompt/parent/agentOptions', () => {
+  const parent = { id: 'agent-1' }
+  const req = buildStartRequest({ promptText: 'hello', parent, agentOptions: { model: 'm' }, maxDepth: 7 })
+  assert.deepEqual(req, {
+    prompt: [{ type: 'text', text: 'hello' }],
+    parent,
+    agentOptions: { model: 'm' },
+    maxDepth: 7,
+  })
+  // maxDepth=0 是合法绝对值（不允许任何子会话），必须保留而非当作缺省丢弃
+  assert.equal(buildStartRequest({ promptText: 'x', parent, maxDepth: 0 }).maxDepth, 0)
+})
+
+test('buildStartRequest：maxDepth 缺省不产生该字段（保持旧宿主形状）；agentOptions 缺省省略', () => {
+  const req = buildStartRequest({ promptText: 'x', parent: { id: 'a' } })
+  assert.deepEqual(req, { prompt: [{ type: 'text', text: 'x' }], parent: { id: 'a' } })
+  assert.equal('maxDepth' in req, false)
+  assert.equal('agentOptions' in req, false)
+})
+
+test('buildStartRequest：非法 maxDepth fail-closed（非整数 / 负数 / 字符串 / NaN）', () => {
+  for (const bad of [1.5, -1, '5', NaN, Infinity, null]) {
+    assert.throws(
+      () => buildStartRequest({ promptText: 'x', parent: {}, maxDepth: bad }),
+      /maxDepth must be a non-negative integer/,
+      'maxDepth=' + String(bad) + ' must be rejected',
+    )
+  }
 })

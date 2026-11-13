@@ -82,6 +82,7 @@ flow 执行器构造 request 时**未传 `maxDepth`**（`spike/dsh-flow-plugin/l
 
 **请求**：flow 执行器在构造 `request` 时传入 `maxDepth`（来源：flow 配置项，缺省 5；与 tree-engine 侧同类修复对齐）。
 **影响**：flow→tree / tree→flow→tree 组合的深度安全目前依赖人工纪律；无上限可能导致编排失控（并发预算仍兜底，但深度语义失效）。
+**进展（2026-11-13 晚）**：tree-harness 侧已修复并发布到本仓工作树（**tree-engine v0.8.1**：dispatch/竹节接力/攻击会话显式传 `request.maxDepth`，缺省 5、`TREE_ENGINE_CONFIG.max_subagent_depth` 可覆盖；测试 172/172）。flow 侧仍待受理——**tree 修复不会约束 flow 节点的 spawn**，故 `tree→flow→tree` 最深 worker 再起 flow 节点仍是未封口路径。
 **证据**：`dsh-tree-harness/docs/reports/composition-pilot-v2-live-create-2026-11-13.md` §5（含 asar 代码行与实测会话 header）。
 
 ## 10. 证据索引

@@ -24,6 +24,7 @@
  *     仅 startActivation 是函数                → 'activation'
  *   resolveContinuableResult(r)  → r.childId ?? r.sessionId ?? r.session?.id；全空 → 抛错（证据 ≤200 字符）
  *   resolveActivationResult(r)   → r.childId ?? r.sessionId；全空 → 抛错（证据 ≤200 字符）
+ *   buildStartRequest({...})     → 起始请求体（v0.8.1：注入 maxDepth；非法值 fail-closed）
  *   buildInterruptAuthorities({ parentSessionId, liveAncestorAgent })
  *     → [{ kind: 'ancestor', agent }] → [{ kind: 'user', parentSessionId }] → [{ kind: 'parent', parentSessionId }]
  *
@@ -86,6 +87,28 @@ export function resolveActivationResult(result) {
   const sessionId = result?.childId ?? result?.sessionId
   if (!sessionId) throw new Error(`unrecognized startActivation result: ${evidenceOf(result)}`)
   return sessionId
+}
+
+/**
+ * 构造宿主起始请求体（v0.8.1，D22）：统一注入 `maxDepth`。
+ *
+ * 背景（asar 实证）：`@deepseek-ai/dsh-subagent` 的 `startActivation` / `startContinuable`
+ * **只**校验调用方显式传入的 `request.maxDepth`（`lib/index.js:1402/1405`）；配置读取
+ * `resolveMaxDepth`（`:3038-3045`）只被模型工具 `dsh-tool-subagent:452-462` 使用。
+ * tree 派发此前不传该字段 → 组合路径深度无平台兜底（D22 实测 depth 6 未被拒）。
+ *
+ * @param {{ promptText?: string, parent?: any, agentOptions?: object, maxDepth?: number }} [input]
+ * @returns {{ prompt: Array<{type:'text',text:string}>, parent: any, agentOptions?: object, maxDepth?: number }}
+ * @throws {Error} maxDepth 非「非负整数」时 fail-closed（形状防御，不静默丢弃上限）
+ */
+export function buildStartRequest({ promptText, parent, agentOptions, maxDepth } = {}) {
+  if (maxDepth !== undefined && (!Number.isInteger(maxDepth) || maxDepth < 0)) {
+    throw new Error(`maxDepth must be a non-negative integer (got ${typeof maxDepth} "${String(maxDepth)}")`)
+  }
+  const request = { prompt: [{ type: 'text', text: promptText ?? '' }], parent }
+  if (agentOptions) request.agentOptions = agentOptions
+  if (maxDepth !== undefined) request.maxDepth = maxDepth
+  return request
 }
 
 /**

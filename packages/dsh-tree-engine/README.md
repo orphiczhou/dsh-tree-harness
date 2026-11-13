@@ -2,6 +2,26 @@
 
 树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/architecture/engine-spec.md](../../docs/architecture/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 9 个工具 schema 为准（[docs/architecture/tools-mapping.md](../../docs/architecture/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
 
+## v0.8.1 增量：派发/接力子会话显式携带深度上限（`request.maxDepth`）
+
+**背景（D22 三层组合 v2 真机实证，2026-11-13）**：`@deepseek-ai/dsh-subagent` 的 `startActivation` / `startContinuable`
+**只校验调用方显式传入的 `request.maxDepth`**（asar 实证 `lib/index.js:1402/1405`；配置读取 `resolveMaxDepth` 仅被模型工具
+`dsh-tool-subagent:452-462` 使用）。tree 派发此前不传该字段 → 组合路径上深度无平台兜底（实测深度 5 的 worker 再起子会话
+成功创建 depth 6 会话，未抛 `SubagentDepthError`）。**修复：tree 派发、竹节接力与攻击审计会话统一显式传 `maxDepth`。**
+
+- **新增配置键 `max_subagent_depth`**（`src/config.js` + `src/guards.js`）：缺省 **5**，可经 `TREE_ENGINE_CONFIG` 覆盖（整数 1–100）；
+  非法值装载期失败（含键名）。写入树的 `audit_meta` 便于事后核对。
+- **派发/接力注入端口**（`src/engine.js`）：`dispatch:start` 与竹节 relay 的 `ports.dispatch` spec 均带 `maxDepth`（relay 不能绕过上限）。
+- **请求体构造抽纯函数**（`src/compat.js` 新增 `buildStartRequest`）：`index.js` 的 `startChildSession` 统一经它生成
+  `{prompt,parent,agentOptions?,maxDepth?}`；`maxDepth` 缺省时不产生该字段（保持旧宿主形状），非法值 fail-closed；
+  攻击审计会话（`runAttackSession`）同样走该构造。
+- **测试**：新增 `tests/depth-budget.test.js`（4 例：缺省 5 / 配置覆盖 7 + audit_meta / 竹节 relay 同样携带 / 配置非法值拒绝）；
+  `tests/compat.test.js` 11 → **14 例**（`buildStartRequest` 注入、缺省省略、非法值 fail-closed）。全量
+  `node --test tests/*.test.js` = **172/172**（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 14 compat + 10 identity + 7 budget + 12 relay + 17 token-meter + 7 usage-port + 9 validate + 8 sweep + 4 depth-cap）。
+- **兼容性**：`maxDepth` 缺省 5 与 desktop profile `subagent.maxDepth=5` 对齐；若宿主配置更低（如 3），tree 派发超过该深度会以
+  `E_PORTS_PROTOCOL` fail-closed（不再静默越界）。**flow 节点会话的 spawn 属 flow 引擎执行器**（同样未传 `maxDepth`），
+  不在本包修复范围——已按用户指示写成跨仓需求单（`docs/operations/REQ-2026-11-13-flow-node-continuable-session.md` §9）。
+
 ## v0.8.0 增量：P0/P1 修复（per-leaf relay 开关 / usagePct 真实接入 / sweep 跨实例生命周期）
 
 S1 真机 E2E（`docs/reports/e2e-composition-relay-2026-11-12.md`）实证的三个缺陷的代码修复；**本包内**只改引擎/工具/SKILL，仓级文档由 Lead 收口。

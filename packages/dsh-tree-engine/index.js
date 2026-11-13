@@ -27,7 +27,7 @@ import { resolveLiveSession, resolveTokenMeter, resolveUsagePct } from './src/to
 import { startManagedSweep } from './src/sweep.js'
 // W2.3（2026-11-12）：RC2 兼容层双形探测抽成纯逻辑模块（src/compat.js），此处只做装配。
 import {
-  buildInterruptAuthorities, detectInterruptMechanism, detectStartMechanism,
+  buildInterruptAuthorities, buildStartRequest, detectInterruptMechanism, detectStartMechanism,
   NO_START_MECHANISM_MESSAGE, resolveActivationResult, resolveContinuableResult,
 } from './src/compat.js'
 import path from 'node:path'
@@ -137,6 +137,8 @@ export function makePorts(services, log, opts = {}) {
           parent: parentAgent,
           promptText,
           agentOptions,
+          // v0.8.1（D22）：引擎传入的绝对深度上限（缺省 startChildSession 内部兑底 subagentDepthCap）
+          maxDepth: spec.maxDepth,
         })
         return { sessionId }
       } catch (e) {
@@ -372,12 +374,10 @@ function pickLiveAncestorAgent(services, parentSessionId) {
   } catch { return undefined }
 }
 
-async function startChildSession(services, { provider, label, parent, promptText, agentOptions }) {
-  const request = {
-    prompt: [{ type: 'text', text: promptText }],
-    parent,
-    ...(agentOptions ? { agentOptions } : {}),
-  }
+async function startChildSession(services, { provider, label, parent, promptText, agentOptions, maxDepth = subagentDepthCap }) {
+  // v0.8.1（D22）：统一经 buildStartRequest 注入 maxDepth——宿主仅在显式传入时校验深度上限；
+  // 缺省值来自 TREE_ENGINE_CONFIG.max_subagent_depth ?? 5（apply 时解析），与 profile subagent.maxDepth 对齐。
+  const request = buildStartRequest({ promptText, parent, agentOptions, maxDepth })
   const signal = new AbortController().signal
   // W2.3：探测/结果解析统一走 src/compat.js（legacy 优先语义冻结，单测覆盖三分支）
   const mechanism = detectStartMechanism(services?.subagents)
@@ -429,6 +429,9 @@ let verifyExec = null
 /** apply 期捕获：宿主服务表与自诊断日志（tree_verify adversarial 攻击/修复端口用）。 */
 let servicesRef = null
 let diagRef = (m) => { try { console.error(`[tree-engine] ${m}`) } catch {} }
+/** v0.8.1（D22）：派发子会话的绝对深度上限（apply 时由 TREE_ENGINE_CONFIG.max_subagent_depth ?? 5 解析）。
+ *  startChildSession 缺省使用；显式 spec.maxDepth（引擎 dispatch/relay 传入）优先。 */
+let subagentDepthCap = 5
 
 /** 从攻击会话 readSession 快照防御性提取 `ATTACK_VERDICT: {...}` JSON 行。 */
 function extractAttackVerdict(snap) {
@@ -889,7 +892,7 @@ export function apply(ctx) {
   /** 文件自诊断（Loader 缓存下唯一可靠观测通道）：apply 全程留痕 + 全程容错。 */
   const diagPath = path.join(dataDir, 'apply.log')
   const diag = (msg) => { try { fsp.mkdir(path.dirname(diagPath), { recursive: true }).then(() => fsp.appendFile(diagPath, `${new Date().toISOString()} ${msg}\n`)).catch(() => {}) } catch {} }
-  diag(`apply() entered (v0.8.0); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
+  diag(`apply() entered (v0.8.1); PROFILE_DIR=${process.env.DSH_PROFILE_DIR ?? '?'}`)
   try {
     ctx.inject(['tools', 'subagents', 'sessionQuery'], (scoped) => {
       try {
@@ -921,6 +924,9 @@ export function apply(ctx) {
         }
         if (Object.keys(envConfig.config).length || Object.keys(envConfig.orchestra).length) diag(`config loaded: ${JSON.stringify(envConfig)}`)
         orchestraCfg = { ...envConfig.orchestra }   // tree_doctor 报告 sweepMode/超时口径（只读）
+        // v0.8.1（D22）：派发/接力/攻击会话的深度上限（显式配置优先，缺省 5；与 profile subagent.maxDepth 对齐）
+        subagentDepthCap = envConfig.config.max_subagent_depth ?? 5
+        diag(`subagent depth cap: ${subagentDepthCap} (request.maxDepth injected on every child session start)`)
 
         engine = createEngine({ store: fsStore(dataDir), clock, ...(Object.keys(envConfig.config).length ? { config: envConfig.config } : {}), ...(Object.keys(envConfig.orchestra).length ? { orchestra: envConfig.orchestra } : {}) })
         engine.attachPorts(makePorts(services, log, { ctx, graceMs: envConfig.orchestra.graceMs }))
@@ -953,7 +959,7 @@ export function apply(ctx) {
           try { services.tools.register(tool); okCount += 1; diag(`register OK: ${tool.name}`) }
           catch (e) { diag(`register FAILED: ${tool.name}: ${e?.message ?? e}`) }
         }
-        console.log(`[tree-engine] v0.8.0 registered ${okCount}/${TOOLS.length} tools (fs persistence @ ${dataDir}; sweepMode=${sweepMode})`)
+        console.log(`[tree-engine] v0.8.1 registered ${okCount}/${TOOLS.length} tools (fs persistence @ ${dataDir}; sweepMode=${sweepMode})`)
         diag(`apply complete: ${okCount}/${TOOLS.length} registered`)
       } catch (e) {
         diag(`inject callback THREW: ${e?.stack ?? e}`)
