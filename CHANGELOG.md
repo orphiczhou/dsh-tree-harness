@@ -2,6 +2,30 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [Unreleased] — 2026-11-13 · D23：硬安全与可观测性收口（tree-engine 0.8.1 → **0.9.0**）
+
+### 变更
+
+- **版本**：`packages/dsh-tree-engine` `0.8.1` → **`0.9.0`**（仓内插件，非 npm 发布；`dsh-session-tree` 1.4.0 / `dsh-agent-introspect` 0.1.0 不变）。
+- **flash 审计三条高危修复**（`docs/archive/flaudit-report.md` #1/#7/#19）：
+  - **#1 跨进程写安全**：新增 `src/lock.js`（`tree-state.lock`，`fs.writeFile(..., {flag:'wx'})` O_EXCL 原子建锁 + 锁内容 `{pid,host,ts,nonce}` + release nonce 校验 + 陈旧锁 `rename` 抢占接管 + 接管留痕 `tree-lock-takeover.log`；超时 `E_TREE_LOCK_TIMEOUT`）；`src/store.js` 端口新增 `withLock`（fsStore=文件锁+心跳 `utimes`；memoryStore=每树 promise 链；旧实现兼容）；`src/engine.js` 拆 `withTree`（只读不加锁）/ `withTreeMut`（enqueue + withLock），18 个写命令与 `sweepTick` 全部改走持锁路径。
+  - **#7 nudge 强制 prune 走状态机**：第 7 次 nudge 强制 prune 前 `assertTransition`；archived 叶子被拒（`E_STATUS_TRANSITION_INVALID`，抛错在 write 前，`nudge_count` 不持久化增加、无 drift）；`done→pruned` 白名单迁移照常并留 drift。
+  - **#19 leaf:add 字段白名单**：仅接受 13 个允许键（`leaf_id/session_id/parent/path/role/added_by/relay/taskType/dependencies/brief/dod/model/channel`），白名单外键 `E_SCHEMA_INVALID`（含非法键名与允许清单）；`runtime/verification/status/events/milestones/segment_chain/drift_history/context_usage_pct/nudge_count` 等内部字段由引擎初始化、永不接受输入。
+- **D22 两个次要发现修复**：
+  - **`tree_log {action:"events"}` 机读化**：render 由「仅计数」改为一行一条（`[ts] leaf_id type meta=<紧凑 JSON>`），done meta 可机读；events 尾部 50 条 + 截断提示、单条 meta 800 字符截断；drift/heartbeat/communication 同步；返回结构不变。
+  - **验证授权委托**：`tree_maintain` 新增 `action:"verify-delegate"`（`session_ids: string[]`，全量替换、`[]` 清空；仅树 root 会话可授予，root=null 拒绝）；被授权者**只能写 leaf.verification**（`LEAF_WRITE_MATRIX.verification.delegate=true`，其余 kind 一律 ❌；owner 自验禁令不放宽）；变更落 `drift_log`（kind=security/action=declare）；旧树缺字段惰性 `[]`。用于「现场建树 root 会话 dispose 后由受信会话补 `tree_verify`」。
+- **R1 异族红队复核（Qwen 系）发现并已修复**：① **P1** `leaf:add` 对既存 `leaf_id` 直接覆盖 → 可擦除 archived/pruned 终态、done 事件与 drift 审计痕、重置 `nudge_count`（抵销 #7）；现 re-add 直接 `E_DUPLICATE_LEAF`（节点复用走 dispatch/set-session）；② **P2** `nudge:reset` 零鉴权（可 reset+nudge 循环使第 7 次永不落账）+ 工具面不传 caller → 现按 status 写权矩阵（owner/creator/root），越权 `E_BORROWED_IDENTITY`；③ **P2** root 信任锚可被 7-strike 强制摘除 → 现 root 叶子 nudge 拒 `E_SCHEMA_INVALID`；④ **P2** `model`/`channel` 未校验形状（可传任意 JSON 经 relay assignee 流入宿主）→ 现必须是字符串；⑤ **P2** 锁心跳间隔下限 1000ms，当 `staleMs<1s` 时活持有者可被判陈旧（双临界区）→ 现 `staleMs/3`（下限 100ms）。相应回归测试 +4（213/213）。R1 报告承认的残余风险：`rename` 抢锁与 release 间极窄竞态（窗口极窄、不改变缺省装配）、`brief/dod` 保留任意 JSON（用户内容）。
+- **发布门禁收紧（W2.8）**：新增 `scripts/e2e/lib/release-gate.mjs`（纯函数、永不抛异常：8 项检查——artifact-found/schema/overall-pass/required-steps-pass/三断言/freshness，缺省新鲜度 168h）+ `release-gate.test.mjs` **14 例**；`scripts/release-all.mjs` 将门禁接在**任何写操作之前**（真实模式失败 exit 1 且零写入；dry-run 同跑、FAIL 记 BLOCKED 但 exit 0），新增 `--e2e-artifact` / `--max-e2e-age-hours` / `--skip-e2e-gate`+必填 `--skip-e2e-reason`（缺 reason exit 2）；`docs/guides/publishing.md` 新增 §5.2 强制门禁章节。R2 异族复核后补修 1 条 P1（JSON `null` artifact 抛 TypeError → 顶层形状 fail-closed）与 2 条 P2（无 UTC 戳文件不得遮蔽带戳 artifact；`collect-skills` 缺失 `missingSessions` 不再视为通过）。
+- **受控试点 v3（任务 1 回归）**：`tree-engine v0.8.1` 深度上限真机回归 **PASS**——depth 5 worker 的 `tree_dispatch` 被宿主拒绝：`E_PORTS_PROTOCOL: ports.dispatch failed: subagent depth 6 exceeds maxDepth 5`；无 depth-6 会话；深度链 1..5、flow `T3C7-R1` succeeded/integrity=verified、`t3c7`/`t3c8`/`t3c9` validate 0 issues。配置 [demo/t3cpilot3/](demo/t3cpilot3/)，证据 [docs/reports/composition-pilot-v3-depth-cap-2026-11-13.md](docs/reports/composition-pilot-v3-depth-cap-2026-11-13.md)。
+- **文档**：tree-engine README（v0.9.0 节）、根 README（组件表/测试口径/Skill 版本）、[agent.md](agent.md)（D23 行 + 状态快照）、[engine-spec.md](docs/architecture/engine-spec.md)、随包 tree-commander/tree-worker SKILL（验证委托 / 日志机读 / 建点白名单 / 锁语义）、[composition-playbook.md](docs/guides/composition-playbook.md)（v3 深度实证 + 验证归属）、[skills-usage.md](docs/guides/skills-usage.md)、进度地图与项目地图口径。
+
+### 验证
+
+- `packages/dsh-tree-engine`: `node --test tests/*.test.js` → **213/213**（172 + 新增 store-lock 8 / nudge-gate 6 / leaf-add-whitelist 8 / tree-log-render 5 / verify-delegate 14 = 213；含 R1 复核回归 4 例）。
+- `node --test scripts/e2e/lib/release-gate.test.mjs` → **14/14**；`node scripts/release-all.mjs --dry-run` 实测门禁 8 项 PASS（真实 artifact age≈14.8h ≤168h）。
+- 活体（受控 disable→enable 后）：`tree_doctor` 7/7 · version=0.9.0；`tree_maintain {action:"verify-delegate"}` 授予→读回→清空 + `drift_log` security 记录；`tree_log events` 读出 done meta（`probe_result` 原文）；`tree-state.lock` 操作后无残留；`t3c7/t3c8/t3c9/d23x` validate 0 issues。
+- 异族交叉复核：R1（Qwen 系，审 A1 审计修复）与 R2（GLM 系，审 tree_log/发布门禁），R2 结论 PASS_WITH_RISKS 的 1 P1 + 2 P2 已修复回归；详见本轮报告。
+
 ## [Unreleased] — 2026-11-13 · 组合编排 v2 试点 + 跨仓需求单（**无版本变更、未发布**）
 
 ### 变更

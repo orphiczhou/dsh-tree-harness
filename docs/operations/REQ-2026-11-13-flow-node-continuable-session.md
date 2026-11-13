@@ -91,3 +91,13 @@ flow 执行器构造 request 时**未传 `maxDepth`**（`spike/dsh-flow-plugin/l
 - adopt 只读认领边界：同文件 `:316-381`
 - tree 组合剧本 §6（一次性→非一次性方向，用户 2026-11-12 已示意）：`D:\Codes\dsh-tree-harness\docs\guides\composition-playbook.md:85-93`
 - 本仓试点 v2（内层树由 flow 节点现场创建）：`D:\Codes\dsh-tree-harness\demo\t3cpilot2\`、报告 `docs/reports/composition-pilot-v2-live-create-2026-11-13.md`
+- 本仓试点 v3（v0.8.1 深度封口真机回归，含 flow 侧仍未封口的复述）：`docs/reports/composition-pilot-v3-depth-cap-2026-11-13.md`
+
+## 附：受理跟进（tree-harness 侧只读核查，不改 flow 仓代码）
+
+| 核查时间 | 方式 | 结果 |
+|---|---|---|
+| 2026-11-13 15:42（D23 轮开工） | flow 仓 `git log --oneline -5` / `git status --short` / 需求目录文件列表 | **未受理**：副本 `evidence/requirements/REQ-2026-11-13-continuable-session.md` 仍为 **untracked**（`??`）；无回执文件；flow 仓近期提交（m1.1 B' 真机批次准备等）未引用本需求单 |
+| 2026-11-13 16:24（收口前复查） | 同上 + 全仓 grep `continuable / REQ-2026-11-13 / tree-harness` | **仍未受理**：无新增提交/回执；需求目录仅本文件（3749 B，2026-11-13 14:51 递交）与 `决策记录.md` |
+
+**结论（FACT）**：截至 2026-11-13 16:24（+08），flow 项目组尚未对本需求单作出受理/拒绝表示。tree-harness 侧按用户指示**不修改 flow 仓代码**、不代提交流；本文件与 flow 仓副本保持同源。**后续**：由用户/项目组排期；若需提醒，仅建议在 flow 仓 `evidence/requirements/` 追加状态说明（不 commit，无写权）。

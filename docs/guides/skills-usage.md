@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.8.1**、`packages/dsh-session-tree` **v1.4.0** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA）。
+> 适用版本：`packages/dsh-tree-engine` **v0.9.0**、`packages/dsh-session-tree` **v1.4.0** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -121,7 +121,7 @@ pnpm install
 
 排障：三条都不出现 → 检查 ① 包是否装（`plugin_manager list_plugins`）；② profile 是否同时有 `@deepseek-ai/dsh-skill-filesystem`（**随 DSH 桌面版内置，不要单独安装**）；③ 是否在改完 patch 后没做 disable→enable；④ 是否是**新开**会话（目录在会话启动时注入，旧会话不刷新）。
 
-> **安装后自检（推荐）：`tree_doctor {action:"run"}`**（tree-engine ≥ 0.8.1）。它是第 9 个 `tree_*` 工具、**只读零写副作用**：一次给出 7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`）与 `summary{pass,warn,fail}` + 一行 `hint`；传 `tree_id`（如 `tree_doctor {action:"run", tree_id:"wave1"}`）会额外校验该树并统计停滞节点。**FAIL 不 throw**——它是诊断器不是门禁，装完/重载后先跑它，比逐项猜「工具或 Skill 为什么没出现」快。
+> **安装后自检（推荐）：`tree_doctor {action:"run"}`**（tree-engine ≥ 0.9.0）。它是第 9 个 `tree_*` 工具、**只读零写副作用**：一次给出 7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`）与 `summary{pass,warn,fail}` + 一行 `hint`；传 `tree_id`（如 `tree_doctor {action:"run", tree_id:"wave1"}`）会额外校验该树并统计停滞节点。**FAIL 不 throw**——它是诊断器不是门禁，装完/重载后先跑它，比逐项猜「工具或 Skill 为什么没出现」快。
 
 ### 3.1 五分钟冒烟（第一次用就照这个顺序）
 
@@ -261,7 +261,8 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.8.1 / `dsh-session-tree` 1.4.0（公开镜像 tag `v1.4.0` = `0343f0c`）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.9.0 / `dsh-session-tree` 1.4.0（公开镜像 tag `v1.4.0` = `0343f0c`）。
+- **tree-engine 0.9.0**：新增第 9 个工具之后的硬安全与可观测性收口版（D23）—— ① 跨进程 `.lock` 文件锁（写路径 `withTreeMut`：O_EXCL + nonce + 陈旧接管 + 心跳；只读 `withTree` 不加锁）；② nudge 第 7 次强制 prune 走状态机（archived 被 `E_STATUS_TRANSITION_INVALID` 拒）；③ `leaf:add` 13 键字段白名单（内部字段永不接受输入）；④ `tree_log {action:"events"}` 事件 meta 机读化（done meta 可读）；⑤ `tree_maintain {action:"verify-delegate"}` 验证授权委托（仅 root 授予、被授权者只能写 `leaf.verification`）；测试数 172→**213/213**。安装/重载后 `tree_doctor` 应显示 `version=0.9.0`。
 - **tree-engine 0.8.1**：新增第 9 个工具之后的深度预算修复版（D22）—— ① 新增 `max_subagent_depth` 配置（缺省 5，`TREE_ENGINE_CONFIG` 可覆盖，非法值装载期失败）；② `tree_dispatch`/竹节接力/攻击审计会话显式传宿主 `request.maxDepth`（宿主只在显式传入时校验深度，此前组合路径无平台兜底）；③ 新增 `buildStartRequest` 纯函数 + 4 例 depth-cap + 3 例 compat 测试；测试数 165→**172/172**。安装/重载后 `tree_doctor` 应显示 `version=0.8.1`。
 - **tree-engine 0.8.0**：新增第 9 个工具之后的组合修复版 —— ① per-leaf relay 开关（`tree_node {action:"set-relay", relay:"auto"|"off"}`，等待 flow/verify/长命令的 leaf 设 `off`，sweep 只跳过竹节）；② usagePct 测量端口修复（宿主 tokenMeter 安全获取 + 5 形状提取）；③ sweep 跨实例（热更僵尸）生命周期；④ relay parent 安全重解析；Skill 正文升到 **v2.2**；测试数 112→**165/165**。安装/重载后推荐先跑一次 `tree_doctor` 自检（见 §3）。
 - **tree-engine 0.7.0**：新增第 9 个工具（`tree_doctor`）之后的引擎收口版 —— ① W2.1 会话预算计入竹节链 `runtime.segmentChain`；② W2.3 RC2 兼容层单测 11 例；③ W2.6 root/主会话 id 归一化（可选 `session-` 前缀）；Skill 正文升到 **v2.1**；测试数 84→**112/112**。

@@ -1,4 +1,4 @@
-# 进度地图（2026-11-13 13:30 快照）
+# 进度地图（2026-11-13 16:30 快照）
 
 > 给用户对齐用的一页进度图。**先对齐本图，再决定下一步推进**（用户 2026-11-13 指示：交接新会话后先沟通进度地图）。
 > 权威细节：状态/决策以 [agent.md](../../agent.md) 与 [handoff-2026-11-12.md](handoff-2026-11-12.md) 为准；本文件只做「一眼看懂」的汇总。
@@ -7,7 +7,7 @@
 
 ## 0. 一句话
 
-**引擎与插件全部就绪、发布物与公开镜像逐字节一致、D21 轮把「真机 E2E + 三层组合试点 + 发布测试门禁 + 会话元数据 GUI」四项欠账全部清掉**；剩余工作以「加深组合编排 / 打磨工具链」为主，没有阻塞性缺陷。
+**引擎与插件全部就绪、发布物与公开镜像逐字节一致；D21 清掉「真机 E2E + 三层组合试点 + 发布测试门禁 + 会话元数据 GUI」，D22 完成组合编排 v2 + v0.8.1 深度预算修复，D23（2026-11-13 晚）完成用户点名的 1-4 四项**：深度 6 拒绝真机回归 PASS、flash 审计三条高危修复、发布前 E2E 门禁收紧、`tree_log` 机读化 + 验证授权委托；tree-engine 升到 **v0.9.0**（213/213）。剩余以「组合编排继续深挖 / 历史边界清理」为主，无阻塞性缺陷。
 
 ---
 
@@ -15,7 +15,7 @@
 
 | 组件 | 版本 | 状态 | 测试 |
 |---|---|---|---|
-| `packages/dsh-tree-engine` | **v0.8.0** | 运行中（9 个 `tree_*` 工具 + 随包 2 份 Skill v2.2） | **165/165**（19 个 `.test.js`） |
+| `packages/dsh-tree-engine` | **v0.9.0** | 运行中（9 个 `tree_*` 工具 + 随包 2 份 Skill v2.3；活体 7/7 · v0.9.0） | **213/213**（25 个 `.test.js`）；发布门禁单测 14/14 |
 | `packages/dsh-session-tree` | **v1.4.0** | 运行中（`tree_send` 仅同树 + `session_handoff` + 会话界面元数据） | handoff 41/41、tree-send 25/25、meta 41/41、render 151/151+9+11、style-guard 26/26、skills 3/3、verify-bundle 0 fail、provider-conformance 29/29 |
 | `packages/dsh-agent-introspect` | v0.1.0 | 运行中（`self_spec`） | — |
 | 公开镜像 `orphiczhou/dsh-session-tree` | tag **v1.4.0 = `0343f0c`** | main + tag 已推送，21/21 SHA 一致 | — |
@@ -52,18 +52,30 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 
 **用户 2026-11-13 对三个问题的拍板**：① 组合编排深挖 **现在就做 → 已完成（v2 PASS）**；② flow 一次性→非一次性 **不改代码**，写需求单交 flow 项目组响应 → **已成单递交**；③ 三层组合**暂不对外**。
 
+## 2.2 D23 轮已完成（2026-11-13 晚，用户点名 1-4 全做 + 异族多模型）
+
+| # | 事项 | 结果 | 证据 |
+|---|---|---|---|
+| 任务 1 | v0.8.1 深度上限**真机回归**（depth 6 应被拒） | **PASS**：depth 5 worker 的 tree 派发被拒 `E_PORTS_PROTOCOL / subagent depth 6 exceeds maxDepth 5`，无 depth-6 会话；深度链 1..5、flow `T3C7-R1` succeeded/integrity=verified、三树 validate 0 issues | [v3 报告](../reports/composition-pilot-v3-depth-cap-2026-11-13.md)、[demo/t3cpilot3/](../../demo/t3cpilot3/) |
+| 任务 2 | flash 审计三条高危（#1/#7/#19）+ 发布门禁收紧 | **DONE**：`.lock` 跨进程写互斥（O_EXCL/nonce/陈旧接管/心跳；`withTree`/`withTreeMut` 读写分层）、nudge 强制 prune 走状态机、`leaf:add` 13 键白名单；发布前真机 E2E 门禁接入 `release-all.mjs`（8 项检查、写前阻断、豁免需 reason、publishing.md §5.2，14/14 单测） | tree-engine README v0.9.0 节、CHANGELOG D23 节 |
+| 任务 3 | 跟进 flow 项目组对需求单响应（只读，不改 flow 仓） | **仍未受理**（flow 仓副本 untracked、无回执/提交引用）；已记录受理跟进到 REQ §附 | [REQ](REQ-2026-11-13-flow-node-continuable-session.md) §附 |
+| 任务 4 | 现场建树验证归属 + `tree_log events` 机读 | **两项均落地**：`tree_log` render 一行一条（done meta 可读）+ `tree_maintain {action:"verify-delegate"}` 验证授权委托（仅 root 授予、被授权者只写 verification、security drift 留痕） | 同上；活体验证：授予/清空/审计可见 |
+| 复核 | 异族交叉复核（防单模型认知锯齿） | R1=Qwen 审审计修复 **PASS_WITH_RISKS**（P1 既存 id 覆盖擦除终态 + 3 P2 已全部修复，+4 回归）；R2=GLM 审 tree_log+门禁 **PASS_WITH_RISKS**（1 P1 JSON null 抛异常 + 2 P2 已修复，14/14） | 报告与任务书 [taskbooks/](taskbooks/) |
+
+**D23 新发现（平台侧，非阻塞）**：① 宿主 HMR 重载竞态——并行改 `packages/**` 触发反复重装，重载窗口内旧实例 dispose 会反注册新实例工具，调用方偶发 `unknown tool`（受控 disable→enable 可恢复；建议宿主侧串行化）；② tree 派发 `assignee` 跨模型时宿主按**调用方会话**的 `maxTokens`（384000）下发，目标模型上限 131072 的供应商（zai/glm、xiaomi/mimo）首请求即 400（当前用 deepseek-official / opencode-go 通道绕行；建议宿主按目标模型 clamp）。
+
 ## 3. 下一步候选（按建议优先级）
 
 | # | 事项 | 为什么值得做 | 需要谁定 |
 |---|---|---|---|
-| 0 | ~~tree-engine 深度预算修复~~ | **D22 已完成（v0.8.1，2026-11-13）**：dispatch/接力显式传 `maxDepth`（缺省 5），测试 172/172 | — |
+| 0 | ~~tree-engine 深度预算修复 + depth 6 真机回归~~ | **D22 修复（v0.8.1）+ D23 真机回归 PASS（v0.9.0，213/213）** | — |
 | 1 | ~~组合编排深挖（内层树现场创建 + maxDepth 边界）~~ | **D22 已完成** | — |
 | 2 | **flow 一次性→非一次性会话** | 已写需求单，属 flow 仓变更 | 用户定时机（本周期不动 flow 代码） |
-| 3 | **发布门禁再收紧**：三断言 E2E 作成发布前必跑 + artifact 归档；flash 审计三条高危（.lock 文件锁 / nudge 绕 assertTransition / leafAdd 白名单） | 提升发布可重复性与引擎健壮性 | Lead 可排期 |
+| 3 | ~~发布门禁再收紧 + flash 审计三条高危~~ | **D23 已完成（v0.9.0）**：真机 E2E 门禁写前强制 + 12 项检查实现（artifact 8 项 + CLI）；三条审计修复 + R1/R2 复核修复 | — |
 | 4 | 只读子会话底部 Phase 2（chain 覆盖官方只读 composer） | 当前只读子会话元数据在标题栏 chip；用户未明确要求底部 | 仅用户要求时做 |
-| 5 | 已知边界清理：artifact 验证对象错位、`runtime.history` 预算口径、`tree_maintain gc`；D22 新增：`tree_log events` 可机读、现场建树验证归属 | 历史欠账，非阻塞 | Lead 排期 |
+| 5 | 已知边界清理：artifact 验证对象错位、`runtime.history` 预算口径、`tree_maintain gc`；D22 新增两项（`tree_log events` 可机读、现场建树验证归属）**D23 已完成** | 历史欠账，非阻塞 | Lead 排期 |
 
-**三个问题当前状态**：① 已做（v2 PASS）；② 需求单已递交，待 flow 项目组响应；③ 暂不对外（用户 2026-11-13 拍板）。
+**三个问题当前状态**：① 已做（v2 PASS + v3 深度回归 PASS）；② 需求单已递交，**截至 2026-11-13 16:24 flow 项目组仍未受理**（只读核查，不改 flow 仓）；③ 暂不对外（用户 2026-11-13 拍板）。
 
 ---
 
@@ -72,3 +84,4 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 - 内层树预置是已知偏离（见 §3-1）；relay 42% 阈值在 D21 试点中未被压到（外层上下文约 4.1%）——relay 抗打断仍以 v0.8.0 E2E 为据。
 - `provider-conformance` 依赖本机 `%TEMP%` rc.2 fixture：发布门禁已按「缺 fixture 记 SKIP、断言失败仍阻断」处理，但干净机器上等于未覆盖。
 - 顶层记忆：真机操作类结论必须有活体读数/截图；UI 结论本轮已闭环（代码级 + 截图 + 用户确认）。
+- D23 平台侧边界（非本仓可修）：HMR 重载竞态导致工具面瞬态 `unknown tool`；tree 派发跨模型 `maxTokens` 继承调用方（小上限供应商 400，当前绕行）。两者均已在 v3 报告 §6 记录。

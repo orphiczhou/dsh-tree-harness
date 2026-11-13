@@ -19,9 +19,9 @@
 
 ## 2. 引擎数据模型（tree-state.json）
 
-- 每 tree 一目录 `<TREES_ROOT>/<tree_id>/`：`tree-state.json`（真源）、`.lock`（文件锁）、`tree-state.json.tmp`（原子写）、`backups/`（保留最近 10 份）、`call-log.jsonl`（append-only 观测层，10MB 轮转，绝不进 tree-state）。
+- 每 tree 一目录 `<TREES_ROOT>/<tree_id>/`：`tree-state.json`（真源）、`tree-state.lock`（跨进程文件锁；内容 `{pid,host,ts,nonce}`）、`tree-lock-takeover.log`（陈旧锁接管留痕）、`tree-state.json.tmp`（原子写）、`backups/`（保留最近 10 份）、`call-log.jsonl`（append-only 观测层，10MB 轮转，绝不进 tree-state）。
 - **tree_id 命名规则**：`[a-z][a-z0-9_]{3,7}`（4–8 字符小写无连字符）；root leaf_id = `<tree_id>-root` 由 tree_id 派生（init 即拦，leaf_add 前后一致）。
-- 顶层字段：`tree_id`（自描述，restore 跨树校验用）、`created_at`、`leaves{}`、`drift_log[]`、`session_registry{}`（旁路会话登记）、`audit_meta{}`、完整性签名（critical 状态无签名 → tamper 告警 + drift 留痕）。
+- 顶层字段：`tree_id`（自描述，restore 跨树校验用）、`created_at`、`leaves{}`、`drift_log[]`、`session_registry{}`（旁路会话登记）、`verify_delegates[]`（树级验证授权委托：归一化裸 UUID 列表、全量替换语义；旧树缺该字段时**读侧惰性缺省 `[]`**，不要求迁移）、`audit_meta{}`、完整性签名（critical 状态无签名 → tamper 告警 + drift 留痕）。
 - leaf 关键字段：`leaf_id`（含 path 一致性校验）、`session_id`（严格 UUID v4）、`parent`、`role`、`model`/`channel`、`added_by`、`status`、`context_usage_pct`、`segment_chain[]`、`events[]`（11 类）、`milestones[]`、`drift_history[]`、`nudge_count`/`nudge_log`、`audit_gate{verdict,...}`、`last_event_type/ts`、`last_heartbeat`、`created_at`；worker 启动首读的**5 件套**（`brief`/`dod`/`report_protocol`/`autonomy`/`self_audit`）持久化在 leaf。
 - **会话 id 全树唯一**：leaf.session_id、segment_chain 所有成员、session_registry 键，跨集合不重复（validate 检查 3）。
 
@@ -51,6 +51,7 @@ STATUS_ENUM = [active, done, pruned, archived, segment_pending, pending_brief]
 - 三层纠偏（drift）：kind ∈ production/direction/rhythm × severity low/mid/high × action nudge/limit/prune/self_correct/declare/handoff。
 - TAO 审计门：audit_gate verdict ∈ required/pass/pass_with_minor/fail/skip；pass 需先有 done event；auditor 必须独立（caller===audit_session_id，V10-self-audit-forbidden-v2，借身份 → E_BORROWED_IDENTITY）；audit_append report 数值一致性（total=passed+failed、results.length=total、severity ∈ red|yellow|green）。
 - 外部通信可观测：send_message 后 log_communication（不截内容，自动更新 target last_event 防心跳误判冻结）。
+- **验证授权委托（本仓 DSH 实现，v0.9.0）**：`tree_maintain {action:"verify-delegate", tree_id, session_ids[]}` 由**该树 root 会话**（`<tree_id>-root` 的 `session_id`；为 null → 拒并说明）**全量替换** `verify_delegates`（入参归一化为裸 UUID 后严格校验 v4；`[]` = 清空）；非 root → `E_BORROWED_IDENTITY`。写权矩阵新增 **delegate 轴**：仅 `verification` 为 ✅（`LEAF_WRITE_MATRIX.verification.delegate=true`），其余 kind 一律 ❌——被授权者只能补 `tree_verify` 落账，不能写 event/status/context/relay/set-session，owner 自验禁令不放宽。变更落 `drift_log`（kind=`security`、severity=`mid`、action=`declare`、leaf_id=null）。用途：现场建树（flow 节点建内层树）后 creator/root 会话 dispose，由受信会话事后补验证。
 
 ## 5. 护栏总表（Z6 稳定对象，全部 S1 继承）
 
@@ -62,6 +63,8 @@ STATUS_ENUM = [active, done, pruned, archived, segment_pending, pending_brief]
 | UUID v4 严格校验 | — | — | 拒全 0/全 f/非 v4/空（V10-uuid-format-strict）；session 真实性 verifier 注入（setSessionVerifier，未注入 bypass 兼容 CLI/测试） |
 | caller 透传 | — | — | run→dispatch→leaf add/set-status/set-session、event append、audit gate 全链 callerSessionId 校验（防借身份五处） |
 | 完整性签名 | — | — | critical 状态（done/pass）无签名 → tamper 告警；writeState 自动签 |
+| 跨进程写互斥 | staleMs=15s / timeoutMs=30s / retryMs=50 | —（`DEFAULT_LOCK_OPTS`，不可配） | 写命令的 read-改-写临界区 = 进程内 per-tree 队列 + `<tree_id>/tree-state.lock` 文件锁：`writeFile(...,{flag:'wx'})`（O_EXCL）原子建锁、nonce 校验释放（防误删他人新锁）、陈旧锁 rename 接管（mtime/内容 ts 超 `staleMs`，留痕 `tree-lock-takeover.log`）、持有期心跳 `utimes`（`staleMs/2` 封顶 5s）——长临界区不被误判陈旧；超时 `E_TREE_LOCK_TIMEOUT`。**只读命令不加锁**（依赖 tmp+rename 原子写读到完整快照）。 |
+| leaf:add 字段白名单 | 13 键（闭集） | — | `leaf:add` 只接受 `leaf_id/session_id/parent/path/role/added_by/relay/taskType/dependencies/brief/dod/model/channel`；白名单外的键 `E_SCHEMA_INVALID`（message 含非法键名与允许清单）；`runtime/verification/status/events/milestones/segment_chain/…` 等内部字段由引擎初始化，**永不接受调用方输入**（v0.9.0）。 |
 | commander 嵌套深度 | ≤3 | — | leaf_add 拦（与 DSH maxDepth:3 恰好同值——嵌套语义天然对齐） |
 | backup 轮转 | 10 | — | doBackup 保留最近 10 份；restore 前自动 before-restore 备份 + tree_id 匹配校验 |
 
@@ -75,6 +78,8 @@ STATUS_ENUM = [active, done, pruned, archived, segment_pending, pending_brief]
 - **临界区铁律**：所有 cmd 的 readState→改→writeState 临界区**纯同步不得 yield**（withLock fn 均同步箭头函数）；文件锁 `.lock` + tmp 原子 rename。
 - 观测层铁律：call_log（每调用成功+失败均记）双层 try 吞错，绝不影响业务；`PROMA_CALL_LOG=0` 测试金标准开关。
 - 错误码体系：E_*（≥30 个）全部挂 help_topic 映射。
+
+> **修订（2026-11-13，tree-engine v0.9.0）**：本仓 DSH 实现的并发分层——**`withTree`（只读）**只经进程内 per-tree `enqueue` 直读 `store.read`，**不加跨进程锁**（写侧 tmp+rename 原子替换保证读到完整快照；读不阻塞写）；**`withTreeMut`（所有写命令）**在 `enqueue` 内再经 `store.withLock` 取跨进程锁后才 read → fn → write，锁在 `fn` 抛错/写失败路径经 `finally` 释放，进程崩溃残留锁由陈旧接管回收。`fsStore.withLock` = `tree-state.lock` 文件锁（`O_EXCL` + nonce + 陈旧接管 + 持有期心跳），`memoryStore.withLock` = 每树 promise 链（进程内串行）；旧 store 未实现 `withLock` 端口时直跑（行为=基线）。拿锁超时抛 `E_TREE_LOCK_TIMEOUT`（message 含 tree_id、锁路径与 `timeoutMs`/`staleMs`）；接管留痕 `tree-lock-takeover.log`。本节以外的冻结正文不变。
 
 ## 7. 竹节（segment）语义
 
