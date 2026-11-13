@@ -189,7 +189,7 @@ node --test tests/*.test.js
 ### P1-1（#8 主旁路）——已闭合，选型说明
 
 - **最终形态**：`dispatch:start` 依赖闸只认**正向结算信号**：`dep.status === 'done'`（三重闸正门）**或** `dep.verification?.pass === true`；`verification.pass===false` 永不放行（保留）；**裸 `runtime.state==='succeeded'` 不再结算依赖**。中途态的 `require_dependency_verification` 配置开关（缺省关）已删除——信任闸不提供「配置即可 reopen」的降级口（原审计 #8 定级「严重」，可配置回退等于把洞留在默认路径上）。
-- **取舍**：复核者两备选——①「依赖闸只认 status==='done'」：会把「`tree_verify` PASS 后指挥官推进下游」这一正常操作契约也拦死（下游派发将强制要求额外一次 `leaf:set-status done`），且与既有 verify-delegate 流程冲突面更大；②「done 事件回流过 milestone 闸」：worker 叶子普遍无 milestones，自报 done 路径仍零验证，洞只缩小未闭合。故取**两路正向判据并集**：三重闸（人工/编排显式收口）与验证 PASS（机器裁决落账）都是强信号，缺一不放行。
+- **取舍**（D25 二次复核 P3-6 措辞更正）：复核者两备选——①「依赖闸只认 status==='done'」：会把「`tree_verify` PASS 后指挥官推进下游」这一正常操作契约也拦死（下游派发将强制要求额外一次 `leaf:set-status done`），且与既有 verify-delegate 流程冲突面更大；②「done 事件回流过 milestone 闸」：`assertMilestoneGate` 对空 milestones = **REJECT**（D25 二次复核指正：本报告初版此处写「对无 milestones worker 仍留洞」是**事实错误**——不是留洞，是把普通 worker **永久拦死**），同样不可操作。故取**两路正向判据并集**：三重闸（人工/编排显式收口）与验证 PASS（机器裁决落账）都是强信号，缺一不放行。二次复核进一步观察：milestones 无工具写入命令、`status=done` 路径经工具面实际不可达，**有效判据实质 = `verification.pass===true`**，比本节文字表述更严（安全结论不变）。
 - **信任模型影响（UNKNOWN-3 回答）**：「无验证 happy path」从放行改为拦截。回归面实测：既有 225 用例中仅 `engine.test.js` 依赖闸用例的最后一段依赖旧语义（runtime.succeeded 直改放行），已按新契约改写为「拦截 → 落 PASS → 放行」；`audit-p2a` #8 用例天然兼容（FAIL 拒 / PASS 放）。操作契约同步：`tree-commander` SKILL §切分判据与错误码表、`skills-usage.md` §9、包 README v0.10.0 节、CHANGELOG——指挥官推进下游前的标准动作 = 收割上游 → `tree_verify` 落 PASS → 再派。
 
 ### P2-2（#21 误导留痕）——已闭合（取建议 (a) 的拒绝分支）
@@ -207,3 +207,26 @@ node --test tests/*.test.js
 ### 未跟进（登记后续批次）
 
 P2-1（stale-done 的 `>=` 等值/时钟回拨窄窗口）、P3-1（relay 自链重复）、P3-2（gc keep=0 破坏强度确认）、P3-5（call-log keep 浮点/并发）、UNKNOWN-1（两本账互斥口径裁决）、UNKNOWN-4（`.tmp` 陈旧副本理论风险）——按本报告 §三 原建议留 batch2，不在本批扩散。
+
+### D25 二次复核（收口验证，2026-11-13 20:5x）
+
+- **复核者**：异族独立子会话（deepseek-official / **deepseek-v4-pro**，只读 + 门禁复跑；前任死于 opencode-go 429 周配额，本轮按交接纪律改用 deepseek-official 通道）。
+- **verdict**：**PASS_WITH_RISKS（无新增 P1/P2，P1-1 确认真闭合）**。
+- **门禁复跑全绿**（复核者独立执行）：tests 225/225 · release-gate 14/14 · check-version-consistency 23 checks OK（1 WARN：project-map 3 处历史段 v0.7.0/0.8.0，属设计内白名单观察项）· doc-links OK · md-tables OK · `require_dependency_verification` 零功能残留（仅 agent.md/本报告历史叙述）。
+- **关键确认**：① #8 新闸三重证据——裸 `runtime.succeeded` 不再结算；verification 写面 owner=false（creator/root/delegate 才可写，且 `leaf:set-verification` 不是工具 action，只能经 `tree_verify` 内部落账）；`status=done` 工具面不可达（`assertMilestoneGate` 空 milestones=REJECT，milestones 无工具写入命令）——**有效判据实质 = `verification.pass===true`，比「两路并集」文档表述实际更严**；② #21 fail-closed 且部署路径未误伤（config 侧 `TREE_ENGINE_CONFIG` 放宽的 init `config uplift` 留痕第二来源仍工作）；③ #28 优先恢复语义未破坏（copyFile/appendCallLog 均 best-effort，异常不抛穿）；④ #15 两条落账路径（普通/adversarial）兼容空-verdicts 校验；⑤ 三处测试为「加强/按更严契约重写」，无弱化凑绿。
+- **二次复核新发现（全部 P3，登记 batch2）**：
+  - P3-6 选型理由事实错误（已当场更正：engine.js 注释 / CHANGELOG / agent.md / 本报告 §四处——「milestone 闸回流对无 milestones worker 留洞」系误写，实际 = `assertMilestoneGate` 空 milestones REJECT 即**永久拦死**）；
+  - P3-7 #28 ENOENT+.tmp 恢复（主文件缺失分支）仍无留痕，「恢复不再静默」仅覆盖损坏路径；
+  - P3-8 `.corrupt-<ts>` 副本永不清理 + 并发同毫秒同路径/重复日志；
+  - P3-9 pruned 依赖但 `verification.pass===true` 仍放行下游（非回归，新门比旧门严；是否排除 pruned/archived 依赖待裁决）；
+  - P3-10 config-uplift 基线不一致（`ctx_segment_threshold` 引擎缺省 42 vs `DEFAULT_GUARDS` 85）——预存在；
+  - P3-11 测试覆盖缺口：`createAdversarial → record → setVerification` 无端到端用例；config uplift 第二来源无专项断言；
+  - P3-12 agent.md D25 行悬空引用（**已当场消解**：本节即二次复核结论与 D12 活体读数正文）；
+  - P3-13 project-map 3 处历史版本漂移 WARN（历史快照段，设计内可接受）。
+
+### D12 受控重载活体读数（2026-11-13 20:53，本会话实机）
+
+- `plugin_manager set_bundle @local/dsh-tree-engine` disable（applied，tree Skill 即时下架）→ enable（applied，Skill 即时回挂）——HMR 热更不可靠面（#13207）按纪律规避。
+- `tree_doctor {action:"run"}` → **7 checks · pass=7 warn=0 fail=0 · version=0.10.0**；带 `tree_id:"d25gcq"` 复跑同读数（树校验通过）。
+- `tree_maintain {action:"gc", tree_id:"d25gcq"}` → **ok（gc archived=0 keep=20 events_cut=0 drift_cut=0 history_cut=0）**；`tree_log {action:"drift"}` 读到 1 条 `kind=security severity=low action=limit reason="gc: archived leaves trimmed (keep=20) …"`——新 gc 代码路径与留痕活体确认（非破坏探针：0 archived）。
+- 探针树 `d25gcp`（首建，root session 为 null → gc 正确拒 `E_BORROWED_IDENTITY`，顺带验证 root-only 授权失败路径）与 `d25gcq` 留存运行时数据目录备查；无业务树被触碰。

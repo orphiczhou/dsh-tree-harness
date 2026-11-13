@@ -606,9 +606,12 @@ export function createEngine(opts) {
       //   ② `verification.pass === true`——验证裁决 PASS（creator/root/delegate 落账，owner 不得自验）。
       // 「自报 done 事件 → runtime.succeeded」**不再**作为依赖结算信号（原主旁路：worker 只需 owner 身份
       // 自报一条 done 即可放行下游，全程零验证——R1 复核 P1-1 实证）。已验证失败（pass===false）的依赖
-      // 仍然永不放行。选型说明：复核者曾建议「只认 status==='done'」或「回流过 milestone 闸」，前者会把
-      // tree_verify PASS 后的正常收口也拦死（操作契约是指挥官验证后推进下游），后者对无 milestones 的
-      // worker 节点仍留洞；本实现取两者并集的正向判据，信任模型影响已同步 SKILL 契约与文档。
+      // 仍然永不放行。选型说明（D25 二次复核 P3-6 措辞更正）：复核者曾建议「只认 status==='done'」或
+      // 「done 回流过 milestone 闸」——前者会把 tree_verify PASS 后的正常收口也拦死（操作契约是指挥官
+      // 验证后推进下游）；后者因 assertMilestoneGate 对空 milestones = REJECT，会把无 milestones 的普通
+      // worker **永久拦死**，同样不可取。本实现取两路正向判据并集（二次复核观察：milestones 无工具写入
+      // 命令，status=done 路径经工具面实际不可达，有效判据实质 = verification.pass===true，比文档表述更严）。
+      // 信任模型影响已同步 SKILL 契约与文档。
       if (Array.isArray(leaf.dependencies) && leaf.dependencies.length > 0) {
         const depState = (d) => {
           const dep = state.leaves[d]
