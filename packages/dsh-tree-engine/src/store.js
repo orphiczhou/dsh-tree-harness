@@ -12,6 +12,9 @@ import { promises as fsp } from 'node:fs'
 import path from 'node:path'
 import { acquireTreeLock, releaseTreeLock, lockPathFor, DEFAULT_LOCK_OPTS } from './lock.js'
 
+/** call-log 单文件上限（flash 审计 #4/#30：无界 append 会长期膨胀；超限滚动保留 1 份）。 */
+export const CALL_LOG_MAX_BYTES = 10 * 1024 * 1024
+
 /**
  * @typedef {Object} TreeStore
  * @property {(treeId: string) => Promise<any|null>} read        null = 树不存在
@@ -57,14 +60,48 @@ export function fsStore(/** @type {string} */ rootDir, /** @type {Partial<typeof
   const statePath = (treeId) => path.join(dirOf(treeId), 'tree-state.json')
   const logPath = (treeId) => path.join(dirOf(treeId), 'call-log.jsonl')
   const lockOptions = { ...DEFAULT_LOCK_OPTS, ...lockOpts }
+  /** call-log 追加（read 的灾备恢复留痕与 appendCallLog 端口共用；双层吞错铁律）。 */
+  async function appendCallLogLine(treeId, line) {
+    try {
+      await fsp.mkdir(dirOf(treeId), { recursive: true })
+      const p = logPath(treeId)
+      // flash 审计 #4/#30：10MB 滚动（rename → .1，旧 .1 覆盖）。旧实现 appendFile 无大小检查，长跑树无界膨胀。
+      try {
+        const st = await fsp.stat(p)
+        if (st.size >= CALL_LOG_MAX_BYTES) {
+          await fsp.unlink(p + '.1').catch(() => {})
+          await fsp.rename(p, p + '.1').catch(() => {})
+        }
+      } catch { /* 文件不存在 / stat 失败：直接 append */ }
+      await fsp.appendFile(p, JSON.stringify(line) + '\n', 'utf-8')
+    } catch { /* swallow */ }
+  }
   return {
     async read(treeId) {
+      const primary = statePath(treeId)
+      const parse = async (/** @type {string} */ p) => JSON.parse(await fsp.readFile(p, 'utf-8'))
       try {
-        const txt = await fsp.readFile(statePath(treeId), 'utf-8')
-        return JSON.parse(txt)
+        return await parse(primary)
       } catch (/** @type {any} */ e) {
-        if (e && e.code === 'ENOENT') return null
-        throw e
+        if (e && e.code === 'ENOENT') {
+          // 主文件缺失：若存在 write() 的原子写残留（writeFile 成功、rename 前崩溃）→ 只读恢复。
+          try { return await parse(primary + '.tmp') } catch { return null }
+        }
+        // flash 审计 #28：主文件损坏（写中断/半截 JSON）时，旧实现整棵树 read 抛错 → 所有操作死锁。
+        // 回退尝试 .tmp 原子写副本（下次 write 会把修复后的 state 落回主文件）；失败才抛原错误。
+        // R1 复核 P2-3（2026-11-13）：灾备恢复**不得静默**——保留损坏原件副本（取证）+ call-log 留痕
+        // （state.recovered 含来源/损坏副本路径/解析错误摘要）。
+        try {
+          const recovered = await parse(primary + '.tmp')
+          const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+          const corruptCopy = `${primary}.corrupt-${stamp}`
+          await fsp.copyFile(primary, corruptCopy).catch(() => {})
+          await appendCallLogLine(treeId, {
+            ts: new Date().toISOString(), event: 'state.recovered', source: `${primary}.tmp`,
+            corrupt_copy: corruptCopy, error: String(e?.message ?? e).slice(0, 300),
+          })
+          return recovered
+        } catch { throw e }
       }
     },
     async write(treeId, state) {
@@ -80,10 +117,7 @@ export function fsStore(/** @type {string} */ rootDir, /** @type {Partial<typeof
       } catch { return [] }
     },
     async appendCallLog(treeId, line) {
-      try { // 双层吞错铁律：观测层绝不影响业务
-        await fsp.mkdir(dirOf(treeId), { recursive: true })
-        await fsp.appendFile(logPath(treeId), JSON.stringify(line) + '\n', 'utf-8')
-      } catch { /* swallow */ }
+      await appendCallLogLine(treeId, line)
     },
     /**
      * 跨进程临界区（flash 审计 #1）：acquire 文件锁 → fn（内部 read+write）→ finally release。

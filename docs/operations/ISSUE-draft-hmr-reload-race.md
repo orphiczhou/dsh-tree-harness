@@ -1,8 +1,9 @@
 # [平台 Issue 草稿] HMR 热重载替换工具注册：在途步骤对已注册工具的调用被判 `UNKNOWN_TOOL`
 
-> **状态：草稿（未对外提交）** —— 2026-11-13 由 `D24-FLOW-M12-PILOT` 会话起草；**经用户明确批准后才可提交**到 DSH 宿主项目 issue 追踪器。
+> **状态：已提交官方（2026-11-13 20:22，用户批准）** —— deepseek-ai/deepseek-harness Discussions **[#13207](https://github.com/deepseek-ai/deepseek-harness/discussions/13207)**（公开版已脱敏：本机路径/会话 id 以占位符表示；本文件保留为内部完整版，§9 证据路径为本机真实路径）。
+> 起草：`D24-FLOW-M12-PILOT` 会话（2026-11-13）。
 > 建议严重度：**P2**（开发态 `hmr.root` 热更路径；发布物与非热更运行不受影响，但会造成工具面瞬态失败、审计误判和重试成本）。
-> 同批另一份草稿：[ISSUE-draft-max-tokens-inheritance.md](ISSUE-draft-max-tokens-inheritance.md)（跨模型 `maxTokens` 继承）。
+> 同批另一份：[ISSUE-draft-max-tokens-inheritance.md](ISSUE-draft-max-tokens-inheritance.md)（跨模型 `maxTokens` 继承，[#13208](https://github.com/deepseek-ai/deepseek-harness/discussions/13208)）。
 
 ---
 

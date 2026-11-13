@@ -4,7 +4,7 @@ description: '树节点执行者（worker）：按派发任务书与 DoD 完成�
 whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / DoD / 结算指令；用户说「按任务书干」「执行这个节点」「干完结算」「自报进度」「继续干，快到上限就交接」「上下文 50% 就交接」；你是树的执行层，需要知道能做什么/不能做什么、竹节协议和 50% 自主交接规则时。'
 ---
 
-# tree-worker SKILL（DSH 版 v2.3，随 tree-engine v0.9.0 分发）
+# tree-worker SKILL（DSH 版 v2.3，随 tree-engine v0.10.0 分发）
 
 > 你是被派发到树节点的**执行者（worker）**。树侧只依赖 tree-engine 的 9 个工具（实际只需 `tree_report` 上报）；
 > 你的工作面很窄：**干活 + 用 `tree_report` 上报 + 到点交接**。不要碰树的结构。

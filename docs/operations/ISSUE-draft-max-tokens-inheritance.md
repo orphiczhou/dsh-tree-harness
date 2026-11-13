@@ -1,8 +1,9 @@
 # [平台 Issue 草稿] 子会话路由切换时 `maxTokens` 无条件继承父会话：小上限供应商首请求即 400
 
-> **状态：草稿（未对外提交）** —— 2026-11-13 由 `D24-FLOW-M12-PILOT` 会话起草；**经用户明确批准后才可提交**到 DSH 宿主项目 issue 追踪器。
+> **状态：已提交官方（2026-11-13 20:22，用户批准）** —— deepseek-ai/deepseek-harness Discussions **[#13208](https://github.com/deepseek-ai/deepseek-harness/discussions/13208)**（公开版已脱敏：本机路径/会话 id 以占位符表示；本文件保留为内部完整版，§9 证据路径为本机真实路径）。
+> 起草：D24-FLOW-M12-PILOT 会话（2026-11-13）。
 > 建议严重度：**P2**（跨模型派发/异族交叉复核不可用；有绕行，但会浪费会话与 turn，且错误语义误导）。
-> 同批另一份草稿：[ISSUE-draft-hmr-reload-race.md](ISSUE-draft-hmr-reload-race.md)（HMR 重载与工具准入）。
+> 同批另一份：[ISSUE-draft-hmr-reload-race.md](ISSUE-draft-hmr-reload-race.md)（HMR 重载与工具准入，[#13207](https://github.com/deepseek-ai/deepseek-harness/discussions/13207)）。
 
 ---
 

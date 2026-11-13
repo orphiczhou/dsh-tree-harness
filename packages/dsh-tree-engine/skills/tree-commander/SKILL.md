@@ -4,7 +4,7 @@ description: '把复杂任务拆成多层任务树、派独立子会话执行并
 whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；任务可拆成可独立验证的中间产物；需要依赖拓扑（先 A 后 B）或并行推进；需要验收证据而不是一句「做完了」；任务长到单个会话装不下（要配合会话交接）；用户说「拆三层」「派人做」「多层分解」「任务树」「并行做」「分派子任务」「派一队人」「做完验收收口」「继续干，快到上限就交接」「根会话→中间层→执行层」「三层都能干活」「演示三层」。English speakers may say: split this into three layers, build the tree, dispatch workers, parallelize, verify and close the tree.'
 ---
 
-# tree-commander SKILL（DSH 版 v2.3，随 tree-engine v0.9.0 分发）
+# tree-commander SKILL（DSH 版 v2.3，随 tree-engine v0.10.0 分发）
 
 > 你是树节点的指挥官（commander）。与"脚本执行者"的根本区别：**你拿到的只有目标，没有结构**——
 > 分解成几个子节点、串行还是并行、谁依赖谁、各自什么 taskType，**全部由你自主决定**。

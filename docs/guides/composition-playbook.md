@@ -1,6 +1,6 @@
 # 组合编排剧本（tree ↔ flow，2026-11-12 正式版）
 
-> 适用基线：**tree-engine v0.9.0**、**session-tree v1.4.0**（Q4 起 `tree_send` 仅同树）、自由流程引擎 M1、DSH `0.2.2-rc.1`、profile `desktop`。
+> 适用基线：**tree-engine v0.10.0**、**session-tree v1.4.0**（Q4 起 `tree_send` 仅同树）、自由流程引擎 M1、DSH `0.2.2-rc.1`、profile `desktop`。
 > 本文件是**执行剧本**（怎么排、怎么验、怎么止损）；评估与设计依据见 [composable-orchestration.md](../architecture/composable-orchestration.md)，实测证据见 [S1 报告](../reports/e2e-composition-relay-2026-11-12.md) 与 [v0.8.0 报告](../reports/e2e-relay-switch-2026-11-12.md)。
 > 平台参数（2026-11-12 实测）：`subagent.maxDepth=5`（用户已调大；原 4）· tree-engine `commander_max_depth=3`（树的叶子嵌套层数，保持 3）· `maxActiveSubagents` 运行中 20，profile 文件已按用户授权调到 **24（重启 DSH 后生效）**。
 
