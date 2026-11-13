@@ -4,7 +4,7 @@ description: '把复杂任务拆成多层任务树、派独立子会话执行并
 whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；任务可拆成可独立验证的中间产物；需要依赖拓扑（先 A 后 B）或并行推进；需要验收证据而不是一句「做完了」；任务长到单个会话装不下（要配合会话交接）；用户说「拆三层」「派人做」「多层分解」「任务树」「并行做」「分派子任务」「派一队人」「做完验收收口」「继续干，快到上限就交接」「根会话→中间层→执行层」「三层都能干活」「演示三层」。English speakers may say: split this into three layers, build the tree, dispatch workers, parallelize, verify and close the tree.'
 ---
 
-# tree-commander SKILL（DSH 版 v2.2，随 tree-engine v0.8.1 分发）
+# tree-commander SKILL（DSH 版 v2.3，随 tree-engine v0.9.0 分发）
 
 > 你是树节点的指挥官（commander）。与"脚本执行者"的根本区别：**你拿到的只有目标，没有结构**——
 > 分解成几个子节点、串行还是并行、谁依赖谁、各自什么 taskType，**全部由你自主决定**。
@@ -25,8 +25,8 @@ whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；�
 | `tree_report` | `context` / `event` | 上报上下文水位 / 追加事件（progress/blocked/plan/brief_echo/done/…） |
 | `tree_status` | `overview` / `validate` / `sessions` / `harvest` | 全局 dump / 校验 / 会话预算 / **显式收割** |
 | `tree_verify` | `run` / `dod` / `adversarial` | 跑验证 / 看 DoD / 异族红队对抗验证 |
-| `tree_log` | `events` / `drift` / `heartbeat` / `communication` | 查日志（只读） |
-| `tree_maintain` | `backup` / `restore` / `nudge-reset` / `register-session` | 维护，一般不用 |
+| `tree_log` | `events` / `drift` / `heartbeat` / `communication` | 查日志（只读）；v0.9.0 起一行一条，done 事件 `meta` 可机读（events 尾部 50 条，单条 meta 超 800 字符截断） |
+| `tree_maintain` | `backup` / `restore` / `nudge-reset` / `register-session` / `verify-delegate` | 维护，一般不用；`verify-delegate` = root 授予受信会话补验证写权（全量替换、`[]` 清空，v0.9.0） |
 | `tree_doctor` | `run` | 只读自检（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env` 七项；FAIL 不 throw） |
 
 ## 1. 自主分解流程（拿到目标后）
@@ -112,6 +112,7 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
 
 - **命名规则**：`<tree_id>-<path 段>-<name>`；`path` 段必须以**大写字母开头**（如 `C1`、`C1a1`；不能写成 `review1`），`path` 字段必须**逐字等于** leaf_id 里的路径段；可带 `-sN`/`-iN` 后缀。不写 `path` 时不校验 path。违反命名 → `E_NAME_INVALID`（helpTopic `naming_convention`）；path 与 leaf_id 不一致 → `E_SCHEMA_INVALID`（helpTopic `how_to_init`）。
 - `added_by` 必须等于引擎提取的调用者 id（v0.7.0 起按**归一化**比较：`session-` 前缀与裸 UUID 视为同一会话，可原样传 `$env:DSH_SESSION_ID`；不同会话仍 `E_BORROWED_IDENTITY`）。
+- **`leaf` 对象字段白名单（v0.9.0）**：`tree_node {action:"add"}` 的 `leaf` 只接受 **13 个键**——`leaf_id` / `session_id` / `parent` / `path` / `role` / `added_by` / `relay` / `taskType` / `dependencies` / `brief` / `dod` / `model` / `channel`；白名单外的键一律 `E_SCHEMA_INVALID`（message 含非法键名与允许清单）。`runtime` / `verification` / `status` / `created_at` / `events` / `milestones` / `segment_chain` / `drift_history` / `context_usage_pct` / `nudge_count` 等**内部字段由引擎初始化，不接受调用方输入**（预注入会被拒）。
 - 角色闭集：`commander` / `worker`（root 只由 tree_plan 创建，`auditor` 也可建但不做执行主力）。
 - worker 初始状态 `pending_brief`；commander/auditor 初始 `active`。
 
@@ -149,6 +150,20 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
 - 裁决落账 `leaf.verification{policy_id, pass, verdicts}`；**PASS 才可视为该点收口**（协议纪律；引擎不强制）。
 - ⚠️ **FAIL 不抛错**：`tree_verify` 即使不通过也正常返回 `{result:{pass:false, verdicts}}`——必须读 `result.pass` 与 `verdicts[].detail`，不要以为「没报错 = 通过」。
 - ⚠️ `tree_node {action:"set-status", status:"done"}` 实际只有**两闸**：已有 done 事件 + milestones 非空且全 `audit_pass=true`；而**里程碑面没有工具写入命令**（工具面打不通 done 状态）。收口判据用 `runtime.state=succeeded` + verify PASS，不要反复尝试 set-status done。已知边界：`leaf.status` 可能停留在 `pending_brief`/`active`，与 runtime 终态脱节，**以 runtime 为准**。
+- 现场建树（flow 节点内 `tree_plan`）的验证归属见 §1.5：**收口前 verify** 或 **root 授权委托**。
+
+### 1.5 现场建树的验证归属（v0.9.0）
+
+flow 节点在自己的会话里 `tree_plan` 现场建树（剧本 B/C）时，creator/root 就是该 flow 节点会话；节点结束即 dispose。此后外层 Lead/commander 再补 `tree_verify` 会被 `E_BORROWED_IDENTITY` 拒（`verification` 只允许 creator | root）。两条出路：
+
+- **a) 收口前 verify（缺省）**：创建者（flow 节点会话 / root）在结束前自己跑 `tree_verify` 并把裁决落账到 `leaf.verification`；节点结束后按 `runtime.state=succeeded` + `tree_status {action:"validate"}` 收口（需在报告标注该口径）。
+- **b) 验证授权委托（v0.9.0）**：root 会话在结束前执行
+
+  ```json
+  { "action": "verify-delegate", "tree_id": "<tree_id>", "session_ids": ["<受信会话 id>"] }
+  ```
+
+  之后被授权者即可对该树的 leaf 补 `tree_verify`。语义：**仅 root 会话可授予**（root 的 `session_id` 为 null → 拒并说明；非 root → `E_BORROWED_IDENTITY`）；`session_ids` **全量替换**（不是追加），`[]` 清空；入参按归一化裸 UUID 严格校验 v4；**最小授权面**——被授权者只能写 `leaf.verification`，event/status/context/relay/set-session 等一律拒（`E_BORROWED_IDENTITY`）；变更落 `drift_log`（kind=`security`、action=`declare`、leaf_id=null）留痕。
 
 ## 2. 动态性：分解不是一次性承诺
 
@@ -241,11 +256,11 @@ worker 层（挂在 commander 下，命名用更细的 path 段）：
 | `E_DEPTH_EXCEEDED` | 超过 3 层；把更细分解交给 worker 内部步骤，不要加层 |
 | `E_DEPENDENCY_NOT_MET` | 上游未 succeeded：等它收割，不是你的 bug |
 | `E_DEPENDENCY_CYCLE` | 依赖成环，装载期就拒；改拓扑 |
-| `E_BORROWED_IDENTITY` | 借身份：done 只由 owner 写；set-status 只由 owner/creator/root；set-session 只由 creator；**set-relay 只由 creator/root（v0.8.0）** |
+| `E_BORROWED_IDENTITY` | 借身份：done 只由 owner 写；set-status 只由 owner/creator/root；set-session 只由 creator；**set-relay 只由 creator/root（v0.8.0）**；**verify-delegate 只由 root、被授权者只能写 verification（v0.9.0）** |
 | `E_TS_NOT_MONOTONIC` | 事件时间倒挂（仅注入 ts 时可能触发；工具路径 ts 由引擎生成，通常不触发） |
 | `E_MAX_SESSIONS` / `E_NODE_BUDGET_EXCEEDED` / `E_SUBAGENT_BUDGET_EXCEEDED` | 预算护栏满：收口/剪枝后再建 |
 | `E_PORTS_NOT_WIRED` / `E_PORTS_PROTOCOL` | 宿主编排端口不可用：如实上报，不要伪造子会话 |
-| `E_STATUS_TRANSITION_INVALID` | 状态机不允许该迁移（看 allowed 列表） |
+| `E_STATUS_TRANSITION_INVALID` | 状态机不允许该迁移（看 allowed 列表）；v0.9.0 起 nudge 第 7 次强制 prune 也走状态机——`archived` 叶子被拒（且 `nudge_count` 不持久化增加、不落 drift） |
 | `E_INVALID_UUID_STRICT` | session_id 归一化后必须是严格 UUID v4（v0.7.0 起接受可选 `session-` 前缀；非 UUID 仍拒） |
 
 ## 6. 一图流

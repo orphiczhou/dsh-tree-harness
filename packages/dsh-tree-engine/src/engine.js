@@ -20,6 +20,17 @@ import { systemClock } from './clock.js'
 const nowIso = (clock) => new Date(clock.now()).toISOString()
 
 /**
+ * flash 审计 #19：leaf:add 输入字段白名单（fail-closed）。
+ * 内部字段（runtime/verification/status/created_at/events/milestones/segment_chain/
+ * drift_history/context_usage_pct/nudge_count/last_event_* 等）由引擎初始化，永不接受调用方输入。
+ * 白名单外的键一律 E_SCHEMA_INVALID（message 含非法键名与允许清单）。
+ */
+export const LEAF_ADD_ALLOWED_FIELDS = Object.freeze([
+  'leaf_id', 'session_id', 'parent', 'path', 'role', 'added_by',
+  'relay', 'taskType', 'dependencies', 'brief', 'dod', 'model', 'channel',
+])
+
+/**
  * @param {object} opts
  * @param {import('./store.js').TreeStore} opts.store
  * @param {import('./clock.js').Clock} [opts.clock]
@@ -30,15 +41,39 @@ export function createEngine(opts) {
   const clock = opts.clock ?? systemClock()
   const cfg = { ...DEFAULT_GUARDS, ctx_segment_threshold: 42, segment_max_chain_length: 5, ...opts.config }
 
-  async function withTree(treeId, fn) {
+  function assertTreeId(treeId) {
     if (typeof treeId !== 'string' || !treeId.trim()) treeError('E_SCHEMA_INVALID', 'tree_id is required')
     if (!TREE_ID_RE.test(treeId)) {
       treeError('E_NAME_INVALID', `tree_id "${treeId}" must match [a-z][a-z0-9_]{3,7} (4-8 chars, lowercase, no hyphen)`)
     }
+  }
+
+  /**
+   * 只读入口：进程内 per-tree 队列直读，不加跨进程锁（读不阻塞、原子 rename 保证快照一致）。
+   * 仅限无副作用命令（get/list/validate/dump 等）。
+   */
+  async function withTree(treeId, fn) {
+    assertTreeId(treeId)
     return enqueue(treeId, async () => {
       const state = await store.read(treeId)
       return fn(state)
     })
+  }
+
+  /**
+   * 写入口（flash 审计 #1）：读-改-写绝对临界区 = 进程内队列 + store.withLock 跨进程锁。
+   * fsStore → 文件锁（.lock）；memoryStore → 每树 promise 链；旧 store 无 withLock 端口 → 直跑（行为=基线）。
+   * 锁在 fn 抛错/写失败路径经 finally 释放；进程崩溃残留锁由陈旧接管回收（见 lock.js）。
+   */
+  const withLock = typeof store.withLock === 'function'
+    ? (treeId, fn) => store.withLock(treeId, fn)
+    : (treeId, fn) => fn()
+  async function withTreeMut(treeId, fn) {
+    assertTreeId(treeId)
+    return enqueue(treeId, async () => withLock(treeId, async () => {
+      const state = await store.read(treeId)
+      return fn(state)
+    }))
   }
 
   function mustLeaf(state, leafId) {
@@ -53,7 +88,7 @@ export function createEngine(opts) {
     // W2.6（2026-11-12）：会话 id 归一化——root/主会话 DSH_SESSION_ID 带 `session-` 前缀，
     // state 一律存归一化裸 UUID 规范形（校验仍严格 v4）。
     const sessionId = normalizeSessionId(sessionIdRaw ?? null)
-    return withTree(treeId, async (existing) => {
+    return withTreeMut(treeId, async (existing) => {
       if (existing) treeError('E_DUPLICATE_LEAF', `tree "${treeId}" already initialized`)
       const rootLeafId = `${treeId}-root`
       const state = {
@@ -72,6 +107,9 @@ export function createEngine(opts) {
           },
         },
         drift_log: [], session_registry: {},
+        // A4：验证授权委托（root 会话可在自己结束前把「补验证」写权授予受信会话）。
+        // 树级、归一化裸 UUID 列表；全量替换语义；旧树缺字段读侧惰性缺省 []（不要求迁移）。
+        verify_delegates: [],
       }
       if (sessionId) {
         if (!isStrictUuidV4(sessionId)) treeError('E_INVALID_UUID_STRICT', `session_id "${sessionId}" must be strict UUID v4`)
@@ -84,9 +122,14 @@ export function createEngine(opts) {
   // ── leaf add ─────────────────────────────────────────
   async function leafAdd(args, caller) {
     const [treeId, leaf] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       if (!state) treeError('E_TREE_NOT_FOUND', `tree "${treeId}" not found`)
       if (!leaf || typeof leaf !== 'object') treeError('E_SCHEMA_INVALID', 'leaf object required')
+      // flash 审计 #19：字段白名单 fail-closed（防 runtime/verification 预注入伪造）
+      const disallowed = Object.keys(leaf).filter((k) => !LEAF_ADD_ALLOWED_FIELDS.includes(k))
+      if (disallowed.length > 0) {
+        treeError('E_SCHEMA_INVALID', `leaf contains disallowed field(s) for leaf:add: "${disallowed.join('", "')}" (allowed: ${LEAF_ADD_ALLOWED_FIELDS.join(', ')})`)
+      }
       const { leaf_id, session_id: rawSessionId, parent, path: leafPath, role, added_by: rawAddedBy } = leaf
       // v0.8.0（P0-A）：per-leaf 竹节开关持久化；缺省 auto（参与竹节），仅接受 auto|off。
       const relay = leaf.relay === undefined ? 'auto' : leaf.relay
@@ -141,6 +184,13 @@ export function createEngine(opts) {
       if (leaf.taskType !== undefined && typeof leaf.taskType !== 'string') {
         treeError('E_SCHEMA_INVALID', `taskType "${String(leaf.taskType)}" must be a string`)
       }
+      // R1 复核（2026-11-13）：model/channel 若在场必须是字符串——旧实现原样存储任意 JSON，
+      // 可经竹节 relay 的 assignee 回退流入宿主端口（形状污染）。brief/dod 保留任意 JSON（用户内容）。
+      for (const key of /** @type {const} */ (['model', 'channel'])) {
+        if (leaf[key] !== undefined && typeof leaf[key] !== 'string') {
+          treeError('E_SCHEMA_INVALID', `leaf.${key} must be a string when provided (got ${Array.isArray(leaf[key]) ? 'array' : typeof leaf[key]})`)
+        }
+      }
       // 防借身份：caller 必须 === added_by（R2 洁净室 D2-B1）
       assertCallerIs(caller, added_by, 'leaf_add (added_by)')
       // 会话唯一 + 预算（E2E 修复：null 会话（PENDING 型）跳过冲突/预算——与 root.session_id=null 不冲突）
@@ -152,6 +202,12 @@ export function createEngine(opts) {
       }
       const ab = activeLeafBudget(state, cfg)
       if (ab.reached) treeError('E_NODE_BUDGET_EXCEEDED', `tree "${treeId}" active leaves ${ab.count + 1} > node_budget ${ab.max}`)
+      // R1 复核（2026-11-13，P1）：既存 leaf_id 拒绝 re-add。旧实现直接覆盖 → 可擦除 archived/pruned
+      // 终态、done 事件与 drift 审计痕、重置 nudge_count，抵销 #7「archived 不可逆」语义并使 validate
+      // 的 status_event_mismatch 闸失去原证据。节点复用走 dispatch/set-session，不复用 leaf:add。
+      if (state.leaves[leaf_id]) {
+        treeError('E_DUPLICATE_LEAF', `leaf "${leaf_id}" already exists in tree "${treeId}" (re-add would erase terminal state/events/drift; use dispatch/set-session to rebind instead)`)
+      }
       state.leaves[leaf_id] = {
         ...leaf, relay, status: leaf.role === 'worker' ? 'pending_brief' : 'active',
         created_at: nowIso(clock), events: [], milestones: [], segment_chain: [], drift_history: [],
@@ -170,7 +226,7 @@ export function createEngine(opts) {
   // ── set-status（含 done 三重闸 + 级联 pruned）─────────
   async function setStatus(args, caller) {
     const [treeId, leafId, status] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       // caller：owner / creator / root（P1-05 统一写权矩阵，语义与旧版一致）
       assertLeafWriter(state, leaf, caller, 'status', state.leaves?.[`${treeId}-root`]?.session_id)
@@ -202,7 +258,7 @@ export function createEngine(opts) {
   async function setSession(args, caller) {
     const [treeId, leafId, sessionIdRaw] = args
     const sessionId = normalizeSessionId(sessionIdRaw)
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       // 仅 creator（added_by）可重绑 owner；root 例外未开（P1-05 矩阵，不扩大写面）
       assertLeafWriter(state, leaf, caller, 'set-session')
@@ -220,7 +276,7 @@ export function createEngine(opts) {
   // ── set-verification（验证裁决落账：taskType 路由的判据持久化到 leaf）──
   async function setVerification(args, caller) {
     const [treeId, leafId, result] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       // P1-05：verification 落账仅 creator/root（tree_verify 由指挥官跑；owner 不得自验）
       assertLeafWriter(state, leaf, caller, 'verification', state.leaves?.[`${treeId}-root`]?.session_id)
@@ -238,6 +294,48 @@ export function createEngine(opts) {
     })
   }
 
+  // ── verify-delegate（A4：验证授权委托）───────────────────
+  // 背景（D22 实测缺口）：现场建树模式（flow 节点在自己的会话里 tree_plan 建内层树）下
+  // root/creator = flow 节点会话，节点结束即 dispose；此后外层 Lead/commander 想事后
+  // tree_verify 补验证，被 E_BORROWED_IDENTITY 拒绝（verification 只允许 creator|root）。
+  // 方案：root 会话可在自己结束前把「补验证」写权显式授予受信会话 id 列表。
+  // 最小授权面：被授权者只能写 leaf.verification（LEAF_WRITE_MATRIX.verification.delegate=true），
+  // 不能写 event/status/context/relay/set-session/cancel（其余 kind delegate:false）。
+  async function verifyDelegate(args, caller) {
+    const [treeId, sessionIdsRaw] = args
+    return withTreeMut(treeId, async (state) => {
+      if (!state) treeError('E_TREE_NOT_FOUND', `tree "${treeId}" not found`)
+      // 入参：非空字符串数组（[] = 清空）；归一化后逐个严格 UUID v4 校验（fail-closed 先于授权判定）
+      if (!Array.isArray(sessionIdsRaw)) treeError('E_SCHEMA_INVALID', 'session_ids must be an array of session id strings (empty array clears delegation)')
+      const normIds = []
+      for (const raw of sessionIdsRaw) {
+        if (typeof raw !== 'string' || !raw.trim()) treeError('E_SCHEMA_INVALID', 'session_ids entries must be non-empty strings')
+        const norm = normalizeSessionId(raw)
+        if (!isStrictUuidV4(norm)) treeError('E_INVALID_UUID_STRICT', `session_id "${raw}" must be strict UUID v4 (normalized: "${norm}")`)
+        normIds.push(norm)
+      }
+      // 授权仅该树 root 会话；root 会话为 null 的树 → 拒绝并说明
+      const rootSid = state.leaves?.[`${treeId}-root`]?.session_id
+      if (typeof rootSid !== 'string' || !rootSid) {
+        treeError('E_BORROWED_IDENTITY', `tree "${treeId}" root session is null: verify delegation (delegated verification authority) cannot be declared without a root session`)
+      }
+      if (!sameSession(caller, rootSid)) {
+        treeError('E_BORROWED_IDENTITY', `verify-delegate is root-only: caller "${String(caller ?? '(missing)').slice(0, 8)}" is not the tree root session — only the root may declare delegated verification authority`)
+      }
+      // 全量替换（不是追加）；旧树无该字段 → 惰性补写（不要求迁移）
+      if (!Array.isArray(state.verify_delegates)) state.verify_delegates = []
+      state.verify_delegates = normIds
+      // 审计留痕：kind:'security'、action:'declare'、leaf_id:null、reason 含授予对象与调用者
+      const entry = {
+        ts: nowIso(clock), leaf_id: null, kind: 'security', severity: 'mid', action: 'declare',
+        reason: `verify_delegates replaced with [${normIds.join(', ') || '(none)'}] by caller ${String(caller ?? '(missing)')} (delegated verification authority)`,
+      }
+      state.drift_log.push(entry)
+      await store.write(treeId, state)
+      return { tree_id: treeId, verify_delegates: state.verify_delegates }
+    })
+  }
+
   // ── set-relay（v0.8.0 P0-A：per-leaf 竹节开关）────────────────
   // 等待外部编排（flow / tree_verify / 长命令）的 leaf 可由指挥官把竹节关掉：
   // leaf.relay='off' 时 sweep 跳过该 leaf 的竹节判定（超时/收割语义不变、不改 runtime.state），
@@ -247,7 +345,7 @@ export function createEngine(opts) {
     const [treeId, leafId, relayRaw] = args
     const relay = relayRaw === undefined ? 'auto' : relayRaw
     if (relay !== 'auto' && relay !== 'off') treeError('E_SCHEMA_INVALID', `relay "${String(relayRaw)}" must be "auto" or "off"`)
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       assertLeafWriter(state, leaf, caller, 'relay', state.leaves?.[`${treeId}-root`]?.session_id)
       leaf.relay = relay
@@ -260,7 +358,7 @@ export function createEngine(opts) {
   async function setContext(args, caller) {
     const [treeId, leafId, pct] = args
     if (!Number.isInteger(pct) || pct < 0 || pct > 100) treeError('E_SCHEMA_INVALID', `pct "${pct}" must be an integer 0-100`)
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       // P1-05：水位自报仅 owner（执行者本人）或 root（信任锚监控）；creator 不得代报
       assertLeafWriter(state, leaf, caller, 'context', state.leaves?.[`${treeId}-root`]?.session_id)
@@ -282,7 +380,7 @@ export function createEngine(opts) {
   // ── event append（枚举 + ts 单调 + done 所有权 + spawn 预算）──
   async function eventAppend(args, caller, tsIso) {
     const [treeId, leafId, type, meta] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       if (!EVENT_TYPE_ENUM.includes(type)) treeError('E_SCHEMA_INVALID', `event type "${type}" invalid (${EVENT_TYPE_ENUM.join('|')})`)
       // 统一写权矩阵（P1-05）：非 done 事件 owner/creator 可写；done 维持 V10-trust-anchor-fix 仅 owner
@@ -317,7 +415,7 @@ export function createEngine(opts) {
     const [treeId, leafId, newSessionIdRaw] = args
     // W2.6：竹节接力会话 id 归一化（带 `session-` 前缀也可登记）
     const newSessionId = normalizeSessionId(newSessionIdRaw)
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       if (!isStrictUuidV4(newSessionId)) treeError('E_INVALID_UUID_STRICT', `new_session_id "${newSessionId}" must be strict UUID v4`)
       if ((leaf.segment_chain ?? []).includes(newSessionId)) {
@@ -344,11 +442,17 @@ export function createEngine(opts) {
   // ── nudge append（7-strike）───────────────────────────
   async function nudgeAppend(args) {
     const [treeId, leafId] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
+      // R1 复核（2026-11-13，P2）：root 是信任锚（root leaf = 树身份/派发权来源），不允许被 7-strike 强制摘除。
+      if (leaf.role === 'root') treeError('E_SCHEMA_INVALID', `cannot nudge root leaf "${leafId}" (root is the trust anchor; 7-strike forced prune must not remove it)`)
       leaf.nudge_count = (leaf.nudge_count ?? 0) + 1
       const esc = nudgeEscalation(leaf.nudge_count)
       if (esc.forcedPrune) {
+        // flash 审计 #7：强制 prune 必须走状态机闭集——archived（不可逆语义）第 7 次 nudge 被拒
+        // （E_STATUS_TRANSITION_INVALID，抛错发生在 write 前 → nudge_count 也不持久化增加），
+        // done→pruned 等白名单迁移照常成功并落 drift 留痕。
+        assertTransition(leaf.status, 'pruned')
         leaf.status = 'pruned'
         leaf.drift_history.push({ ts: nowIso(clock), leaf_id: leafId, kind: 'rhythm', severity: 'high', action: 'prune', reason: `auto-pruned after ${leaf.nudge_count} nudges (V10-nudge-escalation)` })
       }
@@ -429,7 +533,7 @@ export function createEngine(opts) {
    *  非可序列化引用只经 ports 透传；state 仅存 parentSessionId（interrupt 持久地址）。 */
   async function dispatchStart(args, caller) {
     const [treeId, leafId, spec] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       if (leaf.role === 'root') treeError('E_SCHEMA_INVALID', 'cannot dispatch root leaf')
       const rt = runtimeOf(leaf)
@@ -498,7 +602,7 @@ export function createEngine(opts) {
   /** dispatch:cancel — 取消（先到者生效：与超时硬截止/竹节不叠加）。 */
   async function dispatchCancel(args, caller) {
     const [treeId, leafId] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       // P1-05：止血操作 owner/creator/root 均可（陌生人不得取消别人的 running 节点）
       assertLeafWriter(state, leaf, caller, 'cancel', state.leaves?.[`${treeId}-root`]?.session_id)
@@ -571,7 +675,7 @@ export function createEngine(opts) {
     const results = []
     for (const treeId of await store.list()) {
       try {
-        results.push(await enqueue(treeId, async () => {
+        results.push(await enqueue(treeId, async () => withLock(treeId, async () => {
           const state = await store.read(treeId)
           if (!state) return { tree_id: treeId, skipped: 'missing' }
           const events = []
@@ -620,7 +724,7 @@ export function createEngine(opts) {
           }
           await store.write(treeId, state)
           return { tree_id: treeId, events }
-        }))
+        })))
       } catch (e) {
         const errLine = { ts: nowIso(clock), sweep_error: String(e?.message ?? e), stack: String(e?.stack ?? '').slice(0, 500) }
         await store.appendCallLog(treeId, errLine).catch(() => {})
@@ -657,7 +761,7 @@ export function createEngine(opts) {
 
   async function driftAppend(args) {
     const [treeId, leafId, kind, severity, action, forkTo, reason] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
       if (!DRIFT_KIND_ENUM.includes(kind)) treeError('E_SCHEMA_INVALID', `drift kind "${kind}" invalid (${DRIFT_KIND_ENUM.join('|')})`)
       if (!DRIFT_SEVERITY_ENUM.includes(severity)) treeError('E_SCHEMA_INVALID', `drift severity "${severity}" invalid (${DRIFT_SEVERITY_ENUM.join('|')})`)
@@ -682,7 +786,7 @@ export function createEngine(opts) {
 
   async function heartbeatAppend(args) {
     const [treeId, heartbeat] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       if (!heartbeat || typeof heartbeat !== 'object' || !Array.isArray(heartbeat.verdicts)) {
         treeError('E_SCHEMA_INVALID', 'heartbeat object with verdicts[] required')
       }
@@ -711,7 +815,7 @@ export function createEngine(opts) {
 
   async function communicationLog(args, caller) {
     const [treeId, targetSessionId, direction = 'out', note] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       if (!targetSessionId) treeError('E_SCHEMA_INVALID', 'target_session_id required')
       // 定位 target leaf（leaves.session_id / segment_chain / registry）
       let targetLeafId = null
@@ -744,10 +848,13 @@ export function createEngine(opts) {
     })
   }
 
-  async function nudgeReset(args) {
+  async function nudgeReset(args, caller) {
     const [treeId, leafId] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const leaf = mustLeaf(state, leafId)
+      // R1 复核（2026-11-13，P2）：reset 曾零鉴权——任意调用方可 reset+nudge 循环，永远不让第 7 次落账
+      // （#7 的显式旁路）。现在按 status 写权矩阵（owner/creator/root）。
+      assertLeafWriter(state, leaf, caller, 'status', state.leaves?.[`${treeId}-root`]?.session_id)
       leaf.nudge_count = 0
       leaf.nudge_log = []
       await store.write(treeId, state)
@@ -759,7 +866,7 @@ export function createEngine(opts) {
     const [treeId, sessionIdRaw, source, caller] = args
     // W2.6：登记会话 id 归一化（带 `session-` 前缀也可）
     const sessionId = normalizeSessionId(sessionIdRaw)
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       if (!isStrictUuidV4(sessionId)) treeError('E_INVALID_UUID_STRICT', `session_id "${sessionId}" must be strict UUID v4`)
       const conflict = findSessionConflict(state, sessionId)
       if (conflict) treeError('E_SCHEMA_INVALID', conflict)   // 已登记：幂等拒绝重复计（调用方按已存在处理）
@@ -775,7 +882,7 @@ export function createEngine(opts) {
   // 边界：文件级备份随 storageDomain 适配升级；语义（轮转/恢复前快照/跨树校验）已对齐。
   async function backup(args) {
     const [treeId, label] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       if (!Array.isArray(state.backups)) state.backups = []
       const name = `backup-${nowIso(clock).replace(/[:.]/g, '-')}${label ? `-${label}` : ''}`
       state.backups.push({ name, ts: nowIso(clock), state: structuredClone(state) })
@@ -789,7 +896,7 @@ export function createEngine(opts) {
 
   async function restore(args) {
     const [treeId, backupName] = args
-    return withTree(treeId, async (state) => {
+    return withTreeMut(treeId, async (state) => {
       const found = (state.backups ?? []).find((b) => b.name === backupName)
       if (!found) treeError('E_BACKUP_NOT_FOUND', `backup "${backupName}" not found (kept: ${(state.backups ?? []).map((b) => b.name).join(', ') || 'none'})`)
       if (found.state.tree_id !== treeId) treeError('E_BACKUP_CORRUPT', `backup tree_id mismatch: ${found.state.tree_id} ≠ ${treeId}`)
@@ -808,6 +915,7 @@ export function createEngine(opts) {
     'leaf:add': leafAdd, 'leaf:get': leafGet, 'leaf:list-active': leafListActive, 'leaf:list-all': leafListAll,
     'leaf:set-status': setStatus, 'leaf:set-session': setSession, 'leaf:set-context': setContext,
     'leaf:set-verification': setVerification, 'leaf:set-relay': setRelay,
+    'tree:verify-delegate': verifyDelegate,
     'event:append': eventAppend, 'event:list': eventList, 'segment:append': segmentAppend,
     'nudge:append': nudgeAppend, 'nudge:reset': nudgeReset,
     'drift:append': driftAppend, 'drift:list': driftList,

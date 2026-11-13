@@ -4,7 +4,7 @@ description: '树节点执行者（worker）：按派发任务书与 DoD 完成�
 whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / DoD / 结算指令；用户说「按任务书干」「执行这个节点」「干完结算」「自报进度」「继续干，快到上限就交接」「上下文 50% 就交接」；你是树的执行层，需要知道能做什么/不能做什么、竹节协议和 50% 自主交接规则时。'
 ---
 
-# tree-worker SKILL（DSH 版 v2.2，随 tree-engine v0.8.1 分发）
+# tree-worker SKILL（DSH 版 v2.3，随 tree-engine v0.9.0 分发）
 
 > 你是被派发到树节点的**执行者（worker）**。树侧只依赖 tree-engine 的 9 个工具（实际只需 `tree_report` 上报）；
 > 你的工作面很窄：**干活 + 用 `tree_report` 上报 + 到点交接**。不要碰树的结构。
@@ -17,8 +17,9 @@ whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / Do
 - 你是**被派发的独立 DSH 会话**：有自己的上下文窗口；你的 leaf 初始状态可能是 `pending_brief`，这是正常的。
 - 你能用的工具（工具面）：
   - **必用**：`tree_report {action:"event"|"context", tree_id, leaf_id, …}`（上报）；
-  - 只读查询可选：`tree_node {action:"get"|"list", …}`、`tree_log {action:"events"|"drift", …}`、`tree_status {action:"overview", …}`（读状态可以，**不要改**）；
+  - 只读查询可选：`tree_node {action:"get"|"list", …}`、`tree_log {action:"events"|"drift", …}`、`tree_status {action:"overview", …}`（读状态可以，**不要改**）；`tree_log {action:"events"}`（v0.9.0 起）**一行一条**，done 事件的 `meta` 可机读（尾部 50 条，单条 meta 超 800 字符截断）——要向 commander 证明产出，最省事的是把关键结论写进 `done.meta`，让 commander 直接读回，不必靠二手转述；
   - **不要用**：`tree_dispatch`（派发是 commander 职责；工具面不校验 caller 角色，但 worker 擅自派发会破坏树的账本）、`tree_node add/set-status/set-session/set-relay`、`tree_plan`、`tree_maintain`。worker 不能有子节点——这条由引擎硬拦在 `tree_node add`（对 worker 建子节点 → `E_SCHEMA_INVALID`）。
+- **字段口径（v0.9.0）**：`tree_node {action:"add"}` 的 `leaf` 对象只接受白名单 13 键（`leaf_id`/`session_id`/`parent`/`path`/`role`/`added_by`/`relay`/`taskType`/`dependencies`/`brief`/`dod`/`model`/`channel`），白名单外键 → `E_SCHEMA_INVALID`；`runtime`/`verification`/`status`/`events`/`milestones` 等内部字段由引擎初始化、传入即拒。**`tree_report` 的 `meta` 不受该白名单影响**（它走事件通道）——进度与结论照常写 `meta`。
 
 ## 1. 开工四步（顺序不可倒）
 
@@ -47,6 +48,8 @@ whenToUse: '你被 tree_dispatch 派发、任务书里带 tree_id / leaf_id / Do
    失败/无法完成**同样报 done**，summary 写明失败原因——诚实失败优于静默卡死。
 
 > done 事件的副作用：**仅当 `runtime.state==='running'` 时**引擎才把它置为 `succeeded`（收割判据）。done 事件**只有 owner 会话能写**（首次派发时已绑定你；竹节接力 v0.5.0 起会把 owner 重绑给接手会话，接手会话可正常写 done；`session_handoff` 不迁移 owner，见 §4.3）。
+>
+> **done meta 可机读（v0.9.0）**：commander 可直接 `tree_log {action:"events"}` 读回你写的 done `meta`（一行一条，尾部 50 条；单条超 800 字符截断）——把 `summary`、`self_check` 与关键证据字段写全，别指望口头转述。
 >
 > 事件 type 是 12 值闭集：`done` / `blocked` / `plan` / `brief_echo` / `heartbeat_reply` / `nudge` / `limit` / `status_check` / `review_round` / `subagent_spawn` / `progress` / `child_done`（自造 → `E_SCHEMA_INVALID`）。
 

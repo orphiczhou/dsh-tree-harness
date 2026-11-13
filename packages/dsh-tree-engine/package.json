@@ -1,6 +1,6 @@
 {
   "name": "@local/dsh-tree-engine",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
   "description": "Tree task decomposition & execution engine for DSH: plan → dispatch → bamboo-joint relay → harvest → verify, with a per-leaf relay switch (relay=\"off\" for leaves waiting on external orchestration), bundled tree-commander/tree-worker Skills, a read-only tree_doctor self-diagnosis tool (9 tree_* tools) and the 50%-context session handoff discipline.",

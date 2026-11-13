@@ -810,7 +810,55 @@ const TREE_LOG = {
     },
     required: ['action', 'tree_id'],
   },
-  output: { schema: { type: 'object' }, render: ok((v) => `tree_log: ${v?.events?.length ?? v?.drifts?.length ?? v?.heartbeats?.length ?? v?.communications?.length ?? 0} entries`) },
+  output: {
+    schema: { type: 'object' },
+    // tree_log 机读化（A2）：首行计数前缀 tree_log: 不变；随后一行一条。events 仅渲染尾部 50 条并给截断提示
+    // （保证「取最近 done 事件 meta」场景可机读），meta 用紧凑 JSON、单行超 800 字符截断；空 meta 对象省略 meta=。
+    render: ok((v) => {
+      const MAX_LINES = 50
+      const META_MAX = 800
+      const truncate = (s, max = META_MAX) => (s.length <= max ? s : `${s.slice(0, max)}…(+${s.length - max} chars)`)
+      const compact = (x) => {
+        try { return truncate(JSON.stringify(x) ?? String(x)) } catch { return '[unserializable]' }
+      }
+      const hasBody = (m) => m != null && !(typeof m === 'object' && !Array.isArray(m) && Object.keys(m).length === 0)
+      const lines = []
+      const emit = (items, unit, format, truncatedHint) => {
+        lines.push(`tree_log: ${items.length} ${unit}`)
+        const start = Math.max(0, items.length - MAX_LINES)
+        for (const item of items.slice(start)) lines.push(format(item))
+        if (start > 0) lines.push(`…(+${start} ${truncatedHint})`)
+      }
+      const events = Array.isArray(v?.events) ? v.events : null
+      const drifts = Array.isArray(v?.drifts) ? v.drifts : null
+      const heartbeats = Array.isArray(v?.heartbeats) ? v.heartbeats : null
+      const communications = Array.isArray(v?.communications) ? v.communications : null
+      if (events) {
+        emit(events, 'event(s)', (e) => {
+          const base = `[${e?.ts ?? '?'}] ${e?.leaf_id ?? '?'} ${e?.type ?? '?'}`
+          return hasBody(e?.meta) ? `${base} meta=${compact(e.meta)}` : base
+        }, 'earlier events truncated; use leaf_id/type filters')
+      } else if (drifts) {
+        emit(drifts, 'drift(s)', (d) => {
+          const parts = [`[${d?.ts ?? '?'}]`, d?.leaf_id ?? '?', `kind=${d?.kind ?? '?'}`, `severity=${d?.severity ?? '?'}`, `action=${d?.action ?? '?'}`]
+          if (d?.fork_to != null) parts.push(`fork_to=${compact(d.fork_to)}`)
+          if (hasBody(d?.reason)) parts.push(`reason=${compact(d.reason)}`)
+          return parts.join(' ')
+        }, 'earlier drifts truncated; use leaf_id/since filters')
+      } else if (heartbeats) {
+        emit(heartbeats, 'heartbeat(s)', (h) => `[${h?.ts ?? '?'}] heartbeat verdicts=${compact(h?.verdicts ?? [])}`, 'earlier heartbeats truncated; pass a smaller n')
+      } else if (communications) {
+        emit(communications, 'communication(s)', (c) => {
+          const parts = [`[${c?.ts ?? '?'}]`, c?.leaf_id ?? '?', `from=${c?.from ?? '?'}`, `target=${c?.target_session_id ?? '?'}`, `direction=${c?.direction ?? '?'}`]
+          if (hasBody(c?.note)) parts.push(`note=${compact(c.note)}`)
+          return parts.join(' ')
+        }, 'earlier communications truncated; use leaf_id/target/since filters')
+      } else {
+        lines.push('tree_log: 0 event(s)')
+      }
+      return lines.join('\n')
+    }),
+  },
   execute: async (args) => {
     const map = {
       events: { cmd: 'event:list', argv: (a) => [a.tree_id, a.leaf_id, a.type] },
@@ -828,27 +876,35 @@ const TREE_LOG = {
 const TREE_MAINTAIN = {
   name: 'tree_maintain',
   description:
-    'Maintenance: backup (in-state snapshot, keep 10) / restore (tree_id match + before-restore snapshot) / nudge-reset / register-session (bypass session into budget, idempotent).',
+    'Maintenance: backup (in-state snapshot, keep 10) / restore (tree_id match + before-restore snapshot) / nudge-reset / register-session (bypass session into budget, idempotent) / verify-delegate (root declares trusted sessions that may write leaf.verification; full replace, [] clears; only verification is delegated — minimal authority).',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
-      action: { type: 'string', enum: ['backup', 'restore', 'nudge-reset', 'register-session'] },
+      action: { type: 'string', enum: ['backup', 'restore', 'nudge-reset', 'register-session', 'verify-delegate'] },
       tree_id: { type: 'string' }, leaf_id: { type: 'string' },
       label: { type: 'string' }, backup_file: { type: 'string' },
       session_id: { type: 'string' }, source: { type: 'string' },
+      session_ids: { type: 'array', items: { type: 'string' }, description: 'verify-delegate: trusted session id list (strict UUID v4 after normalization; [] clears).' },
     },
     required: ['action', 'tree_id'],
   },
-  output: { schema: { type: 'object' }, render: ok((v) => `tree_maintain: ok (${v?.backup ?? v?.restored_from ?? v?.registered ?? v?.leaf?.leaf_id ?? '?'})`) },
-  execute: async (args) => {
+  output: {
+    schema: { type: 'object' },
+    render: ok((v) => (v?.verify_delegates != null
+      ? `tree_maintain: ok (verify-delegates=${Array.isArray(v.verify_delegates) ? v.verify_delegates.length : 0})`
+      : `tree_maintain: ok (${v?.backup ?? v?.restored_from ?? v?.registered ?? v?.leaf?.leaf_id ?? '?'})`)),
+  },
+  execute: async (args, exec) => {
     const map = {
-      backup: { cmd: 'backup', argv: (a) => [a.tree_id, a.label] },
-      restore: { cmd: 'restore', argv: (a) => [a.tree_id, a.backup_file] },
-      'nudge-reset': { cmd: 'nudge:reset', argv: (a) => [a.tree_id, a.leaf_id] },
-      'register-session': { cmd: 'tree:register-session', argv: (a) => [a.tree_id, a.session_id, a.source] },
+      backup: { cmd: 'backup', argv: (a) => [a.tree_id, a.label], caller: false },
+      restore: { cmd: 'restore', argv: (a) => [a.tree_id, a.backup_file], caller: false },
+      'nudge-reset': { cmd: 'nudge:reset', argv: (a) => [a.tree_id, a.leaf_id], caller: true },
+      'register-session': { cmd: 'tree:register-session', argv: (a) => [a.tree_id, a.session_id, a.source], caller: false },
+      // A4：caller 透传（root-only 判定在引擎侧）；缺省 [] = 清空委托
+      'verify-delegate': { cmd: 'tree:verify-delegate', argv: (a) => [a.tree_id, a.session_ids ?? []], caller: true },
     }
     const m = map[args.action]
-    const r = await engine.call(m.cmd, m.argv(args))
+    const r = await engine.call(m.cmd, m.argv(args), m.caller ? callerOf(exec) : undefined)
     if (!r.ok) throw toError(r)
     return r
   },

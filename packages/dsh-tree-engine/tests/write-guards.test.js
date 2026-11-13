@@ -1,9 +1,9 @@
 /**
  * P1-05 写面护栏回归（docs/audit-tree-system-2026-11-11.md）：统一 assertLeafWriter 写权矩阵。
  *
- * 覆盖矩阵（详见 src/guards.js LEAF_WRITE_MATRIX 注释）：
+ * 覆盖矩阵（详见 src/guards.js LEAF_WRITE_MATRIX 注释；A4 起含 delegate 轴）：
  *   context       owner | root              （creator 不得代报水位）
- *   verification  creator | root            （owner 不得自验）
+ *   verification  creator | root | delegate （owner 不得自验；delegate=verify_delegates 授权委托，A4）
  *   event:<type>  owner | creator           （done 例外：仅 owner）
  *   cancel        owner | creator | root
  *   status        owner | creator | root    （保持既有语义）
@@ -168,16 +168,16 @@ test('只读路径不新增拒绝：leaf get/list、event/drift/heartbeat/commun
 test('assertLeafWriter 单元：矩阵快照 + root 派生 + 未知 kind fail-closed；assertCallerIs 缺失 caller 不再放行', () => {
   const leaf = { leaf_id: WORKER, session_id: OWNER, added_by: CMD }
   const state = { tree_id: TREE, leaves: { [`${TREE}-root`]: { session_id: ROOT } } }
-  // 矩阵契约快照（防实现与文档漂移）
+  // 矩阵契约快照（防实现与文档漂移；A4 起含 delegate 轴——仅 verification=true，其余一律 false）
   assert.deepEqual(LEAF_WRITE_MATRIX, {
-    context: { owner: true, creator: false, root: true },
-    verification: { owner: false, creator: true, root: true },
-    event: { owner: true, creator: true, root: false },
-    'event:done': { owner: true, creator: false, root: false },
-    cancel: { owner: true, creator: true, root: true },
-    status: { owner: true, creator: true, root: true },
-    'set-session': { owner: false, creator: true, root: false },
-    relay: { owner: false, creator: true, root: true },
+    context: { owner: true, creator: false, root: true, delegate: false },
+    verification: { owner: false, creator: true, root: true, delegate: true },
+    event: { owner: true, creator: true, root: false, delegate: false },
+    'event:done': { owner: true, creator: false, root: false, delegate: false },
+    cancel: { owner: true, creator: true, root: true, delegate: false },
+    status: { owner: true, creator: true, root: true, delegate: false },
+    'set-session': { owner: false, creator: true, root: false, delegate: false },
+    relay: { owner: false, creator: true, root: true, delegate: false },
   })
   // root 由 state.tree_id 派生（省略第 5 参也可）
   assert.equal(assertLeafWriter(state, leaf, ROOT, 'context'), true)

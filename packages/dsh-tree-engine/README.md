@@ -2,6 +2,18 @@
 
 树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/architecture/engine-spec.md](../../docs/architecture/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 9 个工具 schema 为准（[docs/architecture/tools-mapping.md](../../docs/architecture/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
 
+## v0.9.0 增量：硬安全与可观测性收口（跨进程写互斥 / 状态机强制路径 / 建点白名单 / 日志机读化 / 验证授权委托）
+
+**背景（2026-11-13 D23 轮 / flash 审计三条高危 + D22 两个次要发现）**：① flash 审计 #1/#7/#19 查实——`.lock` 文件锁未实现（跨进程 last-writer-wins 丢更新）、`nudgeAppend` 强制 prune 绕 `assertTransition`（archived 可被静默打成 pruned）、`leafAdd` 无字段白名单（可预注入 `runtime/verification` 伪造状态）；② D22 发现 `tree_log {action:"events"}` 只回计数（done meta 不可机读）、现场建树后 root 会话 dispose 导致事后 `tree_verify` 被 `E_BORROWED_IDENTITY` 拒。本轮全部修复/补能力，**测试 172 → 213/213**（新增 `store-lock` 8 / `nudge-gate` 6 / `leaf-add-whitelist` 8 / `tree-log-render` 5 / `verify-delegate` 14 共 41 例（含 R1 复核回归 4 例））。
+
+- **跨进程写互斥（#1）**：新增 `src/lock.js`——`tree-state.lock` 用 `fs.writeFile(..., {flag:'wx'})`（O_EXCL）原子建锁，锁内容 `{pid,host,ts,nonce}`；`release` 校验 nonce 防误删他人新锁；**陈旧锁接管**（mtime/内容 ts 超过 `staleMs`=15s → `rename` 到唯一临时名抢占，成功者继续并落 `tree-lock-takeover.log`）；活持有者由 `store.withLock` 心跳（`utimes`，staleMs/2 封顶 5s）刷新，长临界区不被误判陈旧；超时抛 `E_TREE_LOCK_TIMEOUT`（含 tree_id 与锁路径）。`src/store.js` 端口增加 `withLock`（fsStore=文件锁；memoryStore=每树 promise 链；旧实现保持兼容）；`src/engine.js` 拆 **`withTree`（只读直读、不加锁）** 与 **`withTreeMut`（enqueue + withLock，18 个写命令与 `sweepTick` 全部改走它）**，嵌套写命令零调用（无自锁）。
+- **nudge 强制 prune 走状态机（#7）**：第 7 次 nudge 强制 prune 前 `assertTransition(leaf.status,'pruned')`——archived 叶子被拒（`E_STATUS_TRANSITION_INVALID`；抛错在 write 前，`nudge_count` 不持久化增加、无 drift），`done→pruned` 等白名单迁移照常并留 high/rhythm/prune drift。
+- **建点字段白名单（#19）**：`leaf:add` 仅接受 `leaf_id / session_id / parent / path / role / added_by / relay / taskType / dependencies / brief / dod / model / channel` 13 键（导出 `LEAF_ADD_ALLOWED_FIELDS`）；白名单外键 `E_SCHEMA_INVALID`（message 含非法键名与允许清单）；`runtime / verification / status / events / milestones / segment_chain / drift_history / context_usage_pct / nudge_count` 等内部字段由引擎初始化，**永不接受调用方输入**。
+- **`tree_log` 事件机读化（D22 次要发现）**：`tree_log {action:"events"}` 的 render 从「仅 `tree_log: N entries`」改为**一行一条**（`[ts] leaf_id type meta=<紧凑 JSON>`），done 事件 meta（summary/probe_result 等）可被 agent 直接读取；events 只渲尾部 50 条并给截断提示，单条 meta 超 800 字符截断；drift/heartbeat/communication 同样一行一条；返回对象结构不变、首行 `tree_log:` 前缀保留。
+- **验证授权委托（D22 次要发现）**：`tree_maintain` 新增 `action:"verify-delegate"`（参数 `session_ids: string[]`，全量替换语义、`[]` 清空）——**仅树 root 会话可授予**（root.session_id；root 为 null 的树拒绝并说明）；被授权者**只能写 `leaf.verification`**（`LEAF_WRITE_MATRIX.verification.delegate=true`，其余 7 种 kind 一律 ❌；owner 自验禁令不放宽）；变更落 `drift_log`（kind=`security` / action=`declare` / leaf_id=null）。用于「现场建树模式 root 会话 dispose 后，由受信会话补 `tree_verify`」；旧树缺 `verify_delegates` 字段读侧惰性缺省 `[]`。
+- **R1 异族红队复核（Qwen 系）修复**：① `leaf:add` 对既存 `leaf_id` 由「直接覆盖」改为拒绝（`E_DUPLICATE_LEAF`）——旧行为可擦除 archived/pruned 终态、done 事件与 drift 审计痕、重置 nudge_count（抵销 #7 不可逆语义）；② `nudge:reset` 补鉴权（owner/creator/root，越权 `E_BORROWED_IDENTITY`；工具面已传 caller）——封堵 reset+nudge 循环绕过第 7 次；③ root 信任锚叶子拒绝 nudge（7-strike 不得摘除 root）；④ `model`/`channel` 若在场必须是字符串（防对象经 relay assignee 流入宿主）；⑤ 文件锁心跳间隔改为 `staleMs/3`（下限 100ms，旧 1000ms 下限在 `staleMs<1s` 时可致双临界区）。回归测试 +4。
+- **活体验证（2026-11-13）**：受控 disable→enable 后 `tree_doctor` 7/7 · version=0.9.0；活体 `tree_maintain {action:"verify-delegate"}` 授予→读回→清空 + `drift_log` 审计记录可见；`tree_log events` 活体读出 done meta（`probe_result` 原文）；`tree-state.lock` 操作后无残留；试点树 `t3c7/t3c8/t3c9/d23x` validate 0 issues。
+
 ## v0.8.1 增量：派发/接力子会话显式携带深度上限（`request.maxDepth`）
 
 **背景（D22 三层组合 v2 真机实证，2026-11-13）**：`@deepseek-ai/dsh-subagent` 的 `startActivation` / `startContinuable`

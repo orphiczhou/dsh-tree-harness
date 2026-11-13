@@ -173,9 +173,9 @@ test('日志/维护命令：drift 枚举 / heartbeat / communication / nudge-res
   assert.equal(r.communication.leaf_id, 'macp2-C1-worker')
   r = await engine.call('communication:list', ['macp2'])
   assert.equal(r.communications.length, 1)
-  // nudge-reset
+  // nudge-reset（R1 复核修复后需 caller：owner/creator/root；本 fixture added_by=ROOT）
   await engine.call('nudge:append', ['macp2', 'macp2-C1-worker'])
-  r = await engine.call('nudge:reset', ['macp2', 'macp2-C1-worker'])
+  r = await engine.call('nudge:reset', ['macp2', 'macp2-C1-worker'], ROOT)
   assert.equal(r.leaf.nudge_count, 0)
   // register-session：幂等拒绝重复
   r = await engine.call('tree:register-session', ['macp2', S4_, 'bypass'])
