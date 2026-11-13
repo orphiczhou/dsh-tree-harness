@@ -19,7 +19,7 @@
 
 | 包 | 版本 | 能力 | 测试 | 当前状态 |
 |---|---|---|---|---|
-| [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.9.0 | 执行层：9 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain` / **`tree_doctor` 只读自检**），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准、leaf 写面护栏（`LEAF_WRITE_MATRIX`）；Wave-2 增补：**W2.1** 会话预算计入竹节链（`runtime.segmentChain` 归一化去重）、**W2.3** RC2 兼容层抽 `src/compat.js`（双形探测 + 11 测）、**W2.6** root/主会话 id 归一化（`session-` 前缀与裸 UUID 等价比较）；**v0.8.0 组合修复**：per-leaf relay 开关（`tree_node {action:"set-relay"}`）、tokenMeter 测量端口修复、sweep 跨实例（热更僵尸）生命周期、relay parent 重解析；**v0.8.1 深度预算**：派发/竹节接力/攻击审计会话显式传 `request.maxDepth`（缺省 5，`TREE_ENGINE_CONFIG.max_subagent_depth` 可覆盖；此前插件派发路径无平台深度兜底）；**v0.9.0 硬安全与可观测性**：跨进程 `.lock` 文件锁（O_EXCL + 陈旧接管 + 心跳）、nudge 强制 prune 走状态机、`leaf:add` 字段白名单（13 键 fail-closed）、`tree_log` 事件 meta 机读化、`tree_maintain {action:"verify-delegate"}` 验证授权委托；**随包 tree-commander/tree-worker Skill** | **213/213** | ✅ 运行中（本机 desktop profile 已装载，活体 v0.9.0） |
+| [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.10.0 | 执行层：9 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain` / **`tree_doctor` 只读自检**），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准、leaf 写面护栏（`LEAF_WRITE_MATRIX`）；Wave-2 增补：**W2.1** 会话预算计入竹节链（`runtime.segmentChain` 归一化去重）、**W2.3** RC2 兼容层抽 `src/compat.js`（双形探测 + 11 测）、**W2.6** root/主会话 id 归一化（`session-` 前缀与裸 UUID 等价比较）；**v0.8.0 组合修复**：per-leaf relay 开关（`tree_node {action:"set-relay"}`）、tokenMeter 测量端口修复、sweep 跨实例（热更僵尸）生命周期、relay parent 重解析；**v0.8.1 深度预算**：派发/竹节接力/攻击审计会话显式传 `request.maxDepth`（缺省 5，`TREE_ENGINE_CONFIG.max_subagent_depth` 可覆盖；此前插件派发路径无平台深度兜底）；**v0.9.0 硬安全与可观测性**：跨进程 `.lock` 文件锁（O_EXCL + 陈旧接管 + 心跳）、nudge 强制 prune 走状态机、`leaf:add` 字段白名单（13 键 fail-closed）、`tree_log` 事件 meta 机读化、`tree_maintain {action:"verify-delegate"}` 验证授权委托；**v0.10.0 flash 审计第二批**：依赖闸「已验证失败不放行」+ sweep stale-done 判据、`set-verification` verdicts/pass 一致性、竹节接力会话预算/唯一性预检 + 单账本口径、`audit_meta` 严格校验与放宽留痕（含 #23 阈值回退修复）、`subagent_spawn` 仅 owner、`fsStore.read` `.tmp` 灾备恢复、`tree_maintain {action:"gc"}`（archived 账本截断）+ call-log 10MB 滚动；**随包 tree-commander/tree-worker Skill** | **225/225** | ✅ 运行中（本机 desktop profile 已装载，活体 v0.10.0） |
 | [`packages/dsh-agent-introspect`](packages/dsh-agent-introspect/) | 0.1.0 | 自省层：`self_spec` 工具，投影当前会话的 model / permissions / sandbox / cwd / token 用量 | —（无单测） | ✅ 运行中 |
 | [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.4.0** | 会话树单包：左栏嵌套会话树 + **会话界面底部元数据条（model / reasoning effort / 上下文 %；子会话补官方缺失的 model/effort，只读子会话用标题栏 chip 兜底）** + `tree_send` 跨层级消息工具（**v1.4.0 起仅同树投递、移除 `parent` 入参、调用者谱系校验**）+ **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回 | 包内 8 个测试入口（handoff **41/41**、tree-send **25/25**、meta **41/41**、render **151/151** + 9/9 + 11/11、style-guard 26/26、verify-bundle 0 fail、provider-conformance **29/29**） | 🌐 GitHub 公开（镜像 **v1.4.0** = `0343f0c`，main + tag，**21/21 SHA**）、社区市场已收录；**npm 未发布** |
 
@@ -98,7 +98,7 @@ plugin_manager({ action: "install_bundle", target: "D:/Codes/dsh-tree-harness/pa
 
 ```powershell
 cd packages/dsh-tree-engine
-node --test tests/*.test.js     # tests 213 / pass 213 / fail 0（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 14 compat + 10 identity + 7 budget + 12 relay + 17 token-meter + 7 usage-port + 9 validate + 8 sweep + 4 depth-cap + 8 store-lock + 6 nudge-gate + 8 leaf-add-whitelist + 5 tree-log-render + 14 verify-delegate）
+node --test tests/*.test.js     # tests 225 / pass 225 / fail 0（62 引擎 + 4 技能打包 + 1 B1 回归 + 9 tree_doctor + 8 写面护栏 + 14 compat + 10 identity + 7 budget + 12 relay + 17 token-meter + 7 usage-port + 9 validate + 8 sweep + 4 depth-cap + 8 store-lock + 6 nudge-gate + 8 leaf-add-whitelist + 5 tree-log-render + 14 verify-delegate + 12 audit-p2a）
 ```
 
 > 14 个 `.test.js`；Wave-2 新增 `tests/compat.test.js`（11）、`tests/identity.test.js`（10）、`tests/budget.test.js`（7），原 84 项不回归；v0.8.0 再增 relay/token-meter/usage-port/validate/sweep 至 19 个 `.test.js` / 165 项。
@@ -151,17 +151,17 @@ node test/provider-conformance.cjs [asar 解包目录]
 - 所有 DOM 副作用放在 `apply(ctx)` 里；
 - 客户端半热更会**残留旧实例**：用单例注册表 + 令牌仲裁压制，彻底干净仍需刷新一次页面。
 
-### 随包 Skill（SKILL 工程化，v0.9.0 / v1.4.0）
+### 随包 Skill（SKILL 工程化，v0.10.0 / v1.4.0）
 
 Skill 是插件工程的一部分，与工具同包、同版本、同发布：
 
 | 包 | 随包 Skill | 挂载方式 |
 |---|---|---|
-| `packages/dsh-tree-engine` v0.9.0 | `skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md` | `cordis.patch.yml` 第 2 行 insert `@deepseek-ai/dsh-skill-filesystem`（`providerName: tree-engine`、`includeDefaultRoots:false`、`bundledSkillDir` 经安装包身份解析到包内 `skills/`） |
+| `packages/dsh-tree-engine` v0.10.0 | `skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md` | `cordis.patch.yml` 第 2 行 insert `@deepseek-ai/dsh-skill-filesystem`（`providerName: tree-engine`、`includeDefaultRoots:false`、`bundledSkillDir` 经安装包身份解析到包内 `skills/`） |
 | `packages/dsh-session-tree` v1.4.0 | `skills/session-handoff/SKILL.md` | 同模式，`providerName: session-tree` |
 
 - 效果：新会话的 Skill 目录直接出现 `tree-commander` / `tree-worker` / `session-handoff`，模型在**极简提示词**下即可发现「分层分解 / 逐层干活 / 上下文 50% 自主交接」的用法，不需要先把工具名喂给它；真机验证见 [docs/reports/skill-e2e-2026-11-11.md](docs/reports/skill-e2e-2026-11-11.md)。
-- 版本：`tree-commander` / `tree-worker` 两份 SKILL 随 tree-engine **v0.5.0 引入、v0.8.0 升到 v2.2、v0.9.0 同步补「验证授权委托 / 日志机读化 / 建点白名单 / 锁语义」**（9 工具、会话 id 归一化、预算口径、per-leaf relay 开关 `tree_node {action:"set-relay"}`、`tree_maintain {action:"verify-delegate"}`）；`session-handoff` SKILL 随会话树 **v1.4.0**（补 `tree_send` 仅同树 / 无 `parent` 入参说明）。
+- 版本：`tree-commander` / `tree-worker` 两份 SKILL 随 tree-engine **v0.5.0 引入、v0.8.0 升到 v2.2、v0.9.0 同步补「验证授权委托 / 日志机读化 / 建点白名单 / 锁语义」、v0.10.0 同步补「依赖闸/验证落账加固 / 竹节预算与唯一性 / audit_meta 校验 / GC」**（9 工具、会话 id 归一化、预算口径、per-leaf relay 开关 `tree_node {action:"set-relay"}`、`tree_maintain {action:"verify-delegate"}` / `{action:"gc"}`）；`session-handoff` SKILL 随会话树 **v1.4.0**（补 `tree_send` 仅同树 / 无 `parent` 入参说明）。
 - 打包回归：`packages/dsh-tree-engine/tests/skills.test.js`（4 项）与 `packages/dsh-session-tree/test/skills.test.cjs`（3 项）校验 frontmatter、`package.json.files`、patch provider 行与旧路径清理。
 - 发布：会话树单包的 `skills/` 随 `package.json.files` 发布到公开插件仓（v1.4.0 = `0343f0c`，release-plugin **21/21 SHA** 一致）；tree-engine 为仓内插件，Skill 随本仓公开。
 - 热更：新增/修改 patch 行受 D12 约束——对相应 bundle entry 做一次 disable→enable 或重启 DSH。
@@ -179,7 +179,7 @@ DSH Loader 对**宿主模块按包名缓存**：
 
 ```
 packages/
-  dsh-tree-engine/       执行层：src/ 纯逻辑（含 compat.js / lock.js / guards.js / token-meter.js / sweep.js）+ index.js 宿主适配 + tests/（25 个 .test.js + 偏差登记）
+  dsh-tree-engine/       执行层：src/ 纯逻辑（含 compat.js / lock.js / guards.js / token-meter.js / sweep.js）+ index.js 宿主适配 + tests/（26 个 .test.js + 偏差登记）
   dsh-agent-introspect/  自省层：index.js（self_spec）
   dsh-session-tree/      会话树单包（发布产物，与公开镜像仓同步；含 tree_send + session_handoff）
 docs/                    规约、设计、交接（operations/）、一次性报告（reports/）、发布与审计文档

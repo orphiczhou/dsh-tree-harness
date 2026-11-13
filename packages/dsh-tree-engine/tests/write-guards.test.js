@@ -174,6 +174,8 @@ test('assertLeafWriter 单元：矩阵快照 + root 派生 + 未知 kind fail-cl
     verification: { owner: false, creator: true, root: true, delegate: true },
     event: { owner: true, creator: true, root: false, delegate: false },
     'event:done': { owner: true, creator: false, root: false, delegate: false },
+    // flash 审计 #22：spawn 预算事件仅 owner（防 creator/root 注入耗尽他人预算）
+    'event:subagent_spawn': { owner: true, creator: false, root: false, delegate: false },
     cancel: { owner: true, creator: true, root: true, delegate: false },
     status: { owner: true, creator: true, root: true, delegate: false },
     'set-session': { owner: false, creator: true, root: false, delegate: false },

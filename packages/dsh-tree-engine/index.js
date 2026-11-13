@@ -876,15 +876,16 @@ const TREE_LOG = {
 const TREE_MAINTAIN = {
   name: 'tree_maintain',
   description:
-    'Maintenance: backup (in-state snapshot, keep 10) / restore (tree_id match + before-restore snapshot) / nudge-reset / register-session (bypass session into budget, idempotent) / verify-delegate (root declares trusted sessions that may write leaf.verification; full replace, [] clears; only verification is delegated — minimal authority).',
+    'Maintenance: backup (in-state snapshot, keep 10) / restore (tree_id match + before-restore snapshot) / nudge-reset / register-session (bypass session into budget, idempotent) / verify-delegate (root declares trusted sessions that may write leaf.verification; full replace, [] clears; only verification is delegated — minimal authority) / gc (root-only: trim archived leaves\' unbounded events/drift/runtime.history, keep N + all done events; also trims tree drift_log).',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
-      action: { type: 'string', enum: ['backup', 'restore', 'nudge-reset', 'register-session', 'verify-delegate'] },
+      action: { type: 'string', enum: ['backup', 'restore', 'nudge-reset', 'register-session', 'verify-delegate', 'gc'] },
       tree_id: { type: 'string' }, leaf_id: { type: 'string' },
       label: { type: 'string' }, backup_file: { type: 'string' },
       session_id: { type: 'string' }, source: { type: 'string' },
       session_ids: { type: 'array', items: { type: 'string' }, description: 'verify-delegate: trusted session id list (strict UUID v4 after normalization; [] clears).' },
+      keep: { type: 'number', description: 'gc: entries kept per archived leaf history (default 20, clamped 1-500; non-integer rejected).' },
     },
     required: ['action', 'tree_id'],
   },
@@ -892,7 +893,9 @@ const TREE_MAINTAIN = {
     schema: { type: 'object' },
     render: ok((v) => (v?.verify_delegates != null
       ? `tree_maintain: ok (verify-delegates=${Array.isArray(v.verify_delegates) ? v.verify_delegates.length : 0})`
-      : `tree_maintain: ok (${v?.backup ?? v?.restored_from ?? v?.registered ?? v?.leaf?.leaf_id ?? '?'})`)),
+      : v?.gc != null
+        ? `tree_maintain: ok (gc archived=${v.gc.archived_leaves} keep=${v.gc.keep} events_cut=${v.gc.events_cut} drift_cut=${v.gc.drift_cut} history_cut=${v.gc.history_cut})`
+        : `tree_maintain: ok (${v?.backup ?? v?.restored_from ?? v?.registered ?? v?.leaf?.leaf_id ?? '?'})`)),
   },
   execute: async (args, exec) => {
     const map = {
@@ -902,6 +905,8 @@ const TREE_MAINTAIN = {
       'register-session': { cmd: 'tree:register-session', argv: (a) => [a.tree_id, a.session_id, a.source], caller: false },
       // A4：caller 透传（root-only 判定在引擎侧）；缺省 [] = 清空委托
       'verify-delegate': { cmd: 'tree:verify-delegate', argv: (a) => [a.tree_id, a.session_ids ?? []], caller: true },
+      // flash 审计 #30：archived 账本截断（root-only 判定在引擎侧）
+      gc: { cmd: 'tree:gc', argv: (a) => [a.tree_id, { keep: a.keep }], caller: true },
     }
     const m = map[args.action]
     const r = await engine.call(m.cmd, m.argv(args), m.caller ? callerOf(exec) : undefined)

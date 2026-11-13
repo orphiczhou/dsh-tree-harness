@@ -2,7 +2,7 @@
 
 > 本目录是 `dsh-tree-harness`（DSH 会话树体系）的**全部开发文档**。本文件是文档的**单一索引**，并规定新增/迁移/归档规则。
 > 改完文档必须跑：`node scripts/check-doc-links.mjs` 与 `node scripts/check-md-tables.mjs`。
-> 当前快照：2026-11-13 · tree-engine **v0.9.0**（9 工具 / 213-213 测试）· session-tree **v1.4.0**（公开镜像 tag **v1.4.0 = `0343f0c`**，main + tag，**21/21 SHA**）。组合修复：per-leaf relay 开关 / usagePct 端口修复 / sweep 跨实例生命周期 / tree_send 同树收紧 / 会话界面元数据条（子会话补 model·effort·context%，只读子会话 header chip）；**v0.8.1 深度预算**：tree 派发/接力显式传 `request.maxDepth`（D22 真机发现插件派发路径无平台深度兜底后修复）；**v0.9.0 硬安全与可观测性**：跨进程 `.lock` 文件锁 / nudge 强制 prune 走状态机 / `leaf:add` 13 键白名单 / `tree_log` 事件 meta 机读化 / `tree_maintain {action:"verify-delegate"}` 验证授权委托。
+> 当前快照：2026-11-13 · tree-engine **v0.10.0**（9 工具 / 225-225 测试）· session-tree **v1.4.0**（公开镜像 tag **v1.4.0 = `0343f0c`**，main + tag，**21/21 SHA**）。组合修复：per-leaf relay 开关 / usagePct 端口修复 / sweep 跨实例生命周期 / tree_send 同树收紧 / 会话界面元数据条（子会话补 model·effort·context%，只读子会话 header chip）；**v0.8.1 深度预算**：tree 派发/接力显式传 `request.maxDepth`（D22 真机发现插件派发路径无平台深度兜底后修复）；**v0.9.0 硬安全与可观测性**：跨进程 `.lock` 文件锁 / nudge 强制 prune 走状态机 / `leaf:add` 13 键白名单 / `tree_log` 事件 meta 机读化 / `tree_maintain {action:"verify-delegate"}` 验证授权委托；**v0.10.0 flash 审计第二批**：依赖闸「已验证失败不放行」/ `set-verification` 一致性 / 竹节预算与唯一性 / `audit_meta` 校验与留痕 / `subagent_spawn` 仅 owner / `.tmp` 灾备 / `tree_maintain {action:"gc"}` + call-log 滚动。
 
 ## 0. 不同读者的入口
 
@@ -48,7 +48,7 @@
 | [operations/REQ-2026-11-13-flow-node-continuable-session.md](operations/REQ-2026-11-13-flow-node-continuable-session.md) | **跨仓需求单（tree-harness → flow 项目组）**：flow 节点会话 continuable（`sessionMode`，缺省兼容）+ 深度上限（flow 执行器未传 `request.maxDepth` 的同源问题）；含现状代码行、场景、非目标、建议验收标准与受理方式；**§附「受理跟进与回执摘要」：2026-11-13 16:21 flow 方回执——已受理（用户裁决 B 档），M1.2 进行中（`flow_send` 冷恢复续接 + 深度封口）** | 待 flow 项目组响应；改动由用户裁决 |
 | [operations/ISSUE-draft-hmr-reload-race.md](operations/ISSUE-draft-hmr-reload-race.md) | **平台 issue 草稿①（HMR 热重载与工具准入）**：0.2.2-rc.1 热重载替换工具注册对象 → 跨重载模型步对已注册工具报 `UNKNOWN_TOOL`（含会话日志原文/apply.log 统计/宿主代码定位/建议修复/证据路径）；**未对外提交** | 待用户批准后提交宿主；本仓仅留草稿 |
 | [operations/ISSUE-draft-max-tokens-inheritance.md](operations/ISSUE-draft-max-tokens-inheritance.md) | **平台 issue 草稿②（跨模型 `maxTokens` 继承）**：子会话换路由时无条件继承父 `maxTokens`（384000）→ 上限 131072 的供应商首请求 400（两条原始错误/复现/宿主代码定位/建议修复）；**未对外提交** | 待用户批准后提交宿主；本仓仅留草稿 |
-| [operations/taskbooks/](operations/taskbooks/) | **D23 轮派发任务书集**（A1 审计修复 / A2 tree_log 机读 / A3 发布门禁 / A4 验证委托 / D1 文档 / R1·R2 异族复核）：每份含任务边界、验收标准、写作用域与交付格式（可复核） | 一次性执行记录，随轮次归档 |
+| [operations/taskbooks/](operations/taskbooks/) | **派发任务书集**：D23 轮（A1 审计修复 / A2 tree_log 机读 / A3 发布门禁 / A4 验证委托 / D1 文档 / R1·R2 异族复核）+ **D24 flow 续接受控试点任务书**（[d24-flow-continuation-pilot-taskbook.md](operations/taskbooks/d24-flow-continuation-pilot-taskbook.md)，**待执行**：前置 = flow T-6 真机 PASS + 用户时间窗；含调用方=发起 `flow_run` 会话、relay off、深度链≤5、journal 双读验收） | 一次性执行记录，随轮次归档 |
 | [operations/wave2-plan-2026-11-12.md](operations/wave2-plan-2026-11-12.md) | **Wave 2 开发计划**：项目地图 §9 建议与波次 + Wave-1 剩余项 + 新发现（root id 兼容、GUI 规范），含 DoD/风险/执行方式；**✅ 已执行（W2.1–W2.8），证据见 [reports/wave2-closeout-2026-11-12.md](reports/wave2-closeout-2026-11-12.md)** | 计划为历史事实；完成情况见文首「执行状态」 |
 
 ## 3. 一次性报告（reports/）

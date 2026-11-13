@@ -139,6 +139,8 @@ export function assertCallerIs(/** @type {any} */ caller, /** @type {string} */ 
  *                                                  仅 verification 放行 delegate，其余 kind 一律 ❌）
  *   event             ✅      ✅      ❌      ❌    非 done 事件（brief_echo/plan/progress/blocked/…）
  *   event:done        ✅      ❌      ❌      ❌    保持 V10-trust-anchor-fix：done 仅 owner，禁止代写
+ *   event:subagent_spawn ✅   ❌      ❌      ❌    flash 审计 #22：预算事件仅 owner 自报（creator/root 代写
+ *                                                  可把他人 leaf 的 15 次 spawn 预算一次耗尽 = 预算 DoS 向量）
  *   cancel            ✅      ✅      ✅      ❌    dispatch:cancel：执行者/指挥官/root 均可止血
  *   status            ✅      ✅      ✅      ❌    保持既有语义（owner/creator/root）
  *   set-session       ❌      ✅      ❌      ❌    保持既有语义（仅 added_by 重绑；root 例外未开，避免扩大写面）
@@ -157,6 +159,9 @@ export const LEAF_WRITE_MATRIX = Object.freeze({
   verification: Object.freeze({ owner: false, creator: true, root: true, delegate: true }),
   event: Object.freeze({ owner: true, creator: true, root: false, delegate: false }),
   'event:done': Object.freeze({ owner: true, creator: false, root: false, delegate: false }),
+  // flash 审计 #22：subagent_spawn 是**预算事件**——仅 owner（执行者本人）可自报；
+  // creator/root 代写可把他人 leaf 的 15 次 spawn 预算一次耗尽（预算反成 DoS 向量）。
+  'event:subagent_spawn': Object.freeze({ owner: true, creator: false, root: false, delegate: false }),
   cancel: Object.freeze({ owner: true, creator: true, root: true, delegate: false }),
   status: Object.freeze({ owner: true, creator: true, root: true, delegate: false }),
   'set-session': Object.freeze({ owner: false, creator: true, root: false, delegate: false }),
@@ -166,10 +171,14 @@ export const LEAF_WRITE_MATRIX = Object.freeze({
 
 const isNonEmptyString = (v) => typeof v === 'string' && v.length > 0
 
-/** 归一 kind：event:<type> 除 done 外全部共用 'event' 规则（done 是独立更严规则）。 */
+/** 归一 kind：event:<type> 除 done / subagent_spawn 外全部共用 'event' 规则。 */
 function ruleForKind(kind) {
   if (typeof kind !== 'string' || !kind) return null
-  if (kind.startsWith('event:')) return kind === 'event:done' ? LEAF_WRITE_MATRIX['event:done'] : LEAF_WRITE_MATRIX.event
+  if (kind.startsWith('event:')) {
+    if (kind === 'event:done') return LEAF_WRITE_MATRIX['event:done']
+    if (kind === 'event:subagent_spawn') return LEAF_WRITE_MATRIX['event:subagent_spawn']
+    return LEAF_WRITE_MATRIX.event
+  }
   return LEAF_WRITE_MATRIX[kind] ?? null
 }
 

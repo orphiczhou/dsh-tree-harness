@@ -4,7 +4,7 @@ description: '把复杂任务拆成多层任务树、派独立子会话执行并
 whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；任务可拆成可独立验证的中间产物；需要依赖拓扑（先 A 后 B）或并行推进；需要验收证据而不是一句「做完了」；任务长到单个会话装不下（要配合会话交接）；用户说「拆三层」「派人做」「多层分解」「任务树」「并行做」「分派子任务」「派一队人」「做完验收收口」「继续干，快到上限就交接」「根会话→中间层→执行层」「三层都能干活」「演示三层」。English speakers may say: split this into three layers, build the tree, dispatch workers, parallelize, verify and close the tree.'
 ---
 
-# tree-commander SKILL（DSH 版 v2.3，随 tree-engine v0.9.0 分发）
+# tree-commander SKILL（DSH 版 v2.3，随 tree-engine v0.10.0 分发）
 
 > 你是树节点的指挥官（commander）。与"脚本执行者"的根本区别：**你拿到的只有目标，没有结构**——
 > 分解成几个子节点、串行还是并行、谁依赖谁、各自什么 taskType，**全部由你自主决定**。
@@ -43,7 +43,7 @@ whenToUse: '用户要求把目标拆成多层/任务树并派多个执行者；�
 
 - **产物是什么**：目标最终交付物（文件 / 结论 / 报告）拆成可独立验证的中间产物。
 - **切分判据**：①可独立验证（每个子任务有自己的 DoD）；②失败可重试不影响兄弟；③粒度 = 一个执行者一次上下文内能完成（过大 → 再切，或留竹节自报）。
-- **依赖拓扑**：显式声明 `dependencies:[leaf_id]`——引擎在派发时强制闸门（依赖未 succeeded → `E_DEPENDENCY_NOT_MET`）；环在装载期被拒（`E_DEPENDENCY_CYCLE`）。依赖写进节点，不要靠自己记顺序。
+- **依赖拓扑**：显式声明 `dependencies:[leaf_id]`——引擎在派发时强制闸门，依赖必须**正向结算**：`status==='done'`（三重闸收口）**或** `verification.pass===true`（你跑过 `tree_verify` 且 PASS）；「worker 自报 done」不算数（`E_DEPENDENCY_NOT_MET`）。所以推进下游前的标准动作：收割上游 → `tree_verify` 落 PASS → 再派下游。环在装载期被拒（`E_DEPENDENCY_CYCLE`）。依赖写进节点，不要靠自己记顺序。
 - **taskType 逐点定**（决定 `tree_verify` 自动路由哪套策略）：
 
 | taskType | 验证策略 | 实际检查（批 1 缺省） |
@@ -254,7 +254,7 @@ flow 节点在自己的会话里 `tree_plan` 现场建树（剧本 B/C）时，c
 | `E_SCHEMA_INVALID` | 参数形状/角色/依赖/path 不一致等（path 不一致时 helpTopic `how_to_init`；看 message） |
 | `E_DUPLICATE_LEAF` | tree 已存在（多发生在被派发的 commander 又 tree_plan；见 §1.0） |
 | `E_DEPTH_EXCEEDED` | 超过 3 层；把更细分解交给 worker 内部步骤，不要加层 |
-| `E_DEPENDENCY_NOT_MET` | 上游未 succeeded：等它收割，不是你的 bug |
+| `E_DEPENDENCY_NOT_MET` | 上游未正向结算（缺三重闸 done 或验证 PASS；自报 done 不算）：跑 `tree_verify` 落 PASS 再派，不是你的 bug |
 | `E_DEPENDENCY_CYCLE` | 依赖成环，装载期就拒；改拓扑 |
 | `E_BORROWED_IDENTITY` | 借身份：done 只由 owner 写；set-status 只由 owner/creator/root；set-session 只由 creator；**set-relay 只由 creator/root（v0.8.0）**；**verify-delegate 只由 root、被授权者只能写 verification（v0.9.0）** |
 | `E_TS_NOT_MONOTONIC` | 事件时间倒挂（仅注入 ts 时可能触发；工具路径 ts 由引擎生成，通常不触发） |

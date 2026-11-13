@@ -16,6 +16,7 @@ import {
 } from './guards.js'
 import { enqueue } from './queue.js'
 import { systemClock } from './clock.js'
+import { validateAuditMeta } from './config.js'
 
 const nowIso = (clock) => new Date(clock.now()).toISOString()
 
@@ -88,14 +89,37 @@ export function createEngine(opts) {
     // W2.6（2026-11-12）：会话 id 归一化——root/主会话 DSH_SESSION_ID 带 `session-` 前缀，
     // state 一律存归一化裸 UUID 规范形（校验仍严格 v4）。
     const sessionId = normalizeSessionId(sessionIdRaw ?? null)
+    // flash 审计 #21：audit_meta 覆盖必须与 Config 同款校验（未知键/类型/范围 fail-closed），
+    // 且「比基线更宽松」的上调必须留 security drift（不留痕的护栏上调 = 静默提权）。
+    let auditCheck
+    try {
+      auditCheck = validateAuditMeta(auditMeta, cfg)
+    } catch (/** @type {any} */ e) {
+      treeError('E_SCHEMA_INVALID', `audit_meta invalid: ${e?.message ?? String(e)}`)
+    }
     return withTreeMut(treeId, async (existing) => {
       if (existing) treeError('E_DUPLICATE_LEAF', `tree "${treeId}" already initialized`)
       const rootLeafId = `${treeId}-root`
+      // flash 审计 #21（R1 P2-2 补强）：护栏上调留痕覆盖两个入口——① init payload 的 audit_meta
+      // （仅被消费的 ctx_segment_threshold 允许放宽）；② engine config 本身（部署方配置）：比
+      // DEFAULT_GUARDS 更宽松的数值键同样写 security/high drift，避免「悄悄放宽护栏」。
+      const upliftDrifts = [
+        ...auditCheck.uplifted.map((u) => ({
+          ts: nowIso(clock), leaf_id: null, kind: 'security', severity: 'high', action: 'declare',
+          reason: `audit_meta uplift: ${u.key} ${u.base} -> ${u.value} (per-tree guard relaxed via init payload; audited)`,
+        })),
+        ...Object.entries(cfg)
+          .filter(([k, v]) => typeof v === 'number' && typeof DEFAULT_GUARDS[k] === 'number' && v > DEFAULT_GUARDS[k])
+          .map(([k, v]) => ({
+            ts: nowIso(clock), leaf_id: null, kind: 'security', severity: 'high', action: 'declare',
+            reason: `config uplift: ${k} ${DEFAULT_GUARDS[k]} -> ${v} (engine config relaxes default guard; audited)`,
+          })),
+      ]
       const state = {
         schema_version: 2,
         tree_id: treeId,
         created_at: nowIso(clock),
-        audit_meta: { ...cfg, ...(auditMeta ?? {}) },
+        audit_meta: { ...cfg, ...auditCheck.meta },
         leaves: {
           [rootLeafId]: {
             // 差分对齐（源 cmdInit）：root 的 added_by=null、model/channel 缺省 'unknown'
@@ -106,7 +130,7 @@ export function createEngine(opts) {
             context_usage_pct: 0, nudge_count: 0,
           },
         },
-        drift_log: [], session_registry: {},
+        drift_log: [...upliftDrifts], session_registry: {},
         // A4：验证授权委托（root 会话可在自己结束前把「补验证」写权授予受信会话）。
         // 树级、归一化裸 UUID 列表；全量替换语义；旧树缺字段读侧惰性缺省 []（不要求迁移）。
         verify_delegates: [],
@@ -283,6 +307,36 @@ export function createEngine(opts) {
       if (!result || typeof result !== 'object' || typeof result.pass !== 'boolean') {
         treeError('E_SCHEMA_INVALID', 'verification result object with boolean "pass" required')
       }
+      // flash 审计 #15 加固：裁决主体/一致性校验（落账层不可被一键击穿）。
+      // 旧实现接受任意 verdicts 形状且 pass 与 verdicts 无关联——`{pass:true, verdicts:[{pass:false}]}`
+      // 即可伪造裁决；verify.js 的防绕过设计在落账层失守。
+      if (result.policyId !== undefined && result.policyId !== null && typeof result.policyId !== 'string') {
+        treeError('E_SCHEMA_INVALID', 'verification policyId must be a string when provided')
+      }
+      if (result.verdicts !== undefined) {
+        if (!Array.isArray(result.verdicts)) treeError('E_SCHEMA_INVALID', 'verification verdicts must be an array')
+        for (const v of result.verdicts) {
+          if (!v || typeof v !== 'object' || Array.isArray(v) || typeof v.pass !== 'boolean') {
+            treeError('E_SCHEMA_INVALID', `verification verdicts[] entry must be an object with boolean pass (got ${JSON.stringify(v)?.slice(0, 120)})`)
+          }
+        }
+        if (result.verdicts.length > 0) {
+          const allPass = result.verdicts.every((v) => v.pass === true)
+          if (result.pass !== allPass) {
+            treeError('E_SCHEMA_INVALID', `verification pass=${result.pass} inconsistent with verdicts AND=${allPass} (refuse to record an inconsistent verdict)`)
+          }
+        } else if (result.pass === true) {
+          // R1 复核 P3-3：显式空 verdicts + pass=true 等价于「无任何 per-mode 证据的 PASS」，
+          // 与 #15 一致性目标冲突 → 拒绝；省略 verdicts 的旧调用（受信方自证）仍允许（兼容）。
+          treeError('E_SCHEMA_INVALID', 'verification pass=true requires at least one verdict (explicit empty verdicts = no evidence)')
+        }
+      }
+      if (result.rounds !== undefined) {
+        if (!Array.isArray(result.rounds)) treeError('E_SCHEMA_INVALID', 'verification rounds must be an array')
+        for (const r of result.rounds) {
+          if (!r || typeof r !== 'object' || Array.isArray(r)) treeError('E_SCHEMA_INVALID', 'verification rounds[] entry must be an object')
+        }
+      }
       leaf.verification = {
         ts: nowIso(clock), policy_id: result.policyId ?? null, pass: result.pass,
         verdicts: result.verdicts ?? [],
@@ -364,7 +418,15 @@ export function createEngine(opts) {
       assertLeafWriter(state, leaf, caller, 'context', state.leaves?.[`${treeId}-root`]?.session_id)
       leaf.context_usage_pct = pct
       let segTriggered = false
-      const threshold = state.audit_meta?.ctx_segment_threshold ?? cfg.ctxSegmentThreshold
+      // flash 审计 #21/#23：阈值读取修正两处旧缺陷——
+      //   ① 旧回退键 `cfg.ctxSegmentThreshold`（camelCase）恒 undefined（cfg 是 snake_case）→ 旧树
+      //      audit_meta 缺键时 `pct >= undefined` 恒 false，竹节静默失效；回退键改 `cfg.ctx_segment_threshold`。
+      //   ② 旧树 audit_meta 若被写坏（字符串 / >100 / 非整数），`pct >= threshold` 同样恒 false；
+      //      此处做防御性校验，非法值回退 cfg（audit_meta 写入侧的严格校验见 validateAuditMeta）。
+      const rawThreshold = state.audit_meta?.ctx_segment_threshold
+      const threshold = (Number.isInteger(rawThreshold) && rawThreshold >= 1 && rawThreshold <= 100)
+        ? rawThreshold
+        : cfg.ctx_segment_threshold
       if (pct >= threshold && leaf.role !== 'root' && leaf.status === 'active') {
         leaf.status = 'segment_pending'
         segTriggered = true
@@ -396,7 +458,7 @@ export function createEngine(opts) {
       if (leaf.events.length > 0 && ts < leaf.events[leaf.events.length - 1].ts) {
         treeError('E_TS_NOT_MONOTONIC', `event ts ${ts} earlier than previous event`)
       }
-      leaf.events.push({ type, meta: meta ?? {}, ts })
+      leaf.events.push({ type, meta: meta ?? {}, ts, attempt: leaf.runtime?.attempt ?? 0 })
       leaf.last_event_type = type
       leaf.last_event_ts = ts
       // E2E#5 修复：done 事件 → runtime 成功终态回流（收割双轨之「自报 done」路径；此前 succeeded 无任何赋值点，
@@ -538,13 +600,35 @@ export function createEngine(opts) {
       if (leaf.role === 'root') treeError('E_SCHEMA_INVALID', 'cannot dispatch root leaf')
       const rt = runtimeOf(leaf)
       if (rt.state === 'running') treeError('E_SCHEMA_INVALID', `node "${leafId}" already running (cancel or wait harvest first)`)
-      // 依赖闸（§7 任务1）：所有 dependencies 节点必须已 succeeded（runtime 终态成功 ∨ status done——
-      // done 三重闸需 milestone 面经 store/直改注入，工具面正常路径是 runtime succeeded 回流）
+      // 依赖闸（§7 任务1；flash 审计 #8 加固 + R1 复核 P1-1 收敛收口（2026-11-13 D25））：
+      // 结算信号只认**正向判据**，两路任一：
+      //   ① `status === 'done'`——done 三重闸正门（done 事件 + milestones 全 audit_pass + set-status done）；
+      //   ② `verification.pass === true`——验证裁决 PASS（creator/root/delegate 落账，owner 不得自验）。
+      // 「自报 done 事件 → runtime.succeeded」**不再**作为依赖结算信号（原主旁路：worker 只需 owner 身份
+      // 自报一条 done 即可放行下游，全程零验证——R1 复核 P1-1 实证）。已验证失败（pass===false）的依赖
+      // 仍然永不放行。选型说明（D25 二次复核 P3-6 措辞更正）：复核者曾建议「只认 status==='done'」或
+      // 「done 回流过 milestone 闸」——前者会把 tree_verify PASS 后的正常收口也拦死（操作契约是指挥官
+      // 验证后推进下游）；后者因 assertMilestoneGate 对空 milestones = REJECT，会把无 milestones 的普通
+      // worker **永久拦死**，同样不可取。本实现取两路正向判据并集（二次复核观察：milestones 无工具写入
+      // 命令，status=done 路径经工具面实际不可达，有效判据实质 = verification.pass===true，比文档表述更严）。
+      // 信任模型影响已同步 SKILL 契约与文档。
       if (Array.isArray(leaf.dependencies) && leaf.dependencies.length > 0) {
-        const depDone = (d) => state.leaves[d]?.status === 'done' || state.leaves[d]?.runtime?.state === 'succeeded'
-        const unmet = leaf.dependencies.filter((d) => !depDone(d))
+        const depState = (d) => {
+          const dep = state.leaves[d]
+          if (!dep) return 'missing'
+          if (dep.verification && dep.verification.pass === false) return 'verification_failed'
+          if (dep.status === 'done' || dep.verification?.pass === true) return 'done'
+          return 'not_done'
+        }
+        const unmet = leaf.dependencies.filter((d) => depState(d) !== 'done')
         if (unmet.length > 0) {
-          treeError('E_DEPENDENCY_NOT_MET', `node "${leafId}" dispatch blocked: dependencies not succeeded [${unmet.map((d) => `${d}(status=${state.leaves[d]?.status ?? 'missing'},runtime=${state.leaves[d]?.runtime?.state ?? 'none'})`).join(', ')}]`)
+          treeError('E_DEPENDENCY_NOT_MET', `node "${leafId}" dispatch blocked: dependencies not settled (status=done via triple gate, or verification.pass=true required) [${unmet.map((d) => {
+            const s = depState(d)
+            const dep = state.leaves[d]
+            const vState = dep?.verification ? (dep.verification.pass === true ? 'PASS' : 'FAIL') : 'none'
+            if (s === 'verification_failed') return `${d}(verification=FAIL)`
+            return `${d}(status=${dep?.status ?? 'missing'},runtime=${dep?.runtime?.state ?? 'none'},verification=${vState})`
+          }).join(', ')}]`)
         }
       }
       needPort('dispatch')
@@ -637,6 +721,16 @@ export function createEngine(opts) {
     }
     // ① 先 interrupt（释放 maxActiveSubagents 名额；authority 用持久父地址）
     try { await ports.interrupt(rt.subagentSessionId, rt.parentSessionId) } catch { /* 尽力而为 */ }
+    // flash 审计 #20：竹节接力此前完全绕过 findSessionConflict/sessionBudget（max_sessions 对长链失明）。
+    // 接力 = 新会话（将 +1），故接力前做预算探针；达上限 → frozen 待裁（不静默继续烧链）。
+    const budgetProbe = sessionBudget(state, '__bamboo_relay_probe__', cfg)
+    if (budgetProbe.reached) {
+      rt.state = 'frozen'
+      rt.history.push({ sessionId: rt.subagentSessionId, state: 'running', endedAt: clock.now(), note: 'session budget reached → frozen' })
+      leaf.drift_history.push({ ts: nowIso(clock), leaf_id: leaf.leaf_id, kind: 'security', severity: 'high', action: 'limit', reason: `bamboo relay denied: session budget ${budgetProbe.count}/${budgetProbe.max} reached (max_sessions guard)` })
+      state.drift_log.push(leaf.drift_history[leaf.drift_history.length - 1])
+      return { relay: 'frozen-budget', count: budgetProbe.count, max: budgetProbe.max }
+    }
     // ② 后 dispatch 新会话（提示词 = 任务正文（E2E#4 修复：rt.taskPrompt 持久化）+ 简报 + 同一 DoD）
     // [agspec-C2] 接力 assignee 原样透传(此前只恢复 model 且 leaf.model 恒 'unknown' → 接力零路由保持,静默降级)
     const session = await ports.dispatch({
@@ -649,8 +743,31 @@ export function createEngine(opts) {
       // v0.8.1（D22）：接力会话同样携带深度上限（否则接力可绕过派发侧上限）
       maxDepth: cfg.max_subagent_depth,
     })
+    // flash 审计 #20（续）：接力会话同样必须过「全树会话唯一」——宿主/适配层返回冲突 id 时
+    // fail-closed：中断新会话、冻结节点（不把冲突会话绑定进账本）。
+    // R1 复核 P3-1：findSessionConflict 会按 excludeLeafId 跳过当前 leaf，需额外断言「新 id 不得是
+    // 本 leaf 自身当前会话或既有接力链上的 id」（自链重复同样视为异常返回）。
+    const selfDuplicate = sameSession(session.sessionId, rt.subagentSessionId)
+      || sameSession(session.sessionId, leaf.session_id)
+      || (rt.segmentChain ?? []).some((sid) => sameSession(sid, session.sessionId))
+      || (leaf.segment_chain ?? []).some((sid) => sameSession(sid, session.sessionId))
+    const relayConflict = selfDuplicate
+      ? `relay returned session_id "${session.sessionId}" already used by this leaf (self-chain duplicate)`
+      : findSessionConflict(state, session.sessionId, leaf.leaf_id)
+    if (relayConflict) {
+      try { await ports.interrupt(session.sessionId, rt.parentSessionId) } catch { /* 中断失败仍冻结（不绑定冲突会话） */ }
+      rt.state = 'frozen'
+      rt.history.push({ sessionId: rt.subagentSessionId, state: 'running', endedAt: clock.now(), note: 'relay session conflict → frozen' })
+      leaf.drift_history.push({ ts: nowIso(clock), leaf_id: leaf.leaf_id, kind: 'security', severity: 'high', action: 'limit', reason: `bamboo relay denied: ${relayConflict}` })
+      state.drift_log.push(leaf.drift_history[leaf.drift_history.length - 1])
+      return { relay: 'frozen-conflict', conflict: relayConflict }
+    }
     rt.history.push({ sessionId: rt.subagentSessionId, state: 'running', endedAt: clock.now(), note: 'bamboo-relay' })
     if (briefState === 'ok' || briefState === 'manual') rt.handoffBrief = brief
+    // 账本口径（flash 审计 #20 收敛说明）：竹节接力账本 = `runtime.segmentChain`（唯一写入点，下方 push）；
+    // `leaf.segment_chain` 是手写 segment:append 通道的账本（两本账互斥，validate F1③ 强制「同一 id
+    // 不得同时出现在两本账」）。预算/唯一性判定（sessionBudget / findSessionConflict）对两本账取并集，
+    // 故接力不再存在「独立账外会话」。合并为单数组会改变已冻结的 F1 validate 语义，需用户裁决，暂不做。
     rt.segmentChain.push(session.sessionId)
     rt.subagentSessionId = session.sessionId
     // v0.5.0（审计 B1 修复）：竹节接力就是"同一 leaf 换会话"——done 所有权必须随之迁移到
@@ -682,8 +799,16 @@ export function createEngine(opts) {
           for (const leaf of Object.values(state.leaves)) {
             const rt = leaf.runtime
             if (!rt || rt.state !== 'running') continue
-            // E2E#5 修复：收割兜底——已有 done 事件但 runtime 仍 running（历史遗留/写入竞态）→ 补回流 succeeded。
-            if ((leaf.events ?? []).some((e) => e.type === 'done')) {
+            // E2E#5 修复 + flash 审计 #8 加固（R1 P2-1 修正）：收割兜底——已有 done 事件但 runtime 仍 running
+            // （历史遗留/写入竞态）→ 补回流 succeeded。**仅在 done 事件属于当前 attempt 时**才视为结算信号：
+            // 优先用事件落账时记录的 `attempt`（时钟无关、天然抗回拨/同毫秒）；旧状态/旧事件无 attempt 字段时
+            // 回退时间戳启发式（event.ts >= dispatchedAt；dispatchedAt=0 的 legacy 状态一律放行以保持兼容）。
+            const doneEvent = (leaf.events ?? []).find((e) => e.type === 'done')
+            const doneTs = doneEvent ? Date.parse(doneEvent.ts) : NaN
+            const attemptMatches = doneEvent !== undefined && (typeof doneEvent.attempt === 'number'
+              ? doneEvent.attempt === rt.attempt
+              : (rt.dispatchedAt === 0 || (!Number.isNaN(doneTs) && doneTs >= rt.dispatchedAt)))
+            if (doneEvent !== undefined && attemptMatches) {
               rt.history.push({ sessionId: rt.subagentSessionId, state: 'running', endedAt: clock.now(), note: 'done event (sweep reflux)' })
               rt.state = 'succeeded'
               events.push({ leaf_id: leaf.leaf_id, event: 'succeeded' })
@@ -910,12 +1035,79 @@ export function createEngine(opts) {
     })
   }
 
+  /**
+   * gc（flash 审计 #30）：核对/截断 archived 叶子的无界账本。
+   *
+   * 背景：heartbeat 有 500 上限，但 `leaf.events` / `leaf.drift_history` / `leaf.runtime.history`
+   * 与 `tree.drift_log` 全部无界（叠加 #29 备份内嵌 → 每次写全量序列化，膨胀加速）。本命令只处理
+   * **archived** 叶子（终态、不参与调度/依赖闸）：保留最近 `keep` 条 + 全部 `done` 事件（审计锚点），
+   * 并截断 tree.drift_log 到最近 `keep × 5`（下限 100）。破坏性维护 → 仅 root 会话可执行（同
+   * verify-delegate 的最小授权面）；不删除非 archived 叶子任何数据，不改 status/runtime。
+   *
+   * @param {[string, {keep?: number}]} args
+   * @param {string} caller
+   */
+  async function gcRun(args, caller) {
+    const [treeId, opts] = args
+    // R1 复核 P3-2/P3-5：keep 必须是非负整数（缺省 20）；下限从 0 提为 1——keep=0 会清空 archived
+    // 叶子除 done 外的全部审计事件（含 subagent_spawn 预算史 / blocked 升级史），破坏强度过大。
+    if (opts?.keep !== undefined && !Number.isInteger(opts.keep)) {
+      treeError('E_SCHEMA_INVALID', `gc keep must be an integer (got ${typeof opts.keep} "${String(opts.keep)}")`)
+    }
+    const keep = Math.max(1, Math.min(Number.isInteger(opts?.keep) ? opts.keep : 20, 500))
+    return withTreeMut(treeId, async (state) => {
+      if (!state) treeError('E_TREE_NOT_FOUND', `tree "${treeId}" not found`)
+      const rootSid = state.leaves?.[`${treeId}-root`]?.session_id
+      if (typeof rootSid !== 'string' || !rootSid) {
+        treeError('E_BORROWED_IDENTITY', `tree "${treeId}" root session is null: gc (destructive maintenance) cannot be authorized without a root session`)
+      }
+      if (!sameSession(caller, rootSid)) {
+        treeError('E_BORROWED_IDENTITY', `gc is root-only: caller "${String(caller ?? '(missing)').slice(0, 8)}" is not the tree root session`)
+      }
+      const archived = Object.values(state.leaves).filter((l) => l.status === 'archived')
+      let eventsCut = 0
+      let driftCut = 0
+      let historyCut = 0
+      for (const leaf of archived) {
+        const ev = Array.isArray(leaf.events) ? leaf.events : []
+        if (ev.length > keep) {
+          const tail = ev.slice(-keep)
+          const doneEvents = ev.filter((e) => e.type === 'done' && !tail.includes(e))
+          leaf.events = [...doneEvents, ...tail]
+          eventsCut += ev.length - leaf.events.length
+        }
+        const dh = Array.isArray(leaf.drift_history) ? leaf.drift_history : []
+        if (dh.length > keep) { leaf.drift_history = dh.slice(-keep); driftCut += dh.length - keep }
+        const hist = Array.isArray(leaf.runtime?.history) ? leaf.runtime.history : []
+        if (hist.length > keep) { leaf.runtime.history = hist.slice(-keep); historyCut += hist.length - keep }
+      }
+      // tree.drift_log：保留最近 keep×5（下限 100）——gc 自身的留痕在截断之后追加。
+      const driftKeep = Math.max(100, keep * 5)
+      let treeDriftCut = 0
+      if (Array.isArray(state.drift_log) && state.drift_log.length > driftKeep) {
+        treeDriftCut = state.drift_log.length - driftKeep
+        state.drift_log = state.drift_log.slice(-driftKeep)
+      }
+      const entry = {
+        ts: nowIso(clock), leaf_id: null, kind: 'security', severity: 'low', action: 'limit',
+        reason: `gc: archived leaves trimmed (keep=${keep}) events_cut=${eventsCut} drift_cut=${driftCut} history_cut=${historyCut} tree_drift_cut=${treeDriftCut} by caller ${String(caller ?? '(missing)')}`,
+      }
+      state.drift_log.push(entry)
+      if (state.drift_log.length > driftKeep + 1) state.drift_log.shift()
+      await store.write(treeId, state)
+      return {
+        tree_id: treeId,
+        gc: { archived_leaves: archived.length, keep, events_cut: eventsCut, drift_cut: driftCut, history_cut: historyCut, tree_drift_cut: treeDriftCut },
+      }
+    })
+  }
+
   const table = {
     init, validate, treeDump, sessionCount,
     'leaf:add': leafAdd, 'leaf:get': leafGet, 'leaf:list-active': leafListActive, 'leaf:list-all': leafListAll,
     'leaf:set-status': setStatus, 'leaf:set-session': setSession, 'leaf:set-context': setContext,
     'leaf:set-verification': setVerification, 'leaf:set-relay': setRelay,
-    'tree:verify-delegate': verifyDelegate,
+    'tree:verify-delegate': verifyDelegate, 'tree:gc': gcRun,
     'event:append': eventAppend, 'event:list': eventList, 'segment:append': segmentAppend,
     'nudge:append': nudgeAppend, 'nudge:reset': nudgeReset,
     'drift:append': driftAppend, 'drift:list': driftList,
