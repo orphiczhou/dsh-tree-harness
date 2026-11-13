@@ -104,6 +104,7 @@ flow 执行器构造 request 时**未传 `maxDepth`**（`spike/dsh-flow-plugin/l
 | **2026-11-13 16:21** | **flow 项目组出具受理回执** `RECEIPT-2026-11-13-to-tree-harness.md`（7031 B）：**已受理，用户裁决 B 档**；权威登记 flow 仓 `docs/08` §0 D20、台账 §8.5 `CR-2026-11-13-02`、`docs/11` §15.2 | 仓内副本 [RECEIPT-2026-11-13-from-flow-engine.md](RECEIPT-2026-11-13-from-flow-engine.md)（与 flow 仓副本 **SHA256 完全一致**：`F6ED66893B6EEDD449A1BC7AC3E04E987488A49DD9CAA87D56E71A3CB55D3F4A`） |
 | 2026-11-13 17:38 | flow 仓另增通知站插件需求单（与本单无关） | `REQ-2026-11-13-notification-hub-plugin.md` |
 | 2026-11-13 18:41（本仓复查） | flow 仓 `git log` 仍未见 M1.2 提交；**回执已到、正在做**（用户告知） | flow 仓 `git status`/`git log` 只读 |
+| **2026-11-13 18:52（本仓复查，只读）** | flow 仓工作树 `git status` + `evidence/m1/T-m1.2/` + `spike/dsh-flow-plugin/lib/continuation.js` | **M1.2 已实质实现（未提交）**：① 深度封口 `session-executor.js`（`resolveProfileMaxDepth` + provider 能力守卫 + `E_SESSION_DEPTH_EXCEEDED` 映射，证据 `T-2-DEPTH.md`）；② `flow_send` 续接入口 `lib/continuation.js`（纯函数抽象：授权→发送→轮询→抽取；不写 journal；证据 `T-4-FLOW-SEND.md`）；③ 证据与 mutation 原始输出在 `evidence/m1/T-m1.2/`（含 T-3-SESSION-MODE、GLM 复核两份）；④ 插件套件当前 `169/170`，唯一失败 = `m1-judge.test.mjs:140` 的「4 件套」计数断言（`flow_send` 加入后工具面 4→5 的已知残留，待 flow Lead 裁决）。**回执 §1 排期正在兑现。** | flow 仓工作树/证据目录只读核查 |
 
 ### B. 回执要点（FACT，以 flow 回执原文为准）
 

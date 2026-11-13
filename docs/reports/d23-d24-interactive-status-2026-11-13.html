@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D23/D24 收口 + flow 受理回执 + 问题清单 · 2026-11-13</title>
+<script>
+/* 在 <head> 里尽早：(1) 标记 JS 可用，供 CSS 隐藏降级提示；(2) 恢复主题，避免闪烁。
+   沙箱环境 localStorage 会抛错 → 必须 try/catch。 */
+(function () {
+  var root = document.documentElement;
+  root.className += ' js';
+  try {
+    var m = localStorage.getItem('html-explainer-theme');
+    if (m === 'light' || m === 'dark') root.setAttribute('data-theme', m);
+  } catch (e) { /* 忽略：无存储权限 */ }
+})();
+</script>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#ffffff; --ink:#17212f; --ink2:#33414f; --muted:#67737f;
+    --line:#e1e7ee; --line2:#cfd8e3;
+    --brand:#2f6fed; --soft:#eaf1ff;
+    --ok:#177a4c; --ok-soft:#e7f6ee; --ok-line:#b7e0c9;
+    --warn:#9a5b00; --warn-soft:#fff4e2; --warn-line:#f0d9ad;
+    --bad:#b42318; --bad-soft:#fdeceb; --bad-line:#f3c9c4;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 10px 26px rgba(16,24,40,.06);
+    --radius:16px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  html[data-theme="dark"]{
+    --bg:#0e1520; --card:#151f2c; --ink:#e8eef7; --ink2:#c3d0e0; --muted:#9bacbf;
+    --line:#243141; --line2:#314156;
+    --brand:#6ea1ff; --soft:#1a2740;
+    --ok:#58d29a; --ok-soft:#122a20; --ok-line:#24503c;
+    --warn:#f0b45a; --warn-soft:#2a2010; --warn-line:#574221;
+    --bad:#ff8a80; --bad-soft:#2c1614; --bad-line:#5a2b27;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px rgba(0,0,0,.35);
+  }
+  @media (prefers-color-scheme: dark){
+    html:not([data-theme="light"]){
+      --bg:#0e1520; --card:#151f2c; --ink:#e8eef7; --ink2:#c3d0e0; --muted:#9bacbf;
+      --line:#243141; --line2:#314156;
+      --brand:#6ea1ff; --soft:#1a2740;
+      --ok:#58d29a; --ok-soft:#122a20; --ok-line:#24503c;
+      --warn:#f0b45a; --warn-soft:#2a2010; --warn-line:#574221;
+      --bad:#ff8a80; --bad-soft:#2c1614; --bad-line:#5a2b27;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:64px}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.72;font-size:16px;
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    -webkit-font-smoothing:antialiased;transition:background .18s,color .18s}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+  h1,h2,h3,h4{margin:0;line-height:1.32}
+  h2{font-size:25px}h3{font-size:18px}
+  p{margin:.55em 0}
+  a{color:var(--brand);text-decoration:none}
+  code{font-family:var(--mono);font-size:.87em;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 5px;word-break:break-all}
+  .muted{color:var(--muted)}
+  .small{font-size:13.4px}
+  ul{margin:.5em 0;padding-left:1.3em}
+  li{margin:.3em 0}
+
+  /* 控制条 */
+  .topbar{position:sticky;top:0;z-index:30;backdrop-filter:blur(8px);
+    background:color-mix(in srgb, var(--card) 88%, transparent);
+    border-bottom:1px solid var(--line)}
+  .topbar .inner{max-width:1120px;margin:0 auto;padding:8px 22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .topbar .brand{font-weight:700;font-size:14px;margin-right:auto;color:var(--ink2)}
+  .btn{font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--line2);
+    background:var(--card);color:var(--ink2);border-radius:999px;padding:5px 12px;transition:.15s}
+  .btn:hover{border-color:var(--brand);color:var(--brand)}
+  .btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .path-fallback{flex-basis:100%;font-size:12.4px;color:var(--muted);margin-top:2px}
+  .path-fallback code{user-select:all;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+
+  /* 脚本未启用的降级提示：默认显示，html.js 时隐藏 */
+  .jsoff{margin:14px auto 0;max-width:1120px;padding:0 22px}
+  .jsoff .box{border:1px solid var(--warn-line);background:var(--warn-soft);color:var(--warn);
+    border-radius:12px;padding:11px 14px;font-size:13.6px;line-height:1.6}
+  html.js .jsoff{display:none}
+
+  /* 首屏 */
+  .hero{padding:34px 0 22px;background:linear-gradient(160deg,var(--card),var(--bg))}
+  .hero .kicker{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .hero h1{font-size:31px;margin-top:8px;letter-spacing:.3px}
+  .hero .sub{margin-top:10px;color:var(--ink2);max-width:860px;font-size:16.2px}
+  .hero .meta{margin-top:12px;font-size:12.8px;color:var(--muted)}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .badge{font-size:12.6px;font-weight:600;border-radius:999px;padding:4px 11px;border:1px solid}
+  .badge.ok{color:var(--ok);background:var(--ok-soft);border-color:var(--ok-line)}
+  .badge.warn{color:var(--warn);background:var(--warn-soft);border-color:var(--warn-line)}
+  .badge.bad{color:var(--bad);background:var(--bad-soft);border-color:var(--bad-line)}
+
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  nav.toc a{font-size:12.8px;border:1px solid var(--line2);background:var(--card);border-radius:999px;padding:3px 11px;color:var(--ink2)}
+  nav.toc a:hover{border-color:var(--brand);color:var(--brand);text-decoration:none}
+
+  /* 内容 */
+  section{margin:26px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 26px}
+  .sec-head{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:4px}
+  .sec-no{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--brand);background:var(--soft);border-radius:6px;padding:2px 7px}
+  .lead{color:var(--ink2);font-size:16.2px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+  .kpi{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg)}
+  .kpi .k{font-size:12px;color:var(--muted)}
+  .kpi .v{font-size:20px;font-weight:700;margin-top:3px}
+  .kpi .n{font-size:12px;color:var(--muted);margin-top:2px}
+  .kpi.ok .v{color:var(--ok)}.kpi.warn .v{color:var(--warn)}.kpi.brand .v{color:var(--brand)}
+  .ev{display:inline-block;margin-top:8px;font-size:12.4px;color:var(--muted);
+    background:var(--bg);border:1px dashed var(--line2);border-radius:8px;padding:3px 8px}
+  .ev b{color:var(--ink2);font-weight:600}
+
+  /* 状态总览卡片 */
+  .statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+  .stat{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--bg)}
+  .stat .k{font-size:12px;color:var(--muted);font-weight:600}
+  .stat .v{font-size:19px;font-weight:700;margin-top:3px}
+  .stat .d{font-size:13px;color:var(--ink2);margin-top:4px}
+  .stat.ok .v{color:var(--ok)}.stat.warn .v{color:var(--warn)}.stat.brand .v{color:var(--brand)}
+
+  /* 卡片选择：静态全显示，JS 接管后只显示选中 */
+  .pickbar{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+  .pick{text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--card);
+    border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;transition:.15s;
+    display:flex;flex-direction:column;gap:3px}
+  .pick:hover{border-color:var(--brand)}
+  .pick[aria-pressed="true"]{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent)}
+  .pick .pk{font-family:var(--mono);font-size:11.5px;color:var(--brand);font-weight:700}
+  .pick .pn{font-weight:700;font-size:15px}
+  .pick .ps{font-size:12.5px;color:var(--muted)}
+  .panel{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:16px 18px;margin-top:12px}
+  html.js .panel{display:none}
+  html.js .panel.active{display:block}
+  .prow{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .prow:last-child{border-bottom:none}
+  .prow .k{font-size:12.5px;color:var(--muted);font-weight:600;padding-top:2px}
+  .prow .v{font-size:14.6px;color:var(--ink2)}
+
+  /* 两栏对照 */
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .col{border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .col.good{background:var(--ok-soft);border-color:var(--ok-line)}
+  .col.bad{background:var(--bad-soft);border-color:var(--bad-line)}
+  .col h4{margin-bottom:8px}
+  .col.good h4{color:var(--ok)}.col.bad h4{color:var(--bad)}
+  .col ul{margin:0;padding-left:1.2em}
+  .col li{font-size:14px;margin:.45em 0}
+
+  /* 时间线 / 折叠 */
+  details.tl{border:1px solid var(--line);border-radius:12px;background:var(--card);margin-top:10px;overflow:hidden}
+  details.tl summary{cursor:pointer;padding:11px 15px;font-weight:600;font-size:15px;list-style:none;display:flex;gap:10px;align-items:baseline}
+  details.tl summary::-webkit-details-marker{display:none}
+  details.tl summary .t{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:110px}
+  details.tl summary .chev{margin-left:auto;color:var(--muted);font-size:11px;transition:transform .18s}
+  details.tl[open] summary .chev{transform:rotate(90deg)}
+  details.tl .body{padding:2px 16px 14px;border-top:1px solid var(--line);font-size:14.4px;color:var(--ink2)}
+  details.tl .body code{font-size:.82em}
+  .tag{font-family:var(--mono);font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;margin-right:6px;vertical-align:1px}
+  .tag.p1{color:var(--bad);background:var(--bad-soft);border:1px solid var(--bad-line)}
+  .tag.p2{color:var(--warn);background:var(--warn-soft);border:1px solid var(--warn-line)}
+  .tag.p3{color:var(--muted);background:var(--bg);border:1px solid var(--line2)}
+
+  /* 清单（拍板项） */
+  .checklist{margin-top:12px}
+  .ck{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-top:10px;background:var(--bg)}
+  .ck input[type=checkbox]{margin-top:5px;width:16px;height:16px;accent-color:var(--brand);flex:none}
+  .ck .ct{font-size:14.5px}
+  .ck .ct b{display:block;font-size:15px}
+  .ck .ct span{color:var(--ink2)}
+  .ck .rec{font-size:12px;color:var(--ok);font-weight:600}
+
+  /* 表格 */
+  table.src{width:100%;border-collapse:collapse;font-size:14.2px;margin-top:10px}
+  table.src th,table.src td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  table.src th{background:var(--bg);font-size:12.6px;color:var(--muted)}
+  table.src td code{font-size:.8em}
+  .pathbox{overflow-x:auto}
+
+  footer{border-top:1px solid var(--line);margin-top:36px;padding:22px 0 40px;background:var(--bg)}
+  footer p{font-size:13px;color:var(--muted);margin:.3em 0}
+
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;pointer-events:none;
+    background:var(--ink);color:var(--bg);font-size:13.4px;padding:9px 16px;border-radius:999px;
+    transition:opacity .18s,transform .18s;z-index:50;max-width:80vw}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media (max-width:1060px){ .kpis{grid-template-columns:repeat(2,1fr)} .statgrid{grid-template-columns:1fr} .pickbar{grid-template-columns:repeat(2,1fr)} .twocol{grid-template-columns:1fr} }
+  @media (max-width:720px){ .card{padding:18px 16px} .wrap{padding:0 14px} .prow{grid-template-columns:1fr} .pickbar{grid-template-columns:1fr} .hero h1{font-size:24px} }
+
+  @media print{
+    .topbar,.jsoff,nav.toc,#toast{display:none!important}
+    body{background:#fff;color:#111}
+    .card,.panel,details.tl,.stat,.kpi,.col,.ck{box-shadow:none;border-color:#ccc;break-inside:avoid}
+    html.js .panel{display:block}
+    a{color:#111;text-decoration:underline}
+  }
+</style>
+</head>
+<body data-page-path="D:\Codes\dsh-tree-harness\docs\reports\d23-d24-interactive-status-2026-11-13.html">
+
+<div class="topbar">
+  <div class="inner">
+    <span class="brand">D23/D24 状态汇报</span>
+    <button class="btn" id="theme-toggle" type="button" aria-pressed="false" title="切换色调：自动 / 浅色 / 深色">🌗 自动</button>
+    <button class="btn" id="copy-path" type="button">复制本页路径</button>
+    <button class="btn" id="expand-btn" type="button">展开全部</button>
+    <button class="btn" id="print-btn" type="button">打印 / PDF</button>
+  </div>
+</div>
+
+<!-- 降级提示：脚本被禁用时（例如 DSH 文档预览的静态模式）显示，html.js 时自动隐藏。
+     不要用 <noscript>：DSH 静态预览会把 noscript 从白名单里删掉。 -->
+<div class="jsoff">
+  <div class="box">
+    <b>当前是静态预览：脚本未启用。</b>页面正文、图表与折叠项仍然可读，但「切换色调 / 复制路径 / 页签切换」等交互不可用。
+    在 DSH 里获得完整交互：<b>设置 → 通用 → Coding Tools（开发者工具）</b>打开，或点预览右上角<b>「在应用外打开」</b>用系统浏览器查看。
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">dsh-tree-harness · 汇报专页</div>
+    <h1>D23/D24 收口完成并推送；flow 侧已受理 B 档、M1.2 进行中</h1>
+    <p class="sub">本页给项目负责人（Lead）的对接用户看：D23 四项（深度 6 拒绝真机回归 / flash 审计三条高危 / 发布门禁收紧 / <code>tree_log</code> 机读 + 验证授权委托）全部完成并推送；flow 项目组 2026-11-13 16:21 出具受理回执（B 档），M1.2 已于当日 18:52 只读核查到「深度封口 + <code>flow_send</code>」实现但尚未提交。下方逐项可点开细看。</p>
+    <div class="badges">
+      <span class="badge ok">✅ D23 四项已交付并推送</span>
+      <span class="badge ok">✅ flow 已受理（B 档）</span>
+      <span class="badge warn">⏳ flow M1.2 进行中（WIP，未提交）</span>
+      <span class="badge bad">⚠️ 平台侧 2 新发现 + 30 条审计残留</span>
+    </div>
+    <div class="meta">事实截至 <b>2026-11-13</b>（flow M1.2 WIP 核查 <b>18:52</b>）· 单文件、离线可开 · 本页不改变任何代码或状态</div>
+    <nav class="toc">
+      <a href="#summary">一页看懂</a>
+      <a href="#status">状态总览</a>
+      <a href="#flow">flow 受理回执</a>
+      <a href="#issues">其余问题清单</a>
+      <a href="#decisions">需要你拍板</a>
+      <a href="#sources">证据索引</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section id="summary">
+    <div class="card">
+      <div class="sec-head"><span class="sec-no">00</span><h2>一页看懂</h2></div>
+      <p class="lead">三句话：<b>D23 四项全完成并推送（tree-engine v0.9.0，213/213）</b>；<b>flow 侧已受理 B 档、M1.2 进行中（18:52 核查到实现、未提交）</b>；<b>需要你对 4 个决定拍板</b>（是否等 M1.2 落地再做续接试点、是否代拟 DSH issue、是否继续清 flash 审计、是否归档本页）。</p>
+      <div class="kpis">
+        <div class="kpi ok"><div class="k">tree-engine</div><div class="v">v0.9.0</div><div class="n">213/213 · 25 测试文件</div></div>
+        <div class="kpi ok"><div class="k">发布门禁</div><div class="v">14 / 14</div><div class="n">release-gate 单测全绿</div></div>
+        <div class="kpi brand"><div class="k">flow 受理</div><div class="v">B 档</div><div class="n">M1.2 进行中（WIP）</div></div>
+        <div class="kpi warn"><div class="k">需要你</div><div class="v">4 个决定</div><div class="n">见下方拍板清单</div></div>
+      </div>
+      <span class="ev"><b>证据：</b><code>agent.md §1 D23/D24 · §2</code> · <code>CHANGELOG.md Unreleased</code> · <code>docs/operations/RECEIPT-2026-11-13-from-flow-engine.md</code></span>
+    </div>
+  </section>
+
+  <section id="status">
+    <div class="card">
+      <div class="sec-head"><span class="sec-no">01</span><h2>状态总览</h2></div>
+      <p class="lead">四个数字即可对齐：引擎就绪、门禁全绿、已推送、活体一致。</p>
+      <div class="statgrid">
+        <div class="stat ok">
+          <div class="k">① tree-engine</div>
+          <div class="v">v0.9.0</div>
+          <div class="d">213/213 测试（25 个 <code>.test.js</code>）；9 工具 + 随包 2 份 Skill v2.3</div>
+        </div>
+        <div class="stat ok">
+          <div class="k">② 发布门禁</div>
+          <div class="v">14 / 14</div>
+          <div class="d"><code>release-gate.test.mjs</code> 14 例；发布前真机 E2E 门禁 8 项检查已硬接入 <code>release-all.mjs</code></div>
+        </div>
+        <div class="stat ok">
+          <div class="k">③ 提交已推送</div>
+          <div class="v">4 + 1 笔</div>
+          <div class="d">D23 收口 4 笔 + D24 回执落库 1 笔；<code>4ee49e8</code> → <code>7a5c5d1</code>（HEAD），工作树 clean</div>
+        </div>
+        <div class="stat ok">
+          <div class="k">④ 活体</div>
+          <div class="v">v0.9.0 · 7/7</div>
+          <div class="d"><code>tree_doctor {action:"run"}</code> 7/7 PASS；受控 disable→enable 后加载新代码</div>
+        </div>
+      </div>
+      <span class="ev"><b>证据：</b><code>agent.md §2 状态快照</code> · <code>CHANGELOG.md D23/D24 节</code> · <code>git log --oneline</code>（HEAD=<code>7a5c5d1</code>）</span>
+    </div>
+  </section>
+
+  <section id="flow">
+    <div class="card">
+      <div class="sec-head"><span class="sec-no">02</span><h2>flow 受理回执（B 档，M1.2 进行中）</h2></div>
+      <p class="lead">flow 项目组 2026-11-13 <b>16:21</b> 出具受理回执：<b>已受理、用户裁决 B 档</b>。下方五个页签逐项展开；「M1.2 进度」为 <b>18:52 只读核查</b>所得（实现已完成但<b>未提交</b>）。</p>
+
+      <div class="pickbar" role="group" aria-label="受理回执子视图">
+        <button class="pick" type="button" data-k="a" aria-pressed="true">
+          <span class="pk">A</span><span class="pn">受理结论</span><span class="ps">两项需求结论 + 排期</span>
+        </button>
+        <button class="pick" type="button" data-k="b" aria-pressed="false">
+          <span class="pk">B</span><span class="pn">三处事实更正</span><span class="ps">对来函设计的修正</span>
+        </button>
+        <button class="pick" type="button" data-k="c" aria-pressed="false">
+          <span class="pk">C</span><span class="pn">可依赖 / 不可依赖</span><span class="ps">M1.2 后的口径边界</span>
+        </button>
+        <button class="pick" type="button" data-k="d" aria-pressed="false">
+          <span class="pk">D</span><span class="pn">M1.2 进度（WIP）</span><span class="ps">18:52 只读核查，未提交</span>
+        </button>
+        <button class="pick" type="button" data-k="e" aria-pressed="false">
+          <span class="pk">E</span><span class="pn">本仓同步</span><span class="ps">已按回执改写，未改 flow 代码</span>
+        </button>
+      </div>
+
+      <article class="panel active" data-k="a">
+        <h3>A · 受理结论（两项需求）</h3>
+        <div class="prow"><div class="k">结论</div><div class="v">✅ <b>已受理，用户裁决 B 档</b>。flow 仓权威登记 <code>docs/08</code> §0 D20、台账 §8.5 <code>CR-2026-11-13-02</code>、<code>docs/11</code> §15.2。</div></div>
+        <div class="prow"><div class="k">需求一</div><div class="v"><b>采纳</b>为新增 <code>flow_send</code> 工具：<b>发起 <code>flow_run</code> 的父会话 → 该 run 节点会话</b>，冷恢复 + 回读该轮输出；<b>不提供</b>「节点结束不销毁 / 保持活句柄」的驻留语义（宿主无此形态，见 B 页签更正②）。</div></div>
+        <div class="prow"><div class="k">需求二</div><div class="v"><b>采纳</b>且更正为「比来函所述更严重」：不传 <code>maxDepth</code> = <b>完全不校验（无上限）</b>，不是「默认值未生效」。M1.2 起按 <b>能力感知</b>传值（仅 provider 声明 <code>capabilities.depthLimit</code> 时传）+ 超限 fail-closed，新增 <code>E_SESSION_DEPTH_EXCEEDED</code>。</div></div>
+        <div class="prow"><div class="k">§9 深度请求</div><div class="v">✅ <b>采纳</b>（同需求二）；外进程 backend 不声明能力 → 跳过并在启动日志告警、作残留登记。</div></div>
+        <div class="prow"><div class="k">排期</div><div class="v"><b>M1.2</b>（3–5 人日总量，含深度项）；排在 <b>M1.1 真机收口之后</b>；工具面 4→5 的 CR 例外已获用户批准。</div></div>
+        <span class="ev"><b>证据：</b><code>RECEIPT-2026-11-13-from-flow-engine.md §1</code></span>
+      </article>
+
+      <article class="panel" data-k="b">
+        <h3>B · 回执对来函的三处事实更正</h3>
+        <details class="tl" open>
+          <summary><span class="t">更正 ①</span><span>不存在 <code>startContinuable</code></span><span class="chev">▶</span></summary>
+          <div class="body">
+            <ul>
+              <li>宿主唯一启动入口 = <code>startActivation(spec)</code>（导出表 <code>dsh-subagent/lib/index.js</code>）；<b>无</b> <code>startContinuable / continueSession / resume</code>。</li>
+              <li>续接唯一原语 = <code>subagents.sendMessage(sender, targetId, content, {signal})</code> → 非驻留目标走 <code>coldResume</code>。</li>
+              <li>来函 §9 引用的 <code>:1402/:1405</code> 实为 <code>assertSubagentMaxDepth</code> / <code>resolveChildDepth</code>（均在 <code>startLocal</code> 内），不是第二个启动原语。</li>
+            </ul>
+          </div>
+        </details>
+        <details class="tl">
+          <summary><span class="t">更正 ②</span><span><code>dispose()</code> ≠ 销毁会话</span><span class="chev">▶</span></summary>
+          <div class="body">
+            <ul>
+              <li><code>dispose()</code> 只释放<b>驻留（resident）+ 槽位</b>；自然 settle 也走同一事务（槽位只算「运行中」，settle 即归还）。</li>
+              <li>「不 dispose」既不会长期占名额，也不会自动保留活句柄。</li>
+              <li>可靠形态只有：<b>保留 <code>sessionId</code> → 之后冷恢复续接</b>；前置 = <code>sessionPersistence</code> + <code>sessionQuery</code> + descriptor <code>continuable</code> + <b>目标子会话的直接父 Agent 存活</b>。</li>
+              <li>结论：来函 §4.2「保留 activation 句柄 + sendMessage」<b>不可实现</b>。</li>
+            </ul>
+          </div>
+        </details>
+        <details class="tl">
+          <summary><span class="t">更正 ③</span><span>深度配置由工具层注入</span><span class="chev">▶</span></summary>
+          <div class="body">
+            <ul>
+              <li>宿主判据 <code>resolveChildDepth</code>：<code>maxDepth !== void 0</code> 才比较 → <b>不传 = 完全不比较 = 无上限</b>。</li>
+              <li>配置值 <code>resolveMaxDepth(configured)</code> 只把值算出来；<b>注入 <code>request.maxDepth</code> 的是工具层</b>（<code>dsh-tool-subagent</code>）。任何直呼 <code>startActivation</code> 的插件（flow、tree）必须自己 <code>resolveMaxDepth(...)</code> 后显式传。</li>
+              <li>传入前有<b>能力前置</b>：provider 必须声明 <code>capabilities.depthLimit</code>，否则抛 <code>UNSUPPORTED_CAPABILITY</code>。</li>
+              <li>本机 profile 实配 <code>subagent.maxDepth: 5</code>；被拒时抛 <code>SubagentDepthError</code>（无 <code>.code</code>，需按 <code>name</code> 识别）。</li>
+            </ul>
+          </div>
+        </details>
+        <span class="ev"><b>证据：</b><code>RECEIPT-2026-11-13-from-flow-engine.md §2</code></span>
+      </article>
+
+      <article class="panel" data-k="c">
+        <h3>C · M1.2 之后可依赖 / 不可依赖</h3>
+        <div class="twocol">
+          <div class="col good">
+            <h4>✅ 可依赖</h4>
+            <ul>
+              <li>flow 节点会话 <code>sessionId</code> 对模型可见（<code>flow_status</code>/<code>flow_run</code> 渲染 <code>session=&lt;id&gt;</code>，journal <code>node/spawned</code> 已落）。</li>
+              <li>新增 <code>flow_send</code>：仅<b>同 run 同树、直接父会话</b>可用（fail-closed 负例覆盖）。</li>
+              <li>深度上限封口：flow 节点 spawn 受 profile <code>subagent.maxDepth</code> 约束，超限具名拒绝。</li>
+            </ul>
+          </div>
+          <div class="col bad">
+            <h4>❌ 不可依赖（硬限制）</h4>
+            <ul>
+              <li>跨进程 / 跨宿主重启续接（父 Agent 必须存活）。</li>
+              <li>「节点结束不销毁、保持活句柄」（宿主无此形态）。</li>
+              <li>续接轮的<b>结构化 <code>outputSchema</code></b>（冷恢复无 schema）。</li>
+              <li><code>flow_send</code> <b>不写 journal、不改 run 终态</b>（续接轮输出只回调用方）。</li>
+              <li><code>flow_resume</code> 在 M1.2 <b>仍不提供</b>「续接原会话」。</li>
+            </ul>
+          </div>
+        </div>
+        <span class="ev"><b>证据：</b><code>RECEIPT-2026-11-13-from-flow-engine.md §3</code> · <code>composition-playbook.md §6</code></span>
+      </article>
+
+      <article class="panel" data-k="d">
+        <h3>D · flow M1.2 进度（进行中 WIP · 未提交）</h3>
+        <p class="small muted">核查时间 <b>2026-11-13 18:52</b> · 来源：Lead 只读核查 flow 仓（<code>git log</code> 无 M1.2 提交、工作树 WIP）。以下为已观察到但<b>未提交</b>的实现进度，非终态；代码路径属 flow 仓。</p>
+        <div class="prow"><div class="k">① 深度封口</div><div class="v">已实现（WIP）：<code>session-executor.js</code> 新增 <code>resolveProfileMaxDepth()</code>（取 <code>subagents.resolveMaxDepth(undefined)</code>），仅当 provider <code>capabilities.depthLimit===true</code> 才注入 <code>request.maxDepth</code>，否则跳过 + 可见降级日志；<code>SubagentDepthError</code>（无 .code）映射 <code>E_SESSION_DEPTH_EXCEEDED</code>（message 含 attemptedDepth/maxDepth）。证据 <code>evidence/m1/T-m1.2/T-2-DEPTH.md</code>，新增 7 例 depth 用例全绿 + 2 组 mutation。</div></div>
+        <div class="prow"><div class="k">② flow_send</div><div class="v">已实现（WIP）：新增 <code>lib/continuation.js</code>（纯函数：授权→发送→轮询→抽取；零 DSH import）+ <code>lib/tools.js</code> 注册（工具面 4→5）；10 例新测试全绿；不写 journal（字节不变断言）；负例覆盖 parentSession 越权 / nodeId 归属 / live 忙 / 超时 / payload 缺失；3 组 mutation。证据 <code>evidence/m1/T-m1.2/T-4-FLOW-SEND.md</code>。</div></div>
+        <div class="prow"><div class="k">③ 其余证据</div><div class="v"><code>T-3-SESSION-MODE.md</code>、<code>T-2-T-3-GLM-REVIEW.md</code>、<code>T-4-FLOW-SEND-GLM-REVIEW.md</code>、<code>raw/</code>（kernel 286/286、plugin 169/170）。</div></div>
+        <div class="prow"><div class="k">④ 唯一未绿</div><div class="v"><code>m1-judge.test.mjs:140</code> 的「4 件套」计数断言（<code>flow_send</code> 加入后应 5）——已知残留待 flow Lead 裁决，<b>非功能失败</b>。</div></div>
+        <div class="prow"><div class="k">⑤ 口径不变</div><div class="v">父会话必须存活 / 不跨进程或重启 / 续接轮无结构化 schema / <code>flow_send</code> 不写 journal 不改 run 终态 / <code>flow_resume</code> 仍不续接。</div></div>
+        <span class="ev"><b>来源：</b>Lead 只读核查（2026-11-13 18:52）· flow 仓 <code>spike/dsh-flow-plugin/</code> · <code>evidence/m1/T-m1.2/</code> —— 均非本仓文件</span>
+      </article>
+
+      <article class="panel" data-k="e">
+        <h3>E · 本仓同步</h3>
+        <div class="prow"><div class="k">已同步</div><div class="v">✅ <code>REQ-2026-11-13-flow-node-continuable-session.md</code> §附已重写为受理跟进 + 回执摘要 + 三处更正 + 我方配合待办；<code>composition-playbook.md</code> §4/§5/§6/§7/§9/§10 已按回执口径改写（「非一次性」措辞作废，改为 <code>flow_send</code> 冷恢复 + 硬限制清单）。</div></div>
+        <div class="prow"><div class="k">未改动</div><div class="v">❌ <b>未改 flow 仓代码</b>（用户指示：不改 flow 仓，由 flow 项目组响应）。</div></div>
+        <div class="prow"><div class="k">回执留存</div><div class="v">本仓 <code>RECEIPT-2026-11-13-from-flow-engine.md</code> 与 flow 仓副本 <b>SHA256 完全一致</b>（<code>F6ED6689…3D4A</code>）。</div></div>
+        <span class="ev"><b>证据：</b><code>REQ-2026-11-13-flow-node-continuable-session.md §附</code> · <code>CHANGELOG.md D24 节</code></span>
+      </article>
+    </div>
+  </section>
+
+  <section id="issues">
+    <div class="card">
+      <div class="sec-head"><span class="sec-no">03</span><h2>其余问题清单（按优先级分组，逐条展开）</h2></div>
+      <p class="lead">本汇报重点：除 D23/D24 已收口项外，待办与残留按 <b>P1 / P2 / P3</b> 分组。</p>
+
+      <h3 style="margin-top:16px">P1 — 阻塞下一步 / 建议提 DSH issue</h3>
+
+      <details class="tl">
+        <summary><span class="tag p1">P1</span><span>flow M1.2 落地后本仓待办（续接受控试点）</span><span class="chev">▶</span></summary>
+        <div class="body">
+          <ul>
+            <li>按新口径补一次 <b>tree→flow 续接</b>受控试点；调用方必须是<b>发起 <code>flow_run</code> 的会话本身</b>（tree→flow 场景即该 tree worker），跨会话（sibling/root 代发）不支持。</li>
+            <li>向 flow 方取 <code>flow_send</code> 联调夹具（<code>evidence/m1/T-m1.2/</code>）。</li>
+            <li>试点后回写 playbook / REQ。</li>
+          </ul>
+          <span class="ev"><b>证据：</b><code>CHANGELOG.md D24 节「待办」</code> · <code>RECEIPT-2026-11-13-from-flow-engine.md §4</code></span>
+        </div>
+      </details>
+
+      <details class="tl">
+        <summary><span class="tag p1">P1</span><span>平台侧新发现①：HMR 重载竞态（建议提 DSH issue）</span><span class="chev">▶</span></summary>
+        <div class="body">
+          <ul>
+            <li><b>现象</b>：并行改 <code>packages/**</code>（尤其 tree-engine）触发宿主 HMR 反复重装（apply.log 当日 113 次 apply），重载窗口内旧实例 <code>dispose</code> 会「反注册」新实例刚注册的工具 → 调用方偶发 <code>unknown tool</code>（tree_status / tree_doctor / tree_log / tree_node 均出现过，重试或稍后恢复）。</li>
+            <li><b>性质</b>：非本仓可修（宿主机制）；<b>建议</b>宿主侧 dispose/register 顺序串行化，或插件侧 apply 幂等注册（同名覆盖而非报错）。</li>
+            <li><b>当前规避</b>：改动收敛后做受控 disable→enable（D12 纪律）。</li>
+          </ul>
+          <span class="ev"><b>证据：</b><code>composition-pilot-v3-depth-cap-2026-11-13.md §6 新发现①</code></span>
+        </div>
+      </details>
+
+      <details class="tl">
+        <summary><span class="tag p1">P1</span><span>平台侧新发现②：跨模型派发 <code>maxTokens</code> 继承（建议提 DSH issue）</span><span class="chev">▶</span></summary>
+        <div class="body">
+          <ul>
+            <li><b>现象</b>：<code>tree_dispatch</code> 的 <code>assignee</code> 只传 <code>{provider, model, reasoningEffort}</code>（未传 maxTokens），宿主按<b>调用方会话</b>的 <code>maxTokens=384000</code> 下发子会话请求 → 目标模型上限 131072 的供应商（如 <code>zai-coding-cn/glm-5.3</code>、<code>xiaomi/mimo-v2.6-pro</code>）首请求即 400（<code>max_tokens参数非法</code> / <code>max_completion_tokens is too large</code>）。</li>
+            <li><b>影响</b>：异族模型指派不可用；<b>当前绕行</b>= 只用接受 384k 的通道（deepseek-official / opencode-go）。</li>
+            <li><b>建议</b>：宿主在 <code>startActivation</code> 按目标模型 clamp maxTokens，或 tree-engine 允许 <code>assignee.maxTokens</code> 透传。</li>
+          </ul>
+          <span class="ev"><b>证据：</b><code>composition-pilot-v3-depth-cap-2026-11-13.md §6 新发现②</code> · <code>progress-map-2026-11-13.md §2.2</code></span>
+        </div>
+      </details>
+
+      <h3 style="margin-top:16px">P2 — 建议排期</h3>
+
+      <details class="tl">
+        <summary><span class="tag p2">P2</span><span>flash 审计剩余约 30 条（本轮只修 3 条 + 复核补丁）</span><span class="chev">▶</span></summary>
+        <div class="body">
+          <ul>
+            <li>flaudit 报告合并同根后共 <b>33 条</b>；D23 修了 #1（跨进程 <code>.lock</code> 写互斥）/ #7（nudge 强制 prune 走状态机）/ #19（<code>leaf:add</code> 13 键白名单）+ R1 复核补丁（既存 id 覆盖、nudge:reset 鉴权、root 摘除、model/channel 形状、锁心跳地板）→ 剩余约 <b>30 条</b>。</li>
+            <li>剩余仍含信任边界项：<b>#8</b>（依赖闸可被自报 done 绕过）、<b>#15</b>（验证裁决落账无鉴权）、<b>#20</b>（竹节接力预算失明）等。</li>
+            <li><b>建议</b>：按 flaudit-report §3.2 的 P0 / 第二 / 第三批顺序分批，复用「异族复核 + 回归」流程（R1/Qwen、R2/GLM 已示范）。</li>
+          </ul>
+          <span class="ev"><b>证据：</b><code>docs/archive/flaudit-report.md（33 条）</code> · <code>CHANGELOG.md D23 节</code></span>
+        </div>
+      </details>
+
+      <details class="tl">
+        <summary><span class="tag p2">P2</span><span>R1 复核残余风险（2 条，可接受）</span><span class="chev">▶</span></summary>
+        <div class="body">
+          <ul>
+            <li><code>rename</code> 抢锁与 release 间<b>极窄竞态</b>（窗口极窄、不改变缺省装配）。</li>
+            <li><code>brief</code>/<code>dod</code> 保留任意 JSON（用户内容，非引擎内部字段）。</li>
+          </ul>
+          <span class="ev"><b>证据：</b><code>CHANGELOG.md D23 节「R1 报告承认的残余风险」</code></span>
+        </div>
+      </details>
+
+      <details class="tl">
+        <summary><span class="tag p2">P2</span><span>发布侧口径</span><span class="chev">▶</span></summary>
+        <div class="body">
+          <ul>
+            <li><b>npm 冻结（D3）</b>：解冻需用户显式批准。</li>
+            <li><b>session-tree 无变更、无需发版</b>（v1.4.0 = <code>0343f0c</code> 已发布，21/21 SHA）。</li>
+            <li><b>tree-engine 为仓内插件</b>，随本仓公开（非 npm 发布）。</li>
+          </ul>
+          <span class="ev"><b>证据：</b><code>agent.md §2 · §3 D3</code> · <code>CHANGELOG.md D23 节</code></span>
+        </div>
+      </details>
+
+      <h3 style="margin-top:16px">P3 — 已知边界（记录，不阻塞）</h3>
+
+      <details class="tl">
+        <summary><span class="tag p3">P3</span><span>已知边界清单</span><span class="chev">▶</span></summary>
+        <div class="body">
+          <ul>
+            <li><code>flow_resume</code> 不续接原会话（O3，需另行 CR）。</li>
+            <li><code>flow_send</code> 不写 journal、不改 run 终态。</li>
+            <li>跨进程 / 重启不可续接（父 Agent 必须存活）。</li>
+            <li>只读子会话元数据 <b>Phase 2</b>（chain 覆盖官方只读 composer）：<b>仅用户要求时做</b>。</li>
+            <li>其余历史边界：artifact 验证对象错位、<code>runtime.history</code> 预算口径、<code>tree_maintain gc</code> 未实现等（非阻塞，Lead 排期）。</li>
+          </ul>
+          <span class="ev"><b>证据：</b><code>composition-playbook.md §9</code> · <code>progress-map-2026-11-13.md §3/§4</code></span>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="decisions">
+    <div class="card">
+      <div class="sec-head"><span class="sec-no">04</span><h2>需要你拍板（仅展示建议，本页不会自行执行）</h2></div>
+      <p class="lead">四个决定，逐个勾选即可；此处为<b>只读清单</b>，不触发任何动作。</p>
+      <div class="checklist">
+        <label class="ck">
+          <input type="checkbox" disabled>
+          <span class="ct"><b>① 是否等 flow M1.2 落地后再做 tree→flow 续接试点？</b><span class="rec">推荐：等 M1.2 落地 + 取到联调夹具后再做。</span><span>续接试点依赖 <code>flow_send</code> 真实落地与夹具（<code>evidence/m1/T-m1.2/</code>），提前做只能靠模拟。</span></span>
+        </label>
+        <label class="ck">
+          <input type="checkbox" disabled>
+          <span class="ct"><b>② 两个平台侧新发现是否要 Lead 代拟 DSH issue 文本？</b><span>HMR 重载竞态 + 跨模型 <code>maxTokens</code> 继承，均非本仓可修；需要 Lead 代拟 issue 文本则提。</span></span>
+        </label>
+        <label class="ck">
+          <input type="checkbox" disabled>
+          <span class="ct"><b>③ 是否继续清理 flash 审计剩余约 30 条？</b><span class="rec">推荐：按 P0 批次（#8/#15/#20 等）优先。</span><span>复用「异族复核 + 回归」流程分批推进。</span></span>
+        </label>
+        <label class="ck">
+          <input type="checkbox" disabled>
+          <span class="ct"><b>④ 本汇报是否归档进 <code>docs/reports/</code> 并纳入下轮汇报？</b><span>归档后作为一次性证据报告，下轮汇报引用。</span></span>
+        </label>
+      </div>
+      <span class="ev"><b>说明：</b>勾选框为展示用（disabled），拍板结论请回给 Lead。</span>
+    </div>
+  </section>
+
+  <section id="sources">
+    <div class="card">
+      <div class="sec-head"><span class="sec-no">05</span><h2>证据索引</h2></div>
+      <div class="pathbox">
+      <table class="src">
+        <thead><tr><th>主题</th><th>仓库内链接（相对本页）</th><th>完整路径（可复制）</th></tr></thead>
+        <tbody>
+          <tr><td>决策日志 D23/D24 + 状态快照</td><td><a href="../../agent.md">../../agent.md §1 / §2</a></td><td><code>D:\Codes\dsh-tree-harness\agent.md</code></td></tr>
+          <tr><td>变更记录 D23/D24</td><td><a href="../../CHANGELOG.md">../../CHANGELOG.md（Unreleased）</a></td><td><code>D:\Codes\dsh-tree-harness\CHANGELOG.md</code></td></tr>
+          <tr><td>flow 受理回执全文</td><td><a href="../operations/RECEIPT-2026-11-13-from-flow-engine.md">../operations/RECEIPT-2026-11-13-from-flow-engine.md</a></td><td><code>D:\Codes\dsh-tree-harness\docs\operations\RECEIPT-2026-11-13-from-flow-engine.md</code></td></tr>
+          <tr><td>跨仓需求单（§附：受理跟进/回执摘要）</td><td><a href="../operations/REQ-2026-11-13-flow-node-continuable-session.md">../operations/REQ-2026-11-13-flow-node-continuable-session.md §附</a></td><td><code>D:\Codes\dsh-tree-harness\docs\operations\REQ-2026-11-13-flow-node-continuable-session.md</code></td></tr>
+          <tr><td>试点 v3（任务 1 证据 + §6 新发现）</td><td><a href="composition-pilot-v3-depth-cap-2026-11-13.md">composition-pilot-v3-depth-cap-2026-11-13.md §0 / §6</a></td><td><code>D:\Codes\dsh-tree-harness\docs\reports\composition-pilot-v3-depth-cap-2026-11-13.md</code></td></tr>
+          <tr><td>组合剧本（回执后口径 + 已知边界）</td><td><a href="../guides/composition-playbook.md">../guides/composition-playbook.md §6 / §9</a></td><td><code>D:\Codes\dsh-tree-harness\docs\guides\composition-playbook.md</code></td></tr>
+          <tr><td>进度地图（进度/下一步）</td><td><a href="../operations/progress-map-2026-11-13.md">../operations/progress-map-2026-11-13.md</a></td><td><code>D:\Codes\dsh-tree-harness\docs\operations\progress-map-2026-11-13.md</code></td></tr>
+          <tr><td>flash 审计报告（33 条）</td><td><a href="../archive/flaudit-report.md">../archive/flaudit-report.md</a></td><td><code>D:\Codes\dsh-tree-harness\docs\archive\flaudit-report.md</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="small muted" style="margin-top:10px">注：DSH 侧栏「文档预览」静态模式会移除 <code>href</code>，链接可能不可点；请用「复制本页路径」到系统浏览器打开，或直接复制上表右列完整路径。</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><b>事实截至 2026-11-13</b>（flow M1.2 WIP 核查 <b>18:52</b>）。本页是汇报材料，不构成新的状态记录；冲突时以 <code>agent.md</code>、<code>CHANGELOG.md</code> 与 <code>docs/operations/RECEIPT-2026-11-13-from-flow-engine.md</code> 为准。</p>
+    <p>单文件、自包含、零外部依赖，可离线双击打开；本页未改动任何代码、文档或 git 状态。</p>
+  </div>
+</footer>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var THEME_KEY = 'html-explainer-theme';
+  var MODES = ['auto', 'light', 'dark'];
+  var LABEL = { auto: '🌗 自动', light: '☀️ 浅色', dark: '🌙 深色' };
+  var toastEl = document.getElementById('toast');
+  var toastTimer = null;
+
+  function readTheme() {
+    try {
+      var v = localStorage.getItem(THEME_KEY);
+      return MODES.indexOf(v) >= 0 ? v : 'auto';
+    } catch (e) { return 'auto'; }
+  }
+  function writeTheme(v) {
+    try { localStorage.setItem(THEME_KEY, v); } catch (e) { /* 沙箱里写不了，忽略 */ }
+  }
+  function applyTheme(mode) {
+    if (mode === 'auto') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', mode);
+    var btn = document.getElementById('theme-toggle');
+    if (btn) {
+      btn.textContent = LABEL[mode];
+      btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
+      btn.setAttribute('title', '当前：' + mode + '（点按切换 自动 → 浅色 → 深色）');
+    }
+  }
+
+  function toast(msg) {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1900);
+  }
+
+  function showPathFallback(p) {
+    var host = document.querySelector('.topbar .inner');
+    if (!host) return;
+    var el = document.getElementById('path-fallback');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'path-fallback';
+      el.className = 'path-fallback';
+      el.innerHTML = '<span>本页路径：</span><code></code>';
+      host.appendChild(el);
+    }
+    el.querySelector('code').textContent = p;
+    var code = el.querySelector('code');
+    try {
+      var range = document.createRange();
+      range.selectNodeContents(code);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) { /* 选区失败不影响可读性 */ }
+  }
+
+  function pagePath() {
+    var declared = document.body.getAttribute('data-page-path') || '';
+    if (location.protocol === 'file:') {
+      try {
+        var p = decodeURIComponent(location.pathname);
+        if (/^\/[A-Za-z]:/.test(p)) p = p.slice(1);
+        p = p.replace(/\//g, '\\');
+        if (p) return p;
+      } catch (e) { /* 落回声明值 */ }
+    }
+    return declared;
+  }
+
+  function fallbackCopy(text, done) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      done(ok);
+    } catch (e) { done(false); }
+  }
+
+  function copyText(text, done) {
+    if (!text) { done(false); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { fallbackCopy(text, done); });
+      return;
+    }
+    fallbackCopy(text, done);
+  }
+
+  var current = readTheme();
+  applyTheme(current);
+  var themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', function () {
+      current = MODES[(MODES.indexOf(current) + 1) % MODES.length];
+      applyTheme(current);
+      writeTheme(current);
+      toast('色调：' + { auto: '跟随系统', light: '浅色', dark: '深色' }[current]);
+    });
+  }
+
+  var copyBtn = document.getElementById('copy-path');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var p = pagePath();
+      copyText(p, function (ok) {
+        if (ok) toast('已复制：' + p);
+        else { showPathFallback(p); toast('复制失败（浏览器权限限制），路径已显示，可手动选中复制'); }
+      });
+    });
+  }
+
+  var expandBtn = document.getElementById('expand-btn');
+  var allOpen = false;
+  if (expandBtn) {
+    expandBtn.addEventListener('click', function () {
+      allOpen = !allOpen;
+      var items = document.querySelectorAll('details');
+      for (var i = 0; i < items.length; i++) items[i].open = allOpen;
+      expandBtn.textContent = allOpen ? '收起全部' : '展开全部';
+    });
+  }
+
+  var printBtn = document.getElementById('print-btn');
+  if (printBtn) {
+    printBtn.addEventListener('click', function () {
+      var items = document.querySelectorAll('details');
+      for (var i = 0; i < items.length; i++) items[i].open = true;
+      window.print();
+    });
+  }
+
+  var pickbar = document.querySelector('.pickbar');
+  if (pickbar) {
+    var picks = pickbar.querySelectorAll('.pick');
+    var panels = document.querySelectorAll('.panel');
+    pickbar.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('.pick') : null;
+      if (!btn) return;
+      var k = btn.getAttribute('data-k');
+      for (var i = 0; i < picks.length; i++) picks[i].setAttribute('aria-pressed', picks[i] === btn ? 'true' : 'false');
+      for (var j = 0; j < panels.length; j++) panels[j].classList.toggle('active', panels[j].getAttribute('data-k') === k);
+    });
+  }
+})();
+</script>
+</body>
+</html>
