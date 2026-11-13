@@ -2,7 +2,7 @@
 
 > **提出方**：`D:\Codes\dsh-tree-harness`（tree-engine / session-tree 项目，Lead 会话）
 > **受理方**：`D:\Codes\DSH动态流程引擎插件`（自由流程引擎项目组）
-> **日期**：2026-11-13 · **状态**：待受理（本文件只登记需求，不改动 flow 仓任何代码/配置）
+> **日期**：2026-11-13 · **状态**：**已受理**（flow 项目组 2026-11-13 16:21 回执；用户裁决 **B 档**；M1.2 进行中）——本文件只登记需求，不改动 flow 仓任何代码/配置
 > **用户指示**（2026-11-13）："不要改动，这话不是你这个项目的活，你把需求写下来，联系那边项目组响应。"
 >
 > 本仓镜像（权威副本）：`dsh-tree-harness/docs/operations/REQ-2026-11-13-flow-node-continuable-session.md`
@@ -93,11 +93,39 @@ flow 执行器构造 request 时**未传 `maxDepth`**（`spike/dsh-flow-plugin/l
 - 本仓试点 v2（内层树由 flow 节点现场创建）：`D:\Codes\dsh-tree-harness\demo\t3cpilot2\`、报告 `docs/reports/composition-pilot-v2-live-create-2026-11-13.md`
 - 本仓试点 v3（v0.8.1 深度封口真机回归，含 flow 侧仍未封口的复述）：`docs/reports/composition-pilot-v3-depth-cap-2026-11-13.md`
 
-## 附：受理跟进（tree-harness 侧只读核查，不改 flow 仓代码）
+## 附：受理跟进与回执摘要（tree-harness 侧只读核查，不改 flow 仓代码）
 
-| 核查时间 | 方式 | 结果 |
+### A. 受理状态（FACT）
+
+| 时间 | 事件 | 证据 |
 |---|---|---|
-| 2026-11-13 15:42（D23 轮开工） | flow 仓 `git log --oneline -5` / `git status --short` / 需求目录文件列表 | **未受理**：副本 `evidence/requirements/REQ-2026-11-13-continuable-session.md` 仍为 **untracked**（`??`）；无回执文件；flow 仓近期提交（m1.1 B' 真机批次准备等）未引用本需求单 |
-| 2026-11-13 16:24（收口前复查） | 同上 + 全仓 grep `continuable / REQ-2026-11-13 / tree-harness` | **仍未受理**：无新增提交/回执；需求目录仅本文件（3749 B，2026-11-13 14:51 递交）与 `决策记录.md` |
+| 2026-11-13 14:51 | 本需求单递交 flow 仓 `evidence/requirements/REQ-2026-11-13-continuable-session.md`（副本） | flow 仓 untracked 文件 |
+| 2026-11-13 15:42 / 16:24 | tree-harness 两次只读核查：**未受理**（无回执、无提交引用） | D23 轮记录 |
+| **2026-11-13 16:21** | **flow 项目组出具受理回执** `RECEIPT-2026-11-13-to-tree-harness.md`（7031 B）：**已受理，用户裁决 B 档**；权威登记 flow 仓 `docs/08` §0 D20、台账 §8.5 `CR-2026-11-13-02`、`docs/11` §15.2 | 仓内副本 [RECEIPT-2026-11-13-from-flow-engine.md](RECEIPT-2026-11-13-from-flow-engine.md)（与 flow 仓副本 **SHA256 完全一致**：`F6ED66893B6EEDD449A1BC7AC3E04E987488A49DD9CAA87D56E71A3CB55D3F4A`） |
+| 2026-11-13 17:38 | flow 仓另增通知站插件需求单（与本单无关） | `REQ-2026-11-13-notification-hub-plugin.md` |
+| 2026-11-13 18:41（本仓复查） | flow 仓 `git log` 仍未见 M1.2 提交；**回执已到、正在做**（用户告知） | flow 仓 `git status`/`git log` 只读 |
 
-**结论（FACT）**：截至 2026-11-13 16:24（+08），flow 项目组尚未对本需求单作出受理/拒绝表示。tree-harness 侧按用户指示**不修改 flow 仓代码**、不代提交流；本文件与 flow 仓副本保持同源。**后续**：由用户/项目组排期；若需提醒，仅建议在 flow 仓 `evidence/requirements/` 追加状态说明（不 commit，无写权）。
+### B. 回执要点（FACT，以 flow 回执原文为准）
+
+| 来函项 | flow 结论 | 排期/条件 |
+|---|---|---|
+| 需求一（节点会话可续接，opt-in） | **采纳**，形态更正为：新增 **`flow_send` 工具**（发起 `flow_run` 的父会话 → 该 run 某节点会话，**冷恢复 + 回读输出**）；**不提供**"节点结束不销毁/保持活句柄"的驻留语义（宿主无此形态） | M1.2（3–5 人日，含深度项）；排在 M1.1 真机收口之后；工具面 4→5 的 CR 例外已获用户批准 |
+| 需求二（`maxDepth` 未传 → 深度上限失效） | **采纳**，且比来函所述更严重：**不是默认值未生效，而是完全不校验（无上限）** | M1.2 首批（0.5–1 人日）；语义 = 复用 profile `subagent.maxDepth`（本机 5），超限 fail-closed，新增 `E_SESSION_DEPTH_EXCEEDED`；flow 侧按**能力感知**传值（仅 provider 声明 `capabilities.depthLimit` 时传） |
+| §9 深度修复请求 | **采纳**（同上） | 同上 |
+
+### C. 回执对来函的三处事实更正（FACT；本仓文档已按此口径改写，见 [composition-playbook.md](../guides/composition-playbook.md) §6）
+
+1. **不存在 `startContinuable`**：宿主启动唯一入口 = `startActivation`；续接唯一原语 = `subagents.sendMessage` → 非驻留目标走 `coldResume`。本单原文引用的 `:1402/:1405` 实为 `assertSubagentMaxDepth` / `resolveChildDepth`（均在 `startLocal` 内）。
+2. **`dispose()` ≠ 销毁会话**：`dispose` 只释放驻留 + 槽位（自然 settle 也走同一事务）→ 可靠形态只能是「保留 `sessionId` → 之后冷恢复续接」；前置 = `sessionPersistence` + `sessionQuery` + descriptor `continuable` + **目标子会话的直接父 Agent 存活**。故"保留 activation 句柄 + sendMessage"不可实现。
+3. **深度语义**：不传 `maxDepth` = **完全不比较 = 无上限**；配置值由**工具层**注入，任何直呼 `startActivation` 的插件须自己 `resolveMaxDepth(...)` 后显式传，且有 provider 能力前置。
+
+### D. 我方配合事项（回执 §4；待办）
+
+1. ✅ 组合剧本 [composition-playbook.md](../guides/composition-playbook.md) §6 已按回执 §3 口径改写（"非一次性"措辞作废，改为 `flow_send` 冷恢复 + 硬限制清单）。
+2. ⏳ 若 tree-engine 侧要跨"父会话存活期"续接 flow 节点：调用方必须是**发起 `flow_run` 的会话本身**（tree→flow 场景即该 tree worker），跨会话（sibling/root 代发）不在支持面——待 M1.2 联调时在试点中确认。
+3. ⏳ M1.2 离线落地后可向 flow 方取 `flow_send` 联调夹具（`evidence/m1/T-m1.2/`）。
+4. ✅ 回执已双份留存：本仓 [RECEIPT-2026-11-13-from-flow-engine.md](RECEIPT-2026-11-13-from-flow-engine.md)（SHA256 与 flow 仓副本一致）+ flow 仓 `evidence/requirements/RECEIPT-2026-11-13-to-tree-harness.md`。
+
+### E. 约束（延续用户指示）
+
+tree-harness 侧**不修改 flow 仓代码**、不代提交流；本文件与 flow 仓副本保持同源。flow 侧 M1.2 的实现与真机证据由 flow 项目组负责（其 `evidence/m1/T-m1.2/`）。本仓后续动作：M1.2 落地后（a）按新口径补一次 tree→flow 续接受控试点；（b）若 flow_send 形态与 §3 口径有出入，再更新本节与 playbook。

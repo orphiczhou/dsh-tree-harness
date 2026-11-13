@@ -58,7 +58,7 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 |---|---|---|---|
 | 任务 1 | v0.8.1 深度上限**真机回归**（depth 6 应被拒） | **PASS**：depth 5 worker 的 tree 派发被拒 `E_PORTS_PROTOCOL / subagent depth 6 exceeds maxDepth 5`，无 depth-6 会话；深度链 1..5、flow `T3C7-R1` succeeded/integrity=verified、三树 validate 0 issues | [v3 报告](../reports/composition-pilot-v3-depth-cap-2026-11-13.md)、[demo/t3cpilot3/](../../demo/t3cpilot3/) |
 | 任务 2 | flash 审计三条高危（#1/#7/#19）+ 发布门禁收紧 | **DONE**：`.lock` 跨进程写互斥（O_EXCL/nonce/陈旧接管/心跳；`withTree`/`withTreeMut` 读写分层）、nudge 强制 prune 走状态机、`leaf:add` 13 键白名单；发布前真机 E2E 门禁接入 `release-all.mjs`（8 项检查、写前阻断、豁免需 reason、publishing.md §5.2，14/14 单测） | tree-engine README v0.9.0 节、CHANGELOG D23 节 |
-| 任务 3 | 跟进 flow 项目组对需求单响应（只读，不改 flow 仓） | **仍未受理**（flow 仓副本 untracked、无回执/提交引用）；已记录受理跟进到 REQ §附 | [REQ](REQ-2026-11-13-flow-node-continuable-session.md) §附 |
+| 任务 3 | 跟进 flow 项目组对需求单响应（只读，不改 flow 仓） | **已受理（B 档，M1.2 进行中）**：flow 回执 2026-11-13 16:21——需求一采纳为 `flow_send` 冷恢复续接（不提供驻留语义）、需求二采纳并更正为「完全不校验（无上限）」+ M1.2 能力感知封口；三处事实更正已同步本仓文档 | [REQ](REQ-2026-11-13-flow-node-continuable-session.md) §附；flow 仓 `evidence/requirements/RECEIPT-2026-11-13-to-tree-harness.md` |
 | 任务 4 | 现场建树验证归属 + `tree_log events` 机读 | **两项均落地**：`tree_log` render 一行一条（done meta 可读）+ `tree_maintain {action:"verify-delegate"}` 验证授权委托（仅 root 授予、被授权者只写 verification、security drift 留痕） | 同上；活体验证：授予/清空/审计可见 |
 | 复核 | 异族交叉复核（防单模型认知锯齿） | R1=Qwen 审审计修复 **PASS_WITH_RISKS**（P1 既存 id 覆盖擦除终态 + 3 P2 已全部修复，+4 回归）；R2=GLM 审 tree_log+门禁 **PASS_WITH_RISKS**（1 P1 JSON null 抛异常 + 2 P2 已修复，14/14） | 报告与任务书 [taskbooks/](taskbooks/) |
 
@@ -70,12 +70,12 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 |---|---|---|---|
 | 0 | ~~tree-engine 深度预算修复 + depth 6 真机回归~~ | **D22 修复（v0.8.1）+ D23 真机回归 PASS（v0.9.0，213/213）** | — |
 | 1 | ~~组合编排深挖（内层树现场创建 + maxDepth 边界）~~ | **D22 已完成** | — |
-| 2 | **flow 一次性→非一次性会话** | 已写需求单，属 flow 仓变更 | 用户定时机（本周期不动 flow 代码） |
+| 2 | **flow 节点续接（`flow_send` 冷恢复）+ flow 侧深度封口** | **已受理（B 档），flow 项目组 M1.2 进行中（3–5 人日）**；本仓不改 flow 代码，仅按回执同步口径 | flow 项目组执行；落地后本仓补 tree→flow 续接受控试点 |
 | 3 | ~~发布门禁再收紧 + flash 审计三条高危~~ | **D23 已完成（v0.9.0）**：真机 E2E 门禁写前强制 + 12 项检查实现（artifact 8 项 + CLI）；三条审计修复 + R1/R2 复核修复 | — |
 | 4 | 只读子会话底部 Phase 2（chain 覆盖官方只读 composer） | 当前只读子会话元数据在标题栏 chip；用户未明确要求底部 | 仅用户要求时做 |
 | 5 | 已知边界清理：artifact 验证对象错位、`runtime.history` 预算口径、`tree_maintain gc`；D22 新增两项（`tree_log events` 可机读、现场建树验证归属）**D23 已完成** | 历史欠账，非阻塞 | Lead 排期 |
 
-**三个问题当前状态**：① 已做（v2 PASS + v3 深度回归 PASS）；② 需求单已递交，**截至 2026-11-13 16:24 flow 项目组仍未受理**（只读核查，不改 flow 仓）；③ 暂不对外（用户 2026-11-13 拍板）。
+**三个问题当前状态**：① 已做（v2 PASS + v3 深度回归 PASS）；② 需求单**已受理（B 档）**，flow 项目组 M1.2 进行中（回执 2026-11-13 16:21；深度项首批、`flow_send` 随后）；③ 暂不对外（用户 2026-11-13 拍板）。
 
 ---
 

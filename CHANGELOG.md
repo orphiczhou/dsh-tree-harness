@@ -2,6 +2,20 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [Unreleased] — 2026-11-13 · D24：flow 侧受理回执（B 档）与跨仓口径同步（**无版本变更、未发布**）
+
+### 变更
+
+- **flow 项目组受理回执到达**（2026-11-13 16:21，flow 仓 `evidence/requirements/RECEIPT-2026-11-13-to-tree-harness.md`）：**已受理、用户裁决 B 档**——需求一采纳为 **`flow_send` 工具**（发起 `flow_run` 的父会话 → 该 run 节点会话，冷恢复 + 回读输出；**不提供**"节点结束不销毁/保持活句柄"驻留语义），需求二采纳且更正为「**不传 `maxDepth` = 完全不校验（无上限）**」，M1.2 起按 provider 能力感知传值 + fail-closed（`E_SESSION_DEPTH_EXCEEDED`）；排期 M1.2（3–5 人日，M1.1 之后）。
+- **回执三处事实更正**（本仓文档已按此改写）：① 无 `startContinuable`（唯一启动 `startActivation`；续接 `subagents.sendMessage` → `coldResume`）；② `dispose()` ≠ 销毁会话（只释放驻留+槽位；可靠形态 = 保留 `sessionId` 冷恢复，前置目标子会话直接父 Agent 存活）；③ 深度配置值由工具层注入，插件直呼 `startActivation` 须自行 `resolveMaxDepth(...)` 后显式传。
+- **本仓同步**：[REQ §附](docs/operations/REQ-2026-11-13-flow-node-continuable-session.md) 重写为受理跟进 + 回执摘要 + 三处更正 + 我方配合待办；[composition-playbook.md](docs/guides/composition-playbook.md) §4/§5/§6/§7/§9/§10 按回执 §3 口径改写（"非一次性"措辞作废，改为 `flow_send` 冷恢复 + 硬限制清单：父会话必须存活 / 续接轮无结构化 schema / 不写 journal / `flow_resume` 仍不续接原会话）；**未改 flow 仓代码**。
+- **待办**：M1.2 落地后（a）按新口径补一次 tree→flow **续接**受控试点（调用方必须是发起 `flow_run` 的会话本身，跨会话不支持）；（b）向 flow 方取 `flow_send` 联调夹具（`evidence/m1/T-m1.2/`）。
+
+### 验证
+
+- 只读核查：flow 仓 `git log/status`、回执原文、`M1.2-intake-assessment-2026-11-13.md`（B 档选项/硬限制/更正）。
+- 文档门禁：`check-doc-links` / `check-md-tables` / `check-version-consistency` 全绿。
+
 ## [Unreleased] — 2026-11-13 · D23：硬安全与可观测性收口（tree-engine 0.8.1 → **0.9.0**）
 
 ### 变更
