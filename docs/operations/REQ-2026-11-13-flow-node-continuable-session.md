@@ -108,6 +108,8 @@ flow 执行器构造 request 时**未传 `maxDepth`**（`spike/dsh-flow-plugin/l
 
 | **2026-11-13 19:0x（D24 接续会话复查 #2，只读）** | flow 仓 `git log`/`git status`/`evidence/m1/T-m1.2/`/`lib/continuation.js` 只读核查 | **M1.2 离线交付已提交**：`2918fba`（2026-11-13 18:49:28，T-2/T-3/T-4 代码+证据+测试）+ `13776bc`（18:53:52，docs/11 v1.37 与口径同步）；HEAD=`13776bc`（分支 `main`），工作树仅剩历史 HANDOFF 与报告 HTML 未跟踪，**无未提交代码**。基线：内核 **287/287**、插件 **175/175**、qa-gate PASS（floor 287/175）；18:52 记的 `m1-judge.test.mjs:140` 4→5 计数残留**已修**（插件 170→175 全绿）。**未完成**：T-1 续接探针、T-6 真机 E2E（flow 仓 HANDOFF-M1 明写「需用户在场 + 最后一次重载；未执行前不得写真机 PASS」）。**结论：回执 §1 排期已兑现到「离线交付」；真机未收口，不等同可依赖。** 详见 §附 F。 | flow 仓 `git show --stat 2918fba/13776bc`、`evidence/m1/T-m1.2/raw/lead-*.txt`、`HANDOFF-M1.md` 只读 |
 
+| **2026-11-13 21:00（D26 接续会话复查 #3，只读）** | flow 仓 `git log`/`git status` 只读 + `evidence/m1/T-m1.2/` 目录清单 + 联调夹具全文核对；本仓 `tree_doctor` 与 225 测试基线复跑 | flow 仓 HEAD 仍=`13776bc`（main），工作树仅历史 HANDOFF×5 与报告 HTML 未跟踪，**无新提交**；`evidence/m1/T-m1.2/` 仍只有 T-2/T-3/T-4 离线证据 + 夹具 + GLM 复核，**无 T-6 真机文件 → 试点前置② 仍未满足，维持等待态不抢跑**；夹具 `m12-continuable-e2e.flow.json` 与 §附 F 描述逐字一致（n1→n2 两 session 节点；n1 首轮 prompt 出 `{"first":"m12-ready"}`、schema required `first:string`；n2 出 `{"second":true}`、required `second:boolean`；**无显式 start/end**——试点任务书 §8 的 UNKNOWN 未消解，届时以 flow 方说明为准，不改夹具）；本仓门禁：`tree_doctor` 7/7 · v0.10.0、`node --test` 225/225（4.7s）、master=4338bd0 与 wip/d24-p2a-batch1=699e02d 均与 origin 同步（0/0）、树 clean。T-1 续接探针同样未见执行痕迹 | flow 仓 git 只读 + 证据目录 glob + fixtures 只读 + `tree_doctor {action:"run"}` + `node --test tests/*.test.js` |
+
 ### B. 回执要点（FACT，以 flow 回执原文为准）
 
 | 来函项 | flow 结论 | 排期/条件 |
