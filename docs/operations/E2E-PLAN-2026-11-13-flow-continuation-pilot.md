@@ -1,6 +1,6 @@
 # E2E 测试方案：flow 续接 + flow×tree 混合流程试点（`flow_send` 冷恢复 · D27-FLOW-E2E-PILOT）
 
-> **性质**：测试方案（PLAN）。**状态 = 已批准（APPROVED v1.1 · 2026-11-13 22:1x 用户批准，P2 闸通过：方案定稿 + 时间窗开启 + 双维成本授权）——开测仍以 P0/P1 齐备为前提，批准 ≠ 开测**（用户 2026-11-13 21:48 指示「先方案后测试」；22:0x 指示补充 flow×tree 混合流程测试维 §4.2）。
+> **性质**：测试方案（PLAN）。**状态 = 已执行完毕（v1.1 · 2026-11-13 23:3x 收官）**：用户批准（22:1x，P2 过）→ P0 smoke PASS → P1 实质并入试点（用户指令）→ 双维执行 **PASS_WITH_RESIDUAL**（报告 [composition-pilot-v4](../reports/composition-pilot-v4-flow-continuation-and-hybrid-2026-11-13.md)）。用户 2026-11-13 21:48 指示「先方案后测试」；22:0x 指示补充 flow×tree 混合流程测试维 §4.2。
 > 执行单 = [d24-flow-continuation-pilot-taskbook.md](taskbooks/d24-flow-continuation-pilot-taskbook.md)（续接维步骤与派发任务书正文，本方案只做口径与门禁的权威化，不重复其全文）。
 > 起草：D27 接续会话（session_handoff 接替，zai/glm-5.3-flash · max）· 2026-11-13 22:0x · v1.1 同日补混合维。
 

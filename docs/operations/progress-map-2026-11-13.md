@@ -80,7 +80,8 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 | 1 | batch2 登记开工门（用户 21:48 指示：列入计划、暂不开工、等指令） | **已登记**：agent.md 路线图 R15 + 本图 §3-6；清单 = [review-p2a-batch1 §三/§六](../reports/review-p2a-batch1-2026-11-13.md)（P2-1/P3-1/P3-2/P3-5/UNKNOWN-1/4 + 二次复核 P3-7~P3-13，其中 P3-12 已当场消解、P3-13 设计内可接受）+ P3-9 语义取舍 | agent.md §3 R15 行 |
 | 2 | flow 续接/混合 E2E 测试方案（先方案后测试；用户 22:0x 指示补充混合维） | **✅ v1.1 已获用户批准（22:1x，P2 闸通过：方案定稿 + 时间窗开启 + 双维成本授权）**：五道执行闸 P2 已过，剩 P0（插件适配 rc.3 smoke）+ P1（T-6 真机）+ P4（夹具语义确认）；**双维矩阵——续接维 TC-1..8 + 混合维 TC-9..11**（tree→flow→tree 整链 rc.3 回归复用 v3 配置换树号 t27a/t27b/t27c + 续接×内层树 + depth-6 负例）/验收 A1–A12/flash 档模型纪律/止损 | [E2E-PLAN-2026-11-13-flow-continuation-pilot.md](E2E-PLAN-2026-11-13-flow-continuation-pilot.md) |
 | 3 | **新发现：宿主升级回归阻断试点**（FACT） | 宿主 18:17–21:45 升级 **0.2.2-rc.1→rc.3** × flow 插件 `session-executor.js` 仍按 rc.1 形状调 `startActivation` → 所有 session 节点 1ms `E_SESSION_START_FAILED`；两次真机失败 run（21:46 `R-m12-e2e-20261113-2146` + 探针 `R-m12-sop-2146`）；失败面仅插件旧形状路径，宿主 spawn 与本仓 `tree_*` 不受影响（doctor 7/7·v0.10.0 复验）。修复属 **flow 仓责任域**，本仓不改 flow 代码 | flow 仓 `probe-sop/PROBE-REPORT.md` §2、[REQ §附 A 复查 #4](REQ-2026-11-13-flow-node-continuable-session.md) |
-| 4 | rc.3 回归跨仓跟进单（用户批准转交） | **成文**：现象/根因源码行号/影响面收敛/修复建议五条（spec 形状适配、调用形状回归测试、基线刷新、受控重载、验收三步）/时间线/证据索引；E2E 方案 P0 闸以 flow 侧 smoke PASS 为解除信号 | [FOLLOWUP-2026-11-13-host-rc3-session-start-regression.md](FOLLOWUP-2026-11-13-host-rc3-session-start-regression.md) |
+| 4 | rc.3 回归跨仓跟进单（用户批准转交） | **成文 + 已收回执**：flow 修复入库 `0f60e18`/`1fae8fc` + 回执 `FOLLOWUP-RESPONSE-2026-11-13-rc3-adapted.md`（P4 已答/agentOptions/E_BORROWED_IDENTITY 预登记/对账口径）；我方 smoke `D27-SMOKE-RC3-001` PASS 实证适配生效 | [FOLLOWUP-2026-11-13-host-rc3-session-start-regression.md](FOLLOWUP-2026-11-13-host-rc3-session-start-regression.md) |
+| 5 | **D27 双维 E2E 试点收官（用户指示组队执行）** | **PASS_WITH_RESIDUAL（双维 PASS）**：续接维 TC-1..8（`flow_send` 冷恢复两次成功、journal 字节级三重一致、sessionMode 0 注入、深度链 2→3）+ 混合维 TC-9..11（tree→flow→tree rc.3 整链回归、**续接×内层树**新组合 PASS、depth-6 一次性被拒、无 depth-6 会话）；A6=PASS_WITH_RESIDUAL（E_PERM_DENIED 推定+journal 零写入，原文因 flow 渲染缺口不可观测）；暴露清单 F1–F7（F1=tree-engine rc.3 回归已修 v0.10.1；F2–F4 跨仓反馈；F5–F7 本仓候选与 batch2 相邻）；全程 flash 档（指挥官+两 worker+取证子会话×2）；任务树 d27fl/t27b/t27c 与 journal R1/R2/smoke 留证勿清理 | [composition-pilot-v4-flow-continuation-and-hybrid-2026-11-13.md](../reports/composition-pilot-v4-flow-continuation-and-hybrid-2026-11-13.md) |
 
 ## 3. 下一步候选（按建议优先级）
 
@@ -88,7 +89,7 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 |---|---|---|---|
 | 0 | ~~tree-engine 深度预算修复 + depth 6 真机回归~~ | **D22 修复（v0.8.1）+ D23 真机回归 PASS（v0.9.0，213/213 → 现 v0.10.0 225/225）** | — |
 | 1 | ~~组合编排深挖（内层树现场创建 + maxDepth 边界）~~ | **D22 已完成** | — |
-| 2 | **flow 节点续接（`flow_send` 冷恢复）+ flow×tree 混合回归 + flow 侧深度封口** | flow 侧 M1.2 离线交付已提交（`2918fba`/`13776bc`，kernel 287 · plugin 175）；T-1 探针 flow 路径 **BLOCKED**（rc.3 回归，见 §2.4-3）；T-6 真机未执行。**E2E 方案 v1.1（续接维 + 混合维）已获用户批准（P2 过）**，剩执行闸 P0（插件适配 rc.3 smoke PASS）+ P1（T-6）+ P4（夹具语义） | flow 项目组适配 rc.3（跟进单已交用户转交）+ T-6 收口；届时 D27 会话组队开测（flash 档） |
+| 2 | ~~flow 节点续接 + flow×tree 混合回归 + flow 侧深度封口~~ | **✅ D27 双维试点收官 PASS_WITH_RESIDUAL（23:3x）**：续接维 + 混合维全行为判据 PASS（见 §2.4-5 与报告）；M1.2 回执 §3 可依赖/不可依赖全部实证；剩余 residual（A6 原文观测）等 flow 渲染缺口修复后可复测；**下一步 = 用户提供实际案例做真项目测试** | 报告 [composition-pilot-v4](../reports/composition-pilot-v4-flow-continuation-and-hybrid-2026-11-13.md)；等待用户案例 |
 | 3 | ~~发布门禁再收紧 + flash 审计三条高危~~ | **D23 已完成（v0.9.0）**：真机 E2E 门禁写前强制 + 12 项检查实现（artifact 8 项 + CLI）；三条审计修复 + R1/R2 复核修复 | — |
 | 4 | 只读子会话底部 Phase 2（chain 覆盖官方只读 composer） | 当前只读子会话元数据在标题栏 chip；用户未明确要求底部 | 仅用户要求时做 |
 | 5 | 已知边界清理：artifact 验证对象错位、`runtime.history` 预算口径；D22 两项（`tree_log events` 可机读、现场建树验证归属）**D23 已完成**；**`tree_maintain gc` D24-2 已完成（archived 账本截断 + call-log 10MB 滚动）** | 历史欠账，非阻塞 | Lead 排期 |

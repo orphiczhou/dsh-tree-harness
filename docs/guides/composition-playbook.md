@@ -100,6 +100,7 @@
 - **我方配合（待办）**：① 本节已按回执 §3 改写；② 三部曲若用续接，调用方必须是**发起 `flow_run` 的会话本身**（tree→flow 场景即该 tree worker），跨会话（sibling/root 代发）不在支持面；③ M1.2 离线落地后可向 flow 方取联调夹具（`evidence/m1/T-m1.2/`）。
 - **过渡期**：M1.2 完成前，flow 节点仍按"一次给全上下文 + 单轮产出"；需要多轮的场景用 tree leaf（天然 continuable）承接或拆分节点。
 - **tree leaf** 天然 continuable，无需改；若某 leaf 被一次性语义卡住，优先检查是否 flow 节点内再套 tree（三层），改用剧本 B/A 或把 leaf 提出来。
+- **✅ 试点实证（D27，2026-11-13 23:3x，报告 [composition-pilot-v4-flow-continuation-and-hybrid-2026-11-13.md](../reports/composition-pilot-v4-flow-continuation-and-hybrid-2026-11-13.md)）**：rc.3 × 双插件适配环境下双维真机 **PASS_WITH_RESIDUAL**——① `flow_send` 冷恢复两次成功（含「续接 × 内层树」：INNER 冷恢复后仍以自建树 creator/root 身份只读 validate）；② 不写 journal/不改终态（字节级双读 + Lead 负例三重复核）；③ 跨会话代发被拒（residual=错误码原文因 flow 工具渲染缺口不可观测）；④ sessionMode 零注入；⑤ 混合链 2→3→4→5、depth-6 一次性被拒。**两个操作要点进剧本**：a) `flow_run` 的 flowPath 必须位于**调用会话 cwd（或 flowPathRoots）**内——`flow_run.cwd` 参数不参与允许根校验（ADR-011，跨仓场景用逐字节副本+SHA256 引用原件）；b) 派下游 leaf 前必须 `tree_verify` 落 PASS（依赖闸正向结算），`verify-delegate` 不含 verify 管线的 `event:progress` 写面（非 creator 指挥官验证需 root 亲自或扩授权面，见引擎候选改进 F5）。
 
 ---
 
@@ -137,6 +138,8 @@
 7. **深度上限按路径分裂（2026-11-13 更新）**：`subagent.maxDepth` 只校验显式传入的 `request.maxDepth`。**tree 派发路径已封口**（v0.8.1 起 dispatch/竹节/攻击会话统一经 `buildStartRequest` 注入；v3 实证 depth-5 worker 再 `tree_dispatch` 被拒 `E_PORTS_PROTOCOL / subagent depth 6 exceeds maxDepth 5`，无 depth-6 会话残留）；**flow 执行器**（`flow_run` 起的节点）在 M1.2 前完全不校验（无上限），M1.2 起按能力感知传 `maxDepth` + fail-closed（`E_SESSION_DEPTH_EXCEEDED`，见 flow 回执 §1/§2.3）。深度安全按 §3 人工算术，并把「tree 侧有兜底、flow 侧 M1.2 前没有」写进剧本约束。
 8. **现场建树的验证归属（2026-11-13；v0.9.0 起有解）**：flow 节点内 `tree_plan` 创建的树，creator/root=flow 节点会话，节点结束 dispose → 外层 Lead 事后 `tree_verify` 会 `E_BORROWED_IDENTITY`（verification 只允许 creator|root）。两条出路：a) **收口前 verify**——创建者在结束前自己跑 `tree_verify` 并落账，之后按 `runtime=succeeded + validate 0 issues` 收口（报告标注）；b) **验证授权委托（v0.9.0）**——root 会话结束前 `tree_maintain {action:"verify-delegate", tree_id, session_ids:["<受信会话 id>"]}`（仅 root 可授予；全量替换、`[]` 清空；最小授权面：被授权者**只能写 `leaf.verification`**，其余 kind 一律拒），受信会话之后可补 `tree_verify`；变更落 `drift_log`（kind=`security` / action=`declare` / leaf_id=null）。
 9. **`tree_log {action:"events"}` 已可机读（v0.9.0）**：render 从「仅计数」改为一行一条（events 尾部 50 条；单条 meta 超 800 字符截断），done 事件 `meta`（summary/probe_result/self_check 等）可直接读回；返回对象结构不变。旧结论「不可机读」只适用于 ≤v0.8.x。
+10. **flowPath 允许根（D27 实证）**：`flow_run` 的 flowPath 必须位于调用会话 cwd（runCwd，宿主侧 workingDirectory）或 `config.flowPathRoots` 内；`flow_run.cwd` 参数**不参与**允许根校验（ADR-011，`tools.js:381`）。跨仓夹具用「逐字节副本 + SHA256 引用原件」（D27 实证 `E_FLOW_PATH_INVALID` ×4 后以此解锁）。
+11. **flow_send 错误面渲染缺口（D27 实证，跨仓反馈）**：任何失败/拒绝（含 `E_PERM_DENIED`、run 不存在）均渲染 `[flow_send] run=? …`，错误码不可观测——负例判据用「journal 双读零写入 + 代码路径」间接闭环，等 flow 侧修复后可复测取原文。
 
 ---
 
