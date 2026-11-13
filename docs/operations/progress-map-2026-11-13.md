@@ -1,4 +1,4 @@
-# 进度地图（2026-11-13 16:30 快照）
+# 进度地图（2026-11-13 19:3x 快照）
 
 > 给用户对齐用的一页进度图。**先对齐本图，再决定下一步推进**（用户 2026-11-13 指示：交接新会话后先沟通进度地图）。
 > 权威细节：状态/决策以 [agent.md](../../agent.md) 与 [handoff-2026-11-12.md](handoff-2026-11-12.md) 为准；本文件只做「一眼看懂」的汇总。
@@ -62,7 +62,14 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 | 任务 4 | 现场建树验证归属 + `tree_log events` 机读 | **两项均落地**：`tree_log` render 一行一条（done meta 可读）+ `tree_maintain {action:"verify-delegate"}` 验证授权委托（仅 root 授予、被授权者只写 verification、security drift 留痕） | 同上；活体验证：授予/清空/审计可见 |
 | 复核 | 异族交叉复核（防单模型认知锯齿） | R1=Qwen 审审计修复 **PASS_WITH_RISKS**（P1 既存 id 覆盖擦除终态 + 3 P2 已全部修复，+4 回归）；R2=GLM 审 tree_log+门禁 **PASS_WITH_RISKS**（1 P1 JSON null 抛异常 + 2 P2 已修复，14/14） | 报告与任务书 [taskbooks/](taskbooks/) |
 
-**D23 新发现（平台侧，非阻塞）**：① 宿主 HMR 重载竞态——并行改 `packages/**` 触发反复重装，重载窗口内旧实例 dispose 会反注册新实例工具，调用方偶发 `unknown tool`（受控 disable→enable 可恢复；建议宿主侧串行化）；② tree 派发 `assignee` 跨模型时宿主按**调用方会话**的 `maxTokens`（384000）下发，目标模型上限 131072 的供应商（zai/glm、xiaomi/mimo）首请求即 400（当前用 deepseek-official / opencode-go 通道绕行；建议宿主按目标模型 clamp）。
+**D23 新发现（平台侧，非阻塞）**：① 宿主 HMR 重载竞态——并行改 `packages/**` 触发反复重装，重载窗口内旧实例 dispose 会反注册新实例工具，调用方偶发 `unknown tool`（受控 disable→enable 可恢复；建议宿主侧串行化）；② tree 派发 `assignee` 跨模型时宿主按**调用方会话**的 `maxTokens`（384000）下发，目标模型上限 131072 的供应商（zai/glm、xiaomi/mimo）首请求即 400（当前用 deepseek-official / opencode-go 通道绕行；建议宿主按目标模型 clamp）。→ **D24 已升级为两份平台 issue 草稿**（未对外提交）：[ISSUE-draft-hmr-reload-race.md](ISSUE-draft-hmr-reload-race.md)、[ISSUE-draft-max-tokens-inheritance.md](ISSUE-draft-max-tokens-inheritance.md)。
+
+## 2.3 D24 轮已完成（2026-11-13 晚，接续会话 `D24-FLOW-M12-PILOT`）
+
+| # | 事项 | 结果 | 证据 |
+|---|---|---|---|
+| 1 | flow M1.2 只读复查（不改 flow 仓） | **离线交付已提交**：flow 仓 HEAD `13776bc`（`main`），代码 `2918fba`（T-2 深度封口 / T-3 sessionMode / T-4 `flow_send`）+ 文档 `13776bc`；**kernel 287/287 · plugin 175/175 · qa-gate PASS**（floor 287/175）；18:52 的 `m1-judge:140` 计数残留已修。**T-1 探针 / T-6 真机仍未执行**（需用户在场+重载）→ 本仓续接试点**等真机 PASS + 用户时间窗**，不抢跑 | [REQ §附/§附 F](REQ-2026-11-13-flow-node-continuable-session.md) |
+| 2 | 平台 issue 草稿（P1-B） | **两份完成（只拟稿、未对外提交）**：① HMR 重载与工具准入（含 18 次错误原文/apply.log 35 次重载统计/宿主 `dsh-tools` 代码定位）；② 跨模型 `maxTokens` 继承（2 条 400 原文/子会话与父会话证据/`child-agent.js:74-92` 不对称逻辑） | [ISSUE-draft-hmr-reload-race.md](ISSUE-draft-hmr-reload-race.md)、[ISSUE-draft-max-tokens-inheritance.md](ISSUE-draft-max-tokens-inheritance.md) |
 
 ## 3. 下一步候选（按建议优先级）
 
@@ -70,7 +77,7 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 |---|---|---|---|
 | 0 | ~~tree-engine 深度预算修复 + depth 6 真机回归~~ | **D22 修复（v0.8.1）+ D23 真机回归 PASS（v0.9.0，213/213）** | — |
 | 1 | ~~组合编排深挖（内层树现场创建 + maxDepth 边界）~~ | **D22 已完成** | — |
-| 2 | **flow 节点续接（`flow_send` 冷恢复）+ flow 侧深度封口** | **已受理（B 档），flow 项目组 M1.2 进行中（3–5 人日）**；本仓不改 flow 代码，仅按回执同步口径 | flow 项目组执行；落地后本仓补 tree→flow 续接受控试点 |
+| 2 | **flow 节点续接（`flow_send` 冷恢复）+ flow 侧深度封口** | **flow 侧 M1.2 离线交付已提交（`2918fba`/`13776bc`，kernel 287 · plugin 175）**；**T-1 探针 / T-6 真机待收口**（需用户在场+重载）→ 本仓续接试点等真机 PASS + 用户时间窗 | flow 项目组真机收口；本仓试点待信号 |
 | 3 | ~~发布门禁再收紧 + flash 审计三条高危~~ | **D23 已完成（v0.9.0）**：真机 E2E 门禁写前强制 + 12 项检查实现（artifact 8 项 + CLI）；三条审计修复 + R1/R2 复核修复 | — |
 | 4 | 只读子会话底部 Phase 2（chain 覆盖官方只读 composer） | 当前只读子会话元数据在标题栏 chip；用户未明确要求底部 | 仅用户要求时做 |
 | 5 | 已知边界清理：artifact 验证对象错位、`runtime.history` 预算口径、`tree_maintain gc`；D22 新增两项（`tree_log events` 可机读、现场建树验证归属）**D23 已完成** | 历史欠账，非阻塞 | Lead 排期 |
@@ -84,4 +91,5 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 - 内层树预置是已知偏离（见 §3-1）；relay 42% 阈值在 D21 试点中未被压到（外层上下文约 4.1%）——relay 抗打断仍以 v0.8.0 E2E 为据。
 - `provider-conformance` 依赖本机 `%TEMP%` rc.2 fixture：发布门禁已按「缺 fixture 记 SKIP、断言失败仍阻断」处理，但干净机器上等于未覆盖。
 - 顶层记忆：真机操作类结论必须有活体读数/截图；UI 结论本轮已闭环（代码级 + 截图 + 用户确认）。
-- D23 平台侧边界（非本仓可修）：HMR 重载竞态导致工具面瞬态 `unknown tool`；tree 派发跨模型 `maxTokens` 继承调用方（小上限供应商 400，当前绕行）。两者均已在 v3 报告 §6 记录。
+- D23 平台侧边界（非本仓可修）：HMR 重载竞态导致工具面瞬态 `unknown tool`；tree 派发跨模型 `maxTokens` 继承调用方（小上限供应商 400，当前绕行）。两者均已在 v3 报告 §6 记录，并升级为平台 issue 草稿（[①](ISSUE-draft-hmr-reload-race.md)、[②](ISSUE-draft-max-tokens-inheritance.md)，未对外提交）。
+- flow 侧 M1.2 **真机未收口**前，不得引用 `flow_send` 为「可依赖」；本仓试点亦不得抢跑（详见 REQ §附 F）。
