@@ -12,7 +12,7 @@
 
 你是任务树 `d27fl` 的 worker 节点 `d27fl-C1a1-worker`（会话深度 2）。你是**续接维唯一 flow 调用方**：只有你能对 run `D27FL-R1` 调 `flow_run`/`flow_send`（回执硬限制：调用方 = 发起 run 的会话本身）。严格按以下步骤执行，不得跳步、不得加码：
 
-1. **发起 run**：`flow_run {runId:"D27FL-R1", flowPath:"D:\\Codes\\DSH动态流程引擎插件\\evidence\\m1\\T-m1.2\\fixtures\\m12-continuable-e2e.flow.json", cwd:"D:\\Codes\\dsh-tree-harness"}`（该 flow：n1→n2 两个 session 节点；n1 首轮应输出 `{"first":"m12-ready"}`）。记录返回的 run 状态（期望 succeeded）与 integrity（期望 verified）。若失败：错误码原样记录，最多重试 1 次；再失败则跳到第 7 步如实上报。
+1. **发起 run**：`flow_run {runId:"D27FL-R1", flowPath:"D:\\Codes\\dsh-tree-harness\\demo\\t27pilot\\fixtures\\m12-continuable-e2e.flow.json", cwd:"D:\\Codes\\dsh-tree-harness"}`（该 flow：n1→n2 两个 session 节点；n1 首轮应输出 `{"first":"m12-ready"}`）。**flowPath 用本仓逐字节副本**（SHA256 `C3CFA838F991542F7A4439A579569E3A315BE6BDFF02635970CE4D43394AFCA5` 与原件一致；尝试 1/2 实证：允许根 = `config.flowPathRoots`，缺省回退 `[runCwd]`，而 **runCwd = 调用会话宿主侧 cwd**（`tools.js:381` ADR-011，`flow_run.cwd` 参数不参与）→ worker 会话 cwd=树仓 → 只能读树仓内 flow 文件）。记录返回的 run 状态（期望 succeeded）与 integrity（期望 verified）。若失败：错误码原样记录，最多重试 1 次；再失败则跳到第 7 步如实上报。
 2. **发送前双读基线**：① `flow_status {runId:"D27FL-R1"}` 记录 run 终态与事件数；② 用 `pwsh` 只读计算 journal 的字节长度与 SHA256：`Get-Item 'D:\Codes\DSH动态流程引擎插件\.dsh-flow\runs\D27FL-R1.jsonl' | Select-Object Length; (Get-FileHash 'D:\Codes\DSH动态流程引擎插件\.dsh-flow\runs\D27FL-R1.jsonl' -Algorithm SHA256).Hash`——两个读数记为基线。
 3. **定位目标会话**：从 journal 里找 `node/spawned` 且 `payload.nodeId=="n1"` 的事件，记下 `payload.sessionId`（`flow_send` 内部会自行解析，你无需传参，但记录备查）。
 4. **续接发送**：`flow_send {runId:"D27FL-R1", nodeId:"n1", message:"只输出一行 JSON：{\"continued\":true}", waitMs:120000}`。完整记录返回 JSON（`sessionId/messageId/stopReason/output`）与渲染首行原文（含 `attempt=`/`stopReason=` 字样，如实照抄）。

@@ -1,0 +1,41 @@
+{
+  "dslVersion": "0.1",
+  "id": "m1.2.continuable-e2e.realmachine",
+  "title": "M1.2 真机：flow_send 续接已结束节点会话（父会话 = 发起 flow_run 的会话）",
+  "vars": {},
+  "limits": { "maxNodes": 4, "maxRunMs": 300000 },
+  "defaults": { "nodeTimeoutMs": 120000 },
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "session",
+      "input": {
+        "prompt": "只输出一行 JSON，不要解释：{\"first\":\"m12-ready\"}"
+      },
+      "output": {
+        "schema": {
+          "type": "object",
+          "required": ["first"],
+          "properties": { "first": { "type": "string" } },
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "type": "session",
+      "input": { "prompt": "只输出一行 JSON，不要解释：{\"second\":true}" },
+      "output": {
+        "schema": {
+          "type": "object",
+          "required": ["second"],
+          "properties": { "second": { "type": "boolean" } },
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "n1", "to": "n2" }
+  ]
+}
