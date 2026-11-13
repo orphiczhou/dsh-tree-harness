@@ -23,7 +23,7 @@
 | 最深 worker 不再起正常子会话 | **PASS（纪律）**，但探针**意外成功** | worker done meta：`UNEXPECTED_SUCCESS`；见 §5 |
 | 内层叶事后补 verify | **不可用（归属缺口）** | `E_BORROWED_IDENTITY: caller "session-" cannot write verification on leaf "t3c4-C2-commander" (allowed: creator\|root)` |
 
-耗时：外层 C1 派发 13:45:45 → C1 done 13:52:31，**约 409s**；flow `T3C3-R1` 339.3s。
+耗时：外层 C1 派发 13:45:45 → C1 done 13:52:31，**约 406s**；flow `T3C3-R1` 339.3s。
 
 ---
 
