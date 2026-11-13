@@ -91,6 +91,12 @@
 
 - `~/.dsh/sessions/…/f351d7ee-…/session.v4.jsonl.zstd` 首行：`{"type":"session","id":"f351d7ee-…","parentSession":"3ed0f91d-…","origin":"subagent","delegationDepth":6,…}` —— **depth 6 会话真实存在**。
 
+### 4.4 运行环境与日志（FACT）
+
+- `tree_doctor {action:"run"}` → `7 checks · pass=7 warn=0 fail=0 · version=0.8.0`（试点后）。
+- `apply.log` 本日（2026-11-13）**无** `E_DEPTH_EXCEEDED` / `SubagentDepthError` / `E_RUN_CANCELLED` / `sweep_error` / `inactive context` 新增行（现存同类行均为 2026-11-12 旧记录）。
+- 本轮无 bamboo relay 触发（外层上下文远低于 42%），`segmentChain=[]`、`drift_history=[]` 与之一致。
+
 ---
 
 ## 5. 发现：`subagent.maxDepth=5` 在插件编程派发路径不生效（FACT + 根因）
