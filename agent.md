@@ -65,7 +65,7 @@ node scripts/release-all.mjs --dry-run --mirror-dir <dir>
 - node 路径：`%USERPROFILE%\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe`
 - `packages/` 位于 profile 的 `hmr.root`（`D:/Codes/dsh-tree-harness/packages`）。**实测（2026-11-11 第三/四轮）：改了已加载包的宿主半 `index.js` 或 bundle patch（含新增 skill provider 行）后，活体仍是旧实现；必须对相应 entry（`include:session-tree` / `include:tree-engine`）做一次 `plugin_manager set_plugin enabled:false → true`（或重启 DSH）才加载新代码。客户端半改动刷新页面生效。**
 - **热重载安全（2026-11-11 实际事故，务必遵守）**：`packages/` 在 `hmr.root` 内时，**直接覆盖写宿主半文件可能被 HMR 读到半写状态**，本次 Wave-1 期间就因此让宿主启动崩溃（`ReferenceError: TOOLS is not defined`）。改 `index.js` / `cordis.patch.yml` 前先对相应 bundle 做 disable，或改完立即 disable→enable；批量/脚本改动用「写 `.tmp` 再原子 rename」。宿主崩溃会留下孤儿进程并占用文件锁——这是宿主机制的结构性限制（需宿主侧加「父进程死亡即自杀」守护），本仓代码无法根治，只能减少触发。
-- git push 需要凭据：token 从 **User 环境变量 `GH_TOKEN`** 在内存中取用（`[Environment]::GetEnvironmentVariable('GH_TOKEN','User')` + `http.extraheader`），**禁止打印、禁止落盘、禁止写进 remote URL**；GitHub 访问需按 handoff 用 `-c http.proxy=` 等逐命令覆盖失效代理。
+- git push 需要凭据：token 从 **User 环境变量 `GH_TOKEN`** 在内存中取用（`[Environment]::GetEnvironmentVariable('GH_TOKEN','User')` + `http.extraheader`），**禁止打印、禁止落盘、禁止写进 remote URL**；GitHub 访问需按 handoff 用 `-c http.proxy=` 等逐命令覆盖失效代理。**代理覆盖必须同时带 per-URL 作用域键**（F8 轮实测，2026-11-14）：全局 `.gitconfig` 存在 `[http "https://github.com"] proxy`（作用域优先级高于普通 `-c http.proxy=`）与 `[http]/[https] proxy` 四处，代理失效时的正确覆盖 = `git -c http.https://github.com.proxy= -c http.proxy= push`（空值经 `GIT_CONFIG_VALUE_*` 环境变量注入会报错，必须走 argv `-c`）。
 
 ## 0.3 会话交接纪律（上下文接近 50% 时必做）
 
