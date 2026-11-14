@@ -1646,22 +1646,17 @@ window.__ModuleLoader__.load({
         return s
       }, [byId])
 
-      if (props.wide === false) {
-        return h(
-          'button',
-          {
-            className: 'st-rail',
-            title: t('expand'),
-            'aria-label': t('expand'),
-            onClick: () => {
-              try {
-                if (typeof props.expandSidebar === 'function') props.expandSidebar()
-              } catch (e) {}
-            },
-          },
-          h('span', { style: { fontSize: 16, lineHeight: 1 } }, '\u2261'),
-        )
-      }
+      /**
+       * v1.4.1（F8/R300 修复）：rail（侧栏收起）渲染决策**延迟到全部 hook 之后**。
+       * 旧实现在此处早退 `return h('button', …)`——而 TreeView 的最后一个 hook
+       * （`workspaceAction` useCallback）在更后面（≈L1724），收起态渲染会比展开态
+       * 少执行 1 个 hook → React「Rendered fewer hooks than expected」（minified
+       * #300）；再展开时同一 fiber 又多回 1 个 → #310，两态交替即反复崩溃
+       * （2026-11-14 真机实证：rc.3 环境冷启动/收起态触发，Boundary 捕获后树死）。
+       * 修复 = 只记录 railMode 标记，rail 按钮的渲染移到最终 return 前（全部
+       * hook 已跑完），两种模式的 hook 数量恒定。
+       */
+      const railMode = props.wide === false
 
       /** One view-options row; picking it applies the value and closes the menu. */
       const menuItem = (label, active, onPick) =>
@@ -1932,6 +1927,25 @@ window.__ModuleLoader__.load({
                 rowMenu === row.id ? rowMenuPanel(row) : null,
               )
             })
+
+      // v1.4.1（F8/R300）：rail 渲染分支——此处全部 hook 已执行完毕，
+      // railMode 与展开两种模式的 hook 数量恒定（不再触发 React #300/#310）。
+      if (railMode) {
+        return h(
+          'button',
+          {
+            className: 'st-rail',
+            title: t('expand'),
+            'aria-label': t('expand'),
+            onClick: () => {
+              try {
+                if (typeof props.expandSidebar === 'function') props.expandSidebar()
+              } catch (e) {}
+            },
+          },
+          h('span', { style: { fontSize: 16, lineHeight: 1 } }, '\u2261'),
+        )
+      }
 
       return h(
         'div',

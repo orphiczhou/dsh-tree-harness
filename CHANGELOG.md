@@ -81,6 +81,16 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.4.1] — 2026-11-14 · session-tree rail 收起态 React #300/#310 hook 崩溃修复（F8，无发布）
+
+### 变更
+
+- **版本**：`packages/dsh-session-tree` `1.4.0` → **`1.4.1`**（仓内插件；**未发布 npm / 公开镜像**——镜像 tag 仍为 `v1.4.0` = `0343f0c`）。
+- **根因与时间线**：侧栏收起（rail）态渲染早退自 **v1.0.4** 引入；**v1.1.0** 把 `workspaceAction` 的 `useCallback` 放到早退点之后——rail 早退路径比展开态少执行 1 个 hook → React **#300**（Rendered fewer hooks than expected），侧栏收起即触发；展开/收起交替使 hook 数量抖动 → React **#310** 反复崩溃。**2026-11-14 真机实证崩溃**。
+- **修复**：rail 渲染决策延迟到全部 hook 之后——以 `const railMode` 标记收起态，全部 hooks 无条件执行，最终 `return` 前进入 rail 分支（渲染 `≡` 展开按钮）；hook 数量在两态恒定。该 bug 与 rc.3 宿主升级无关（纯客户端 React 代码）。
+- **回归断言 +2**：`test/render.test.cjs` 新增 F8/R300 回归——rail 态 `useState=13` 恒定 + `st-rail` 展开按钮渲染；属包内自检，不计入文档测试计数口径（render 仍为 151/151 + 9/9 + 11/11）。
+- **定性更正**：与 rc.3 宿主无关，此前 F8 记录的「冷启动竞态」定性**作废**（progress-map §4 已同步改写）。
+
 ## [0.10.1] — 2026-11-13 · D28：宿主 rc.3 扁平 spec 适配（真机派发全量失败修复，无发布）
 
 ### 变更

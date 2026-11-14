@@ -16,7 +16,7 @@
 | 组件 | 版本 | 状态 | 测试 |
 |---|---|---|---|
 | `packages/dsh-tree-engine` | **v0.10.1** | 运行中（9 个 `tree_*` 工具 + 随包 2 份 Skill v2.3；活体 7/7 · v0.10.1） | **227/227**（26 个 `.test.js`）；发布门禁单测 14/14 |
-| `packages/dsh-session-tree` | **v1.4.0** | 运行中（`tree_send` 仅同树 + `session_handoff` + 会话界面元数据） | handoff 41/41、tree-send 25/25、meta 41/41、render 151/151+9+11、style-guard 26/26、skills 3/3、verify-bundle 0 fail、provider-conformance 29/29 |
+| `packages/dsh-session-tree` | **v1.4.1** | 运行中（`tree_send` 仅同树 + `session_handoff` + 会话界面元数据） | handoff 41/41、tree-send 25/25、meta 41/41、render 151/151+9+11、style-guard 26/26、skills 3/3、verify-bundle 0 fail、provider-conformance 29/29 |
 | `packages/dsh-agent-introspect` | v0.1.0 | 运行中（`self_spec`） | — |
 | 公开镜像 `orphiczhou/dsh-session-tree` | tag **v1.4.0 = `0343f0c`** | main + tag 已推送，21/21 SHA 一致 | — |
 
@@ -107,4 +107,4 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 - D23 平台侧边界（非本仓可修）：HMR 重载竞态导致工具面瞬态 `unknown tool`；tree 派发跨模型 `maxTokens` 继承调用方（小上限供应商 400，当前绕行）。两者均已在 v3 报告 §6 记录，并升级为平台 issue 草稿（[①](ISSUE-draft-hmr-reload-race.md)、[②](ISSUE-draft-max-tokens-inheritance.md)，未对外提交）。
 - flow 侧 M1.2 **真机未收口**前，不得引用 `flow_send` 为「可依赖」；本仓试点亦不得抢跑（详见 REQ §附 F）。
 - **D27 新增（2026-11-13 21:5x）**：宿主 0.2.2-rc.1→rc.3 升级 × flow 插件未适配 → 所有 flow session 节点 `E_SESSION_START_FAILED`；在 flow 插件适配 rc.3 并重载 smoke PASS 前，**任何 flow run 的 session 节点都无法启动**，试点/联调一律不可行（证据：[REQ §附 A 复查 #4](REQ-2026-11-13-flow-node-continuable-session.md)、flow 仓 probe-sop/PROBE-REPORT.md）。另注：rc.3 上宿主自身 spawn 与本仓 `tree_*` 工具正常（doctor 7/7·v0.10.0）。
-- **F8（2026-11-14 13:28，已恢复·待复现定性）**：宿主升级 rc.3 后**首次冷启动**，session-tree 插件报错且侧栏不显示 → 用户 13:30 在界面禁用（bundles 移除 + patch `disabled:true`）；13:35 Lead `set_bundle enabled` 重新启用（**宿主半 apply 零警告**）+ 用户刷新页面 → **显示恢复、功能正常**。定性（INFERENCE）：非 rc.3 持久不兼容（恢复后 client 半工作正常 + 离线测试全绿 + 宿主半零警告），最可能是 **rc.3 升级后首次冷启动的 client 模块/依赖服务加载时序竞态**（昨晚 21:33 升级在热窗口完成、client 半未走冷启动路径，今晨才暴露；与 D23 已登记的 HMR 重载竞态同族）。处置：再次冷启动若复现 → 抓浏览器 DevTools console 报错栈定位激活期依赖；操作面速记 = **client 半异常先刷新一次页面再报障**。全套佐证：离线测试全绿（handoff 41/41、meta 41/41、render 全过、style-guard、skills 3/3、verify-bundle 0 fail）。
+- **F8（2026-11-14 13:28，✅ 根因确认并修复 · v1.4.1）**：rail 收起态早退少执行 1 个 hook → React #300/#310（**v1.1.0 起潜伏**——v1.0.4 引入 rail 早退渲染、v1.1.0 把 `workspaceAction` useCallback 放到早退点之后；2026-11-14 真机实证侧栏收起即崩溃；**与 rc.3 宿主无关**，纯客户端 React 代码）；修复 = rail 渲染决策延迟到全部 hook 之后（`railMode` 标记 + 最终 return 前 rail 分支）+ 回归断言 ×2（rail 态 useState=13 恒定 + `st-rail` 按钮渲染，`render.test.cjs` 自检、不计文档计数）；恢复路径 = **重新启用插件 + 刷新页面**。此前「冷启动竞态（INFERENCE）」定性**作废**。

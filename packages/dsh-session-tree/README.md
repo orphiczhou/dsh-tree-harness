@@ -8,11 +8,27 @@
 
 A DeepSeek Harness profile bundle that turns the left sidebar into a **session tree**: every session plus its nested subagent descendants, expandable to arbitrary depth, each node one click away from its multi-turn conversation. It also adds two Host tools: `tree_send`, which lets an agent message a continuable subagent session **inside its own session tree** — including a sibling, which the built-in messaging APIs cannot reach, while cross-tree delivery is refused — and `session_handoff`, which hands the current session off to a fresh successor at the **same level** before its context budget fills, carrying the same workspace, Agent preset, permission preset, model and reasoning effort.
 
-**Current release: v1.4.0.** Bundled `session-handoff` Skill since **v1.3.0**; the successor kickoff prompt follows the DSH interface language since **v1.3.1**; `tree_send` is limited to the caller's own session tree and no longer accepts a `parent` argument since **v1.4.0** (see [releases](https://github.com/orphiczhou/dsh-session-tree/tags)).
+**Current release: v1.4.1.** Bundled `session-handoff` Skill since **v1.3.0**; the successor kickoff prompt follows the DSH interface language since **v1.3.1**; `tree_send` is limited to the caller's own session tree and no longer accepts a `parent` argument since **v1.4.0** (see [releases](https://github.com/orphiczhou/dsh-session-tree/tags)). v1.4.1 fixes a collapsed-sidebar (rail) hook-count crash (React #300/#310) — see the release note below.
 
 <!-- Screenshot placeholder: add a screenshot of the left sidebar tree here once one exists.
      Do not reference an image file that is not in the repository. -->
 <!-- ![Session tree in the left sidebar](docs/screenshot.png) -->
+
+## v1.4.1 增量：rail 收起态 React #300/#310 hook 数量崩溃修复（F8）
+
+> 2026-11-14 真机实证：侧栏收起（rail）即触发崩溃。v1.4.1 为仓内修复版本，未发布 npm / 公开镜像（镜像 tag 仍为 `v1.4.0` = `0343f0c`）。
+
+**现象**：侧栏收起到图标 rail 态时渲染少执行 1 个 hook → React **#300**（Rendered fewer hooks than expected）；展开/收起交替使 hook 数量抖动 → React **#310** 反复崩溃，侧栏不可用。
+
+**根因与时间线**：
+
+- rail 早退渲染分支自 **v1.0.4** 引入（侧栏收起时提前 `return`，只渲染 `≡` 展开按钮）；
+- **v1.1.0** 把 `workspaceAction` 的 `useCallback` 放到该早退点**之后**——展开态多执行 1 个 hook、rail 早退态不执行，两态 hook 数量不一致，埋雷；
+- 2026-11-14 真机实证崩溃；此前 F8 曾误判为「冷启动竞态」，该定性**作废**。
+
+**修复**：rail 渲染决策**延迟到全部 hook 之后**——先无条件执行全部 hooks，以 `const railMode` 标记收起态，在最终 `return` 前进入 rail 分支（渲染 `≡` 展开按钮）；两态 hook 数量恒定，不再随展开/收起变化。该 bug 与 rc.3 宿主升级无关（纯客户端 React 代码）。
+
+**回归断言 +2**（`test/render.test.cjs` F8/R300 回归）：① rail 态 hook 数量恒定（`useState=13`）；② rail 态 `st-rail` 展开按钮渲染。此 2 条属包内自检，不计入文档测试计数口径。
 
 ## Features
 

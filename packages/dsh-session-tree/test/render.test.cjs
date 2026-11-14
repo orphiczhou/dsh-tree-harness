@@ -2121,6 +2121,39 @@ function runLivePhase() {
     console.log(`  实时阶段异常，已忽略（不影响夹具结果）：${(e && e.message) || e}`)
   }
 }
+
+// ------------------------------------------------ F8/R300 回归（v1.4.1）：rail 收起态
+// 旧实现：`if (props.wide === false) return h('button', …)` 早退发生在 TreeView
+// 的最后一个 hook（workspaceAction useCallback）之前 → 收起态比展开态少执行 1 个
+// hook → React「Rendered fewer hooks than expected」（minified #300）；再展开时
+// 同一 fiber 又多回 1 个 → #310，两态交替反复崩溃（2026-11-14 真机实证，rc.3）。
+// 回归判据：rail 收起态渲染**必须同样跑满全部 13 个 useState**（hook 数量与展开
+// 态恒定），且返回 st-rail 按钮。
+console.log('\n=== F8/R300 回归：rail 收起态 hook 数量恒定（v1.4.1） ===')
+{
+  useStateCalls = 0
+  useStateSeed = null
+  const railSink = []
+  const railEl = registered({
+    useSessions: (sel) => sel({ byId: byId, projectionsBySession: {} }),
+    useSessionStatus: (sel) => sel({}),
+    useWorkspaces: (sel) => sel(fixtureWorkspaces),
+    wide: false,
+    expandSidebar: () => {},
+  })
+  renderTree(railEl, railSink)
+  check(
+    '回归：rail 收起态渲染必须跑满全部 13 个 useState（hook 数量与展开态恒定，旧实现早退只跑 12 个）',
+    useStateCalls === STATE_HOOK_COUNT,
+    `rail 态 useState=${useStateCalls}（期望 ${STATE_HOOK_COUNT}）`,
+  )
+  const railBtn = railSink.find(
+    (e) => typeof e.props.className === 'string' && e.props.className.includes('st-rail'),
+  )
+  check('回归：rail 收起态返回 st-rail 按钮（延迟到全部 hook 之后渲染）', !!railBtn, railBtn ? 'st-rail 按钮已渲染' : '未找到 st-rail 元素')
+  useStateCalls = 0
+  useStateSeed = null
+}
 runLivePhase()
 
 // ------------------------------------------------------------------- 汇总
