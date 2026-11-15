@@ -2,7 +2,7 @@
 
 > **Audience**: an AI coding agent (DSH / any harness) asked to install, upgrade, verify or troubleshoot this plugin on a user's machine.
 > **Repo role**: `orphiczhou/dsh-session-tree` is the **release mirror** of `packages/dsh-session-tree` in the source repo [orphiczhou/dsh-tree-harness](https://github.com/orphiczhou/dsh-tree-harness). Source of truth = the monorepo. Never edit this repo directly; changes are published from the monorepo by `scripts/release-plugin.mjs` (18 files, SHA-256 verified).
-> **Snapshot**: `v1.4.0` · 2026-11-12 · tested on DSH desktop `0.2.2-rc.1` (Windows 11).
+> **Snapshot**: `v1.6.0` · 2026-11-15 · tested on DSH desktop `0.2.2-rc.1` (Windows 11).
 
 ## 0. TL;DR decision tree
 
@@ -46,7 +46,7 @@ dsh plugin --profile <name> add /absolute/path/to/dsh-session-tree   # local che
 
 `dsh plugin <args...>` forwards to pnpm inside the profile; a Git install fetches sources (plain ESM, no build step, so no pnpm build-script allowlist is needed).
 
-**A3. Pin a version** (recommended for reproducibility): use a pnpm git ref, e.g. `github:orphiczhou/dsh-session-tree#v1.4.0` in the Add-plugin spec / profile dependency. Tag = `package.json.version` = what a community catalog indexes.
+**A3. Pin a version** (recommended for reproducibility): use a pnpm git ref, e.g. `github:orphiczhou/dsh-session-tree#v1.6.0` in the Add-plugin spec / profile dependency. Tag = `package.json.version` = what a community catalog indexes.
 
 ### Route B — full tree stack (session-tree + tree-engine + agent-introspect)
 
@@ -108,7 +108,7 @@ Run these in a **new session** after install/reload:
 | # | Check | How | Expected |
 |---|---|---|---|
 | 1 | Tools mounted | ask the agent to list its tools (or `plugin_manager list_plugins` / tool list) | `tree_send` + `session_handoff` present; full stack adds the 9 `tree_*` tools |
-| 2 | Tool surface (tree-engine) | call `tree_doctor {action:"run"}` | `tree_doctor: 7 checks · pass=… · version=0.6.0`; no `FAIL` on `package`/`tool-count`/`skills` |
+| 2 | Tool surface (tree-engine) | call `tree_doctor {action:"run"}` | `tree_doctor: 7 checks · pass=… · version=0.11.0`; no `FAIL` on `package`/`tool-count`/`skills` |
 | 3 | Handoff tool | `session_handoff {action:"status"}` | one line with `context=…% (threshold 50%) … preset=… permission=… successor=… lang=zh\|en`; no side effects |
 | 4 | Skill catalog | ask "what Skills do you see?" (new session!) | `session-handoff` (full stack also `tree-commander`, `tree-worker`) |
 | 5 | Sidebar UI | open the left sidebar | header reads **Sessions** / **会话树**; child counts expand; subagent rows nest |
@@ -122,7 +122,7 @@ Quick reference for #1/#3: the render line of `status` is the cheapest machine-c
 ```sh
 # upgrade (Git install)
 dsh plugin remove orphiczhou/dsh-session-tree     # or disable in the Plugins page
-dsh plugin add orphiczhou/dsh-session-tree#v1.4.0 # pinned
+dsh plugin add orphiczhou/dsh-session-tree#v1.6.0 # pinned
 # then reload: disable → enable, open a new session
 
 # uninstall

@@ -81,6 +81,22 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.6.0] — 2026-11-15 · session-tree Tree Runs 面板 v2（Flow Runs 同布局多区域，无发布）
+
+### 变更
+
+- **版本**：`packages/dsh-session-tree` `1.5.0` → **`1.6.0`**（仓内插件；**未发布 npm / 公开镜像**——镜像 tag 仍为 `v1.4.0` = `0343f0c`）。
+- **Tree Runs 面板 v2**（与 Flow Runs 同布局同功能的多区域面板）：入口 pill 与 Flow Runs pill 同视觉——26px 胶囊、`600 12px system-ui` 字栈、`--dsw-alias-bg-layer-1` 底、`--dsw-alias-border-l1` 边、`--dsw-alias-label-primary` 字、7px 品牌圆点（`.st-tr-pill` 原地逐值改写）。
+- 面板体改为**左右分栏同屏**：左列表列（flex `0 0 36%`、clamp 150–320px、自滚、分隔线）+ 右详情区（flex 1 自滚）；Detail = 字段栅格 + **TreeGraph 树图**（依赖 DAG 最长路径分层 + 环保护、192×56 节点盒、贝塞尔边 + bend×14 扇出避让、缩放 0.25–2.5 / Ctrl/⌘ 滚轮 ×1.12 / 拖拽平移 / Fit 重置、LOD 0.5/0.85、空图退化隐藏）+ LeafTable 8 列（含 SessionCell 一键复制）+ 事件尾。
+- 样式：新增 `st-tr2-*` 22 类 CSS（全 `--dsw-alias-*` token）；组件 Back 按钮移除。
+- 零改动面：席位注册 / 轮询 controller / 数据契约原样；tree-engine 侧无改动（P0 零服务端）。
+- 工程流程：任务树 **t29p** 三 leaf 流水线（W1 逆向 flow UI 规格 → W2 设计 → W3 实现），规格与设计入 `docs/operations/panel-v2/`，实现有意偏离 4 处已记录。
+- 变更文件：`client.js`（W3 实现 +669 行：pill/面板体/TreeGraph/LeafTable/Back 移除）、`test/panel-render.test.cjs`、`test/style-guard.cjs`、`docs/operations/panel-v2/SPEC-flow-parity.md`（新，W1 365 行）、`docs/operations/panel-v2/DESIGN-tree-panel-v2.md`（新，W2 461 行）。
+
+### 验证
+
+- `test/panel-render.test.cjs` **58 → 73/73**（新增 V2-1..15 + 既有 58 判定处置 55 留/2 改/1 删；三态 hook 恒定按公式 A/B 断言）；style-guard 新增 A8e–i（A8=10 不变，共 **34/34**）；render **153/153 + 9 + 11**、provider-conformance **29/29**、handoff **41/41**、meta **41/41**、skills **3/3**、verify-bundle 0 fail 全部保持。
+
 ## [1.5.0] — 2026-11-15 · session-tree Tree Runs 面板（无发布）
 
 ### 变更

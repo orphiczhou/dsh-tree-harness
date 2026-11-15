@@ -8,11 +8,26 @@
 
 A DeepSeek Harness profile bundle that turns the left sidebar into a **session tree**: every session plus its nested subagent descendants, expandable to arbitrary depth, each node one click away from its multi-turn conversation. It also adds two Host tools: `tree_send`, which lets an agent message a continuable subagent session **inside its own session tree** — including a sibling, which the built-in messaging APIs cannot reach, while cross-tree delivery is refused — and `session_handoff`, which hands the current session off to a fresh successor at the **same level** before its context budget fills, carrying the same workspace, Agent preset, permission preset, model and reasoning effort.
 
-**Current release: v1.5.0.** Bundled `session-handoff` Skill since **v1.3.0**; the successor kickoff prompt follows the DSH interface language since **v1.3.1**; `tree_send` is limited to the caller's own session tree and no longer accepts a `parent` argument since **v1.4.0** (see [releases](https://github.com/orphiczhou/dsh-session-tree/tags)). v1.5.0 adds the **Tree Runs panel** (composer-dock entry pill + right-sidebar tab, data from the same-origin `/tree-panel/*` routes) — see the release note below. v1.4.1 fixed a collapsed-sidebar (rail) hook-count crash (React #300/#310) — see its release note below.
+**Current release: v1.6.0.** Bundled `session-handoff` Skill since **v1.3.0**; the successor kickoff prompt follows the DSH interface language since **v1.3.1**; `tree_send` is limited to the caller's own session tree and no longer accepts a `parent` argument since **v1.4.0** (see [releases](https://github.com/orphiczhou/dsh-session-tree/tags)). v1.6.0 upgrades the Tree Runs panel to **panel v2** — same layout and feature set as the Flow Runs panel, a multi-area side-by-side panel (list + dependency-DAG tree graph + details on one screen) — see the release note below. v1.5.0 adds the **Tree Runs panel** (composer-dock entry pill + right-sidebar tab, data from the same-origin `/tree-panel/*` routes) — see the release note below. v1.4.1 fixed a collapsed-sidebar (rail) hook-count crash (React #300/#310) — see its release note below.
 
 <!-- Screenshot placeholder: add a screenshot of the left sidebar tree here once one exists.
      Do not reference an image file that is not in the repository. -->
 <!-- ![Session tree in the left sidebar](docs/screenshot.png) -->
+
+## v1.6.0 增量：Tree Runs 面板 v2（Flow Runs 同布局）
+
+> 2026-11-15 D31 轮交付。v1.6.0 为仓内版本，**未发布 npm / 公开镜像**（镜像 tag 仍为 `v1.4.0` = `0343f0c`）。
+
+**组成（与 Flow Runs 面板同布局同功能的多区域面板）**：
+
+- **入口 pill 与 Flow Runs pill 同视觉**：26px 胶囊、`600 12px system-ui` 字栈、`--dsw-alias-bg-layer-1` 底、`--dsw-alias-border-l1` 边、`--dsw-alias-label-primary` 字、7px 品牌圆点（`.st-tr-pill` 原地逐值改写）；
+- **面板体左右分栏同屏**：左列表列（flex `0 0 36%`、clamp 150–320px、自滚、分隔线）+ 右详情区（flex 1 自滚）；
+- **Detail 三件**：字段栅格 + **TreeGraph 树图**（依赖 DAG 最长路径分层 + 环保护、192×56 节点盒、贝塞尔边 + bend×14 扇出避让、缩放 0.25–2.5 / Ctrl/⌘ 滚轮 ×1.12 / 拖拽平移 / Fit 重置、LOD 0.5/0.85、空图退化隐藏）+ LeafTable 8 列（含 SessionCell 一键复制）+ 事件尾；
+- **样式**：新增 `st-tr2-*` 22 类 CSS（全部只用 `--dsw-alias-*` token）；组件 Back 按钮移除；
+- **零改动面**：席位注册 / 轮询 controller / 数据契约原样（tree-engine 侧 P0 零服务端改动）；
+- **规格与设计入 `docs/operations/panel-v2/`**（SPEC-flow-parity.md 365 行 / DESIGN-tree-panel-v2.md 461 行）；任务树 t29p 三 leaf 流水线（W1 逆向 flow UI 规格 → W2 设计 → W3 实现），实现有意偏离 4 处已记录。
+
+**测试**：`test/panel-render.test.cjs` **58 → 73/73**（新增 V2-1..15 + 既有 58 判定处置 55 留/2 改/1 删；三态 hook 恒定按公式 A/B 断言）；style-guard 新增 A8e–i（A8=10 不变，共 **34/34**）；render **153/153** + 9 + 11 保持、provider-conformance **29/29**、handoff 41/41、meta 41/41、skills 3/3、verify-bundle 0 fail 全部保持。
 
 ## v1.5.0 增量：Tree Runs 面板（pill + 右栏页签两件套）
 

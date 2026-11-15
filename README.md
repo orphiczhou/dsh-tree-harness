@@ -21,7 +21,7 @@
 |---|---|---|---|---|
 | [`packages/dsh-tree-engine`](packages/dsh-tree-engine/) | 0.11.0 | 执行层：9 个 `tree_*` 工具（`tree_plan` / `tree_node` / `tree_dispatch` / `tree_report` / `tree_status` / `tree_verify` / `tree_log` / `tree_maintain` / **`tree_doctor` 只读自检**），含依赖编排、竹节接力（上下文自动换棒）、对抗式验证、差分金标准、leaf 写面护栏（`LEAF_WRITE_MATRIX`）；Wave-2 增补：**W2.1** 会话预算计入竹节链（`runtime.segmentChain` 归一化去重）、**W2.3** RC2 兼容层抽 `src/compat.js`（双形探测 + 11 测）、**W2.6** root/主会话 id 归一化（`session-` 前缀与裸 UUID 等价比较）；**v0.8.0 组合修复**：per-leaf relay 开关（`tree_node {action:"set-relay"}`）、tokenMeter 测量端口修复、sweep 跨实例（热更僵尸）生命周期、relay parent 重解析；**v0.8.1 深度预算**：派发/竹节接力/攻击审计会话显式传 `maxDepth`（缺省 5，`TREE_ENGINE_CONFIG.max_subagent_depth` 可覆盖；此前插件派发路径无平台深度兜底）；**v0.9.0 硬安全与可观测性**：跨进程 `.lock` 文件锁（O_EXCL + 陈旧接管 + 心跳）、nudge 强制 prune 走状态机、`leaf:add` 字段白名单（13 键 fail-closed）、`tree_log` 事件 meta 机读化、`tree_maintain {action:"verify-delegate"}` 验证授权委托；**v0.10.0 flash 审计第二批**：依赖闸「已验证失败不放行」+ sweep stale-done 判据、`set-verification` verdicts/pass 一致性、竹节接力会话预算/唯一性预检 + 单账本口径、`audit_meta` 严格校验与放宽留痕（含 #23 阈值回退修复）、`subagent_spawn` 仅 owner、`fsStore.read` `.tmp` 灾备恢复、`tree_maintain {action:"gc"}`（archived 账本截断）+ call-log 10MB 滚动；**v0.10.1 宿主 rc.3 适配**：`startActivation` 扁平 spec（`buildActivationSpec`，嵌套形状真机全量失败修复）；**v0.11.0 `/tree-panel` 只读 HTTP 投影路由**：`GET /tree-panel/trees`、`/trees/<treeId>`、`/trees/<treeId>/events`（webServer 可选注入缺席降级不阻断工具面；Host/Origin/Sec-Fetch-Site 三重校验 + `no-store` + 不回 ACAO；投影纯函数 `src/panel-view.js` 脱敏截断——不透出 prompt/meta/环境变量，preview 120/200 字符上限）；**随包 tree-commander/tree-worker Skill** | **256/256** | ✅ 运行中（本机 desktop profile 已装载） |
 | [`packages/dsh-agent-introspect`](packages/dsh-agent-introspect/) | 0.1.0 | 自省层：`self_spec` 工具，投影当前会话的 model / permissions / sandbox / cwd / token 用量 | —（无单测） | ✅ 运行中 |
-| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.5.0** | 会话树单包：左栏嵌套会话树 + **会话界面底部元数据条（model / reasoning effort / 上下文 %；子会话补官方缺失的 model/effort，只读子会话用标题栏 chip 兜底）** + **Tree Runs 面板（v1.5.0）**：`conversation.composer.dock` 入口 pill（order:6）+ 右栏页签席位（kind `tree-runs`，右栏服务缺席降级 `shell.overlay` 并延迟补挂；数据 = 同源 fetch `/tree-panel/*`）+ `tree_send` 跨层级消息工具（**v1.4.0 起仅同树投递、移除 `parent` 入参、调用者谱系校验**）+ **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回；**v1.4.1 修复**：rail 收起态 hook 数量崩溃（React #300/#310，侧栏收起即触发，v1.1.0 起潜伏） | 包内 9 个测试入口（handoff **41/41**、tree-send **25/25**、meta **41/41**、render **153/153** + 9/9 + 11/11、**panel-render 58/58**、style-guard 29/29、verify-bundle 0 fail、provider-conformance **29/29**） | 🌐 GitHub 公开（镜像 **v1.4.0** = `0343f0c`，main + tag，**21/21 SHA**）、社区市场已收录；**npm 未发布；v1.5.0 未发布镜像** |
+| [`packages/dsh-session-tree`](packages/dsh-session-tree/) | **1.6.0** | 会话树单包：左栏嵌套会话树 + **会话界面底部元数据条（model / reasoning effort / 上下文 %；子会话补官方缺失的 model/effort，只读子会话用标题栏 chip 兜底）** + **Tree Runs 面板（v1.5.0）**：`conversation.composer.dock` 入口 pill（order:6）+ 右栏页签席位（kind `tree-runs`，右栏服务缺席降级 `shell.overlay` 并延迟补挂；数据 = 同源 fetch `/tree-panel/*`）+ **v1.6.0 面板 v2**：Flow Runs 同款多区域面板（列表+树图+详情分栏同屏、依赖 DAG 树图可缩放平移）+ `tree_send` 跨层级消息工具（**v1.4.0 起仅同树投递、移除 `parent` 入参、调用者谱系校验**）+ **`session_handoff` 会话自交接**（同层级接替，继承工作区 / Agent 预设 / 权限模式 / 模型 / 思考等级）+ **随包 `session-handoff` Skill**；**接替提示语跟随 DSH 界面语言（zh/en）**；工作区排序 / 隐藏恢复 / 检索召回；**v1.4.1 修复**：rail 收起态 hook 数量崩溃（React #300/#310，侧栏收起即触发，v1.1.0 起潜伏） | 包内 9 个测试入口（handoff **41/41**、tree-send **25/25**、meta **41/41**、render **153/153** + 9/9 + 11/11、**panel-render 73/73**、style-guard 34/34、verify-bundle 0 fail、provider-conformance **29/29**） | 🌐 GitHub 公开（镜像 **v1.4.0** = `0343f0c`，main + tag，**21/21 SHA**）、社区市场已收录；**npm 未发布；v1.5.0/v1.6.0 未发布镜像** |
 
 状态口径：
 
@@ -114,8 +114,8 @@ node test/tree-send.test.js    # v1.4.0 同树投递/谱系校验：25/25（跨�
 node test/meta.test.cjs        # 会话元数据纯函数/只读判定（model/effort/context%）：41/41
 node test/skills.test.cjs      # 随包 Skill 打包回归：3/3（frontmatter/files/patch 行）
 node test/render.test.cjs      # 确定性夹具渲染检查（153/153 + 夹具自检 9/9 + 实时附加 11/11）
-node test/panel-render.test.cjs # v1.5.0 Tree Runs 面板渲染：58/58（pill/页签/降级三态，hook 数量恒定钉死）
-node test/style-guard.cjs      # 样式注入 / SSR 边界检查：29/29（v1.5.0 起 A8=10 + 新增 A8b/c/d）
+node test/panel-render.test.cjs # v1.6.0 Tree Runs 面板 v2 渲染：73/73（pill/页签/降级三态 + V2 判定，三态 hook 恒定按公式 A/B 断言）
+node test/style-guard.cjs      # 样式注入 / SSR 边界检查：34/34（A8=10 + A8b/c/d，v1.6.0 新增 A8e–i）
 node scripts/verify-bundle.mjs # 清单自检：0 fail
 node test/provider-conformance.cjs [asar 解包目录]
 # fixture 解析顺序：DSH_RC2_FIXTURE_DIR → %TEMP%\dsh-asar-inspect\out-rc2-compat → out
@@ -152,14 +152,14 @@ node test/provider-conformance.cjs [asar 解包目录]
 - 所有 DOM 副作用放在 `apply(ctx)` 里；
 - 客户端半热更会**残留旧实例**：用单例注册表 + 令牌仲裁压制，彻底干净仍需刷新一次页面。
 
-### 随包 Skill（SKILL 工程化，v0.11.0 / v1.5.0）
+### 随包 Skill（SKILL 工程化，v0.11.0 / v1.6.0）
 
 Skill 是插件工程的一部分，与工具同包、同版本、同发布：
 
 | 包 | 随包 Skill | 挂载方式 |
 |---|---|---|
 | `packages/dsh-tree-engine` v0.11.0 | `skills/tree-commander/SKILL.md`、`skills/tree-worker/SKILL.md` | `cordis.patch.yml` 第 2 行 insert `@deepseek-ai/dsh-skill-filesystem`（`providerName: tree-engine`、`includeDefaultRoots:false`、`bundledSkillDir` 经安装包身份解析到包内 `skills/`） |
-| `packages/dsh-session-tree` v1.5.0 | `skills/session-handoff/SKILL.md` | 同模式，`providerName: session-tree` |
+| `packages/dsh-session-tree` v1.6.0 | `skills/session-handoff/SKILL.md` | 同模式，`providerName: session-tree` |
 
 - 效果：新会话的 Skill 目录直接出现 `tree-commander` / `tree-worker` / `session-handoff`，模型在**极简提示词**下即可发现「分层分解 / 逐层干活 / 上下文 50% 自主交接」的用法，不需要先把工具名喂给它；真机验证见 [docs/reports/skill-e2e-2026-11-11.md](docs/reports/skill-e2e-2026-11-11.md)。
 - 版本：`tree-commander` / `tree-worker` 两份 SKILL 随 tree-engine **v0.5.0 引入、v0.8.0 升到 v2.2、v0.9.0 同步补「验证授权委托 / 日志机读化 / 建点白名单 / 锁语义」、v0.10.0 同步补「依赖闸/验证落账加固 / 竹节预算与唯一性 / audit_meta 校验 / GC」**（9 工具、会话 id 归一化、预算口径、per-leaf relay 开关 `tree_node {action:"set-relay"}`、`tree_maintain {action:"verify-delegate"}` / `{action:"gc"}`）；`session-handoff` SKILL 随会话树 **v1.4.0**（补 `tree_send` 仅同树 / 无 `parent` 入参说明）。

@@ -121,17 +121,17 @@ window.__ModuleLoader__.load({
 /* Tree Runs panel (composer-dock pill + right-sidebar tab + degraded
    shell.overlay). Same theme tokens as the rest of this sheet; the running
    blue keeps the .st-dot[data-state='ongoing'] literal-fallback precedent. */
-.st-tr-pill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;border:1px solid var(--dsw-alias-border-l1);background:none;color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+.st-tr-pill{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:600 12px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;white-space:nowrap}
 .st-tr-pill:hover{background:var(--dsw-alias-interactive-bg-hover);border-color:var(--dsw-alias-border-l2)}
-.st-tr-pill-dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--dsw-static-blue-500,#3b82f6)}
+.st-tr-pill[data-open='true']{border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-brand-primary);color:var(--dsw-alias-bg-base)}
+.st-tr-pill-dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--dsw-alias-brand-primary)}
 .st-tr-root{display:flex;flex-direction:column;min-height:0;height:100%;font-size:12px;color:var(--dsw-alias-label-primary)}
 .st-tr-top{display:flex;align-items:center;gap:8px;padding:8px 10px;flex:none;border-bottom:1px solid var(--dsw-alias-border-l1)}
 .st-tr-top-title{flex:none;font-weight:600;font-size:12px}
 .st-tr-top-path{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-tertiary);font-size:11px}
 .st-tr-top-count{flex:none;color:var(--dsw-alias-label-tertiary);font-size:11px;font-variant-numeric:tabular-nums}
-.st-tr-btn{flex:none;border:1px solid var(--dsw-alias-border-l1);background:none;color:var(--dsw-alias-label-secondary);border-radius:var(--dsw-radius-sm);font:inherit;font-size:11px;line-height:16px;padding:2px 8px;cursor:pointer;white-space:nowrap}
+.st-tr-btn{height:24px;padding:0 10px;border-radius:6px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font:500 12px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;white-space:nowrap}
 .st-tr-btn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
-.st-tr-scroll{overflow:auto;min-height:0;flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
 .st-tr-card{display:block;width:100%;box-sizing:border-box;text-align:left;background:none;border:1px solid var(--dsw-alias-border-l1);border-radius:var(--dsw-radius-lg);padding:8px 10px;cursor:pointer;color:inherit;font:inherit}
 .st-tr-card:hover{background:var(--dsw-alias-interactive-bg-hover);border-color:var(--dsw-alias-border-l2)}
 .st-tr-card-top{display:flex;align-items:center;gap:8px;min-width:0}
@@ -148,9 +148,6 @@ window.__ModuleLoader__.load({
 .st-tr-note{padding:10px 2px;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}
 .st-tr-note[data-kind='error']{color:var(--dsw-alias-state-error-primary)}
 .st-tr-head{display:flex;align-items:center;gap:8px;padding:8px 10px;flex:none;border-bottom:1px solid var(--dsw-alias-border-l1)}
-.st-tr-grid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;padding:8px 10px;flex:none;align-items:baseline}
-.st-tr-flabel{color:var(--dsw-alias-label-tertiary);font-size:11px;white-space:nowrap}
-.st-tr-fvalue{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
 .st-tr-section{padding:8px 10px 2px;color:var(--dsw-alias-label-tertiary);font-size:11px;font-weight:600;flex:none}
 .st-tr-tablewrap{padding:0 10px 4px;overflow-x:auto;flex:none}
 .st-tr-row{display:grid;grid-template-columns:minmax(110px,1.3fr) minmax(74px,.9fr) 52px minmax(64px,.8fr) 44px 48px minmax(60px,.8fr);gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--dsw-alias-border-l1);min-width:520px}
@@ -165,10 +162,39 @@ window.__ModuleLoader__.load({
 .st-tr-events{padding:0 10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0;font-size:10px;color:var(--dsw-alias-label-tertiary)}
 .st-tr-event{display:flex;gap:8px;min-width:0}
 .st-tr-event .st-tr-mono{flex:none}
-.st-tr-event-type{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-tr-event-type{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-brand-primary);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .st-tr-overlay{position:fixed;inset:0;z-index:60;background:var(--dsw-alias-bg-overlay);display:flex;flex-direction:column;padding:12px;box-sizing:border-box}
 .st-tr-overlay-head{display:flex;align-items:center;gap:8px;padding:0 0 8px;flex:none}
 .st-tr-overlay-title{flex:1;min-width:0;font-weight:600;font-size:13px}
+/* Tree Runs panel v2: split-pane read-only projection (list left / detail
+   right, no Back). st-tr2-* namespace per panel-v2 design §4; colors only
+   through --dsw-alias-* tokens. */
+.st-tr2-top{display:flex;align-items:center;gap:8px;padding:8px 10px;flex:0 0 auto;border-bottom:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1)}
+.st-tr2-title{flex:none;font-weight:600;font-size:13px;color:var(--dsw-alias-label-primary)}
+.st-tr2-dim{flex:none;color:var(--dsw-alias-label-secondary);font-size:11px}
+.st-tr2-body{flex:1 1 auto;display:flex;flex-direction:row;align-items:stretch;min-height:0}
+.st-tr2-list{flex:0 0 36%;min-width:150px;max-width:320px;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;border-right:1px solid var(--dsw-alias-border-l1)}
+.st-tr2-detail{flex:1 1 auto;min-width:0;min-height:0;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:8px}
+.st-tr2-empty{padding:12px;color:var(--dsw-alias-label-secondary);border:1px dashed var(--dsw-alias-border-l2);border-radius:8px}
+.st-tr2-fieldgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 16px}
+.st-tr2-field{display:flex;gap:8px;align-items:baseline;min-width:0}
+.st-tr2-fieldlabel{flex:0 0 auto;min-width:84px;color:var(--dsw-alias-label-secondary);font-size:11px}
+.st-tr2-fieldvalue{min-width:0;word-break:break-all;color:var(--dsw-alias-label-primary);font-size:12px}
+.st-tr2-fieldvalue.st-tr-mono{font-size:11px}
+.st-tr2-section{border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1);padding:8px 10px}
+.st-tr2-section-title{font-weight:600;font-size:12px;margin-bottom:6px;color:var(--dsw-alias-label-primary)}
+.st-tr2-graphbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.st-tr2-graphbtn{padding:2px 8px;border-radius:6px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-2);font-size:11px;line-height:18px}
+.st-tr2-viewport{border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1);max-height:520px;overflow:auto;touch-action:none;cursor:grab}
+.st-tr2-hint{flex:none;color:var(--dsw-alias-label-secondary);font-size:11px}
+.st-tr2-legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--dsw-alias-label-secondary)}
+.st-tr2-event-seq{flex:none;color:var(--dsw-alias-label-secondary)}
+.st-tr2-sessid{user-select:text}
+.st-tr2-copybtn{height:20px;padding:0 6px;border-radius:5px;border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);color:var(--dsw-alias-brand-primary);font:500 11px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;white-space:nowrap}
+.st-tr2-svg{display:block}
+.st-tr2-node text{user-select:none}
+.st-tr2-edge{pointer-events:none}
+.st-tr-card[data-selected='true']{border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-bg-layer-2)}
 `
 
     /**
@@ -945,8 +971,9 @@ window.__ModuleLoader__.load({
      */
     function panelToneOf(status) {
       if (status === 'running' || status === 'suspended' || status === 'dispatched') return 'running'
-      if (status === 'succeeded') return 'succeeded'
+      if (status === 'succeeded' || status === 'done') return 'succeeded'
       if (status === 'failed' || status === 'cancelled') return 'failed'
+      if (status === 'active' || status === 'segment_pending') return 'running'
       return 'other'
     }
 
@@ -966,6 +993,175 @@ window.__ModuleLoader__.load({
       if (typeof v !== 'string') return ''
       const s = v.replace(/\s+/g, ' ').trim()
       return s.length > 160 ? s.slice(0, 159) + '…' : s
+    }
+
+    /**
+     * panel-v2 pure helpers. All exported at the module seam for tests; none
+     * of them touch React or the store.
+     */
+
+    /**
+     * Tree-level status derived from leaf counts (design §2.5 + §6.1 V2-3):
+     * any failed leaf paints the whole tree failed; any ACTIVE non-terminal
+     * leaf keeps it running (`pending` is NOT active — an all-pending tree
+     * stays pending, per the frozen V2-3 contract); otherwise at least one
+     * succeeded leaf means succeeded; anything else is pending.
+     */
+    function treeStatusOf(counts) {
+      const c = counts && typeof counts === 'object' ? counts : {}
+      const num = (v) => (typeof v === 'number' && isFinite(v) && v > 0 ? v : 0)
+      if (num(c.failed) > 0) return 'failed'
+      let hasActive = false
+      for (const key of Object.keys(c)) {
+        if (key === 'succeeded' || key === 'pending') continue
+        if (num(c[key]) > 0) hasActive = true
+      }
+      if (hasActive) return 'running'
+      if (num(c.succeeded) > 0) return 'succeeded'
+      return 'pending'
+    }
+
+    /**
+     * Client-side dependency edges (design §3.2): for every leaf, one edge
+     * per declared dependency, direction dep → leaf (`data-from` = the
+     * dependency, `data-to` = the dependent), deduped, both endpoints must
+     * exist. Server data is never trusted to be acyclic.
+     */
+    function treeEdgesOf(leaves) {
+      const ids = []
+      const seen = new Set()
+      for (const leaf of Array.isArray(leaves) ? leaves : []) {
+        if (!leaf || typeof leaf !== 'object') continue
+        const id = String(leaf.leafId)
+        if (!id || seen.has(id)) continue
+        seen.add(id)
+        ids.push(id)
+      }
+      const present = new Set(ids)
+      const edges = []
+      const edgeKeys = new Set()
+      for (const leaf of Array.isArray(leaves) ? leaves : []) {
+        if (!leaf || typeof leaf !== 'object') continue
+        const to = String(leaf.leafId)
+        if (!present.has(to)) continue
+        const deps = Array.isArray(leaf.dependencies) ? leaf.dependencies : []
+        for (const dep of deps) {
+          const from = String(dep)
+          if (!present.has(from)) continue
+          const key = from + '\u0000' + to
+          if (edgeKeys.has(key)) continue
+          edgeKeys.add(key)
+          edges.push({ from, to })
+        }
+      }
+      return edges
+    }
+
+    /**
+     * Longest-path layering (design §3.2): level[dep] + 1 pushes every
+     * dependent one column right; the relaxation is bounded (≤ nodes.length
+     * + 2 passes with a level ceiling of nodes.length) so a cyclic
+     * dependency graph can never loop forever.
+     */
+    function treeLevelsOf(leaves, edges) {
+      const level = new Map()
+      const list = Array.isArray(leaves) ? leaves : []
+      for (const leaf of list) {
+        if (leaf && typeof leaf === 'object' && leaf.leafId !== undefined) level.set(String(leaf.leafId), 0)
+      }
+      const maxLevel = Math.max(0, list.length)
+      const passes = list.length + 2
+      const edgeList = Array.isArray(edges) ? edges : []
+      for (let pass = 0; pass < passes; pass += 1) {
+        let moved = false
+        for (const edge of edgeList) {
+          const from = level.get(edge.from)
+          const to = level.get(edge.to)
+          if (from === undefined || to === undefined) continue
+          if (from + 1 > to && to + 1 <= maxLevel) {
+            level.set(edge.to, to + 1)
+            moved = true
+          }
+        }
+        if (!moved) break
+      }
+      return level
+    }
+
+    const GRAPH_PAD = 12
+    const GRAPH_BOX_W = 192
+    const GRAPH_BOX_H = 56
+    const GRAPH_COL_GAP = 76
+    const GRAPH_ROW_GAP = 18
+
+    /**
+     * Layout for the read-only dependency graph (design §3.2): nodes in
+     * server order into level columns, geometry per flow parity constants.
+     */
+    function treeGraphLayout(leaves, rootLeafId) {
+      const list = Array.isArray(leaves) ? leaves : []
+      const root = rootLeafId !== undefined && rootLeafId !== null ? String(rootLeafId) : ''
+      const edges = treeEdgesOf(list)
+      const level = treeLevelsOf(list, edges)
+      const rowCounter = new Map()
+      const nodes = []
+      for (const leaf of list) {
+        if (!leaf || typeof leaf !== 'object' || leaf.leafId === undefined) continue
+        const id = String(leaf.leafId)
+        const col = level.get(id) || 0
+        const row = rowCounter.get(col) || 0
+        rowCounter.set(col, row + 1)
+        nodes.push({
+          leafId: id,
+          leaf,
+          level: col,
+          row,
+          x: GRAPH_PAD + col * (GRAPH_BOX_W + GRAPH_COL_GAP),
+          y: GRAPH_PAD + row * (GRAPH_BOX_H + GRAPH_ROW_GAP),
+        })
+      }
+      let maxLevel = 0
+      let maxRows = 0
+      for (const node of nodes) {
+        if (node.level > maxLevel) maxLevel = node.level
+        if (node.row + 1 > maxRows) maxRows = node.row + 1
+      }
+      const graphW = 2 * GRAPH_PAD + (maxLevel + 1) * GRAPH_BOX_W + maxLevel * GRAPH_COL_GAP
+      const graphH = 2 * GRAPH_PAD + maxRows * GRAPH_BOX_H + (maxRows - 1) * GRAPH_ROW_GAP
+      return { nodes, edges, graphW, graphH, maxLevel, maxRows, root }
+    }
+
+    const ZOOM_MIN = 0.25
+    const ZOOM_MAX = 2.5
+    const ZOOM_STEP = 1.12
+
+    /** Clamp the graph zoom into the fixed 0.25×–2.5× window (design §3.6). */
+    function clampZoom(v) {
+      const n = typeof v === 'number' && isFinite(v) ? v : 1
+      return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, n))
+    }
+
+    /**
+     * Edge state per flow parity (design §3.4): an edge is "satisfied" when
+     * its source leaf already succeeded, otherwise it stays the declared
+     * baseline. The P0 panel renders every edge in the declared state; the
+     * mapping exists so the P1 upgrade is a one-line swap.
+     */
+    function edgeStateOf(fromLeaf) {
+      const status = fromLeaf && typeof fromLeaf === 'object' ? fromLeaf.status : null
+      return status === 'succeeded' ? 'sat' : 'decl'
+    }
+
+    /**
+     * Session-id count for the detail field grid (design §7): the server
+     * sends `stats.sessions` as a number, older fixtures as an object keyed
+     * by session id; both shapes collapse to a count string, '—' if absent.
+     */
+    function statsSessionsOf(stats) {
+      const s = stats && typeof stats === 'object' ? stats.sessions : null
+      if (typeof s === 'number' && isFinite(s)) return String(s)
+      if (s && typeof s === 'object') return String(Object.keys(s).length)
+      return '—'
     }
 
     /**
@@ -1199,7 +1395,7 @@ window.__ModuleLoader__.load({
       return h('span', { className: 'st-tr-badge', 'data-tone': panelToneOf(status) }, status)
     }
 
-    /** One tree card in the list: id + per-tone count dots + meta + preview. */
+    /** One tree card in the list: id + whole-tree badge + meta row (§2.5). */
     function PanelTreeCard(props) {
       const tree = props.tree || {}
       const treeId = typeof tree.treeId === 'string' ? tree.treeId : String(tree.treeId)
@@ -1225,27 +1421,37 @@ window.__ModuleLoader__.load({
           )
         }
       }
-      const metaParts = []
-      if (tree.updatedAt !== undefined) metaParts.push('updated ' + panelTimeOf(tree.updatedAt))
-      if (typeof tree.leafCount === 'number') metaParts.push(tree.leafCount + ' leaves')
+      const treeStatus = treeStatusOf(counts)
+      // Row 1: tree id (mono, full id in title) + whole-tree status badge.
+      const top = h(
+        'span',
+        { className: 'st-tr-card-top' },
+        h('span', { className: 'st-tr-mono st-tr-card-id', title: treeId }, treeId),
+        h('span', { className: 'st-tr-badge', 'data-tone': panelToneOf(treeStatus) }, treeStatus),
+      )
+      // Row 2: "<N> leaves · <tone dots> · updated <UTC>"; dots moved here
+      // from row 1 (design §2.5), same st-tr-dots markup as before.
+      const metaKids = []
+      const metaPush = (kid) => {
+        if (metaKids.length > 0) metaKids.push(' · ')
+        metaKids.push(kid)
+      }
+      if (typeof tree.leafCount === 'number') metaPush(String(tree.leafCount) + ' leaves')
+      if (dots.length > 0) metaPush(h('span', { key: 'dots', className: 'st-tr-dots' }, dots))
+      if (tree.updatedAt !== undefined) metaPush('updated ' + panelTimeOf(tree.updatedAt))
+      const preview = panelPreviewOf(tree.rootGoalPreview)
       return h(
         'button',
         {
           type: 'button',
           className: 'st-tr-card',
           'data-tree-id': treeId,
+          'data-selected': props.selected === true ? 'true' : 'false',
+          title: preview ? treeId + ' — ' + preview : treeId,
           onClick: props.onOpen,
         },
-        h(
-          'span',
-          { className: 'st-tr-card-top' },
-          h('span', { className: 'st-tr-mono st-tr-card-id', title: treeId }, treeId),
-          dots.length > 0 ? h('span', { className: 'st-tr-dots' }, dots) : null,
-        ),
-        metaParts.length > 0 ? h('div', { className: 'st-tr-meta' }, metaParts.join(' · ')) : null,
-        panelPreviewOf(tree.rootGoalPreview)
-          ? h('div', { className: 'st-tr-preview' }, panelPreviewOf(tree.rootGoalPreview))
-          : null,
+        top,
+        metaKids.length > 0 ? h('div', { className: 'st-tr-meta' }, metaKids) : null,
       )
     }
 
@@ -1274,32 +1480,610 @@ window.__ModuleLoader__.load({
         h('span', { className: 'st-tr-cell', key: 'ctx' }, typeof leaf.ctxPct === 'number' ? leaf.ctxPct + '%' : '—'),
         verifNode,
         h('span', { className: 'st-tr-cell', key: 'deps', title: deps }, deps || '—'),
+        h(SessionCell, { key: 'session', sessionId: leaf.sessionId }),
       ]
       return h('div', { className: 'st-tr-row', 'data-kind': 'leaf', 'data-leaf-id': leafId }, cells)
     }
 
-    /** Field of the detail summary grid; returns the keyed label/value pair. */
+    /**
+     * Session-id cell + copy button for the leaf table's 8th column (design
+     * §2/#19). The feedback text is written straight to the button DOM node;
+     * the 1500ms revert timer never enters the panel timer ledger (no state,
+     * no leak surface).
+     */
+    function SessionCell(props) {
+      const sessionId =
+        props && props.sessionId !== undefined && props.sessionId !== null
+          ? String(props.sessionId)
+          : ''
+      if (!sessionId) {
+        return [h('span', { className: 'st-tr-cell', key: 'sess-none' }, '—')]
+      }
+      const onCopy = (event) => {
+        if (
+          typeof navigator === 'undefined' ||
+          !navigator.clipboard ||
+          typeof navigator.clipboard.writeText !== 'function'
+        ) {
+          return
+        }
+        const node = event && event.currentTarget ? event.currentTarget : null
+        const show = (text) => {
+          try {
+            if (node && typeof node.textContent === 'string') node.textContent = text
+          } catch (e) {}
+        }
+        try {
+          Promise.resolve(navigator.clipboard.writeText(sessionId)).then(
+            () => {
+              show('Copied')
+              setTimeout(() => show('Copy'), 1500)
+            },
+            () => show('Copy failed'),
+          )
+        } catch (e) {}
+      }
+      return [
+        h('span', {
+          className: 'st-tr-cell st-tr-mono st-tr2-sessid',
+          key: 'sess-id',
+          title: sessionId,
+        }, sessionId),
+        h('button', { type: 'button', className: 'st-tr2-copybtn', key: 'sess-copy', onClick: onCopy }, 'Copy'),
+      ]
+    }
+
+    /** Field of the detail summary grid: one flex row per field (§4.3). */
     function PanelField(props) {
       const value =
         props.value === undefined || props.value === null || props.value === '' ? '—' : props.value
+      return h(
+        'div',
+        { className: 'st-tr2-field' },
+        h('span', { className: 'st-tr2-fieldlabel' }, props.label),
+        h('span', { className: 'st-tr2-fieldvalue' + (props.mono ? ' st-tr-mono' : '') }, value),
+      )
+    }
+
+    /**
+     * Inner error boundary around the graph only (design §3.7): a crash in
+     * layout/SVG rendering degrades to the note fallback instead of taking
+     * down the whole detail pane.
+     */
+    class GraphBoundary extends React.Component {
+      constructor(props) {
+        super(props)
+        this.state = { err: null }
+      }
+      static getDerivedStateFromError(err) {
+        return { err: err && err.message ? err.message : String(err) }
+      }
+      render() {
+        if (this.state.err !== null) {
+          return h('div', { className: 'st-tr-note', 'data-kind': 'error' }, 'Graph unavailable')
+        }
+        return this.props.children
+      }
+    }
+
+    /**
+     * Read-only dependency graph (design §3). F8 DISCIPLINE: the two hooks
+     * (zoom state + viewport ref) run unconditionally first; the empty-graph
+     * early return happens after them, so GRAPH_HOOKS = 2 is constant and
+     * asserted by V2-12. Zoom/pan never enter the store — zoom is local
+     * state, pan/scroll are written straight to the DOM element.
+     */
+    function TreeGraph(props) {
+      // [HOOKS] zoom is graph-local; pan/scroll stay in the DOM.
+      const zoomPair = useState(1)
+      const zoom = zoomPair[0]
+      const setZoom = zoomPair[1]
+      const viewportRef = useRef(null)
+
+      const leaves = Array.isArray(props.leaves) ? props.leaves : []
+      if (leaves.length === 0) return null // empty graph = the section disappears (§3.7)
+
+      const rootObj = props.root && typeof props.root === 'object' ? props.root : {}
+      const rootId =
+        rootObj.leafId !== undefined && rootObj.leafId !== null && String(rootObj.leafId) !== ''
+          ? String(rootObj.leafId)
+          : String(leaves[0] && leaves[0].leafId)
+
+      const layout = treeGraphLayout(leaves, rootId)
+      const scaleComp = 1 / Math.max(zoom, ZOOM_MIN)
+      const showLabels = zoom >= 0.5
+      const showDetail = zoom >= 0.85
+      const fontFamily = 'system-ui,-apple-system,"Segoe UI",sans-serif'
+      const monoFamily = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'
+      const statusFill = (status) => {
+        const tone = panelToneOf(status)
+        if (tone === 'running') return 'var(--dsw-static-blue-500,#3b82f6)'
+        if (tone === 'succeeded') return 'var(--dsw-alias-state-success-primary)'
+        if (tone === 'failed') return 'var(--dsw-alias-state-error-primary)'
+        return 'var(--dsw-alias-state-idle-primary)'
+      }
+
+      const nodeById = new Map()
+      for (const node of layout.nodes) nodeById.set(node.leafId, node)
+      const bySource = new Map()
+      for (const edge of layout.edges) {
+        if (!bySource.has(edge.from)) bySource.set(edge.from, [])
+        bySource.get(edge.from).push(edge)
+      }
+      const edgeEls = layout.edges.map((edge) => {
+        const from = nodeById.get(edge.from)
+        const to = nodeById.get(edge.to)
+        if (!from || !to) return null
+        const sx = from.x + GRAPH_BOX_W
+        const sy = from.y + GRAPH_BOX_H / 2
+        const ex = to.x - 8
+        const ey = to.y + GRAPH_BOX_H / 2
+        let c1x
+        let c2x
+        if (to.x > from.x + 8) {
+          const off = Math.max(36, Math.min((to.x - from.x) * 0.5, 160))
+          c1x = from.x + off
+          c2x = to.x - off
+        } else {
+          c1x = from.x - 70
+          c2x = to.x + 70
+        }
+        const siblings = bySource.get(edge.from) || []
+        const bend = (siblings.indexOf(edge) - (siblings.length - 1) / 2) * 14
+        const c1y = sy + bend
+        const c2y = sy + bend / 4
+        return h(
+          'g',
+          {
+            key: edge.from + '\u0000' + edge.to,
+            className: 'st-tr2-edge',
+            'data-from': edge.from,
+            'data-to': edge.to,
+            'data-state': 'decl',
+          },
+          h('path', {
+            d:
+              'M ' + sx + ' ' + sy +
+              ' C ' + c1x + ' ' + c1y +
+              ', ' + c2x + ' ' + c2y +
+              ', ' + ex + ' ' + ey,
+            fill: 'none',
+            stroke: 'var(--dsw-alias-label-secondary)',
+            strokeWidth: 1.3 * scaleComp,
+            strokeDasharray: 7 * scaleComp + ' ' + 5 * scaleComp,
+            opacity: 0.85,
+            markerEnd: 'url(#st-tr2-arrow-decl)',
+          }),
+        )
+      })
+
+      const nodeEls = layout.nodes.map((node) => {
+        const leaf = node.leaf || {}
+        const status = leaf.status !== undefined && leaf.status !== null ? String(leaf.status) : ''
+        const role = leaf.role !== undefined && leaf.role !== null ? String(leaf.role) : ''
+        const isRoot = node.leafId === rootId
+        const failed = status === 'failed'
+        const stroke = failed
+          ? 'var(--dsw-alias-state-error-primary)'
+          : isRoot
+            ? 'var(--dsw-alias-brand-primary)'
+            : 'var(--dsw-alias-border-l1)'
+        const strokeWidth = (failed ? 2 : isRoot ? 1.6 : 1.2) * scaleComp
+        const roleFill =
+          role === 'commander'
+            ? 'var(--dsw-alias-brand-primary)'
+            : role === 'auditor'
+              ? 'var(--dsw-alias-state-success-primary)'
+              : 'var(--dsw-alias-label-secondary)'
+        const displayId = node.leafId.length > 22 ? node.leafId.slice(0, 21) + '…' : node.leafId
+        const kids = [
+          h('title', { key: 'tip' }, node.leafId),
+          h('rect', {
+            key: 'box',
+            x: node.x,
+            y: node.y,
+            width: GRAPH_BOX_W,
+            height: GRAPH_BOX_H,
+            rx: 9,
+            style: { fill: 'var(--dsw-alias-bg-layer-2)', stroke, strokeWidth: String(strokeWidth) },
+          }),
+          h('rect', {
+            key: 'stripe',
+            x: node.x + 6,
+            y: node.y + 1,
+            width: 5,
+            height: GRAPH_BOX_H - 2,
+            opacity: 0.9,
+            style: { fill: roleFill },
+          }),
+          h('text', {
+            key: 'id',
+            x: node.x + 19,
+            y: node.y + 21,
+            style: {
+              fill: isRoot ? 'var(--dsw-alias-brand-primary)' : 'var(--dsw-alias-label-primary)',
+              fontFamily: monoFamily,
+              fontSize: 12 * scaleComp,
+              fontWeight: 700,
+            },
+          }, displayId),
+        ]
+        if (showLabels) {
+          kids.push(h('text', {
+            key: 'role',
+            x: node.x + 19,
+            y: node.y + 38,
+            style: { fill: roleFill, fontFamily, fontSize: 11 * scaleComp, fontWeight: 600 },
+          }, role))
+          kids.push(h('text', {
+            key: 'status',
+            x: node.x + 19 + 4 + role.length * 11,
+            y: node.y + 38,
+            style: { fill: statusFill(status), fontFamily, fontSize: 11 * scaleComp, fontWeight: 600 },
+          }, ' · ' + status))
+        }
+        if (showDetail) {
+          const ctxParts = ['ctx ' + (typeof leaf.ctxPct === 'number' ? leaf.ctxPct : '—') + '%']
+          if (leaf.relay !== undefined && leaf.relay !== null && leaf.relay !== 'auto') {
+            ctxParts.push('relay ' + String(leaf.relay))
+          }
+          kids.push(h('text', {
+            key: 'ctx',
+            x: node.x + 19,
+            y: node.y + 50,
+            style: { fill: 'var(--dsw-alias-label-secondary)', fontFamily, fontSize: 10 * scaleComp },
+          }, ctxParts.join(' · ')))
+        }
+        if (failed) {
+          kids.push(h('circle', {
+            key: 'mark',
+            cx: node.x + GRAPH_BOX_W - 12,
+            cy: node.y + 13,
+            r: 6 * scaleComp,
+            style: { fill: 'var(--dsw-alias-state-error-primary)' },
+          }))
+          kids.push(h('text', {
+            key: 'marktext',
+            x: node.x + GRAPH_BOX_W - 12,
+            y: node.y + 16,
+            textAnchor: 'middle',
+            style: {
+              fill: 'var(--dsw-alias-bg-layer-1)',
+              fontFamily,
+              fontSize: 9 * scaleComp,
+              fontWeight: 700,
+            },
+          }, '!'))
+        }
+        return h(
+          'g',
+          {
+            key: node.leafId,
+            className: 'st-tr2-node',
+            'data-leaf-id': node.leafId,
+            'data-status': status,
+            'data-tone': panelToneOf(status),
+            'data-root': isRoot ? 'true' : 'false',
+          },
+          kids,
+        )
+      })
+
+      const onWheel = (event) => {
+        if (!event || !(event.ctrlKey || event.metaKey)) return // plain scroll stays native
+        if (typeof event.preventDefault === 'function') event.preventDefault()
+        const el = viewportRef.current
+        if (!el) return
+        const rect = typeof el.getBoundingClientRect === 'function' ? el.getBoundingClientRect() : { left: 0, top: 0 }
+        const px = event.clientX - rect.left
+        const py = event.clientY - rect.top
+        const next = clampZoom(event.deltaY < 0 ? zoom * ZOOM_STEP : zoom / ZOOM_STEP)
+        if (next === zoom) return
+        // Anchor the document point under the pointer, then swap the zoom.
+        const anchorX = (px + el.scrollLeft) / zoom
+        const anchorY = (py + el.scrollTop) / zoom
+        el.scrollLeft = anchorX * next - px
+        el.scrollTop = anchorY * next - py
+        setZoom(next)
+      }
+      const onPointerDown = (event) => {
+        const el = viewportRef.current
+        if (!el || !event || event.button !== 0) return
+        el.__stTreeGraphPan = { x: event.clientX, y: event.clientY, sl: el.scrollLeft, st: el.scrollTop }
+        try {
+          if (typeof el.setPointerCapture === 'function') el.setPointerCapture(event.pointerId)
+        } catch (e) {}
+      }
+      const onPointerMove = (event) => {
+        const el = viewportRef.current
+        const pan = el ? el.__stTreeGraphPan : null
+        if (!el || !pan || !event) return
+        el.scrollLeft = pan.sl - (event.clientX - pan.x)
+        el.scrollTop = pan.st - (event.clientY - pan.y)
+      }
+      const onPointerUp = () => {
+        const el = viewportRef.current
+        if (el) el.__stTreeGraphPan = null
+      }
+
+      const stepZoom = (factor) => setZoom((current) => clampZoom(current * factor))
+      const zoomTo = (target) => {
+        const el = viewportRef.current
+        if (el) {
+          el.scrollLeft = 0
+          el.scrollTop = 0
+        }
+        setZoom(clampZoom(target))
+      }
+
       return [
-        h('span', { className: 'st-tr-flabel', key: 'label' }, props.label),
         h(
-          'span',
-          { className: 'st-tr-fvalue' + (props.mono ? ' st-tr-mono' : ''), key: 'value' },
-          value,
+          'div',
+          { className: 'st-tr2-graphbar', key: 'bar' },
+          h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => stepZoom(1 / 1.2), title: 'Zoom out' }, '−'),
+          h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => stepZoom(1.2), title: 'Zoom in' }, '＋'),
+          h('button', {
+            type: 'button',
+            className: 'st-tr2-graphbtn',
+            onClick: () => {
+              const el = viewportRef.current
+              const width = el && typeof el.clientWidth === 'number' ? el.clientWidth : 0
+              zoomTo(Math.min(2, Math.max(0.25, (width - 8) / layout.graphW)))
+            },
+            title: 'Fit graph',
+          }, 'Fit'),
+          h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => zoomTo(1), title: 'Reset zoom' }, '100%'),
+          h('span', { className: 'st-tr2-hint' }, 'Ctrl/⌘+wheel zoom · drag to pan · dashed = declared dependency'),
+        ),
+        h(
+          'div',
+          {
+            className: 'st-tr2-viewport',
+            key: 'viewport',
+            ref: viewportRef,
+            onWheel,
+            onPointerDown,
+            onPointerMove,
+            onPointerUp,
+            onPointerCancel: onPointerUp,
+          },
+          h(
+            'div',
+            { key: 'canvas', style: { width: layout.graphW * zoom + 'px', height: layout.graphH * zoom + 'px' } },
+            h(
+              'svg',
+              {
+                className: 'st-tr2-svg',
+                viewBox: '0 0 ' + layout.graphW + ' ' + layout.graphH,
+                width: layout.graphW * zoom,
+                height: layout.graphH * zoom,
+              },
+              h(
+                'defs',
+                { key: 'defs' },
+                h(
+                  'marker',
+                  {
+                    key: 'decl',
+                    id: 'st-tr2-arrow-decl',
+                    viewBox: '0 0 9 9',
+                    refX: 7,
+                    refY: 3.5,
+                    markerWidth: 9,
+                    markerHeight: 9,
+                    orient: 'auto',
+                  },
+                  h('path', {
+                    d: 'M0.5,0.5 L6.5,3.5 L0.5,6.5 z',
+                    style: { fill: 'var(--dsw-alias-bg-layer-1)', stroke: 'var(--dsw-alias-label-secondary)', strokeWidth: 1.2 },
+                  }),
+                ),
+                h(
+                  'marker',
+                  {
+                    key: 'sat',
+                    id: 'st-tr2-arrow-sat',
+                    viewBox: '0 0 8 8',
+                    refX: 6,
+                    refY: 3,
+                    markerWidth: 8,
+                    markerHeight: 8,
+                    orient: 'auto',
+                  },
+                  h('path', { d: 'M0,0 L6,3 L0,6 z', style: { fill: 'var(--dsw-alias-brand-primary)' } }),
+                ),
+              ),
+              edgeEls,
+              nodeEls,
+            ),
+          ),
+        ),
+        h(
+          'div',
+          { className: 'st-tr2-legend', key: 'legend' },
+          ['succeeded', 'failed', 'running', 'other'].map((tone) =>
+            h('span', { key: tone }, h('span', { className: 'st-tr-dot', 'data-tone': tone }), ' ' + tone),
+          ),
+          h('span', { key: 'decl' }, '─── declared dependency (dashed)'),
         ),
       ]
     }
 
+    /** Fixed header row of the v2 shell (design §2): title / root / count / stamp / refresh. */
+    function PanelHeader(props) {
+      const state = props.state
+      const controller = props.controller
+      const trees = props.trees
+      return h(
+        'div',
+        { className: 'st-tr2-top' },
+        h('span', { className: 'st-tr2-title' }, 'Tree Runs · read-only'),
+        h('span', { className: 'st-tr-top-path', title: state.storageRoot || '' }, state.storageRoot || ''),
+        h('span', { className: 'st-tr-top-count' }, String(trees.length) + (state.total > trees.length ? ' / ' + state.total : '')),
+        h('span', { className: 'st-tr2-dim' }, '更新 ' + panelTimeOf(state.updatedAt)),
+        h('button', { type: 'button', className: 'st-tr-btn', onClick: () => controller.refreshAll(true) }, 'Refresh'),
+      )
+    }
+
     /**
-     * The panel body itself. F8 DISCIPLINE (see the rail comment on TreeView):
-     * every hook runs unconditionally on every render; the loading / error /
-     * empty / list / detail branches happen only in the FINAL return, so the
-     * hook count is constant across all five states (asserted by
-     * test/panel-render.test.cjs).
+     * Left column: loading / error / empty / cards (design §2.1, §2.7).
+     * Zero hooks — the shell owns the store subscription and passes state.
      */
-    function TreeRunsPanel(props) {
+    function PanelList(props) {
+      const state = props.state
+      const controller = props.controller
+      const trees = props.trees
+      let inner
+      if (state.treesLoading && trees.length === 0) {
+        inner = h('div', { className: 'st-tr-note' }, 'Loading trees…')
+      } else if (state.treesError !== null && state.treesError !== undefined) {
+        inner = h('div', { className: 'st-tr-note', 'data-kind': 'error' }, 'Tree list unavailable: ' + state.treesError)
+      } else if (trees.length === 0) {
+        inner = h(
+          'div',
+          { className: 'st-tr2-empty' },
+          'No trees' + (state.storageRoot ? ' (storage root: ' + state.storageRoot + ')' : '') + '.',
+        )
+      } else {
+        inner = trees.map((tree) =>
+          h(PanelTreeCard, {
+            key: tree && tree.treeId,
+            tree,
+            selected: !!(tree && tree.treeId === state.selectedTreeId),
+            onOpen: () => controller.select(tree && tree.treeId),
+          }),
+        )
+      }
+      return h('div', { className: 'st-tr2-list' }, inner)
+    }
+
+    /** Read-only summary grid of the selected tree (design §2/#10). */
+    function PanelFieldGrid(props) {
+      const detail = props.detail || {}
+      const root = detail.root && typeof detail.root === 'object' ? detail.root : {}
+      const stats = detail.stats && typeof detail.stats === 'object' ? detail.stats : {}
+      const leaves = Array.isArray(detail.leaves) ? detail.leaves : []
+      const byStatus = stats.byStatus && typeof stats.byStatus === 'object' ? stats.byStatus : null
+      let statusText = '—'
+      if (byStatus) {
+        const parts = []
+        for (const key of Object.keys(byStatus)) {
+          const n = typeof byStatus[key] === 'number' && isFinite(byStatus[key]) ? byStatus[key] : 0
+          parts.push(key + '=' + n)
+        }
+        if (parts.length > 0) statusText = parts.join(' · ')
+      }
+      return h(
+        'div',
+        { className: 'st-tr2-fieldgrid' },
+        h(PanelField, { label: 'Tree', value: detail.treeId, mono: true }),
+        h(PanelField, { label: 'Root goal', value: root.goalPreview ? panelPreviewOf(root.goalPreview) : '' }),
+        h(PanelField, { label: 'Root status', value: root.status ? String(root.status) : '' }),
+        h(PanelField, { label: 'Created', value: panelTimeOf(detail.createdAt) }),
+        h(PanelField, { label: 'Updated', value: panelTimeOf(detail.updatedAt) }),
+        h(PanelField, { label: 'Leaves', value: typeof stats.total === 'number' ? String(stats.total) : String(leaves.length) }),
+        h(PanelField, { label: 'Status', value: statusText }),
+        h(PanelField, { label: 'Sessions', value: statsSessionsOf(stats) }),
+      )
+    }
+
+    /** Leaf table with the 8 read-only columns incl. the session cell (§2/#8). */
+    function PanelLeafTable(props) {
+      const leaves = props.leaves
+      const headRow = h(
+        'div',
+        { className: 'st-tr-row', 'data-kind': 'head' },
+        h('span', { className: 'st-tr-cell' }, 'Leaf'),
+        h('span', { className: 'st-tr-cell' }, 'Status'),
+        h('span', { className: 'st-tr-cell' }, 'Relay'),
+        h('span', { className: 'st-tr-cell' }, 'Task'),
+        h('span', { className: 'st-tr-cell' }, 'Ctx'),
+        h('span', { className: 'st-tr-cell' }, 'Verif'),
+        h('span', { className: 'st-tr-cell' }, 'Deps'),
+        h('span', { className: 'st-tr-cell' }, 'Session'),
+      )
+      return h(
+        'div',
+        { className: 'st-tr2-section' },
+        h('div', { className: 'st-tr2-section-title' }, 'Leaves'),
+        leaves.length > 0
+          ? h('div', { className: 'st-tr-tablewrap' }, headRow, leaves.map((leaf) => h(PanelLeafRow, { key: leaf && leaf.leafId, leaf })))
+          : h('div', { className: 'st-tr-note' }, 'No leaves recorded.'),
+      )
+    }
+
+    /** Event tail rows: "#seq · ts · leafId · type" (design §2/#27). */
+    function PanelEventTail(props) {
+      const events = props.events
+      const eventsError = props.eventsError
+      const rows = events.map((ev, i) => {
+        const seq = ev && ev.seq !== undefined && ev.seq !== null ? String(ev.seq) : '?'
+        return h(
+          'div',
+          { className: 'st-tr-event', key: (ev && ev.seq) !== undefined ? String(ev.seq) : String(i) },
+          h('span', { className: 'st-tr2-event-seq st-tr-mono' }, '#' + seq),
+          h('span', { className: 'st-tr-mono' }, panelTimeOf(ev && ev.ts)),
+          h('span', { className: 'st-tr-mono' }, (ev && ev.leafId) || '—'),
+          h('span', { className: 'st-tr-event-type' }, (ev && ev.type) || '—'),
+        )
+      })
+      return h(
+        'div',
+        { className: 'st-tr2-section' },
+        h('div', { className: 'st-tr2-section-title' }, 'Events (last ' + PANEL_EVENT_TAIL + ')'),
+        rows.length > 0
+          ? h('div', { className: 'st-tr-events' }, rows)
+          : eventsError
+            ? h('div', { className: 'st-tr-note', 'data-kind': 'error' }, 'Events unavailable: ' + eventsError)
+            : h('div', { className: 'st-tr-note' }, 'No events yet.'),
+      )
+    }
+
+    /**
+     * Right column: empty / loading / error / no-detail notes, else the full
+     * read-only detail (field grid + graph + leaf table + event tail).
+     * Zero hooks; all state arrives via props.
+     */
+    function PanelDetail(props) {
+      const state = props.state
+      const selected = state.selectedTreeId
+      const detail = state.detail && typeof state.detail === 'object' ? state.detail : null
+      const leaves = detail && Array.isArray(detail.leaves) ? detail.leaves : []
+      const events = Array.isArray(state.events) ? state.events : []
+      let inner
+      if (!selected) {
+        inner = h(
+          'div',
+          { className: 'st-tr2-empty' },
+          'Select a tree on the left to view read-only detail (graph / fields / leaves / events).',
+        )
+      } else if (state.detailLoading && !detail) {
+        inner = h('div', { className: 'st-tr-note' }, 'Loading tree…')
+      } else if (state.detailError !== null && state.detailError !== undefined) {
+        inner = h('div', { className: 'st-tr-note', 'data-kind': 'error' }, 'Detail unavailable: ' + state.detailError)
+      } else if (!detail) {
+        inner = h('div', { className: 'st-tr-note' }, 'No detail for this tree yet.')
+      } else {
+        inner = [
+          h(PanelFieldGrid, { key: 'fields', detail }),
+          h(GraphBoundary, { key: 'graph' }, h(TreeGraph, { leaves, root: detail.root })),
+          h(PanelLeafTable, { key: 'leaves', leaves }),
+          h(PanelEventTail, { key: 'events', events, eventsError: state.eventsError }),
+        ]
+      }
+      return h('div', { className: 'st-tr2-detail' }, inner)
+    }
+
+    /**
+     * The panel body itself (v2 split-pane shell). F8 DISCIPLINE: the
+     * shell's own hooks (store subscription + poll lifecycle) run
+     * unconditionally; every three-state branch lives inside the zero-hook
+     * column components, so the Body hook count is constant across loading /
+     * error / empty / selected-but-loading states (formula A, V2-11) and the
+     * detail render adds exactly the graph's two hooks (formula B, V2-12).
+     * There is no Back button — both columns are always on screen.
+     */
+    function PanelShell(props) {
       const store = props.store
       const controller = props.controller
       const state = usePanelStore(store)
@@ -1311,135 +2095,17 @@ window.__ModuleLoader__.load({
       }, [])
 
       const trees = Array.isArray(state.trees) ? state.trees : []
-      const selected = state.selectedTreeId
-      const detail = state.detail && typeof state.detail === 'object' ? state.detail : null
-      const leaves = detail && Array.isArray(detail.leaves) ? detail.leaves : []
-      const events = Array.isArray(state.events) ? state.events : []
-
-      const topBar = h(
+      return h(
         'div',
-        { className: 'st-tr-top' },
-        h('span', { className: 'st-tr-top-title' }, 'Tree Runs'),
+        { className: 'st-tr-root' },
+        h(PanelHeader, { state, trees, controller }),
         h(
-          'span',
-          { className: 'st-tr-top-path', title: state.storageRoot || '' },
-          state.storageRoot || '',
-        ),
-        h('span', { className: 'st-tr-top-count' }, String(trees.length) + (state.total > trees.length ? ' / ' + state.total : '')),
-        h(
-          'button',
-          { type: 'button', className: 'st-tr-btn', onClick: () => controller.refreshAll(true) },
-          'Refresh',
+          'div',
+          { className: 'st-tr2-body' },
+          h(PanelList, { state, trees, controller }),
+          h(PanelDetail, { state }),
         ),
       )
-
-      // Detail view (branch selected after all hooks).
-      if (selected) {
-        let body
-        if (state.detailLoading && !detail) {
-          body = h('div', { className: 'st-tr-note' }, 'Loading tree…')
-        } else if (state.detailError !== null && state.detailError !== undefined) {
-          body = h('div', { className: 'st-tr-note', 'data-kind': 'error' }, 'Detail unavailable: ' + state.detailError)
-        } else if (!detail) {
-          body = h('div', { className: 'st-tr-note' }, 'No detail for this tree yet.')
-        } else {
-          const root = detail.root && typeof detail.root === 'object' ? detail.root : {}
-          const stats = detail.stats && typeof detail.stats === 'object' ? detail.stats : {}
-          const leafRows = leaves.map((leaf) => h(PanelLeafRow, { key: leaf && leaf.leafId, leaf }))
-          const headRow = h(
-            'div',
-            { className: 'st-tr-row', 'data-kind': 'head' },
-            h('span', { className: 'st-tr-cell' }, 'Leaf'),
-            h('span', { className: 'st-tr-cell' }, 'Status'),
-            h('span', { className: 'st-tr-cell' }, 'Relay'),
-            h('span', { className: 'st-tr-cell' }, 'Task'),
-            h('span', { className: 'st-tr-cell' }, 'Ctx'),
-            h('span', { className: 'st-tr-cell' }, 'Verif'),
-            h('span', { className: 'st-tr-cell' }, 'Deps'),
-          )
-          const eventRows = events.map((ev, i) =>
-            h(
-              'div',
-              { className: 'st-tr-event', key: (ev && ev.seq) !== undefined ? String(ev.seq) : String(i) },
-              h('span', { className: 'st-tr-mono' }, panelTimeOf(ev && ev.ts)),
-              h('span', { className: 'st-tr-mono' }, (ev && ev.leafId) || '—'),
-              h('span', { className: 'st-tr-event-type' }, (ev && ev.type) || '—'),
-            ),
-          )
-          body = [
-            h(
-              'div',
-              { className: 'st-tr-grid', key: 'grid' },
-              h(PanelField, { label: 'Tree', value: detail.treeId, mono: true }),
-              h(PanelField, { label: 'Created', value: panelTimeOf(detail.createdAt) }),
-              h(PanelField, { label: 'Updated', value: panelTimeOf(detail.updatedAt) }),
-              h(PanelField, {
-                label: 'Leaves',
-                value: typeof stats.total === 'number' ? String(stats.total) : String(leaves.length),
-              }),
-              h(PanelField, {
-                label: 'Sessions',
-                value:
-                  stats.sessions && typeof stats.sessions === 'object'
-                    ? String(Object.keys(stats.sessions).length)
-                    : '—',
-              }),
-              h(PanelField, {
-                label: 'Root',
-                value: (root.goalPreview ? panelPreviewOf(root.goalPreview) + ' ' : '') + (root.status ? '(' + root.status + ')' : ''),
-              }),
-            ),
-            h('div', { className: 'st-tr-section', key: 'leaves-title' }, 'Leaves'),
-            leafRows.length > 0
-              ? h('div', { className: 'st-tr-tablewrap', key: 'leaves' }, headRow, leafRows)
-              : h('div', { className: 'st-tr-note', key: 'leaves-empty' }, 'No leaves recorded.'),
-            h('div', { className: 'st-tr-section', key: 'events-title' }, 'Events (last ' + PANEL_EVENT_TAIL + ')'),
-            eventRows.length > 0
-              ? h('div', { className: 'st-tr-events', key: 'events' }, eventRows)
-              : state.eventsError
-                ? h('div', { className: 'st-tr-note', key: 'events-error', 'data-kind': 'error' }, 'Events unavailable: ' + state.eventsError)
-                : h('div', { className: 'st-tr-note', key: 'events-empty' }, 'No events yet.'),
-          ]
-        }
-        return h(
-          'div',
-          { className: 'st-tr-root' },
-          h(
-            'div',
-            { className: 'st-tr-head' },
-            h(
-              'button',
-              { type: 'button', className: 'st-tr-btn', onClick: () => controller.back() },
-              '← Back',
-            ),
-            h('span', { className: 'st-tr-top-title' }, 'Tree ' + selected),
-          ),
-          h('div', { className: 'st-tr-scroll' }, body),
-        )
-      }
-
-      // List view (loading / error / empty / cards — still after all hooks).
-      let listBody
-      if (state.treesLoading && trees.length === 0) {
-        listBody = h('div', { className: 'st-tr-note' }, 'Loading trees…')
-      } else if (state.treesError !== null && state.treesError !== undefined) {
-        listBody = h('div', { className: 'st-tr-note', 'data-kind': 'error' }, 'Tree list unavailable: ' + state.treesError)
-      } else if (trees.length === 0) {
-        listBody = h(
-          'div',
-          { className: 'st-tr-note' },
-          'No trees' + (state.storageRoot ? ' (storage root: ' + state.storageRoot + ')' : '') + '.',
-        )
-      } else {
-        listBody = trees.map((tree) =>
-          h(PanelTreeCard, {
-            key: tree && tree.treeId,
-            tree,
-            onOpen: () => controller.select(tree && tree.treeId),
-          }),
-        )
-      }
-      return h('div', { className: 'st-tr-root' }, topBar, h('div', { className: 'st-tr-scroll' }, listBody))
     }
 
     /** The degraded full-screen overlay (flow spike :2853-2872 seat body). */
@@ -1478,7 +2144,7 @@ window.__ModuleLoader__.load({
             'Close',
           ),
         ),
-        h(TreeRunsPanel, { store, controller }),
+        h(PanelShell, { store, controller }),
       )
     }
 
@@ -1557,7 +2223,7 @@ window.__ModuleLoader__.load({
         openPanel,
         Entry: wrap('entry', PanelEntry),
         Overlay: wrap('overlay', PanelOverlay),
-        Body: wrap('sidebar-body', TreeRunsPanel),
+        Body: wrap('sidebar-body', PanelShell),
         TabTitle: (props) => h(Boundary, null, h(PanelTabTitle, props)),
       }
     }
@@ -3253,6 +3919,16 @@ window.__ModuleLoader__.load({
       panelToneOf,
       panelTimeOf,
       panelPreviewOf,
+      // panel-v2 pure helpers (design §5.5): tree status derivation, graph
+      // layout, zoom constants, edge-state mapping and session counting.
+      treeStatusOf,
+      treeGraphLayout,
+      clampZoom,
+      ZOOM_MIN,
+      ZOOM_MAX,
+      ZOOM_STEP,
+      edgeStateOf,
+      statsSessionsOf,
     }
   },
 })

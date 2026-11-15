@@ -340,6 +340,28 @@ async function main() {
           /\.st-tr-row\[data-kind='head'\]\{/.test(sheet) &&
           /\.st-tr-badge\[data-tone='succeeded'\]\{/.test(sheet),
       )
+      // v2 spot checks (DESIGN §4.6): the st-tr2-* split-pane rules must
+      // carry the frozen layout values. A8 stays at 10 — no new seats.
+      check(
+        'A8e the v2 list column keeps the 36% split clamp (min-width:150px / max-width:320px)',
+        /\.st-tr2-list\{[^}]*min-width:150px/.test(sheet) && /\.st-tr2-list\{[^}]*max-width:320px/.test(sheet),
+      )
+      check(
+        'A8f the v2 graph viewport keeps the scroll/pan contract (max-height:520px + touch-action:none)',
+        /\.st-tr2-viewport\{[^}]*max-height:520px/.test(sheet) && /\.st-tr2-viewport\{[^}]*touch-action:none/.test(sheet),
+      )
+      check(
+        'A8g the v2 field grid keeps the auto-fill track (minmax(260px,1fr))',
+        /\.st-tr2-fieldgrid\{[^}]*minmax\(260px,1fr\)/.test(sheet),
+      )
+      check(
+        'A8h the entry pill keeps the 26px capsule spec',
+        /\.st-tr-pill\{[^}]*height:26px/.test(sheet),
+      )
+      check(
+        'A8i the v2 empty states keep the dashed outline',
+        /\.st-tr2-empty\{[^}]*dashed/.test(sheet),
+      )
     } finally {
       undo()
     }
