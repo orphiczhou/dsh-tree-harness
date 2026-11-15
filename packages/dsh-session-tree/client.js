@@ -118,6 +118,57 @@ window.__ModuleLoader__.load({
 .st-more:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
 .st-rowmenu{position:absolute;right:4px;top:100%;z-index:41;min-width:150px;background:var(--dsw-alias-bg-overlay);border:1px solid var(--dsw-alias-border-l1);border-radius:var(--dsw-radius-lg);box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px}
 .st-rename{flex:1;min-width:0;font:inherit;font-size:13px;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm);padding:1px 4px;outline:none}
+/* Tree Runs panel (composer-dock pill + right-sidebar tab + degraded
+   shell.overlay). Same theme tokens as the rest of this sheet; the running
+   blue keeps the .st-dot[data-state='ongoing'] literal-fallback precedent. */
+.st-tr-pill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;border:1px solid var(--dsw-alias-border-l1);background:none;color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+.st-tr-pill:hover{background:var(--dsw-alias-interactive-bg-hover);border-color:var(--dsw-alias-border-l2)}
+.st-tr-pill-dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--dsw-static-blue-500,#3b82f6)}
+.st-tr-root{display:flex;flex-direction:column;min-height:0;height:100%;font-size:12px;color:var(--dsw-alias-label-primary)}
+.st-tr-top{display:flex;align-items:center;gap:8px;padding:8px 10px;flex:none;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.st-tr-top-title{flex:none;font-weight:600;font-size:12px}
+.st-tr-top-path{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-tertiary);font-size:11px}
+.st-tr-top-count{flex:none;color:var(--dsw-alias-label-tertiary);font-size:11px;font-variant-numeric:tabular-nums}
+.st-tr-btn{flex:none;border:1px solid var(--dsw-alias-border-l1);background:none;color:var(--dsw-alias-label-secondary);border-radius:var(--dsw-radius-sm);font:inherit;font-size:11px;line-height:16px;padding:2px 8px;cursor:pointer;white-space:nowrap}
+.st-tr-btn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
+.st-tr-scroll{overflow:auto;min-height:0;flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.st-tr-card{display:block;width:100%;box-sizing:border-box;text-align:left;background:none;border:1px solid var(--dsw-alias-border-l1);border-radius:var(--dsw-radius-lg);padding:8px 10px;cursor:pointer;color:inherit;font:inherit}
+.st-tr-card:hover{background:var(--dsw-alias-interactive-bg-hover);border-color:var(--dsw-alias-border-l2)}
+.st-tr-card-top{display:flex;align-items:center;gap:8px;min-width:0}
+.st-tr-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-tr-card-id{flex:1;min-width:0;font-weight:600}
+.st-tr-dots{flex:none;display:inline-flex;align-items:center;gap:5px;color:var(--dsw-alias-label-tertiary);font-size:10px;font-variant-numeric:tabular-nums}
+.st-tr-dot{display:inline-block;width:7px;height:7px;border-radius:50%;vertical-align:middle}
+.st-tr-dot[data-tone='running']{background:var(--dsw-static-blue-500,#3b82f6)}
+.st-tr-dot[data-tone='succeeded']{background:var(--dsw-alias-state-success-primary)}
+.st-tr-dot[data-tone='failed']{background:var(--dsw-alias-state-error-primary)}
+.st-tr-dot[data-tone='other']{background:var(--dsw-alias-state-idle-primary)}
+.st-tr-meta{margin-top:3px;color:var(--dsw-alias-label-tertiary);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-tr-preview{margin-top:3px;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.st-tr-note{padding:10px 2px;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}
+.st-tr-note[data-kind='error']{color:var(--dsw-alias-state-error-primary)}
+.st-tr-head{display:flex;align-items:center;gap:8px;padding:8px 10px;flex:none;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.st-tr-grid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;padding:8px 10px;flex:none;align-items:baseline}
+.st-tr-flabel{color:var(--dsw-alias-label-tertiary);font-size:11px;white-space:nowrap}
+.st-tr-fvalue{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.st-tr-section{padding:8px 10px 2px;color:var(--dsw-alias-label-tertiary);font-size:11px;font-weight:600;flex:none}
+.st-tr-tablewrap{padding:0 10px 4px;overflow-x:auto;flex:none}
+.st-tr-row{display:grid;grid-template-columns:minmax(110px,1.3fr) minmax(74px,.9fr) 52px minmax(64px,.8fr) 44px 48px minmax(60px,.8fr);gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--dsw-alias-border-l1);min-width:520px}
+.st-tr-row[data-kind='head']{color:var(--dsw-alias-label-tertiary);font-size:10px;border-bottom-color:var(--dsw-alias-border-l2)}
+.st-tr-cell{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.st-tr-badge{display:inline-block;max-width:100%;padding:0 6px;border-radius:999px;border:1px solid var(--dsw-alias-state-idle-primary);color:var(--dsw-alias-state-idle-primary);font-size:10px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-tr-badge[data-tone='running']{border-color:var(--dsw-static-blue-500,#3b82f6);color:var(--dsw-static-blue-500,#3b82f6)}
+.st-tr-badge[data-tone='succeeded']{border-color:var(--dsw-alias-state-success-primary);color:var(--dsw-alias-state-success-primary)}
+.st-tr-badge[data-tone='failed']{border-color:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-state-error-primary)}
+.st-tr-verif[data-pass='true']{color:var(--dsw-alias-state-success-primary)}
+.st-tr-verif[data-pass='false']{color:var(--dsw-alias-state-error-primary)}
+.st-tr-events{padding:0 10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0;font-size:10px;color:var(--dsw-alias-label-tertiary)}
+.st-tr-event{display:flex;gap:8px;min-width:0}
+.st-tr-event .st-tr-mono{flex:none}
+.st-tr-event-type{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-tr-overlay{position:fixed;inset:0;z-index:60;background:var(--dsw-alias-bg-overlay);display:flex;flex-direction:column;padding:12px;box-sizing:border-box}
+.st-tr-overlay-head{display:flex;align-items:center;gap:8px;padding:0 0 8px;flex:none}
+.st-tr-overlay-title{flex:1;min-width:0;font-weight:600;font-size:13px}
 `
 
     /**
@@ -760,6 +811,856 @@ window.__ModuleLoader__.load({
         '&mode=' +
         m
       )
+    }
+
+    // ===================================================================
+    // Tree Runs panel — read-only window onto the dsh-tree-engine stores.
+    //
+    // Three seats (modeled on the flow-engine spike panel, spike/
+    // dsh-flow-plugin/client.js:2797-2872, verified line-by-line):
+    //   1. composer-dock pill  (id 'tree-runs', order 6 — right after flow's 5);
+    //   2. right-sidebar tab   (sidebarRightTabs.register kind 'tree-runs' +
+    //      keyed seats 'sidebar.right.pane.tab' / '.title');
+    //   3. degraded shell.overlay when the sidebarRight services are absent,
+    //      with a late `ctx.inject([...])` re-try once they arrive.
+    // Data is same-origin fetch against the /tree-panel routes served by
+    // dsh-tree-engine; every failure degrades to an inline note inside the
+    // panel and never breaks the seat. All styling lives in the shared
+    // `st-tr-*` rules of the sheet above — no inline style objects, no
+    // React-subtree <style>.
+    // ===================================================================
+
+    const PANEL_ROUTE = '/tree-panel'
+    const PANEL_POLL_MS = 1500
+    const PANEL_TREE_LIMIT = 50
+    const PANEL_EVENT_FETCH_LIMIT = 100
+    const PANEL_EVENT_TAIL = 50
+    /** HMR hygiene: interval ids live on window so a module re-load can clear them. */
+    const PANEL_TIMERS_KEY = '__stTreePanelTimers'
+    /** Tab registry id (process-wide unique) and the kind the pill opens. */
+    const PANEL_TAB_ID = '@orphiczhou/dsh-session-tree'
+    const PANEL_TAB_KIND = 'tree-runs'
+
+    /** Optional-service lookup that never throws (flow spike :2737-2752). */
+    function panelServiceOf(ctx, key) {
+      try {
+        if (ctx && ctx[key] !== undefined && ctx[key] !== null) return ctx[key]
+      } catch (e) {}
+      try {
+        if (ctx && typeof ctx.get === 'function') {
+          const viaGet = ctx.get(key)
+          if (viaGet !== undefined && viaGet !== null) return viaGet
+        }
+      } catch (e) {}
+      return null
+    }
+
+    /** Hand-written store (flow spike :81-106); components subscribe via usePanelStore. */
+    function createPanelStore(initial) {
+      let state = initial
+      const listeners = []
+      return {
+        get() {
+          return state
+        },
+        set(patch) {
+          const next = typeof patch === 'function' ? patch(state) : patch
+          state = Object.assign({}, state, next)
+          for (const fn of listeners) {
+            try {
+              fn()
+            } catch (e) {}
+          }
+        },
+        subscribe(fn) {
+          listeners.push(fn)
+          return () => {
+            const i = listeners.indexOf(fn)
+            if (i >= 0) listeners.splice(i, 1)
+          }
+        },
+      }
+    }
+
+    /** Same-origin GET with the flow panel's fetch hygiene (:110-136). */
+    function panelJsonGet(path, signal) {
+      return fetch(path, {
+        method: 'GET',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { accept: 'application/json' },
+        signal,
+      }).then((response) => {
+        if (!response.ok) {
+          return response
+            .json()
+            .catch(() => null)
+            .then((body) => {
+              const err =
+                body && body.error && typeof body.error.message === 'string'
+                  ? new Error(body.error.message)
+                  : new Error('HTTP ' + response.status)
+              err.status = response.status
+              throw err
+            })
+        }
+        return response.json()
+      })
+    }
+
+    /** Clear timers left behind by an earlier module load (flow spike :297-314). */
+    function panelResetGlobalTimers() {
+      try {
+        const previous = window[PANEL_TIMERS_KEY]
+        if (previous && previous.ids) {
+          for (const id of previous.ids) {
+            try {
+              clearInterval(id)
+              clearTimeout(id)
+            } catch (e) {}
+          }
+        }
+        window[PANEL_TIMERS_KEY] = { ids: [] }
+      } catch (e) {}
+    }
+
+    /** Record an interval id on window so a re-load can clear it. */
+    function panelTrackTimer(id) {
+      try {
+        let slot = window[PANEL_TIMERS_KEY]
+        // Defensive: apply() normally seeds the slot (panelResetGlobalTimers);
+        // if a mount somehow races ahead of it, seed here so the id is not lost.
+        if (!slot || !slot.ids) {
+          slot = { ids: [] }
+          window[PANEL_TIMERS_KEY] = slot
+        }
+        slot.ids.push(id)
+      } catch (e) {}
+      return id
+    }
+
+    /**
+     * Four-state colour semantics shared with the sidebar dots: running blue,
+     * succeeded green, failed red, everything else idle gray. Pure mapping.
+     */
+    function panelToneOf(status) {
+      if (status === 'running' || status === 'suspended' || status === 'dispatched') return 'running'
+      if (status === 'succeeded') return 'succeeded'
+      if (status === 'failed' || status === 'cancelled') return 'failed'
+      return 'other'
+    }
+
+    /** UTC-ish timestamp display; numbers and ISO strings both accepted. */
+    function panelTimeOf(v) {
+      if (typeof v === 'number' && isFinite(v) && v > 0) {
+        try {
+          return new Date(v).toISOString().replace('T', ' ').slice(0, 19)
+        } catch (e) {}
+      }
+      if (typeof v === 'string' && v) return v.length > 19 ? v.slice(0, 19).replace('T', ' ') : v
+      return '—'
+    }
+
+    /** Shortened first line of a goal preview; malformed input degrades to ''. */
+    function panelPreviewOf(v) {
+      if (typeof v !== 'string') return ''
+      const s = v.replace(/\s+/g, ' ').trim()
+      return s.length > 160 ? s.slice(0, 159) + '…' : s
+    }
+
+    /**
+     * The panel's polling controller. One instance per panel runtime; the
+     * sidebar body / overlay start it on mount and stop it on unmount.
+     * Trees refresh every tick (1.5s), detail + events every 2nd tick or on
+     * explicit force — the flow panel's cadence (:635-654). Every request runs
+     * through an AbortController that `stop()` aborts wholesale (:338-374,
+     * :668-678); failures land in store error fields, never thrown.
+     */
+    function createPanelController(store) {
+      let pollTimer = null
+      let ticks = 0
+      let inflight = false
+      const aborters = []
+
+      function abortAll() {
+        for (const a of aborters) {
+          try {
+            a.abort()
+          } catch (e) {}
+        }
+        aborters.length = 0
+      }
+
+      function withAbort(factory) {
+        if (typeof AbortController === 'undefined') return factory(undefined)
+        const ac = new AbortController()
+        aborters.push(ac)
+        let promise
+        try {
+          promise = factory(ac.signal)
+        } catch (e) {
+          const i = aborters.indexOf(ac)
+          if (i >= 0) aborters.splice(i, 1)
+          return Promise.reject(e)
+        }
+        const release = () => {
+          const i = aborters.indexOf(ac)
+          if (i >= 0) aborters.splice(i, 1)
+        }
+        return promise.then(
+          (v) => {
+            release()
+            return v
+          },
+          (e) => {
+            release()
+            throw e
+          },
+        )
+      }
+
+      /** Abort noise (unmount / re-select) is hygiene, not a panel error. */
+      function reportError(field, error) {
+        if (error && error.name === 'AbortError') return
+        const patch = {}
+        patch[field] = error && error.message ? error.message : String(error)
+        store.set(patch)
+      }
+
+      function refreshTrees(force) {
+        // Forced refresh (start / manual) may flip the loading note on, but
+        // only while the list is still empty — periodic ticks never flicker it.
+        if (force === true && store.get().trees.length === 0) {
+          store.set({ treesLoading: true })
+        }
+        return withAbort((signal) =>
+          panelJsonGet(PANEL_ROUTE + '/trees?limit=' + PANEL_TREE_LIMIT, signal),
+        ).then(
+          (body) => {
+            store.set({
+              trees: Array.isArray(body && body.trees) ? body.trees : [],
+              storageRoot: body && typeof body.storageRoot === 'string' ? body.storageRoot : null,
+              total: body && typeof body.total === 'number' ? body.total : (body && Array.isArray(body.trees) ? body.trees.length : 0),
+              treesError: null,
+              treesLoading: false,
+            })
+          },
+          (error) => {
+            reportError('treesError', error)
+            store.set({ treesLoading: false })
+          },
+        )
+      }
+
+      function refreshDetail(force) {
+        const treeId = store.get().selectedTreeId
+        if (!treeId) return Promise.resolve(null)
+        if (force === true) store.set({ detailLoading: true })
+        return withAbort((signal) =>
+          panelJsonGet(
+            PANEL_ROUTE + '/trees/' + encodeURIComponent(String(treeId)),
+            signal,
+          ),
+        ).then(
+          (body) => {
+            // Ignore a stale response for a tree the user already left.
+            if (store.get().selectedTreeId !== treeId) return null
+            store.set({
+              detail: body && typeof body === 'object' ? body : null,
+              detailError: null,
+              detailLoading: false,
+            })
+          },
+          (error) => {
+            if (store.get().selectedTreeId !== treeId) return null
+            reportError('detailError', error)
+            store.set({ detailLoading: false })
+          },
+        )
+      }
+
+      function refreshEvents() {
+        const treeId = store.get().selectedTreeId
+        if (!treeId) return Promise.resolve(null)
+        return withAbort((signal) =>
+          panelJsonGet(
+            PANEL_ROUTE +
+              '/trees/' +
+              encodeURIComponent(String(treeId)) +
+              '/events?limit=' +
+              PANEL_EVENT_FETCH_LIMIT,
+            signal,
+          ),
+        ).then(
+          (body) => {
+            if (store.get().selectedTreeId !== treeId) return null
+            const all = Array.isArray(body && body.events) ? body.events : []
+            store.set({
+              events: all.slice(-PANEL_EVENT_TAIL),
+              lastSeq: body && typeof body.lastSeq === 'number' ? body.lastSeq : 0,
+              eventsError: null,
+            })
+          },
+          (error) => {
+            if (store.get().selectedTreeId !== treeId) return null
+            reportError('eventsError', error)
+          },
+        )
+      }
+
+      function refreshAll(force) {
+        if (inflight && force !== true) return Promise.resolve(null)
+        inflight = true
+        ticks += 1
+        const detailDue = ticks % 2 === 0 || force === true
+        return refreshTrees(force === true)
+          .then(() => {
+            if (store.get().selectedTreeId && detailDue) {
+              return Promise.all([refreshDetail(force === true), refreshEvents()])
+            }
+            return null
+          })
+          .catch(() => {})
+          .then(() => {
+            inflight = false
+          })
+      }
+
+      function select(treeId) {
+        store.set({
+          selectedTreeId: treeId,
+          detail: null,
+          detailLoading: true,
+          detailError: null,
+          events: [],
+          eventsError: null,
+          lastSeq: 0,
+        })
+        abortAll()
+        refreshDetail(true)
+        refreshEvents()
+      }
+
+      function back() {
+        abortAll()
+        store.set({
+          selectedTreeId: null,
+          detail: null,
+          detailLoading: false,
+          detailError: null,
+          events: [],
+          eventsError: null,
+        })
+      }
+
+      function start() {
+        if (pollTimer !== null) return
+        pollTimer = panelTrackTimer(
+          setInterval(() => {
+            refreshAll(false)
+          }, PANEL_POLL_MS),
+        )
+        refreshAll(true)
+      }
+
+      function stop() {
+        if (pollTimer !== null) {
+          try {
+            clearInterval(pollTimer)
+          } catch (e) {}
+          pollTimer = null
+        }
+        abortAll()
+      }
+
+      return {
+        start,
+        stop,
+        select,
+        back,
+        refreshAll,
+        getTimerId: () => pollTimer,
+      }
+    }
+
+    /** Store subscription hook; old React falls back to useState+useEffect (:1367-1378). */
+    function usePanelStore(store) {
+      if (typeof React.useSyncExternalStore === 'function') {
+        return React.useSyncExternalStore(store.subscribe, store.get, store.get)
+      }
+      const pair = useState(store.get)
+      useEffect(() => store.subscribe(() => pair[1](store.get())), [])
+      return pair[0]
+    }
+
+    /** Colored status badge (flow spike Badge :1399-1414, as st-tr-* classes). */
+    function PanelBadge(props) {
+      const status = props && typeof props.status === 'string' && props.status ? props.status : 'unknown'
+      return h('span', { className: 'st-tr-badge', 'data-tone': panelToneOf(status) }, status)
+    }
+
+    /** One tree card in the list: id + per-tone count dots + meta + preview. */
+    function PanelTreeCard(props) {
+      const tree = props.tree || {}
+      const treeId = typeof tree.treeId === 'string' ? tree.treeId : String(tree.treeId)
+      const counts =
+        tree.counts && typeof tree.counts === 'object' && !Array.isArray(tree.counts)
+          ? tree.counts
+          : {}
+      const byTone = { running: 0, succeeded: 0, failed: 0, other: 0 }
+      for (const key of Object.keys(counts)) {
+        const n = typeof counts[key] === 'number' && isFinite(counts[key]) ? counts[key] : 0
+        if (n > 0) byTone[panelToneOf(key)] += n
+      }
+      const dots = []
+      for (const tone of ['running', 'succeeded', 'failed', 'other']) {
+        if (byTone[tone] > 0) {
+          dots.push(
+            h(
+              'span',
+              { key: tone, className: 'st-tr-dots' },
+              h('span', { className: 'st-tr-dot', 'data-tone': tone }),
+              String(byTone[tone]),
+            ),
+          )
+        }
+      }
+      const metaParts = []
+      if (tree.updatedAt !== undefined) metaParts.push('updated ' + panelTimeOf(tree.updatedAt))
+      if (typeof tree.leafCount === 'number') metaParts.push(tree.leafCount + ' leaves')
+      return h(
+        'button',
+        {
+          type: 'button',
+          className: 'st-tr-card',
+          'data-tree-id': treeId,
+          onClick: props.onOpen,
+        },
+        h(
+          'span',
+          { className: 'st-tr-card-top' },
+          h('span', { className: 'st-tr-mono st-tr-card-id', title: treeId }, treeId),
+          dots.length > 0 ? h('span', { className: 'st-tr-dots' }, dots) : null,
+        ),
+        metaParts.length > 0 ? h('div', { className: 'st-tr-meta' }, metaParts.join(' · ')) : null,
+        panelPreviewOf(tree.rootGoalPreview)
+          ? h('div', { className: 'st-tr-preview' }, panelPreviewOf(tree.rootGoalPreview))
+          : null,
+      )
+    }
+
+    /** One leaf row of the detail table (plus the head row variant). */
+    function PanelLeafRow(props) {
+      const leaf = props.leaf || {}
+      const leafId = typeof leaf.leafId === 'string' ? leaf.leafId : String(leaf.leafId)
+      const verif = leaf.verification && typeof leaf.verification === 'object' ? leaf.verification : null
+      let verifNode = h('span', { className: 'st-tr-cell' }, '—')
+      if (verif && typeof verif.pass === 'boolean') {
+        const attempts = typeof verif.attempts === 'number' ? verif.attempts : ''
+        verifNode = h(
+          'span',
+          { className: 'st-tr-cell st-tr-verif', 'data-pass': String(verif.pass) },
+          (verif.pass ? '✓' : '✗') + (attempts === '' ? '' : ' ' + attempts),
+        )
+      }
+      const deps = Array.isArray(leaf.dependencies)
+        ? leaf.dependencies.map(String).join(', ')
+        : ''
+      const cells = [
+        h('span', { className: 'st-tr-cell st-tr-mono', key: 'id', title: leaf.path || leafId }, leafId),
+        h(PanelBadge, { key: 'status', status: leaf.status }),
+        h('span', { className: 'st-tr-cell', key: 'relay' }, leaf.relay === undefined || leaf.relay === null ? '—' : String(leaf.relay)),
+        h('span', { className: 'st-tr-cell', key: 'task' }, leaf.taskType || '—'),
+        h('span', { className: 'st-tr-cell', key: 'ctx' }, typeof leaf.ctxPct === 'number' ? leaf.ctxPct + '%' : '—'),
+        verifNode,
+        h('span', { className: 'st-tr-cell', key: 'deps', title: deps }, deps || '—'),
+      ]
+      return h('div', { className: 'st-tr-row', 'data-kind': 'leaf', 'data-leaf-id': leafId }, cells)
+    }
+
+    /** Field of the detail summary grid; returns the keyed label/value pair. */
+    function PanelField(props) {
+      const value =
+        props.value === undefined || props.value === null || props.value === '' ? '—' : props.value
+      return [
+        h('span', { className: 'st-tr-flabel', key: 'label' }, props.label),
+        h(
+          'span',
+          { className: 'st-tr-fvalue' + (props.mono ? ' st-tr-mono' : ''), key: 'value' },
+          value,
+        ),
+      ]
+    }
+
+    /**
+     * The panel body itself. F8 DISCIPLINE (see the rail comment on TreeView):
+     * every hook runs unconditionally on every render; the loading / error /
+     * empty / list / detail branches happen only in the FINAL return, so the
+     * hook count is constant across all five states (asserted by
+     * test/panel-render.test.cjs).
+     */
+    function TreeRunsPanel(props) {
+      const store = props.store
+      const controller = props.controller
+      const state = usePanelStore(store)
+
+      // Poll lifecycle: start on mount, stop + abort on unmount.
+      useEffect(() => {
+        controller.start()
+        return () => controller.stop()
+      }, [])
+
+      const trees = Array.isArray(state.trees) ? state.trees : []
+      const selected = state.selectedTreeId
+      const detail = state.detail && typeof state.detail === 'object' ? state.detail : null
+      const leaves = detail && Array.isArray(detail.leaves) ? detail.leaves : []
+      const events = Array.isArray(state.events) ? state.events : []
+
+      const topBar = h(
+        'div',
+        { className: 'st-tr-top' },
+        h('span', { className: 'st-tr-top-title' }, 'Tree Runs'),
+        h(
+          'span',
+          { className: 'st-tr-top-path', title: state.storageRoot || '' },
+          state.storageRoot || '',
+        ),
+        h('span', { className: 'st-tr-top-count' }, String(trees.length) + (state.total > trees.length ? ' / ' + state.total : '')),
+        h(
+          'button',
+          { type: 'button', className: 'st-tr-btn', onClick: () => controller.refreshAll(true) },
+          'Refresh',
+        ),
+      )
+
+      // Detail view (branch selected after all hooks).
+      if (selected) {
+        let body
+        if (state.detailLoading && !detail) {
+          body = h('div', { className: 'st-tr-note' }, 'Loading tree…')
+        } else if (state.detailError !== null && state.detailError !== undefined) {
+          body = h('div', { className: 'st-tr-note', 'data-kind': 'error' }, 'Detail unavailable: ' + state.detailError)
+        } else if (!detail) {
+          body = h('div', { className: 'st-tr-note' }, 'No detail for this tree yet.')
+        } else {
+          const root = detail.root && typeof detail.root === 'object' ? detail.root : {}
+          const stats = detail.stats && typeof detail.stats === 'object' ? detail.stats : {}
+          const leafRows = leaves.map((leaf) => h(PanelLeafRow, { key: leaf && leaf.leafId, leaf }))
+          const headRow = h(
+            'div',
+            { className: 'st-tr-row', 'data-kind': 'head' },
+            h('span', { className: 'st-tr-cell' }, 'Leaf'),
+            h('span', { className: 'st-tr-cell' }, 'Status'),
+            h('span', { className: 'st-tr-cell' }, 'Relay'),
+            h('span', { className: 'st-tr-cell' }, 'Task'),
+            h('span', { className: 'st-tr-cell' }, 'Ctx'),
+            h('span', { className: 'st-tr-cell' }, 'Verif'),
+            h('span', { className: 'st-tr-cell' }, 'Deps'),
+          )
+          const eventRows = events.map((ev, i) =>
+            h(
+              'div',
+              { className: 'st-tr-event', key: (ev && ev.seq) !== undefined ? String(ev.seq) : String(i) },
+              h('span', { className: 'st-tr-mono' }, panelTimeOf(ev && ev.ts)),
+              h('span', { className: 'st-tr-mono' }, (ev && ev.leafId) || '—'),
+              h('span', { className: 'st-tr-event-type' }, (ev && ev.type) || '—'),
+            ),
+          )
+          body = [
+            h(
+              'div',
+              { className: 'st-tr-grid', key: 'grid' },
+              h(PanelField, { label: 'Tree', value: detail.treeId, mono: true }),
+              h(PanelField, { label: 'Created', value: panelTimeOf(detail.createdAt) }),
+              h(PanelField, { label: 'Updated', value: panelTimeOf(detail.updatedAt) }),
+              h(PanelField, {
+                label: 'Leaves',
+                value: typeof stats.total === 'number' ? String(stats.total) : String(leaves.length),
+              }),
+              h(PanelField, {
+                label: 'Sessions',
+                value:
+                  stats.sessions && typeof stats.sessions === 'object'
+                    ? String(Object.keys(stats.sessions).length)
+                    : '—',
+              }),
+              h(PanelField, {
+                label: 'Root',
+                value: (root.goalPreview ? panelPreviewOf(root.goalPreview) + ' ' : '') + (root.status ? '(' + root.status + ')' : ''),
+              }),
+            ),
+            h('div', { className: 'st-tr-section', key: 'leaves-title' }, 'Leaves'),
+            leafRows.length > 0
+              ? h('div', { className: 'st-tr-tablewrap', key: 'leaves' }, headRow, leafRows)
+              : h('div', { className: 'st-tr-note', key: 'leaves-empty' }, 'No leaves recorded.'),
+            h('div', { className: 'st-tr-section', key: 'events-title' }, 'Events (last ' + PANEL_EVENT_TAIL + ')'),
+            eventRows.length > 0
+              ? h('div', { className: 'st-tr-events', key: 'events' }, eventRows)
+              : state.eventsError
+                ? h('div', { className: 'st-tr-note', key: 'events-error', 'data-kind': 'error' }, 'Events unavailable: ' + state.eventsError)
+                : h('div', { className: 'st-tr-note', key: 'events-empty' }, 'No events yet.'),
+          ]
+        }
+        return h(
+          'div',
+          { className: 'st-tr-root' },
+          h(
+            'div',
+            { className: 'st-tr-head' },
+            h(
+              'button',
+              { type: 'button', className: 'st-tr-btn', onClick: () => controller.back() },
+              '← Back',
+            ),
+            h('span', { className: 'st-tr-top-title' }, 'Tree ' + selected),
+          ),
+          h('div', { className: 'st-tr-scroll' }, body),
+        )
+      }
+
+      // List view (loading / error / empty / cards — still after all hooks).
+      let listBody
+      if (state.treesLoading && trees.length === 0) {
+        listBody = h('div', { className: 'st-tr-note' }, 'Loading trees…')
+      } else if (state.treesError !== null && state.treesError !== undefined) {
+        listBody = h('div', { className: 'st-tr-note', 'data-kind': 'error' }, 'Tree list unavailable: ' + state.treesError)
+      } else if (trees.length === 0) {
+        listBody = h(
+          'div',
+          { className: 'st-tr-note' },
+          'No trees' + (state.storageRoot ? ' (storage root: ' + state.storageRoot + ')' : '') + '.',
+        )
+      } else {
+        listBody = trees.map((tree) =>
+          h(PanelTreeCard, {
+            key: tree && tree.treeId,
+            tree,
+            onOpen: () => controller.select(tree && tree.treeId),
+          }),
+        )
+      }
+      return h('div', { className: 'st-tr-root' }, topBar, h('div', { className: 'st-tr-scroll' }, listBody))
+    }
+
+    /** The degraded full-screen overlay (flow spike :2853-2872 seat body). */
+    function PanelOverlay(props) {
+      const store = props.store
+      const controller = props.controller
+      const state = usePanelStore(store)
+
+      useEffect(() => {
+        const onKeyDown = (event) => {
+          if (event && event.key === 'Escape' && store.get().open) store.set({ open: false })
+        }
+        try {
+          window.addEventListener('keydown', onKeyDown)
+          return () => {
+            try {
+              window.removeEventListener('keydown', onKeyDown)
+            } catch (e) {}
+          }
+        } catch (e) {
+          return undefined
+        }
+      }, [])
+
+      if (!state.open) return null
+      return h(
+        'div',
+        { className: 'st-tr-overlay', role: 'dialog', 'aria-label': 'Tree Runs' },
+        h(
+          'div',
+          { className: 'st-tr-overlay-head' },
+          h('span', { className: 'st-tr-overlay-title' }, 'Tree Runs'),
+          h(
+            'button',
+            { type: 'button', className: 'st-tr-btn', onClick: () => store.set({ open: false }) },
+            'Close',
+          ),
+        ),
+        h(TreeRunsPanel, { store, controller }),
+      )
+    }
+
+    /**
+     * Composer-dock entry pill. Prefers the right-sidebar tab; without the
+     * sidebarRight services it opens the degraded overlay instead (visible
+     * fallback, never a dead click).
+     */
+    function PanelEntry(props) {
+      const store = props.store
+      const state = usePanelStore(store)
+      return h(
+        'button',
+        {
+          type: 'button',
+          className: 'st-tr-pill',
+          'data-open': state.open ? 'true' : 'false',
+          'aria-pressed': state.open ? 'true' : 'false',
+          title: 'Tree Runs (read-only task-tree panel)',
+          onClick: () => props.openPanel(),
+        },
+        h('span', { className: 'st-tr-pill-dot' }),
+        'Tree Runs',
+      )
+    }
+
+    /** Right-sidebar tab title seat. */
+    function PanelTabTitle() {
+      return h('span', null, 'Tree Runs')
+    }
+
+    /**
+     * One panel runtime per apply(): shared store + controller + the
+     * boundary-wrapped seat components. Exported as a test seam
+     * (test/panel-render.test.cjs builds its own instances with a stubbed
+     * fetch; the mounted plugin builds exactly one).
+     */
+    function createPanelRuntime(ctx) {
+      const store = createPanelStore({
+        open: false,
+        trees: [],
+        treesLoading: true,
+        treesError: null,
+        storageRoot: null,
+        total: 0,
+        selectedTreeId: null,
+        detail: null,
+        detailLoading: false,
+        detailError: null,
+        events: [],
+        eventsError: null,
+        lastSeq: 0,
+      })
+      const controller = createPanelController(store)
+
+      function openPanel() {
+        const sidebarRight = panelServiceOf(ctx, 'sidebarRight')
+        if (sidebarRight && typeof sidebarRight.openTab === 'function') {
+          try {
+            sidebarRight.openTab(PANEL_TAB_KIND, {})
+            return
+          } catch (e) {
+            try {
+              console.warn('[session-tree] sidebarRight.openTab failed', e)
+            } catch (_) {}
+          }
+        }
+        store.set({ open: true })
+      }
+
+      const wrap = (label, Component) => (props) => h(Boundary, null, h(Component, Object.assign({}, props, { store, controller, openPanel })))
+
+      return {
+        store,
+        controller,
+        openPanel,
+        Entry: wrap('entry', PanelEntry),
+        Overlay: wrap('overlay', PanelOverlay),
+        Body: wrap('sidebar-body', TreeRunsPanel),
+        TabTitle: (props) => h(Boundary, null, h(PanelTabTitle, props)),
+      }
+    }
+
+    /**
+     * Seat registration for one apply() (flow spike :2797-2872, adapted to the
+     * two-argument slots.inject of this repo). Registers the pill always; the
+     * right-sidebar tab when sidebarRightTabs + sidebarRight are present, or
+     * the shell.overlay fallback plus a late re-try otherwise.
+     */
+    function registerPanelSeats(ctx) {
+      const slots = ctx && ctx.slots
+      if (!slots || typeof slots.inject !== 'function' || typeof slots.register !== 'function') return
+      panelResetGlobalTimers()
+      const runtime = createPanelRuntime(ctx)
+      const disposers = []
+      let sidebarRegistered = false
+      let disposed = false
+
+      function registerSeat(ownerKey, options, Component) {
+        try {
+          const dispose = slots.inject(ownerKey, () => slots.register(options, Component))
+          if (typeof dispose === 'function') disposers.push(dispose)
+        } catch (e) {
+          try {
+            console.warn('[session-tree] panel seat registration failed: ' + ownerKey, e)
+          } catch (_) {}
+        }
+      }
+
+      function tryRegisterSidebar() {
+        if (sidebarRegistered) return true
+        const tabs = panelServiceOf(ctx, 'sidebarRightTabs')
+        const sidebarRight = panelServiceOf(ctx, 'sidebarRight')
+        if (
+          !tabs ||
+          typeof tabs.register !== 'function' ||
+          !sidebarRight ||
+          typeof sidebarRight.openTab !== 'function'
+        ) {
+          return false
+        }
+        try {
+          const registerType = () =>
+            tabs.register({
+              id: PANEL_TAB_ID,
+              kind: PANEL_TAB_KIND,
+              priority: 'extension',
+              title: () => 'Tree Runs',
+            })
+          const disposeType =
+            typeof ctx.effect === 'function'
+              ? ctx.effect(registerType, 'session-tree: rightbar tab type')
+              : registerType()
+          if (typeof disposeType === 'function') disposers.push(disposeType)
+        } catch (e) {
+          try {
+            console.warn('[session-tree] rightbar tab type registration failed', e)
+          } catch (_) {}
+          return false
+        }
+        registerSeat('sidebar.right.pane.tab', { name: 'sidebar.right.pane.tab', key: PANEL_TAB_ID }, runtime.Body)
+        registerSeat('sidebar.right.pane.tab.title', { name: 'sidebar.right.pane.tab.title', key: PANEL_TAB_ID }, runtime.TabTitle)
+        sidebarRegistered = true
+        return true
+      }
+
+      registerSeat(
+        'conversation.composer.dock',
+        { name: 'conversation.composer.dock', id: PANEL_TAB_KIND, order: 6, label: () => 'Tree Runs' },
+        runtime.Entry,
+      )
+      if (!tryRegisterSidebar()) {
+        registerSeat(
+          'shell.overlay',
+          { name: 'shell.overlay', id: 'tree-runs-panel', order: 50, label: () => 'Tree Runs' },
+          runtime.Overlay,
+        )
+        if (typeof ctx.inject === 'function') {
+          try {
+            ctx.inject(['sidebarRightTabs', 'sidebarRight'], () => {
+              if (disposed) return
+              try {
+                tryRegisterSidebar()
+              } catch (e) {
+                try {
+                  console.warn('[session-tree] deferred panel sidebar registration failed', e)
+                } catch (_) {}
+              }
+            })
+          } catch (e) {}
+        }
+      }
+      return function disposePanelSeats() {
+        disposed = true
+        runtime.controller.stop()
+        for (const dispose of disposers) {
+          try {
+            dispose()
+          } catch (e) {}
+        }
+        disposers.length = 0
+      }
     }
 
     /** Build the flat row list the renderer walks. Pure; tolerant of malformed data. */
@@ -2318,6 +3219,21 @@ window.__ModuleLoader__.load({
           ),
         )
 
+        /**
+         * Tree Runs panel (read-only dsh-tree-engine view): composer-dock pill
+         * (id 'tree-runs', order 6) + right-sidebar tab, with the shell.overlay
+         * fallback while the sidebarRight services are absent. Registered AFTER
+         * the session-meta dock entry so the pre-existing seat keeps its slot
+         * order (and any "first entry with this name" reader keeps finding it).
+         */
+        try {
+          registerPanelSeats(ctx)
+        } catch (e) {
+          try {
+            console.error('[session-tree] Tree Runs panel registration failed', e)
+          } catch (_) {}
+        }
+
         registerInspectProvider(ctx)
       },
       // Pure derivation/selector/components exposed as test seams
@@ -2328,6 +3244,15 @@ window.__ModuleLoader__.load({
       selectReadOnlyMeta,
       SessionMetaStrip,
       SessionMetaChip,
+      // Tree Runs panel seams (test/panel-render.test.cjs): the runtime factory
+      // builds a store/controller/components trio against any `fetch`, and the
+      // pure helpers are asserted directly.
+      createPanelRuntime,
+      createPanelController,
+      createPanelStore,
+      panelToneOf,
+      panelTimeOf,
+      panelPreviewOf,
     }
   },
 })

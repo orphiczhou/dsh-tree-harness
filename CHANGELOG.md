@@ -81,6 +81,34 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.5.0] — 2026-11-15 · session-tree Tree Runs 面板（无发布）
+
+### 变更
+
+- **版本**：`packages/dsh-session-tree` `1.4.1` → **`1.5.0`**（仓内插件；**未发布 npm / 公开镜像**——镜像 tag 仍为 `v1.4.0` = `0343f0c`）。
+- **新增 Tree Runs 面板**（仿 flow 插件「pill + 右栏页签」两件套）：`conversation.composer.dock` 入口 pill `order:6` + `sidebar.right.pane.tab`/`.title` keyed 席位 kind `tree-runs`；右栏服务缺席降级 `shell.overlay` 并延迟补挂。
+- 数据面：同源 fetch `/tree-panel/*`；列表 1500ms 轮询、详情每 2 tick；`AbortController` 统一中止 + `window.__stTreePanelTimers` 防 HMR 泄漏；样式走既有 `data-plugin-css` 表新增 `st-tr-*` 规则；面板组件三态 hook 数量恒定有测试钉死。
+- **席位注册 3 → 5（降级态）/ 6（右栏齐备态）**。
+- 变更文件：`client.js`（+925 行）、`test/panel-render.test.cjs`（新）、`test/style-guard.cjs`、`test/provider-conformance.cjs`。
+
+### 验证
+
+- 新增 `test/panel-render.test.cjs` **58/58**；render **153/153** + 9 + 11 保持；style-guard A8=10 + 新增 A8b/c/d；provider-conformance **29/29**（席位断言 3→5）；handoff **41/41**、meta **41/41**、skills **3/3**、verify-bundle 0 fail。
+
+## [0.11.0] — 2026-11-15 · tree-engine `/tree-panel` 只读 HTTP 投影路由（无发布）
+
+### 变更
+
+- **版本**：`packages/dsh-tree-engine` `0.10.1` → **`0.11.0`**（仓内插件，非 npm 发布；同轮 `dsh-session-tree` `1.4.1` → `1.5.0`）。
+- **新增 `/tree-panel` 只读 HTTP 投影路由**：`GET /tree-panel/trees`、`GET /tree-panel/trees/<treeId>`、`GET /tree-panel/trees/<treeId>/events`；webServer 可选注入，缺席即降级、不阻断工具面；跨实例幂等注册先 dispose 再 register。
+- **安全**：Host/Origin/Sec-Fetch-Site 三重校验 + `no-store` + 不回 ACAO。
+- **投影纯函数 `src/panel-view.js` 脱敏截断**：不透出 prompt/meta/环境变量，assignee 只留 provider/model/effort，preview 120/200 字符上限；工具面仍 9 工具不变。
+- 变更文件：`index.js`（+336 行）、`src/panel-view.js`（新）、`tests/panel-view.test.js`（新）。
+
+### 验证
+
+- 单测：`cd packages/dsh-tree-engine; node --test tests/*.test.js` → **256/256**（新增 `tests/panel-view.test.js` 29 例；原 227 例不回归）。
+
 ## [1.4.1] — 2026-11-14 · session-tree rail 收起态 React #300/#310 hook 崩溃修复（F8，无发布）
 
 ### 变更

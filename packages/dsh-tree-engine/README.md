@@ -2,6 +2,16 @@
 
 树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/architecture/engine-spec.md](../../docs/architecture/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 9 个工具 schema 为准（[docs/architecture/tools-mapping.md](../../docs/architecture/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
 
+## v0.11.0 增量：`/tree-panel` 只读 HTTP 投影路由（Tree Runs 面板数据源）
+
+**背景（2026-11-15 D30 轮）**：session-tree v1.5.0 新增 Tree Runs 面板，需要引擎半提供**只读**树投影。本轮为已装载的 webServer 增加 `/tree-panel` 路由（`index.js` +336 行）与投影纯函数 `src/panel-view.js`（新）。
+
+- **端点**：`GET /tree-panel/trees`（树清单）、`GET /tree-panel/trees/<treeId>`（单树概览）、`GET /tree-panel/trees/<treeId>/events`（事件流）。
+- **降级不阻断**：webServer 为可选注入——缺席即跳过注册，工具面（9 个 `tree_*`）不受影响；跨实例幂等注册先 dispose 再 register。
+- **安全**：Host/Origin/Sec-Fetch-Site 三重校验 + `no-store` + 不回 ACAO（不开放跨域读取）。
+- **脱敏截断（`src/panel-view.js` 纯函数）**：不透出 prompt/meta/环境变量；assignee 只留 provider/model/effort；preview 120/200 字符上限。
+- **测试 227 → 256/256**（新增 `tests/panel-view.test.js` 29 例；原 227 例不回归）。
+
 ## v0.10.1 增量：宿主 rc.3 扁平 spec 适配（`startActivation` 形状漂移真机修复）
 
 **背景（2026-11-13 D27 E2E 指挥官派发真机暴露）**：DSH 宿主当日 18:17–21:45 间自动升级 **0.2.2-rc.1 → rc.3**，`subagents.startActivation` 的 spec 从「`request:{prompt,parent,...}` 嵌套」改为「**扁平**」（`spec.parent`/`spec.maxDepth`/`spec.outputSchema` 在顶层；宿主 `dsh-subagent/lib/index.js:3021/3024/3025` 直接读顶层；权威参考调用方 `dsh-tool-subagent:454-475` 以 `...request` 展开）。本插件 `startChildSession` 仍按嵌套形状调用 → `spec.parent === undefined` → TypeError `reading 'id'` → **所有 `tree_dispatch` 真机派发 1 次调用内失败**（`E_PORTS_PROTOCOL`；与 flow 插件同款问题，flow 仓同日已修，见其 `T-2b-RC3-ADAPTER.md`）。

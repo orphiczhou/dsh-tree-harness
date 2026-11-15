@@ -6,7 +6,10 @@
  *   - 编排端口尽力装配（subagents/sessionQuery/timer 形状待 S1 smoke 冻结；任何端口失败
  *     fail-closed 返回 E_PORTS_NOT_WIRED / E_PORTS_PROTOCOL，绝不静默降级）；
  *   - sweep 随插件启动：宿主 timer 服务可用 → 用它的 interval；不可用 → systemClock 的进程内
- *     60s interval 兜底（sweepMode 恒为 timer；tree_status {action:"harvest"} 仍可显式立即收割）。
+ *     60s interval 兜底（sweepMode 恒为 timer；tree_status {action:"harvest"} 仍可显式立即收割）；
+ *   - tree-panel 只读投影路由（GET /tree-panel/trees[/...|/events]）：webServer 可选注入——缺席
+ *     （headless profile）只降级不阻断（fail-open 面板 / fail-closed 工具面不变）；注册幂等
+ *     （跨实例注册表持有 dispose，热更重载先撤销旧注册再注册新路由，不重复 register）。
  *
  * v0.2 边界（诚实声明）：
  *   - startContinuable / prompt / interrupt 的精确 spec 形状未 smoke（装载后用
@@ -30,6 +33,8 @@ import {
   buildActivationSpec, buildInterruptAuthorities, buildStartRequest, detectInterruptMechanism, detectStartMechanism,
   NO_START_MECHANISM_MESSAGE, resolveActivationResult, resolveContinuableResult,
 } from './src/compat.js'
+// Tree 运行面板（只读 HTTP 投影）：投影纯函数与视图面（store 只读读取，同 tree_doctor 口径）。
+import { createPanelView, clampInt, PANEL_LIMITS, TREE_PANEL_TREE_ID_RE } from './src/panel-view.js'
 import path from 'node:path'
 import { promises as fsp } from 'node:fs'
 import { spawn } from 'node:child_process'
@@ -957,6 +962,327 @@ const TREE_DOCTOR = {
 /** 注册表（apply 逐项注册；tree_doctor 自身用它核对「注册工具数 = 9」，避免清单两处维护）。 */
 export const TOOLS = Object.freeze([TREE_PLAN, TREE_NODE, TREE_DISPATCH, TREE_REPORT, TREE_STATUS, TREE_VERIFY, TREE_LOG, TREE_MAINTAIN, TREE_DOCTOR])
 
+// ===================== Tree 运行面板：只读 HTTP 投影路由（flow 插件同款做法） =====================
+
+/**
+ * 面板路由常量。注册 path **不得带尾斜杠**——宿主 dsh-host-webserver WebServer#match 的前缀匹配是
+ * `pathname === prefix || pathname.startsWith(prefix + '/')`（本仓安装 asar 内实证源码；
+ * flow 仓 index.js M1/T12-fix 注释同结论，真机 R-m1-07 发现带尾斜杠时子路径全部落到 SPA fallback 404）。
+ * handler 内部仍按 TREE_PANEL_ROUTE_PREFIX 下的具体路径解析。
+ */
+export const TREE_PANEL_ROUTE_PREFIX = '/tree-panel/'
+export const TREE_PANEL_ROUTE_PATH = '/tree-panel'
+/** Host 头白名单（防 DNS rebinding；缺省只允许宿主本地来源，与 flow 同口径）。 */
+export const DEFAULT_PANEL_HOST_ALLOWLIST = Object.freeze(['localhost', '127.0.0.1', '[::1]'])
+
+/** 读请求头（大小写无关；兼容裸 headers 对象与 Node getHeader）。 */
+function panelHeaderValue(req, name) {
+  try {
+    const headers = req?.headers
+    if (headers && typeof headers === 'object') {
+      const direct = headers[name] ?? headers[String(name).toLowerCase()]
+      if (Array.isArray(direct)) return direct.length > 0 ? String(direct[0]) : undefined
+      if (direct !== undefined && direct !== null) return String(direct)
+    }
+    if (typeof req?.getHeader === 'function') {
+      const viaNode = req.getHeader(name)
+      return viaNode === undefined || viaNode === null ? undefined : String(viaNode)
+    }
+  } catch { /* 头读取失败按缺失处理 */ }
+  return undefined
+}
+
+/** Host 头 → hostname（去端口；IPv6 方括号保留 `[::1]` 形态）。 */
+function panelHostnameOfHostText(value) {
+  const text = String(value ?? '').trim().toLowerCase()
+  if (text === '') return null
+  if (text.startsWith('[')) {
+    const end = text.indexOf(']')
+    return end === -1 ? text : text.slice(0, end + 1)
+  }
+  const lastColon = text.lastIndexOf(':')
+  if (lastColon > 0 && /^\d+$/.test(text.slice(lastColon + 1))) return text.slice(0, lastColon)
+  return text
+}
+
+/** Host 头 allowlist（防 DNS rebinding）。空 Host 容忍（回环监听 + 同源校验兜底）；绝不回 ACAO。 */
+export function isHostAllowed(hostHeader, allowlist) {
+  const list = Array.isArray(allowlist) && allowlist.length > 0 ? allowlist : DEFAULT_PANEL_HOST_ALLOWLIST
+  const raw = typeof hostHeader === 'string' ? hostHeader.trim() : ''
+  if (raw === '') return { ok: true, hostname: null, reason: 'empty-host-tolerated' }
+  const hostname = panelHostnameOfHostText(raw)
+  for (const entry of list) {
+    if (typeof entry !== 'string' || entry.trim() === '') continue
+    if (panelHostnameOfHostText(entry) === hostname) return { ok: true, hostname, reason: 'allowlisted' }
+  }
+  return { ok: false, hostname, reason: `Host 不在 allowlist（疑似 DNS rebinding）：${hostname}` }
+}
+
+/**
+ * Origin 同源校验（同源或精确白名单；与 flow 同口径）：
+ * 缺失容忍（同源 GET 通常不带）；`Origin: null`（不透明来源）拒绝；`dsh-app://app` desktop 外壳放行；
+ * 其余 Origin 的 hostname 必须落在 Host allowlist 内。
+ */
+export function isOriginAllowed(originHeader, allowlist) {
+  const list = Array.isArray(allowlist) && allowlist.length > 0 ? allowlist : DEFAULT_PANEL_HOST_ALLOWLIST
+  const origin = typeof originHeader === 'string' ? originHeader.trim() : ''
+  if (origin === '') return { ok: true, reason: 'no-origin' }
+  if (origin.toLowerCase() === 'null') return { ok: false, reason: 'Origin: null（不透明来源）拒绝' }
+  let parsed
+  try { parsed = new URL(origin) } catch { return { ok: false, reason: `非法 Origin：${origin}` } }
+  if (parsed.protocol === 'dsh-app:' && parsed.hostname.toLowerCase() === 'app') return { ok: true, reason: 'desktop-shell-origin' }
+  const hostname = parsed.hostname.toLowerCase()
+  for (const entry of list) {
+    if (typeof entry === 'string' && panelHostnameOfHostText(entry) === hostname) return { ok: true, hostname, reason: 'same-origin-allowlist' }
+  }
+  return { ok: false, reason: `跨源 Origin 拒绝：${origin}` }
+}
+
+/** 面板路径解析（纯函数；错误不抛）。GET 只读 3 条：trees / trees/<treeId> / trees/<treeId>/events。 */
+export function parsePanelPath(rawUrl) {
+  let text = typeof rawUrl === 'string' && rawUrl !== '' ? rawUrl : '/'
+  // 防御：某些载体把绝对 URL 传给 handler（Fetch 风格）——只取 pathname + query。
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(text)) {
+    try {
+      const absolute = new URL(text)
+      text = `${absolute.pathname}${absolute.search}`
+    } catch {
+      return { ok: false, reason: `非法 URL：${text}`, notFound: true }
+    }
+  }
+  const queryIndex = text.indexOf('?')
+  const rawPath = queryIndex >= 0 ? text.slice(0, queryIndex) : text
+  const rawQuery = queryIndex >= 0 ? text.slice(queryIndex + 1) : ''
+  let pathname
+  try { pathname = decodeURIComponent(rawPath) } catch { return { ok: false, reason: 'url 含非法百分号编码' } }
+  let params
+  try { params = new URLSearchParams(rawQuery) } catch { return { ok: false, reason: 'query 非法' } }
+  if (pathname === '/tree-panel/trees' || pathname === '/tree-panel/trees/') return { ok: true, route: 'list', params }
+  const prefix = '/tree-panel/trees/'
+  if (pathname.startsWith(prefix)) {
+    const rest = pathname.slice(prefix.length)
+    if (rest.endsWith('/events')) {
+      const treeId = rest.slice(0, -'/events'.length)
+      if (treeId === '' || treeId.includes('/')) return { ok: false, reason: `非法 events 路径：${pathname}`, notFound: true }
+      return { ok: true, route: 'events', treeId, params }
+    }
+    if (rest === '' || rest.includes('/')) return { ok: false, reason: `非法树路径：${pathname}`, notFound: true }
+    return { ok: true, route: 'detail', treeId: rest, params }
+  }
+  return { ok: false, reason: `未知面板路径：${pathname}`, notFound: true }
+}
+
+/** JSON 响应（无 ACAO；no-store；nosniff；不泄漏任何内部对象）。失败不抛。 */
+function respondJson(res, statusCode, body, extraHeaders) {
+  let text
+  try { text = JSON.stringify(body) } catch { text = JSON.stringify({ error: { code: 'E_PANEL_UNAVAILABLE' } }) }
+  try {
+    if (res && typeof res === 'object') {
+      res.statusCode = statusCode
+      if (typeof res.setHeader === 'function') {
+        res.setHeader('content-type', 'application/json; charset=utf-8')
+        res.setHeader('cache-control', 'no-store')
+        res.setHeader('x-content-type-options', 'nosniff')
+        // 同源取数无需 ACAO，任何情况下都不写该头（flow ADR-013 §5 同口径）。
+        if (extraHeaders !== undefined && extraHeaders !== null) {
+          for (const [key, value] of Object.entries(extraHeaders)) res.setHeader(key, value)
+        }
+      }
+      res.end(text)
+    }
+  } catch {
+    try { res?.end?.('') } catch { /* 连接已断：忽略 */ }
+  }
+}
+
+/** 查询参数整数钳制（缺失/空串/非数值回退默认，不抛；对照 flow queryInt 口径）。 */
+function panelQueryInt(raw, min, max, fallback) {
+  if (typeof raw !== 'string' || raw.trim() === '') return fallback
+  return clampInt(Number(raw), min, max, fallback)
+}
+
+/**
+ * 创建 /tree-panel/ 请求处理器（Node 风格 (req,res)；webServer handler 语义）。
+ *
+ * 顺序：方法闸（GET 只读）→ Host allowlist → Origin 同源 → Sec-Fetch-Site 纵深 → 路径解析 →
+ *       treeId 白名单（契约正则，不匹配 → 404）→ panel-view 只读查询 → JSON。
+ * 任何异常兜底 500（body 只含 code，详情进日志）——面板失败绝不影响宿主/工具面。
+ *
+ * @param {{ store: { list: Function, read: Function }, stateRoot?: string|null,
+ *          log?: (message: string) => void, allowlist?: string[] }} options
+ * @returns {(req: any, res: any) => Promise<void>}
+ */
+export function createPanelRequestHandler(options = {}) {
+  const log = typeof options.log === 'function' ? options.log : () => {}
+  const view = createPanelView({ store: options.store, stateRoot: options.stateRoot })
+  const allowlist = Array.isArray(options.allowlist) && options.allowlist.length > 0 ? options.allowlist : DEFAULT_PANEL_HOST_ALLOWLIST
+
+  /** 契约错误面：404 {error:{code,message}}；500 只含 code（详情进日志）。 */
+  const notFound = (res, message) => respondJson(res, 404, { error: { code: 'E_NOT_FOUND', message } })
+
+  async function handle(req, res) {
+    try {
+      const method = String(req?.method ?? 'GET').toUpperCase()
+      if (method !== 'GET') {
+        respondJson(res, 405, { error: { code: 'E_METHOD_NOT_ALLOWED', message: `面板路由只读（GET）：${method} 不允许` } }, { allow: 'GET' })
+        return
+      }
+      const hostCheck = isHostAllowed(panelHeaderValue(req, 'host'), allowlist)
+      if (hostCheck.ok !== true) {
+        log(`panel: 拒绝 Host=${hostCheck.hostname ?? '?'}（${hostCheck.reason}）`)
+        respondJson(res, 403, { error: { code: 'E_FORBIDDEN', message: hostCheck.reason } })
+        return
+      }
+      const originCheck = isOriginAllowed(panelHeaderValue(req, 'origin'), allowlist)
+      if (originCheck.ok !== true) {
+        log(`panel: 拒绝 Origin（${originCheck.reason}）`)
+        respondJson(res, 403, { error: { code: 'E_FORBIDDEN', message: originCheck.reason } })
+        return
+      }
+      const fetchSite = panelHeaderValue(req, 'sec-fetch-site')
+      if (typeof fetchSite === 'string' && fetchSite.trim().toLowerCase() === 'cross-site') {
+        log('panel: 拒绝 Sec-Fetch-Site: cross-site（跨站取数）')
+        respondJson(res, 403, { error: { code: 'E_FORBIDDEN', message: 'Sec-Fetch-Site: cross-site 拒绝' } })
+        return
+      }
+
+      const parsed = parsePanelPath(req?.url ?? req?.pathname ?? req?.path)
+      if (parsed.ok !== true) {
+        if (parsed.notFound === true) notFound(res, parsed.reason)
+        else respondJson(res, 400, { error: { code: 'E_INVALID_ARGUMENT', message: parsed.reason } })
+        return
+      }
+      // treeId 契约正则（API 契约逐字 ^[a-z0-9_]{3,32}$）：不匹配 → 404（与树不存在同面）。
+      if (parsed.route !== 'list' && TREE_PANEL_TREE_ID_RE.test(parsed.treeId) !== true) {
+        notFound(res, `treeId 不在白名单（^[a-z0-9_]{3,32}$）：${JSON.stringify(String(parsed.treeId))}`)
+        return
+      }
+
+      if (parsed.route === 'list') {
+        const limit = panelQueryInt(parsed.params.get('limit'), 1, PANEL_LIMITS.treesMax, PANEL_LIMITS.treesDefault)
+        const result = await view.listTrees({ limit })
+        if (result.ok !== true) {
+          respondJson(res, 500, { error: { code: result.code } })   // store 整体不可用：只含 code（详情进日志）
+          return
+        }
+        respondJson(res, 200, { trees: result.trees, storageRoot: result.storageRoot, updatedAt: result.updatedAt, total: result.total })
+        return
+      }
+      if (parsed.route === 'detail') {
+        const result = await view.readTree(parsed.treeId)
+        if (result.ok !== true) {
+          if (result.code === 'E_TREE_NOT_FOUND') notFound(res, result.message)
+          else respondJson(res, 500, { error: { code: result.code } })   // 损坏等内部态：只含 code
+          return
+        }
+        respondJson(res, 200, result.view)
+        return
+      }
+      // route === 'events'：limit 钳 1..500 缺省 100；since 缺省 0；leaf= 可选过滤（仅相等比较，不做路径拼接）。
+      const since = panelQueryInt(parsed.params.get('since'), 0, Number.MAX_SAFE_INTEGER, 0)
+      const limit = panelQueryInt(parsed.params.get('limit'), 1, PANEL_LIMITS.eventsMax, PANEL_LIMITS.eventsDefault)
+      const leaf = parsed.params.get('leaf')
+      const result = await view.readEvents(parsed.treeId, { since, limit, leaf })
+      if (result.ok !== true) {
+        if (result.code === 'E_TREE_NOT_FOUND') notFound(res, result.message)
+        else respondJson(res, 500, { error: { code: result.code } })
+        return
+      }
+      respondJson(res, 200, { treeId: result.treeId, events: result.events, lastSeq: result.lastSeq })
+    } catch (error) {
+      // 任何意外都不得把异常抛回 webServer（面板失败不得影响宿主/工具面）；500 body 只含 code。
+      log(`panel: 请求处理失败（已兜底）：${error?.message ?? String(error)}`)
+      respondJson(res, 500, { error: { code: 'E_PANEL_UNAVAILABLE' } })
+    }
+  }
+
+  return handle
+}
+
+/**
+ * 注册只读面板路由（webServer **可选**注入；flow registerPanelRoutes 同款装配）：
+ *   - `ctx.inject(['webServer'], …)`：webServer 缺席（headless profile）时回调不进入——只降级不阻断
+ *     （工具面注册完全独立，fail-open 面板 / fail-closed 工具）；
+ *   - `ctx.effect` 可用时持有注册 dispose（HMR/卸载时撤销路由）；
+ *   - 幂等（热更防重）：跨实例注册表（复用 src/sweep.js 的 globalThis Symbol 注册表，按 stateRoot 键）
+ *     持有一份 dispose——重载先撤销旧注册再注册新路由，宿主「同表重复 path 抛错」永不触发；
+ *   - 注册失败 → log E_PANEL_ROUTE_FAILED，**绝不 throw 出 apply**。
+ *
+ * @param {any} ctx 宿主 ctx（可含 inject/effect/on）
+ * @param {{ store: any, stateRoot?: string, log?: (m: string) => void, allowlist?: string[], holder?: any }} deps
+ * @returns {{ route: {kind:'prefix', path:string, handler:Function}, isRegistered: () => boolean }}
+ */
+export function registerTreePanelRoutes(ctx, deps = {}) {
+  const log = typeof deps.log === 'function' ? deps.log : () => {}
+  const stateRoot = typeof deps.stateRoot === 'string' && deps.stateRoot !== '' ? deps.stateRoot : null
+  const handler = createPanelRequestHandler({ store: deps.store, stateRoot, allowlist: deps.allowlist, log })
+  const route = Object.freeze({ kind: 'prefix', path: TREE_PANEL_ROUTE_PATH, handler })
+  let registered = false
+
+  /** 取服务：优先 ctx.webServer，退回 ctx.get('webServer')（可选服务探测；宿主代理对未注入服务访问会抛，全程 try）。 */
+  const pickWebServer = () => {
+    try { if (ctx?.webServer !== undefined && ctx?.webServer !== null) return ctx.webServer } catch { /* 走 ctx.get */ }
+    try { return typeof ctx?.get === 'function' ? ctx.get('webServer') : undefined } catch { return undefined }
+  }
+
+  const tryRegister = (webServer) => {
+    if (!webServer || typeof webServer.register !== 'function') {
+      log('panel: webServer 服务不可用 → tree-panel 降级（工具面不受影响）')
+      return undefined
+    }
+    try {
+      // 幂等（热更防重）：同 stateRoot 键的旧注册 dispose 先行（复用 sweep 注册表；holder 可注入隔离单测）。
+      const managed = startManagedSweep({
+        key: `tree-panel:${path.resolve(stateRoot ?? dataDir)}`,
+        holder: deps.holder,
+        start: () => webServer.register({ ...route }),
+        onError: (e) => log(`panel: previous route dispose failed: ${e?.message ?? e}`),
+      })
+      registered = true
+      log(`panel: 只读路由已注册 ${TREE_PANEL_ROUTE_PATH}（prefix，GET 只读；stateRoot=${path.resolve(stateRoot ?? dataDir)}）`)
+      // 卸载清理：dispose 时撤销路由（ctx.on 可用时；不可用则由下一次 apply 的注册表顶替兜底）。
+      try {
+        if (typeof ctx?.on === 'function') {
+          ctx.on('dispose', () => { try { if (managed.stop()) log('panel: route disposed on dispose') } catch (e) { log(`panel: route dispose on dispose failed: ${e?.message ?? e}`) } })
+        }
+      } catch { /* dispose 钩子不可用：注册表顶替兜底 */ }
+      return managed
+    } catch (error) {
+      log(`E_PANEL_ROUTE_FAILED: 面板路由注册失败（不抛出，工具面继续可用）：${error?.message ?? String(error)}`)
+      return undefined
+    }
+  }
+
+  try {
+    if (typeof ctx?.inject === 'function') {
+      // 可选注入：webServer 缺席时不进入回调（headless/web 组合不拖垮插件装载，也不重复告警刷屏）。
+      ctx.inject(['webServer'], (scoped) => {
+        try {
+          const webServer = (scoped && scoped.webServer) || pickWebServer()
+          if (!webServer) {
+            log('panel: webServer 未注入 → tree-panel 降级（工具面不受影响）')
+            return undefined
+          }
+          if (typeof scoped?.effect === 'function') return scoped.effect(() => tryRegister(webServer), 'tree-engine: panel routes')
+          if (typeof ctx?.effect === 'function') { ctx.effect(() => tryRegister(webServer), 'tree-engine: panel routes'); return undefined }
+          return tryRegister(webServer)
+        } catch (error) {
+          log(`E_PANEL_ROUTE_FAILED: 面板路由装配失败（不抛出）：${error?.message ?? String(error)}`)
+          return undefined
+        }
+      })
+    } else {
+      // 兜底（无 ctx.inject 的宿主/测试夹具）：直接探测 webServer（仍为可选服务）。
+      const webServer = pickWebServer()
+      if (!webServer) log('panel: 无 ctx.inject 且无 webServer → tree-panel 不可用（降级；工具面不受影响）')
+      else tryRegister(webServer)
+    }
+  } catch (error) {
+    log(`E_PANEL_ROUTE_FAILED: 面板路由装配失败（不抛出）：${error?.message ?? String(error)}`)
+  }
+  return { route, isRegistered: () => registered }
+}
+
 export function apply(ctx) {
   /** 文件自诊断（Loader 缓存下唯一可靠观测通道）：apply 全程留痕 + 全程容错。 */
   const diagPath = path.join(dataDir, 'apply.log')
@@ -1035,6 +1361,14 @@ export function apply(ctx) {
         console.error(`[tree-engine] apply failed: ${e?.stack ?? e}`)
       }
     })
+    // Tree 运行面板（只读投影路由）：webServer 可选注入，缺席（headless profile）只降级不阻断。
+    // 面板用独立的只读 fsStore 实例（store.read/list 直读，同 tree_doctor 口径——不走 engine.call，
+    // 避免面板轮询把 call-log 观测账本写爆）。任何装配失败只留痕，绝不影响上方工具面注册。
+    try {
+      registerTreePanelRoutes(ctx, { store: fsStore(dataDir), stateRoot: path.resolve(dataDir), log: diag })
+    } catch (e) {
+      diag(`panel route assembly failed (non-fatal): ${e?.stack ?? e}`)
+    }
   } catch (e) {
     diag(`ctx.inject THREW: ${e?.stack ?? e}`)
     console.error(`[tree-engine] ctx.inject failed: ${e?.stack ?? e}`)

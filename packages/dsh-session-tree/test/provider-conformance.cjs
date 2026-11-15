@@ -341,13 +341,16 @@ async function main() {
     }
     check(`${scenario.name}: apply() does not throw`, threw === null, threw && threw.message)
     // v1.4.0 adds two additive conversation-UI entries beside the sidebar seat:
-    // the composer dock strip and the read-only header chip.
+    // the composer dock strip and the read-only header chip. v1.5.0 adds the
+    // Tree Runs panel: composer dock pill + shell.overlay fallback (right-bar
+    // services absent in these degraded scenarios) = 5 slots total.
     check(
-      `${scenario.name}: all three additive slot entries register`,
-      slots.length === 3 &&
+      `${scenario.name}: all five additive slot entries register`,
+      slots.length === 5 &&
         slots.includes('sidebar.workspaces') &&
         slots.includes('conversation.composer.dock') &&
-        slots.includes('conversation.session.header.utilities'),
+        slots.includes('conversation.session.header.utilities') &&
+        slots.includes('shell.overlay'),
       JSON.stringify(slots),
     )
   }
@@ -366,11 +369,12 @@ async function main() {
   }
   plugin.apply(ctx)
   check(
-    'sidebar.workspaces + conversation metadata entries register alongside the provider',
-    slots.length === 3 &&
+    'sidebar.workspaces + conversation metadata + Tree Runs entries register alongside the provider',
+    slots.length === 5 &&
       slots.includes('sidebar.workspaces') &&
       slots.includes('conversation.composer.dock') &&
-      slots.includes('conversation.session.header.utilities'),
+      slots.includes('conversation.session.header.utilities') &&
+      slots.includes('shell.overlay'),
     JSON.stringify(slots),
   )
   check('exactly one inspect provider registered', inspect.registered.length === 1, `${inspect.registered.length}`)

@@ -1,4 +1,4 @@
-# 进度地图（2026-11-13 22:1x 快照 · D27 接续会话更新）
+# 进度地图（2026-11-15 快照 · D30 文档同步轮更新）
 
 > 给用户对齐用的一页进度图。**先对齐本图，再决定下一步推进**（用户 2026-11-13 指示：交接新会话后先沟通进度地图）。
 > 权威细节：状态/决策以 [agent.md](../../agent.md) 与 [handoff-2026-11-12.md](handoff-2026-11-12.md) 为准；本文件只做「一眼看懂」的汇总。
@@ -15,8 +15,8 @@
 
 | 组件 | 版本 | 状态 | 测试 |
 |---|---|---|---|
-| `packages/dsh-tree-engine` | **v0.10.1** | 运行中（9 个 `tree_*` 工具 + 随包 2 份 Skill v2.3；活体 7/7 · v0.10.1） | **227/227**（26 个 `.test.js`）；发布门禁单测 14/14 |
-| `packages/dsh-session-tree` | **v1.4.1** | 运行中（`tree_send` 仅同树 + `session_handoff` + 会话界面元数据） | handoff 41/41、tree-send 25/25、meta 41/41、render 151/151+9+11、style-guard 26/26、skills 3/3、verify-bundle 0 fail、provider-conformance 29/29 |
+| `packages/dsh-tree-engine` | **v0.11.0** | 运行中（9 个 `tree_*` 工具 + 随包 2 份 Skill v2.3；**v0.11.0 `/tree-panel` 只读 HTTP 投影路由**：三端点 + 安全三重校验 + `src/panel-view.js` 脱敏截断，webServer 缺席降级不阻断） | **256/256**（27 个 `.test.js`，含 panel-view 29 例）；发布门禁单测 14/14 |
+| `packages/dsh-session-tree` | **v1.5.0** | 运行中（`tree_send` 仅同树 + `session_handoff` + 会话界面元数据 + **v1.5.0 Tree Runs 面板**：composer.dock 入口 pill + 右栏页签 kind `tree-runs`，右栏缺席降级 `shell.overlay`） | handoff 41/41、tree-send 25/25、meta 41/41、render 153/153+9+11、**panel-render 58/58**、style-guard 29/29、skills 3/3、verify-bundle 0 fail、provider-conformance 29/29（席位断言 3→5） |
 | `packages/dsh-agent-introspect` | v0.1.0 | 运行中（`self_spec`） | — |
 | 公开镜像 `orphiczhou/dsh-session-tree` | tag **v1.4.0 = `0343f0c`** | main + tag 已推送，21/21 SHA 一致 | — |
 
@@ -83,6 +83,14 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 | 4 | rc.3 回归跨仓跟进单（用户批准转交） | **成文 + 已收回执**：flow 修复入库 `0f60e18`/`1fae8fc` + 回执 `FOLLOWUP-RESPONSE-2026-11-13-rc3-adapted.md`（P4 已答/agentOptions/E_BORROWED_IDENTITY 预登记/对账口径）；我方 smoke `D27-SMOKE-RC3-001` PASS 实证适配生效 | [FOLLOWUP-2026-11-13-host-rc3-session-start-regression.md](FOLLOWUP-2026-11-13-host-rc3-session-start-regression.md) |
 | 5 | **D27 双维 E2E 试点收官（用户指示组队执行）** | **PASS_WITH_RESIDUAL（双维 PASS）**：续接维 TC-1..8（`flow_send` 冷恢复两次成功、journal 字节级三重一致、sessionMode 0 注入、深度链 2→3）+ 混合维 TC-9..11（tree→flow→tree rc.3 整链回归、**续接×内层树**新组合 PASS、depth-6 一次性被拒、无 depth-6 会话）；A6=PASS_WITH_RESIDUAL（E_PERM_DENIED 推定+journal 零写入，原文因 flow 渲染缺口不可观测）；暴露清单 F1–F7（F1=tree-engine rc.3 回归已修 v0.10.1；F2–F4 跨仓反馈；F5–F7 本仓候选与 batch2 相邻）；全程 flash 档（指挥官+两 worker+取证子会话×2）；任务树 d27fl/t27b/t27c 与 journal R1/R2/smoke 留证勿清理 | [composition-pilot-v4-flow-continuation-and-hybrid-2026-11-13.md](../reports/composition-pilot-v4-flow-continuation-and-hybrid-2026-11-13.md) |
 
+## 2.5 D30 轮进行中（2026-11-15，t28 自举试点 + Tree Runs 面板）
+
+| # | 事项 | 结果 | 证据 |
+|---|---|---|---|
+| 1 | **t28 真项目试点（自举）**（用户裁决四项：自举 / 长期迭代型全量 / 自主模拟用户 / GWT 纳入） | **进行中（未收官）**：树 `t28a` 七 leaf 三门禁流程，**W1–W5 已过 verify**；依赖闸新暴露 = 被依赖 leaf 须逐一 verify（W1 卡 W6 案例，归暴露清单 F6） | agent.md §1 D30 行；树 `t28a` 留证 |
+| 2 | **Tree Runs 面板两半已实现**（session-tree v1.5.0 + tree-engine v0.11.0，均未发布 npm / 公开镜像） | **代码与离线测试完成、待真机活体目检**：引擎半 `/tree-panel` 三端点只读投影（**256/256**，panel-view 29 例）；客户端半 pill + 右栏页签/降级两态（panel-render **58/58**、render 153/153+9+11 保持、style-guard 29/29、conformance 29/29 席位断言 3→5）；右栏齐备态与降级态均需真机目检 | CHANGELOG `[1.5.0]` / `[0.11.0]` 条目；两包 README 增量节 |
+| 3 | **RELOAD5 通报入库**（flow 引擎项目组 2026-11-15） | **P0/P1 两闸齐备**：rc.3 适配已装载 + smoke PASS、T-6 真机 E2E PASS；提示：续接指令建议纯文本 + waitMs≤300s、`flow_send` 错误渲染仍是 `?` 占位待修、TC-9 E_BORROWED_IDENTITY 边界仍在（t28 实测同款边界） | [RELOAD5-EVIDENCE-2026-11-15-from-flow-engine.md](RELOAD5-EVIDENCE-2026-11-15-from-flow-engine.md) |
+
 ## 3. 下一步候选（按建议优先级）
 
 | # | 事项 | 为什么值得做 | 需要谁定 |
@@ -94,6 +102,7 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 | 4 | 只读子会话底部 Phase 2（chain 覆盖官方只读 composer） | 当前只读子会话元数据在标题栏 chip；用户未明确要求底部 | 仅用户要求时做 |
 | 5 | 已知边界清理：artifact 验证对象错位、`runtime.history` 预算口径；D22 两项（`tree_log events` 可机读、现场建树验证归属）**D23 已完成**；**`tree_maintain gc` D24-2 已完成（archived 账本截断 + call-log 10MB 滚动）** | 历史欠账，非阻塞 | Lead 排期 |
 | 6 | **batch2（约 24 条审计项）——已计划、暂不开工（用户 21:48 指示，等指令）** | 清单 = review-p2a-batch1 §三/§六 + P3-9；开工顺序建议 = P2-1 stale-done 窄窗 → P3-1 relay 自链重复 → P3-2/P3-5 gc 与滚动 → UNKNOWN-1/4 裁决 → P3-7~P3-11/P3-13 | 仅用户指令开工 |
+| 7 | **t28 试点收官 + Tree Runs 面板真机活体验证（D30）** | 面板两半已实现、离线测试全绿；右栏齐备态 / 降级态真机目检与 `t28a` 剩余 leaf 推进待继续；RELOAD5 提示的 `flow_send` 渲染缺口（`?` 占位）修复后可复测 A6 残留 | Lead / 用户；flow 项目组（渲染缺口） |
 
 **三个问题当前状态**：① 已做（v2 PASS + v3 深度回归 PASS）；② 需求单**已受理（B 档）**，M1.2 **离线交付已提交**（kernel 287 · plugin 175），T-1 探针 flow 路径被 rc.3 回归阻断、T-6 真机未执行——插件适配 rc.3 属 flow 仓下一修复项；③ 暂不对外（用户 2026-11-13 拍板）。
 
@@ -108,3 +117,4 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 - flow 侧 M1.2 **真机未收口**前，不得引用 `flow_send` 为「可依赖」；本仓试点亦不得抢跑（详见 REQ §附 F）。
 - **D27 新增（2026-11-13 21:5x）**：宿主 0.2.2-rc.1→rc.3 升级 × flow 插件未适配 → 所有 flow session 节点 `E_SESSION_START_FAILED`；在 flow 插件适配 rc.3 并重载 smoke PASS 前，**任何 flow run 的 session 节点都无法启动**，试点/联调一律不可行（证据：[REQ §附 A 复查 #4](REQ-2026-11-13-flow-node-continuable-session.md)、flow 仓 probe-sop/PROBE-REPORT.md）。另注：rc.3 上宿主自身 spawn 与本仓 `tree_*` 工具正常（doctor 7/7·v0.10.0）。
 - **F8（2026-11-14 13:28，✅ 根因确认并修复 · v1.4.1）**：rail 收起态早退少执行 1 个 hook → React #300/#310（**v1.1.0 起潜伏**——v1.0.4 引入 rail 早退渲染、v1.1.0 把 `workspaceAction` useCallback 放到早退点之后；2026-11-14 真机实证侧栏收起即崩溃；**与 rc.3 宿主无关**，纯客户端 React 代码）；修复 = rail 渲染决策延迟到全部 hook 之后（`railMode` 标记 + 最终 return 前 rail 分支）+ 回归断言 ×2（rail 态 useState=13 恒定 + `st-rail` 按钮渲染，`render.test.cjs` 自检、不计文档计数）；恢复路径 = **重新启用插件 + 刷新页面**。此前「冷启动竞态（INFERENCE）」定性**作废**。
+- **RELOAD5 通报提示（2026-11-15，flow 引擎项目组）**：`flow_send` **错误渲染仍是 `?` 占位待修**（与 D29 A6 的 flow 工具错误面渲染缺口同源——原文不可观测问题未根治）；**TC-9 E_BORROWED_IDENTITY 边界仍在**（D28 回执预登记撞线未消除，t28 真项目试点实测同款边界——被依赖 leaf 须逐一 verify，W1 卡 W6 即此案例）。另：续接指令建议纯文本 + waitMs≤300s。来源 [RELOAD5-EVIDENCE-2026-11-15-from-flow-engine.md](RELOAD5-EVIDENCE-2026-11-15-from-flow-engine.md)。

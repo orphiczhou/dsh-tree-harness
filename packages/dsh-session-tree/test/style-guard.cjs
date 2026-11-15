@@ -314,7 +314,32 @@ async function main() {
         for (const a of armed) a.fire()
       }
       check('A7 repeated observer fires with the sheet present inject nothing', state.injected.length === 4, String(state.injected.length))
-      check('A8 all three slot entries still register once per apply', slotCount() === 6, String(slotCount()))
+      // v1.4.x + Tree Runs panel: 5 slot entries per apply in THIS ctx (no
+      // sidebarRightTabs service → the panel takes its degraded path):
+      //   sidebar.workspaces, composer.dock(session-meta), header.utilities
+      //   (session-meta-chip), composer.dock('tree-runs' pill), shell.overlay
+      //   ('tree-runs-panel' fallback). Two applies ran (A0 + A4) → 10.
+      // When sidebarRightTabs IS present the overlay is replaced by the two
+      // `sidebar.right.pane.tab[.title]` keyed seats — same total per apply.
+      check('A8 all five slot entries still register once per apply (10 across A0+A4)', slotCount() === 10, String(slotCount()))
+      check(
+        'A8b the sheet carries the Tree Runs panel rules (.st-tr-pill / .st-tr-card / .st-tr-badge)',
+        /\.st-tr-pill\{/.test(sheet) && /\.st-tr-card\{/.test(sheet) && /\.st-tr-badge\{/.test(sheet),
+        `pill=${/\.st-tr-pill\{/.test(sheet)} card=${/\.st-tr-card\{/.test(sheet)} badge=${/\.st-tr-badge\{/.test(sheet)}`,
+      )
+      check(
+        'A8c Tree Runs four-state tones keep the theme tokens (running blue keeps the literal fallback)',
+        /\.st-tr-dot\[data-tone='running'\]\{background:var\(--dsw-static-blue-500,#3b82f6\)\}/.test(sheet) &&
+          /\.st-tr-dot\[data-tone='succeeded'\]\{background:var\(--dsw-alias-state-success-primary\)\}/.test(sheet) &&
+          /\.st-tr-dot\[data-tone='failed'\]\{background:var\(--dsw-alias-state-error-primary\)\}/.test(sheet) &&
+          /\.st-tr-dot\[data-tone='other'\]\{background:var\(--dsw-alias-state-idle-primary\)\}/.test(sheet),
+      )
+      check(
+        'A8d the Tree Runs overlay + table rules exist (.st-tr-overlay / .st-tr-row / .st-tr-badge tones)',
+        /\.st-tr-overlay\{/.test(sheet) &&
+          /\.st-tr-row\[data-kind='head'\]\{/.test(sheet) &&
+          /\.st-tr-badge\[data-tone='succeeded'\]\{/.test(sheet),
+      )
     } finally {
       undo()
     }

@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.10.1**、`packages/dsh-session-tree` **v1.4.1** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA）。
+> 适用版本：`packages/dsh-tree-engine` **v0.11.0**、`packages/dsh-session-tree` **v1.5.0** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA；v1.4.1/v1.5.0 未发布镜像）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -121,7 +121,7 @@ pnpm install
 
 排障：三条都不出现 → 检查 ① 包是否装（`plugin_manager list_plugins`）；② profile 是否同时有 `@deepseek-ai/dsh-skill-filesystem`（**随 DSH 桌面版内置，不要单独安装**）；③ 是否在改完 patch 后没做 disable→enable；④ 是否是**新开**会话（目录在会话启动时注入，旧会话不刷新）。
 
-> **安装后自检（推荐）：`tree_doctor {action:"run"}`**（tree-engine ≥ 0.10.1）。它是第 9 个 `tree_*` 工具、**只读零写副作用**：一次给出 7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`）与 `summary{pass,warn,fail}` + 一行 `hint`；传 `tree_id`（如 `tree_doctor {action:"run", tree_id:"wave1"}`）会额外校验该树并统计停滞节点。**FAIL 不 throw**——它是诊断器不是门禁，装完/重载后先跑它，比逐项猜「工具或 Skill 为什么没出现」快。
+> **安装后自检（推荐）：`tree_doctor {action:"run"}`**（tree-engine ≥ 0.11.0）。它是第 9 个 `tree_*` 工具、**只读零写副作用**：一次给出 7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`）与 `summary{pass,warn,fail}` + 一行 `hint`；传 `tree_id`（如 `tree_doctor {action:"run", tree_id:"wave1"}`）会额外校验该树并统计停滞节点。**FAIL 不 throw**——它是诊断器不是门禁，装完/重载后先跑它，比逐项猜「工具或 Skill 为什么没出现」快。
 
 ### 3.1 五分钟冒烟（第一次用就照这个顺序）
 
@@ -261,7 +261,8 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.10.1 / `dsh-session-tree` 1.4.1（公开镜像 tag `v1.4.0` = `0343f0c`）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.11.0 / `dsh-session-tree` 1.5.0（公开镜像 tag `v1.4.0` = `0343f0c`；v1.4.1/v1.5.0 未发布镜像）。
+- **tree-engine 0.11.0**：新增第 9 个工具之后的 `/tree-panel` 只读 HTTP 投影路由版（D30）—— ① 三端点 `GET /tree-panel/trees`、`/trees/<treeId>`、`/trees/<treeId>/events`（webServer 可选注入，缺席降级、不阻断工具面；跨实例幂等注册先 dispose 再 register）；② Host/Origin/Sec-Fetch-Site 三重校验 + `no-store` + 不回 ACAO；③ 投影纯函数 `src/panel-view.js` 脱敏截断——不透出 prompt/meta/环境变量，assignee 只留 provider/model/effort，preview 120/200 字符上限；④ 工具面仍 9 工具不变（`session-tree` v1.5.0 的 Tree Runs 面板数据源即此路由）；测试数 227→**256/256**（新增 `tests/panel-view.test.js` 29 例）。安装/重载后 `tree_doctor` 应显示 `version=0.11.0`。
 - **tree-engine 0.10.1**：新增第 9 个工具之后的 flash 审计第二批修复版（D24/D25）+ **宿主 rc.3 扁平 spec 适配（D28）**—— ① 依赖闸「已验证失败不放行」+ **依赖只认正向结算信号（三重闸 done ∨ verification.pass=true；自报 done 不再放行下游，#8 主旁路闭合）** + sweep stale-done 判据；② `leaf:set-verification` verdicts/pass 一致性校验 + 空 verdicts 的无证据 PASS 拒绝（#15）；③ 竹节接力会话预算预检 + 唯一性回滚 + 单账本口径（#20）；④ `audit_meta` 严格校验 + 消费键放宽留痕 / recorded-only 键上调拒收 / 编排键拒收 + 阈值回退修复（#21/#23）；⑤ `subagent_spawn` 仅 owner（#22）；⑥ `fsStore.read` `.tmp` 灾备恢复 + 损坏原件取证副本与 call-log 留痕（#28）；⑦ `tree_maintain {action:"gc"}`（archived 账本截断）+ call-log 10MB 滚动（#30）；⑧ `startActivation` rc.3 扁平 spec（`buildActivationSpec`，嵌套形状真机派发全量失败修复）；测试数 213→**227/227**（0.10.0 为 225/225，compat 14→16）。安装/重载后 `tree_doctor` 应显示 `version=0.10.1`。
 - **tree-engine 0.9.0**：新增第 9 个工具之后的硬安全与可观测性收口版（D23）—— ① 跨进程 `.lock` 文件锁（写路径 `withTreeMut`：O_EXCL + nonce + 陈旧接管 + 心跳；只读 `withTree` 不加锁）；② nudge 第 7 次强制 prune 走状态机（archived 被 `E_STATUS_TRANSITION_INVALID` 拒）；③ `leaf:add` 13 键字段白名单（内部字段永不接受输入）；④ `tree_log {action:"events"}` 事件 meta 机读化（done meta 可读）；⑤ `tree_maintain {action:"verify-delegate"}` 验证授权委托（仅 root 授予、被授权者只能写 `leaf.verification`）；测试数 172→**213/213**。安装/重载后 `tree_doctor` 应显示 `version=0.9.0`。
 - **tree-engine 0.8.1**：新增第 9 个工具之后的深度预算修复版（D22）—— ① 新增 `max_subagent_depth` 配置（缺省 5，`TREE_ENGINE_CONFIG` 可覆盖，非法值装载期失败）；② `tree_dispatch`/竹节接力/攻击审计会话显式传宿主 `request.maxDepth`（宿主只在显式传入时校验深度，此前组合路径无平台兜底）；③ 新增 `buildStartRequest` 纯函数 + 4 例 depth-cap + 3 例 compat 测试；测试数 165→**172/172**。安装/重载后 `tree_doctor` 应显示 `version=0.8.1`。
@@ -277,7 +278,9 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
   - **1.3.4**：洁净室文档债清扫（语言验收表述、set-session 主体、英文触发词、版本矩阵）；
   - **1.3.5**：SKILL 补 `spawn:false` 例外说明；README root→grandchild 措辞修正；
   - **1.3.6**：文档按目录归档（`docs/README.md` 索引）+ 新增人类安装指南 / Agent 安装指南（`AGENT-INSTALL.md`）；无代码行为变化。
-- **1.4.0**：**Q4 安全收紧**——`tree_send` 仅同树投递、移除 `parent` 入参、调用者谱系校验（跨树 `E_CROSS_TREE_SEND`）；`session-handoff` SKILL 同步说明（当前版本）。
+- **1.4.0**：**Q4 安全收紧**——`tree_send` 仅同树投递、移除 `parent` 入参、调用者谱系校验（跨树 `E_CROSS_TREE_SEND`）；`session-handoff` SKILL 同步说明。
+- **1.4.1**：rail 收起态 hook 数量崩溃修复（React #300/#310，F8）；无 Skill 变化。
+- **1.5.0**：**Tree Runs 面板**——composer.dock 入口 pill（order:6）+ 右栏页签席位 kind `tree-runs`（右栏服务缺席降级 `shell.overlay`），数据 = 同源 fetch `/tree-panel/*`（当前版本）。
 - 升级包后：宿主半/patch 有变化 → disable→enable；只改 Skill 正文 → 新会话直接读到。
 - 会话树公开插件仓：`orphiczhou/dsh-session-tree`（tag = 版本号）；本仓 `packages/dsh-session-tree` 是唯一源码事实源。
 

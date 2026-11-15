@@ -8,11 +8,25 @@
 
 A DeepSeek Harness profile bundle that turns the left sidebar into a **session tree**: every session plus its nested subagent descendants, expandable to arbitrary depth, each node one click away from its multi-turn conversation. It also adds two Host tools: `tree_send`, which lets an agent message a continuable subagent session **inside its own session tree** — including a sibling, which the built-in messaging APIs cannot reach, while cross-tree delivery is refused — and `session_handoff`, which hands the current session off to a fresh successor at the **same level** before its context budget fills, carrying the same workspace, Agent preset, permission preset, model and reasoning effort.
 
-**Current release: v1.4.1.** Bundled `session-handoff` Skill since **v1.3.0**; the successor kickoff prompt follows the DSH interface language since **v1.3.1**; `tree_send` is limited to the caller's own session tree and no longer accepts a `parent` argument since **v1.4.0** (see [releases](https://github.com/orphiczhou/dsh-session-tree/tags)). v1.4.1 fixes a collapsed-sidebar (rail) hook-count crash (React #300/#310) — see the release note below.
+**Current release: v1.5.0.** Bundled `session-handoff` Skill since **v1.3.0**; the successor kickoff prompt follows the DSH interface language since **v1.3.1**; `tree_send` is limited to the caller's own session tree and no longer accepts a `parent` argument since **v1.4.0** (see [releases](https://github.com/orphiczhou/dsh-session-tree/tags)). v1.5.0 adds the **Tree Runs panel** (composer-dock entry pill + right-sidebar tab, data from the same-origin `/tree-panel/*` routes) — see the release note below. v1.4.1 fixed a collapsed-sidebar (rail) hook-count crash (React #300/#310) — see its release note below.
 
 <!-- Screenshot placeholder: add a screenshot of the left sidebar tree here once one exists.
      Do not reference an image file that is not in the repository. -->
 <!-- ![Session tree in the left sidebar](docs/screenshot.png) -->
+
+## v1.5.0 增量：Tree Runs 面板（pill + 右栏页签两件套）
+
+> 2026-11-15 D30 轮交付。v1.5.0 为仓内版本，**未发布 npm / 公开镜像**（镜像 tag 仍为 `v1.4.0` = `0343f0c`）。
+
+**组成（仿 flow 插件「pill + 右栏页签」两件套）**：
+
+- **入口 pill**：`conversation.composer.dock` 席位（order:6），打开 Tree Runs 面板；
+- **右栏页签**：`sidebar.right.pane.tab` / `.title` keyed 席位，kind `tree-runs`；右栏服务缺席时**降级 `shell.overlay`** 并延迟补挂；
+- **数据面**：同源 fetch tree-engine 的 `/tree-panel/*` 只读投影路由（列表 1500ms 轮询、详情每 2 tick；`AbortController` 统一中止 + `window.__stTreePanelTimers` 防 HMR 泄漏）；
+- **样式**：走既有 `data-plugin-css` 表新增 `st-tr-*` 规则；
+- **席位注册 3 → 5（降级态）/ 6（右栏齐备态）**；面板组件三态 hook 数量恒定，有测试钉死。
+
+**测试**：新增 `test/panel-render.test.cjs` **58/58**；render **153/153** + 9 + 11 保持；style-guard 新增 A8b/c/d（A8=10，共 **29/29**）；provider-conformance **29/29**（席位断言 3→5）；handoff 41/41、meta 41/41、skills 3/3、verify-bundle 0 fail 全绿。
 
 ## v1.4.1 增量：rail 收起态 React #300/#310 hook 数量崩溃修复（F8）
 
