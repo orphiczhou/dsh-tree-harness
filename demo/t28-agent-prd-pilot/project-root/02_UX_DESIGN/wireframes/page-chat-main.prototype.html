@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>和向导聊想法 — 向导助手</title>
+<style>
+  :root{
+    --c-primary:#2E9E6B;--c-primary-deep:#1F7A52;--c-primary-soft:#E9F6EF;
+    --c-bg:#F7F5F0;--c-card:#FFFFFF;
+    --c-text:#2B2A26;--c-text-sub:#6E6A60;--c-text-weak:#9A958A;
+    --c-line:#E5E1D8;--c-warn:#E8A13C;--c-warn-soft:#FBF3E4;
+    --c-error:#D96459;--c-rollback:#4A7EBB;--c-snapshot:#8071A8;
+    --r-card:16px;--r-btn:12px;--r-input:12px;--r-bubble:14px;--r-chip:999px;
+    --shadow-card:0 2px 8px rgba(43,42,38,.06);
+    --shadow-pop:0 8px 24px rgba(43,42,38,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:var(--c-bg);color:var(--c-text);font-size:17px;line-height:1.7;
+    animation:pageIn .24s ease-out;
+    height:100vh;display:flex;flex-direction:column;
+  }
+  @keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .topbar{
+    display:flex;align-items:center;gap:10px;padding:12px 24px;
+    background:var(--c-card);border-bottom:1px solid var(--c-line);flex-wrap:wrap;
+  }
+  .topbar a{color:var(--c-text-sub);text-decoration:none;font-size:14px}
+  .topbar a:hover{text-decoration:underline}
+  .logo{font-weight:700;font-size:19px;margin-right:8px}
+  .snapchip{
+    margin-left:auto;display:inline-flex;align-items:center;gap:6px;
+    background:#F4F1FA;color:var(--c-snapshot);font-size:14px;
+    border:1px solid #DDD6EC;border-radius:var(--r-chip);padding:4px 14px;
+    text-decoration:none;
+  }
+  .snapchip:hover{background:#EDE8F6}
+  .steps{font-size:14px;color:var(--c-text-sub);display:flex;gap:6px}
+  .steps span{padding:3px 12px;border-radius:var(--r-chip);background:#F2EFE8}
+  .steps span.on{background:var(--c-primary-soft);color:var(--c-primary-deep);font-weight:600}
+  #chat{
+    flex:1;overflow-y:auto;max-width:820px;width:100%;margin:0 auto;padding:24px 20px 12px;
+  }
+  .row{display:flex;margin-bottom:14px;animation:msgIn .22s ease-out}
+  @keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .row.me{justify-content:flex-end}
+  .avatar{font-size:26px;margin-right:10px;align-self:flex-start}
+  .bubble{
+    max-width:70%;background:var(--c-card);border:1px solid var(--c-line);
+    border-radius:var(--r-bubble);border-bottom-left-radius:4px;padding:12px 16px;
+    box-shadow:var(--shadow-card);
+  }
+  .row.me .bubble{
+    background:var(--c-primary-soft);border-color:#CFE9DC;border-bottom-left-radius:var(--r-bubble);
+    border-bottom-right-radius:4px;
+  }
+  .bubble .who{font-size:14px;color:var(--c-text-weak);margin-bottom:2px}
+  .qcard{
+    margin-top:10px;background:#FBFAF7;border:1px solid var(--c-line);
+    border-radius:var(--r-card);padding:14px 16px;max-width:70%;
+  }
+  .qcard .q{font-weight:600;margin-bottom:10px}
+  .opts{display:flex;flex-direction:column;gap:8px}
+  .opt{
+    text-align:left;background:var(--c-card);border:1.5px solid var(--c-line);
+    border-radius:var(--r-btn);padding:10px 14px;font-size:17px;cursor:pointer;
+    font-family:inherit;color:var(--c-text);transition:border-color .12s,background .12s;
+  }
+  .opt:hover{border-color:#BFD9CB;background:#FAFDfb}
+  .opt.picked{border-color:var(--c-primary);background:var(--c-primary-soft);font-weight:600}
+  .opt.picked::after{content:" ✓";color:var(--c-primary)}
+  .decide{
+    margin-top:8px;display:inline-block;background:var(--c-primary-soft);
+    color:var(--c-primary-deep);border:none;border-radius:var(--r-chip);
+    padding:6px 16px;font-size:14px;cursor:pointer;font-family:inherit;
+  }
+  .decide:hover{background:#DCF0E6}
+  .progress{
+    margin-top:10px;max-width:70%;background:var(--c-card);border:1px solid var(--c-line);
+    border-radius:var(--r-card);padding:14px 16px;box-shadow:var(--shadow-card);display:none;
+  }
+  .progress.show{display:block;animation:msgIn .2s ease-out}
+  .progress .main{display:flex;gap:10px;align-items:flex-start}
+  .progress .dot{font-size:20px;animation:breath 2.4s ease-in-out infinite}
+  @keyframes breath{0%,100%{opacity:.5}50%{opacity:1}}
+  .progress .track{height:12px;border-radius:6px;background:#EDEAE2;margin-top:10px;overflow:hidden}
+  .progress .fill{height:100%;width:12%;background:var(--c-primary);border-radius:6px;transition:width 1.2s linear}
+  .progress .stage{font-size:14px;color:var(--c-text-sub);margin-top:6px}
+  .proto-card{
+    margin-top:10px;max-width:70%;background:linear-gradient(135deg,#EAF6F0,#FDFBF4);
+    border:1.5px solid #BFDCCB;border-radius:var(--r-card);padding:16px 18px;box-shadow:var(--shadow-card);
+  }
+  .proto-card .t{font-weight:700;margin-bottom:4px}
+  .proto-card .d{color:var(--c-text-sub);font-size:14px;margin-bottom:12px}
+  .composer{
+    border-top:1px solid var(--c-line);background:var(--c-card);padding:14px 20px 16px;
+  }
+  .composer .inner{max-width:820px;margin:0 auto;display:flex;gap:10px}
+  .composer input{
+    flex:1;font-size:17px;font-family:inherit;padding:12px 16px;border-radius:var(--r-input);
+    border:1.5px solid var(--c-line);outline:none;transition:border-color .12s,box-shadow .12s;
+  }
+  .composer input:focus{border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(46,158,107,.15)}
+  .toast{
+    position:fixed;right:20px;bottom:90px;z-index:30;display:none;
+    background:var(--c-card);border:1px solid var(--c-line);border-left:3px solid var(--c-snapshot);
+    border-radius:var(--r-btn);box-shadow:var(--shadow-pop);padding:12px 16px;font-size:14px;
+  }
+  .toast.show{display:block;animation:toastIn .26s ease-out}
+  @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .toast a{color:var(--c-rollback);text-decoration:none}
+  footer{
+    text-align:center;color:var(--c-text-weak);font-size:14px;
+    background:var(--c-card);border-top:1px solid var(--c-line);padding:8px;
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="page-mode-gate.prototype.html">← 重新选用法</a>
+    <div class="logo">🧭 向导助手</div>
+    <div class="steps"><span>① 选个用法</span><span class="on">② 聊聊想法</span><span>③ 看效果</span></div>
+    <a class="snapchip" href="page-timeline-rollback.prototype.html">📸 已自动备份 · 14:02</a>
+    <a href="#">⚙️ 设置</a>
+  </div>
+
+  <div id="chat"></div>
+
+  <div class="composer">
+    <div class="inner">
+      <input id="say" type="text" placeholder="用你自己的话告诉我就行…" onkeydown="if(event.key==='Enter')send()">
+      <button class="btn btn-primary" onclick="send()">发送</button>
+    </div>
+  </div>
+
+  <div class="toast" id="snapToast">📸 已自动备份：画好第一版页面（快照） · <a href="page-timeline-rollback.prototype.html">看看足迹</a></div>
+  <footer>🔒 你的内容保存在你自己的电脑上。 · <a href="page-preview-fix.prototype.html" style="color:var(--c-rollback)">③ 预览与点选纠错原型</a></footer>
+
+<script>
+var chat = document.getElementById('chat');
+
+function wizard(html, who){
+  var row = document.createElement('div'); row.className='row';
+  row.innerHTML = '<div class="avatar">🧭</div><div class="bubble"><div class="who">'+(who||'向导')+'</div>'+html+'</div>';
+  chat.appendChild(row); scrollDown(); return row;
+}
+function me(text){
+  var row = document.createElement('div'); row.className='row me';
+  row.innerHTML = '<div class="bubble">'+text+'</div>';
+  chat.appendChild(row); scrollDown(); return row;
+}
+function scrollDown(){ chat.scrollTop = chat.scrollHeight; }
+
+function askQuestion(q, opts, next){
+  var row = wizard('<div class="q"><b>选择题：</b>'+q+'</div>');
+  var box = document.createElement('div'); box.className='qcard';
+  var h = '<div class="q">'+q+'</div><div class="opts">';
+  opts.forEach(function(o,i){ h += '<button class="opt" data-i="'+i+'">'+o+'</button>'; });
+  h += '</div><button class="decide">✨ 你帮我决定</button>';
+  box.innerHTML = h;
+  row.querySelector('.bubble').appendChild(box); scrollDown();
+
+  var buttons = box.querySelectorAll('.opt');
+  function answer(i, via){
+    buttons.forEach(function(b,j){ b.classList.toggle('picked', j===i); b.disabled=true; });
+    box.querySelector('.decide').disabled = true;
+    me('我选了：'+opts[i] + (via==='decide' ? '（你帮我决定的，谢谢！）' : ''));
+    setTimeout(function(){ next(opts[i]); }, 500);
+  }
+  buttons.forEach(function(b,i){ b.onclick=function(){ answer(i,false); }; });
+  box.querySelector('.decide').onclick=function(){
+    var rec = opts.length===4 ? 3 : 0;
+    answer(rec, true);
+  };
+}
+
+/* —— 开场（模拟数据） —— */
+wizard('你好呀！跟我说说你想做什么东西？比如：一个记读书笔记的小工具，或者一个班级投票页面。<br><span style="font-size:14px;color:var(--c-text-sub)">（原型演示：接下来的问题是模拟样例）</span>');
+me('我想给班里做一个投票小页面，选班委用。');
+setTimeout(function(){
+  askQuestion('投票页面最需要什么？',
+    ['展示候选人，让大家投票','投票后马上看到结果（条条高低那种）','投完先不显示结果，防止跟风','以上都要'],
+    function(){
+      wizard('记下了！再问一个小问题。');
+      askQuestion('每个同学可以投几票？',
+        ['只能投一票，最公平','可以投两三票，选出好几位班委','你帮我决定'],
+        function(pick){
+          wizard('明白啦。我先画一个页面样子给你看，稍等～');
+          setTimeout(showProgress, 600);
+        });
+    });
+}, 600);
+
+/* —— >5 秒进度提示（PRD §7.5「等待中」原文） —— */
+function showProgress(){
+  var row = wizard(''); row.style.display='none';
+  var p = document.createElement('div');
+  p.className='progress';
+  p.innerHTML =
+    '<div class="main"><span class="dot">🧭</span><div><b>我正在帮你生成可运行的版本，这个过程只发生在安全环境里，不会影响你的电脑文件。</b>'+
+    '<div class="stage">正在画页面样子（第 1 步 / 共 2 步）</div>'+
+    '<div class="track"><div class="fill" id="fill"></div></div></div></div>';
+  chat.appendChild(p); p.classList.add('show'); scrollDown();
+  var fill = document.getElementById('fill');
+  setTimeout(function(){ fill.style.width='58%'; p.querySelector('.stage').textContent='正在把样子变得能用（第 2 步 / 共 2 步）'; }, 1600);
+  setTimeout(finishProgress, 4200);
+}
+function finishProgress(){
+  var p = document.querySelector('.progress');
+  p.querySelector('#fill').style.width='100%';
+  p.querySelector('.dot').textContent='✅';
+  p.querySelector('.stage').textContent='画好了！';
+  setTimeout(function(){ p.style.opacity='0'; p.style.transition='opacity .3s'; }, 700);
+  setTimeout(function(){
+    p.remove();
+    wizard('<b>画好了，你看看效果？不满意随时告诉我。</b>');
+    var card = document.createElement('div'); card.className='row';
+    card.innerHTML = '<div class="avatar">🧭</div>'+
+      '<div class="proto-card"><div class="t">🖼️ 第一版页面样子</div>'+
+      '<div class="d">「班委投票」的页面，候选人和投票按钮都在里面了。</div>'+
+      '<a class="btn btn-primary" style="text-decoration:none" href="page-preview-fix.prototype.html">打开原型看看 →</a> '+
+      '<a class="btn btn-ghost" style="text-decoration:none" href="page-timeline-rollback.prototype.html">看看历史足迹</a></div>';
+    chat.appendChild(card); scrollDown();
+    var t = document.getElementById('snapToast');
+    t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 4000);
+  }, 1000);
+}
+
+/* —— 自由输入（演示：收到后温柔确认） —— */
+function send(){
+  var input = document.getElementById('say');
+  var v = input.value.trim(); if(!v) return;
+  me(v); input.value='';
+  setTimeout(function(){ wizard('收到！我记下来了，我们继续。'); }, 600);
+}
+</script>
+</body>
+</html>

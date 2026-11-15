@@ -1,0 +1,70 @@
+@startuml seq-02-sprint-code-gwt-merge
+' =====================================================================
+' 时序图② 长期迭代型 Sprint 内闭环：编码 → GWT测试 → 裁判收口 → 合并
+' 树/节点: t28a / t28a-W5-arch  对应旅程: UF-03 成功主链（user-flows.md）
+' 覆盖: F-11 规范化执行管线 · F-13 团队激活协作 · F-15 GWT测试收口 ·
+'       F-16 裁判收口判定 · F-18 自愈(简支路) · F-22 Sprint交付与changelog
+' =====================================================================
+actor 用户
+participant DesktopShell
+participant Orchestrator
+participant ModelGateway
+participant PlantUmlEngine
+participant GwtTestRunner
+participant JudgeEngine
+participant SnapshotManager
+participant DocGenEngine
+participant TelemetryCollector
+autonumber
+
+== Sprint N 开工（节奏已确认 F-22）==
+
+用户 -> DesktopShell : 确认 Sprint N 计划（生活化卡片, 附"你帮我决定"）
+DesktopShell -> Orchestrator : confirmSprint(sprintId)
+Orchestrator -> Orchestrator : advanceStage() 进入 CODING\n(规划阶段已过裁判门禁 C7)
+
+== 团队流水线（00_AGENT_ROLES.md §3.4, 团队对用户透明 F-13）==
+
+Orchestrator -> PlantUmlEngine : validate(类图/时序图.puml)
+PlantUmlEngine -> PlantUmlEngine : 语法校验(H3) + 结构提取(供H8比对)
+PlantUmlEngine --> Orchestrator : 语法有效 + 结构提取结果
+Orchestrator -> ModelGateway : invoke(P1编程架构师, 审核设计规约 vs PlantUML约束)
+ModelGateway --> Orchestrator : 规约审核通过(或修改建议)
+Orchestrator -> ModelGateway : invoke(P2前端开发, 以原型HTML为UI实现模板, Mock数据先行)
+Orchestrator -> ModelGateway : invoke(P3后端开发, 按 04_API_SPEC 实现接口)\n(前端/后端并行, 互不阻塞)
+ModelGateway --> Orchestrator : 代码产出(落项目目录)
+Orchestrator -> ModelGateway : invoke(P6代码审查员, 质量/安全/合规审查)\n(长期迭代型必选)
+ModelGateway --> Orchestrator : 审查意见(不通过则回到修复)
+Orchestrator -> TelemetryCollector : track(CODING_EXECUTED, 任务类型+Token消耗)
+
+== GWT 测试与裁判收口 ==
+
+Orchestrator -> GwtTestRunner : runAll(projectId, sprintScope)
+GwtTestRunner -> GwtTestRunner : 执行 06_TESTS/features/*.feature\n(正常+边界+异常三类 F-15)
+GwtTestRunner --> Orchestrator : TestReport(通过率 + 逐场景结果)
+Orchestrator -> JudgeEngine : 收口判定(TestReport + 代码结构提取 + PlantUML + PRD)
+JudgeEngine -> JudgeEngine : H7 测试是否全部通过?\nH8 代码结构 ≡ PlantUML类图?\nPRD功能项是否全部有测试对应?
+note right of JudgeEngine
+  裁判是流程门禁, 不是质量审计员(需求源 §9.1)
+  只查"交接是否到位", 不管代码质量细节
+end note
+JudgeEngine --> Orchestrator : JudgeVerdict(通过/退回)
+
+alt Verdict = PASS → 合并交付
+  Orchestrator -> Orchestrator : 合并 Sprint 增量(编程层提交点)
+  Orchestrator -> SnapshotManager : autoSnapshot(AFTER_CONFIRM, "第N期改好的东西")
+  Orchestrator -> DocGenEngine : appendChangelog("版本N变更条目")
+  Orchestrator -> TelemetryCollector : track(JUDGE_VERDICT, PASS, 耗时)
+  Orchestrator --> DesktopShell : Sprint 交付卡(P6, 带生活化版本号)
+  DesktopShell --> 用户 : "做好了，来试试！"（进入下一 Sprint 或版本发布）
+
+else Verdict = REJECT → 异常自愈
+  loop RepairLoop: 自动修复 ≤3 次, 每次可换策略(F-18)
+    Orchestrator -> ModelGateway : invoke(编程角色, 修复策略 i)
+    Orchestrator -> GwtTestRunner : runScenarios(失败场景回归)
+    Orchestrator -> TelemetryCollector : track(REPAIR_TRIGGERED, 尝试i, 结果)
+  end
+  Orchestrator --> DesktopShell : 3次仍失败 → 熔断\n(转时序图④: 快照回滚 + 安抚文案)
+end
+
+@enduml

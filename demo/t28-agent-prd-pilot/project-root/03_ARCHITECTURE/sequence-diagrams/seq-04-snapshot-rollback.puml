@@ -1,0 +1,67 @@
+@startuml seq-04-snapshot-rollback
+' =====================================================================
+' 时序图④ 快照回滚：熔断 → 回滚 → 安抚文案（线性回滚，无分支）
+' 树/节点: t28a / t28a-W5-arch  对应旅程: UF-03 步骤5 / UF-05（user-flows.md）
+' 覆盖: F-18 熔断回滚 · F-08 线性回滚 · F-19 安抚文案 ·
+'       埋点#10 自修复触发 / #6 用户主动撤销
+' =====================================================================
+actor 用户
+participant DesktopShell
+participant Orchestrator
+participant SnapshotManager
+participant DialogueRouter
+participant ModelGateway
+participant TelemetryCollector
+autonumber
+
+== 阶段一：熔断触发（RepairLoop 3 次修复均失败）==
+
+Orchestrator -> Orchestrator : handleFailure(第3次修复仍失败) → 熔断触发(F-18)
+Orchestrator -> TelemetryCollector : track(REPAIR_TRIGGERED, 尝试次数=3, 最终结果=熔断)
+
+== 阶段二：回滚执行（快照管理器, 线性单链 F-08）==
+
+Orchestrator -> SnapshotManager : rollbackToLastHealthy(projectId)
+SnapshotManager -> SnapshotManager : 当前(失败)版本先存为快照\n(BEFORE_ROLLBACK, "异常回滚前", 回滚不丢当前版本)
+SnapshotManager -> SnapshotManager : 校验上一健康快照 contentHash
+SnapshotManager -> SnapshotManager : 原子替换恢复文件树\n(临时文件写入 + 原子重命名)
+SnapshotManager --> Orchestrator : 回滚完成(当前版本=健康快照,\n原失败版本在时间轴转为"存档"徽章)
+Orchestrator --> DesktopShell : 回滚事件(进度条短暂转暖色, 无红色大弹窗)
+
+== 阶段三：安抚与分流（永不出现技术报错 F-19）==
+
+Orchestrator -> DialogueRouter : broadcastCopy("修改失败")
+DialogueRouter --> DesktopShell : §7.5原文「刚才的修改没有成功，我已经帮你回到上一个正常版本，你的内容没有丢失。我们换个思路试试？」
+DesktopShell -> 用户 : 消息气泡 + 按钮「换个思路」/「先看看时间轴」
+
+alt 快消型（编程层闭环, 不倒回需求）
+  用户 -> DesktopShell : 点「换个思路」
+  DesktopShell -> Orchestrator : retryWithNewStrategy()
+  Orchestrator -> ModelGateway : invoke(编程角色, 换一个技术方案重新尝试)
+  note right of Orchestrator
+    编程层闭环(需求源 §6.3):
+    全程不倒回向导Agent改需求,
+    需求分析师G1不被重新激活
+  end note
+
+else 长期迭代型 · 设计约束不可实现
+  Orchestrator -> DialogueRouter : 出具变更说明(生活化语言)
+  DialogueRouter --> DesktopShell : 变更说明卡
+  DesktopShell --> 用户 : 「这个想法实现起来有一个限制，我们商量一下怎么调整？」
+  用户 -> DesktopShell : 确认调整方案
+  DesktopShell -> Orchestrator : confirmChangeNote()
+  Orchestrator -> ModelGateway : invoke(编程角色, 按确认后的变更说明调整实现方案)
+  note right of Orchestrator
+    变更说明是唯一允许突破设计约束的通道,
+    且必须用户确认; 不倒回需求阶段(边界规则R3/R6)
+  end note
+end
+
+== 阶段四：用户查看时间轴（可选支路 UF-05）==
+
+用户 -> DesktopShell : 打开「历史足迹」
+DesktopShell -> SnapshotManager : listSnapshots(projectId)
+SnapshotManager --> DesktopShell : 线性时间轴(时间戳+人话描述,\n当前版本/存档徽章)
+DesktopShell --> 用户 : 直线时间轴, 无"分支"概念;\n无手动建快照入口(F-08)
+
+@enduml

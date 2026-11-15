@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>历史足迹 · 时间轴与回滚 — 向导助手</title>
+<style>
+  :root{
+    --c-primary:#2E9E6B;--c-primary-deep:#1F7A52;--c-primary-soft:#E9F6EF;
+    --c-bg:#F7F5F0;--c-card:#FFFFFF;
+    --c-text:#2B2A26;--c-text-sub:#6E6A60;--c-text-weak:#9A958A;
+    --c-line:#E5E1D8;--c-warn:#E8A13C;--c-warn-soft:#FBF3E4;
+    --c-error:#D96459;--c-rollback:#4A7EBB;--c-snapshot:#8071A8;
+    --r-card:16px;--r-btn:12px;--r-chip:999px;
+    --shadow-card:0 2px 8px rgba(43,42,38,.06);
+    --shadow-pop:0 8px 24px rgba(43,42,38,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:var(--c-bg);color:var(--c-text);font-size:17px;line-height:1.7;
+    animation:pageIn .24s ease-out;min-height:100vh;
+  }
+  @keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .topbar{display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--c-card);
+    border-bottom:1px solid var(--c-line);flex-wrap:wrap}
+  .topbar a{color:var(--c-text-sub);text-decoration:none;font-size:14px}
+  .topbar a:hover{text-decoration:underline}
+  .logo{font-weight:700;font-size:19px}
+  .steps{font-size:14px;color:var(--c-text-sub);display:flex;gap:6px}
+  .steps span{padding:3px 12px;border-radius:var(--r-chip);background:#F2EFE8}
+  .steps span.on{background:var(--c-primary-soft);color:var(--c-primary-deep);font-weight:600}
+  main{max-width:760px;margin:0 auto;padding:32px 20px 80px}
+  h1{font-size:26px;font-weight:700;margin-bottom:6px}
+  .lead{color:var(--c-text-sub);margin-bottom:18px}
+  .linear-note{
+    background:#EAF1F9;border:1px solid #CBDCEC;border-radius:var(--r-btn);
+    padding:12px 18px;margin-bottom:26px;display:flex;gap:10px;align-items:flex-start;
+  }
+  .veil{
+    position:fixed;inset:0;background:rgba(247,245,240,.55);z-index:60;display:none;
+    align-items:center;justify-content:center;
+  }
+  .veil.show{display:flex;animation:fadeIn .3s ease-out}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .veil .box{background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r-card);
+    box-shadow:var(--shadow-pop);padding:20px 28px;display:flex;gap:12px;align-items:center;font-weight:600}
+  .veil .dot{font-size:22px;animation:breath 2.4s ease-in-out infinite}
+  @keyframes breath{0%,100%{opacity:.5}50%{opacity:1}}
+  .timeline{position:relative;padding-left:34px}
+  .timeline::before{
+    content:"";position:absolute;left:11px;top:8px;bottom:8px;width:3px;
+    background:linear-gradient(#BFD0E4,#D8E3F0);border-radius:2px;
+  }
+  .snap{position:relative;margin-bottom:18px;animation:pageIn .22s ease-out}
+  .snap .dot{
+    position:absolute;left:-34px;top:20px;width:16px;height:16px;border-radius:50%;
+    background:var(--c-card);border:3px solid var(--c-rollback);
+  }
+  .snap.current .dot{background:var(--c-primary);border-color:var(--c-primary)}
+  .snap .card{
+    background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r-card);
+    box-shadow:var(--shadow-card);padding:16px 18px;display:flex;gap:14px;align-items:center;
+  }
+  .snap.current .card{border:1.5px solid var(--c-primary)}
+  .snap .meta{flex:1}
+  .snap .time{font-size:14px;color:var(--c-text-weak)}
+  .snap .desc{font-weight:600;margin-top:2px}
+  .badge{
+    display:inline-block;font-size:13px;padding:2px 12px;border-radius:var(--r-chip);margin-left:8px;vertical-align:2px;
+  }
+  .b-current{background:var(--c-primary);color:#fff}
+  .b-archive{border:1px solid #C9C5BC;color:var(--c-text-sub);background:#F5F3EE}
+  .b-before{border:1px solid #DDD6EC;color:var(--c-snapshot);background:#F4F1FA}
+  .btn{
+    display:inline-block;border:none;cursor:pointer;font-size:16px;font-weight:600;
+    border-radius:var(--r-btn);padding:9px 18px;font-family:inherit;transition:background .12s,transform .1s;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn-sec{background:var(--c-card);color:var(--c-text);border:1.5px solid var(--c-line)}
+  .btn-sec:hover{background:#F2F0EA}
+  .btn-primary{background:var(--c-primary);color:#fff}
+  .btn-primary:hover{background:var(--c-primary-deep)}
+  .btn-ghost{background:none;color:var(--c-text-sub)}
+  .btn-ghost:hover{text-decoration:underline}
+  .here{font-size:14px;color:var(--c-primary-deep);font-weight:600;white-space:nowrap}
+  /* 确认弹窗 */
+  .mask{position:fixed;inset:0;background:rgba(43,42,38,.4);z-index:70;display:none;align-items:center;justify-content:center;padding:20px}
+  .mask.show{display:flex;animation:fadeIn .18s ease-out}
+  .dialog{
+    background:var(--c-card);border-radius:var(--r-card);box-shadow:var(--shadow-pop);
+    max-width:480px;width:100%;padding:24px 26px;animation:pageIn .18s ease-out;
+  }
+  .dialog h3{font-size:21px;margin-bottom:10px}
+  .dialog .promise{
+    background:var(--c-primary-soft);border:1px solid #CFE9DC;border-radius:var(--r-btn);
+    padding:10px 14px;margin:10px 0 18px;
+  }
+  .dialog .acts{display:flex;gap:12px;justify-content:flex-end}
+  /* 完成提示 */
+  .donebar{
+    display:none;margin:22px 0;background:var(--c-primary-soft);border:1px solid #CFE9DC;
+    border-radius:var(--r-btn);padding:14px 18px;gap:10px;align-items:flex-start;
+  }
+  .donebar.show{display:flex;animation:pageIn .22s ease-out}
+  footer{text-align:center;color:var(--c-text-weak);font-size:14px;padding:16px}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="page-chat-main.prototype.html">← 回到对话</a>
+    <div class="logo">🧭 向导助手</div>
+    <div class="steps"><span>① 选个用法</span><span>② 聊聊想法</span><span>③ 看效果</span><span class="on">④ 历史足迹</span></div>
+  </div>
+
+  <main>
+    <h1>🗓️ 历史足迹</h1>
+    <p class="lead">像游戏存档一样，我自动帮你备份了每个重要时刻（备份也叫「快照」）。想回到哪个时刻都行，你不用记着点保存。</p>
+
+    <div class="linear-note">🧭
+      <span><b>只有一条时间线：</b>回到过去之后继续改，时间线就接着往前走，<b>不会分叉</b>，你不用操心「版本」的事。被留在后面的记录会标成「存档」，一直都在。</span>
+    </div>
+
+    <div class="timeline" id="tl"></div>
+
+    <div class="donebar" id="donebar">⏮ <span><b>已经回到之前的版本了，一切都在。要继续的话随时告诉我。</b></span></div>
+
+    <p style="font-size:14px;color:var(--c-text-sub)">
+      📸 备份由我自动管理：第一次画好、你确认改动前后、换用法的时候、出错回到正常版本之前——这些时刻我都会先存一份。
+    </p>
+  </main>
+
+  <div class="veil" id="veil"><div class="box"><span class="dot">⏮</span><span id="veilMsg">正在回到过去的版本…</span></div></div>
+
+  <div class="mask" id="mask">
+    <div class="dialog">
+      <h3 id="dlgTitle">要回到这里吗？</h3>
+      <p id="dlgDesc"></p>
+      <div class="promise">🛟 放心：回去了之后，<b>现在这份也会存起来，不会丢</b>。</div>
+      <div class="acts">
+        <button class="btn btn-ghost" onclick="closeDlg()">再想想</button>
+        <button class="btn btn-primary" onclick="confirmRollback()">对，回到那里</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>🔒 回来、回去都不会丢东西。 · <a href="page-preview-fix.prototype.html" style="color:var(--c-rollback)">③ 预览与点选纠错原型</a> · <a href="page-chat-main.prototype.html" style="color:var(--c-rollback)">② 聊天主界面</a></footer>
+
+<script>
+/* 模拟数据：新在上 */
+var snaps = [
+  { id:'S5', time:'今天 15:24', desc:'把投票按钮改得更醒目', tag:'mod' },
+  { id:'S4', time:'今天 15:23', desc:'修改前自动备份',        tag:'before' },
+  { id:'S3', time:'今天 14:02', desc:'画好第一版页面',        tag:'mod' },
+  { id:'S2', time:'今天 13:47', desc:'确定要做投票页面',      tag:'mod' },
+  { id:'S1', time:'今天 13:45', desc:'刚创建项目',            tag:'mod' }
+];
+var current = 0;      // snaps 下标 0 = 最新
+var pendingIdx = -1;  // 待确认回滚目标
+var rolledOnce = false;
+
+function render(){
+  var tl = document.getElementById('tl');
+  var h = '';
+  snaps.forEach(function(s,i){
+    var badge = '';
+    if (i === current) badge = '<span class="badge b-current">当前版本</span>';
+    else if (i < current) badge = '<span class="badge b-archive">存档</span>';
+    else if (s.tag === 'before') badge = '<span class="badge b-before">修改前备份</span>';
+    var action = (i === current)
+      ? '<span class="here">📍 你现在在这里</span>'
+      : '<button class="btn btn-sec" onclick="askRollback('+i+')">回到这里</button>';
+    h += '<div class="snap '+(i===current?'current':'')+'" id="snap-'+i+'">'+
+         '<span class="dot"></span><div class="card"><div class="meta">'+
+         '<div class="time">'+s.time+' · '+s.id+'</div>'+
+         '<div class="desc">'+s.desc+badge+'</div></div>'+ action + '</div></div>';
+  });
+  tl.innerHTML = h;
+}
+
+function askRollback(i){
+  pendingIdx = i;
+  document.getElementById('dlgDesc').innerHTML =
+    '要回到 <b>「' + snaps[i].desc + '」</b>（' + snaps[i].time + '）吗？' +
+    (rolledOnce ? '' : '<br><span style="font-size:14px;color:var(--c-text-sub)">（第一次回滚？放心，跟着提示走就行。）</span>');
+  document.getElementById('mask').classList.add('show');
+}
+function closeDlg(){ document.getElementById('mask').classList.remove('show'); pendingIdx = -1; }
+document.getElementById('mask').addEventListener('click', function(e){ if(e.target===this) closeDlg(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDlg(); });
+
+function confirmRollback(){
+  var i = pendingIdx; closeDlg();
+  if (i < 0) return;
+  document.getElementById('veil').classList.add('show');
+  setTimeout(function(){
+    current = i;                    /* 线性回滚：当前版本指向目标 */
+    rolledOnce = true;
+    render();
+    document.getElementById('veil').classList.remove('show');
+    document.getElementById('donebar').classList.add('show');
+    setTimeout(function(){ document.getElementById('donebar').classList.remove('show'); }, 6000);
+  }, 900);
+}
+
+render();
+</script>
+</body>
+</html>

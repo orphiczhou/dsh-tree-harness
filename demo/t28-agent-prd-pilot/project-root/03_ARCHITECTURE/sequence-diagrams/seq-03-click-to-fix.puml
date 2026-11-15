@@ -1,0 +1,61 @@
+@startuml seq-03-click-to-fix
+' =====================================================================
+' 时序图③ 点选纠错：预览点击 → 修改意图 → 编程Agent → 自动刷新
+' 树/节点: t28a / t28a-W5-arch  对应旅程: UF-04（user-flows.md）
+' 覆盖: F-07 点选纠错 · F-08 修改前快照 · F-15 回归 · F-19 安抚文案 ·
+'       埋点#7 点选纠错 / #6 用户主动撤销
+' =====================================================================
+actor 用户
+participant DesktopShell
+participant PrototypeEngine
+participant DialogueRouter
+participant Orchestrator
+participant ModelGateway
+participant SnapshotManager
+participant GwtTestRunner
+participant JudgeEngine
+participant TelemetryCollector
+autonumber
+
+== 阶段一：捕获与规约（两段式: 先记录、后执行）==
+
+用户 -> DesktopShell : 在预览区点击不满意的元素(如投票按钮)\n+ 快选「更醒目一点」
+DesktopShell -> PrototypeEngine : captureClickTarget(点击事件)
+PrototypeEngine -> PrototypeEngine : 提取元素selector与上下文\n(可点元素悬停虚线高亮)
+PrototypeEngine --> DesktopShell : 元素定位信息
+DesktopShell -> DialogueRouter : createFixIntent(selector, context, userWish)
+DialogueRouter -> ModelGateway : invoke(G2 UI/UX顾问, 点击位置+上下文 → 修改规约)
+ModelGateway --> DialogueRouter : ModificationIntent(规约, 仅记录未执行)
+DialogueRouter -> TelemetryCollector : track(CLICK_FIX, 点击目标类型)
+DialogueRouter --> DesktopShell : 更新"想改的地方"清单(每条可单独撤销)
+DesktopShell --> 用户 : "记下了：我点了【投票按钮】，想让它变成：更醒目一点。"
+
+== 阶段二：执行（修改前强制快照, 联动 F-08）==
+
+用户 -> DesktopShell : 点「让向导开始改」
+DesktopShell -> Orchestrator : executeFixIntents(intentIds)
+Orchestrator -> SnapshotManager : autoSnapshot(BEFORE_CONFIRM, "修改前")
+SnapshotManager --> Orchestrator : Snapshot(回滚点就绪) + 快照提示条
+Orchestrator -> ModelGateway : invoke(P2前端开发, ModificationIntent.spec)
+ModelGateway --> Orchestrator : 代码更新(项目目录内)
+Orchestrator -> TelemetryCollector : track(CLICK_FIX, 是否成功修改)
+
+== 阶段三：回归校验与自动刷新 ==
+
+Orchestrator -> GwtTestRunner : runScenarios(受影响GWT场景回归)
+GwtTestRunner --> Orchestrator : 回归报告(相关场景全过)
+Orchestrator -> JudgeEngine : 增量校验(结构一致性 + 测试对应)
+JudgeEngine --> Orchestrator : PASS
+Orchestrator -> PrototypeEngine : refreshPreview()
+PrototypeEngine --> DesktopShell : 新原型资源(经预览静态服务)
+Orchestrator -> DialogueRouter : broadcastCopy("修改成功")
+DialogueRouter --> DesktopShell : §7.5原文「改好了，你看看效果？不满意随时告诉我。」
+DesktopShell -> 用户 : 预览区交叉淡入自动刷新 + 安抚文案
+
+alt 本次修改失败（自愈支路）
+  Orchestrator -> Orchestrator : RepairLoop 自动修复 ≤3 次(F-18)
+  Orchestrator --> DesktopShell : 3次仍失败 → 熔断\n(转时序图④: 快照回滚 + 安抚文案)
+  DesktopShell -> 用户 : 预览恢复上一快照, 清单保留可换说法再试
+end
+
+@enduml

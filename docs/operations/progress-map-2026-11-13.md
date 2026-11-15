@@ -7,7 +7,7 @@
 
 ## 0. 一句话
 
-**引擎与插件全部就绪、发布物与公开镜像逐字节一致；D21 清掉「真机 E2E + 三层组合试点 + 发布测试门禁 + 会话元数据 GUI」，D22 完成组合编排 v2 + v0.8.1 深度预算修复，D23（2026-11-13 晚）完成用户点名的 1-4 四项**：深度 6 拒绝真机回归 PASS、flash 审计三条高危修复、发布前 E2E 门禁收紧、`tree_log` 机读化 + 验证授权委托；**D24 完成 flow 回执落地 + 平台 issue 草稿 + flash 审计第二批（#8/#15/#20/#21/#22/#28/#30）**，tree-engine 升到 **v0.10.0**（225/225）；**D25 batch1 复核收口合回主干（3196f33）**；**D27（进行中）**：batch2（约 24 条）按用户指示**列入计划暂不开工**，flow 续接试点 E2E **方案已成文待用户批准**，且**发现新阻断**——宿主 18:17–21:45 升级 0.2.2-rc.1→rc.3 × flow 插件未适配 → 所有 session 节点 `E_SESSION_START_FAILED`（修复属 flow 仓，等适配）。**D28**：tree-engine **v0.10.1** 宿主 rc.3 扁平 spec 适配（E2E 指挥官派发暴露 `reading 'id'`，227/227，受控重载后生效）。
+**引擎与插件全部就绪、发布物与公开镜像逐字节一致；D21 清掉「真机 E2E + 三层组合试点 + 发布测试门禁 + 会话元数据 GUI」，D22 完成组合编排 v2 + v0.8.1 深度预算修复，D23（2026-11-13 晚）完成用户点名的 1-4 四项**：深度 6 拒绝真机回归 PASS、flash 审计三条高危修复、发布前 E2E 门禁收紧、`tree_log` 机读化 + 验证授权委托；**D24 完成 flow 回执落地 + 平台 issue 草稿 + flash 审计第二批（#8/#15/#20/#21/#22/#28/#30）**，tree-engine 升到 **v0.10.0**（225/225）；**D25 batch1 复核收口合回主干（3196f33）**；**D27（进行中）**：batch2（约 24 条）按用户指示**列入计划暂不开工**，flow 续接试点 E2E **方案已成文待用户批准**，且**发现新阻断**——宿主 18:17–21:45 升级 0.2.2-rc.1→rc.3 × flow 插件未适配 → 所有 session 节点 `E_SESSION_START_FAILED`（修复属 flow 仓，等适配）。**D28**：tree-engine **v0.10.1** 宿主 rc.3 扁平 spec 适配（E2E 指挥官派发暴露 `reading 'id'`，227/227，受控重载后生效）。**D30（2026-11-15）**：**t28 真项目试点（自举）收官 PASS**——一句话意图 → 树 `t28a` 七 leaf 三门禁 → PRD《向导Agent协同平台》自身 §5.2 全量开编程前文档（6132 行，PRD/用户故事/UX含原型/架构PlantUML/API/计划/GWT 89 场景）；同轮 **Tree Runs 面板** v1.5.0/v0.11.0 两半落地并真机活体（`/tree-panel` 探针 200 + doctor 7/7·v0.11.0）。
 
 ---
 
@@ -15,7 +15,7 @@
 
 | 组件 | 版本 | 状态 | 测试 |
 |---|---|---|---|
-| `packages/dsh-tree-engine` | **v0.11.0** | 运行中（9 个 `tree_*` 工具 + 随包 2 份 Skill v2.3；**v0.11.0 `/tree-panel` 只读 HTTP 投影路由**：三端点 + 安全三重校验 + `src/panel-view.js` 脱敏截断，webServer 缺席降级不阻断） | **256/256**（27 个 `.test.js`，含 panel-view 29 例）；发布门禁单测 14/14 |
+| `packages/dsh-tree-engine` | **v0.11.0** | 运行中（9 个 `tree_*` 工具 + 随包 2 份 Skill v2.3；**v0.11.0 `/tree-panel` 只读 HTTP 投影路由**：三端点 + 安全三重校验 + `src/panel-view.js` 脱敏截断，webServer 缺席降级不阻断；**活体 2026-11-15：doctor 7/7·v0.11.0 + `/tree-panel` HTTP 探针 200×2**） | **256/256**（27 个 `.test.js`，含 panel-view 29 例）；发布门禁单测 14/14 |
 | `packages/dsh-session-tree` | **v1.5.0** | 运行中（`tree_send` 仅同树 + `session_handoff` + 会话界面元数据 + **v1.5.0 Tree Runs 面板**：composer.dock 入口 pill + 右栏页签 kind `tree-runs`，右栏缺席降级 `shell.overlay`） | handoff 41/41、tree-send 25/25、meta 41/41、render 153/153+9+11、**panel-render 58/58**、style-guard 29/29、skills 3/3、verify-bundle 0 fail、provider-conformance 29/29（席位断言 3→5） |
 | `packages/dsh-agent-introspect` | v0.1.0 | 运行中（`self_spec`） | — |
 | 公开镜像 `orphiczhou/dsh-session-tree` | tag **v1.4.0 = `0343f0c`** | main + tag 已推送，21/21 SHA 一致 | — |
@@ -83,12 +83,12 @@ Git：`83c0502`（证据+修复）、`6c1a0ee`、`65feef0`，均已推送 `maste
 | 4 | rc.3 回归跨仓跟进单（用户批准转交） | **成文 + 已收回执**：flow 修复入库 `0f60e18`/`1fae8fc` + 回执 `FOLLOWUP-RESPONSE-2026-11-13-rc3-adapted.md`（P4 已答/agentOptions/E_BORROWED_IDENTITY 预登记/对账口径）；我方 smoke `D27-SMOKE-RC3-001` PASS 实证适配生效 | [FOLLOWUP-2026-11-13-host-rc3-session-start-regression.md](FOLLOWUP-2026-11-13-host-rc3-session-start-regression.md) |
 | 5 | **D27 双维 E2E 试点收官（用户指示组队执行）** | **PASS_WITH_RESIDUAL（双维 PASS）**：续接维 TC-1..8（`flow_send` 冷恢复两次成功、journal 字节级三重一致、sessionMode 0 注入、深度链 2→3）+ 混合维 TC-9..11（tree→flow→tree rc.3 整链回归、**续接×内层树**新组合 PASS、depth-6 一次性被拒、无 depth-6 会话）；A6=PASS_WITH_RESIDUAL（E_PERM_DENIED 推定+journal 零写入，原文因 flow 渲染缺口不可观测）；暴露清单 F1–F7（F1=tree-engine rc.3 回归已修 v0.10.1；F2–F4 跨仓反馈；F5–F7 本仓候选与 batch2 相邻）；全程 flash 档（指挥官+两 worker+取证子会话×2）；任务树 d27fl/t27b/t27c 与 journal R1/R2/smoke 留证勿清理 | [composition-pilot-v4-flow-continuation-and-hybrid-2026-11-13.md](../reports/composition-pilot-v4-flow-continuation-and-hybrid-2026-11-13.md) |
 
-## 2.5 D30 轮进行中（2026-11-15，t28 自举试点 + Tree Runs 面板）
+## 2.5 D30 轮收官（2026-11-15，t28 自举试点 PASS + Tree Runs 面板活体）
 
 | # | 事项 | 结果 | 证据 |
 |---|---|---|---|
-| 1 | **t28 真项目试点（自举）**（用户裁决四项：自举 / 长期迭代型全量 / 自主模拟用户 / GWT 纳入） | **进行中（未收官）**：树 `t28a` 七 leaf 三门禁流程，**W1–W5 已过 verify**；依赖闸新暴露 = 被依赖 leaf 须逐一 verify（W1 卡 W6 案例，归暴露清单 F6） | agent.md §1 D30 行；树 `t28a` 留证 |
-| 2 | **Tree Runs 面板两半已实现**（session-tree v1.5.0 + tree-engine v0.11.0，均未发布 npm / 公开镜像） | **代码与离线测试完成、待真机活体目检**：引擎半 `/tree-panel` 三端点只读投影（**256/256**，panel-view 29 例）；客户端半 pill + 右栏页签/降级两态（panel-render **58/58**、render 153/153+9+11 保持、style-guard 29/29、conformance 29/29 席位断言 3→5）；右栏齐备态与降级态均需真机目检 | CHANGELOG `[1.5.0]` / `[0.11.0]` 条目；两包 README 增量节 |
+| 1 | **t28 真项目试点（自举）**（用户裁决四项：自举 / 长期迭代型全量 / 自主模拟用户 / GWT 纳入） | **✅ PASS 收官**：树 `t28a` 七 leaf 全 done、三门禁 verify 全 PASS；交付 §5.2 全量开编程前文档 **6132 行/31 文件**（PRD F-01..F-24 / UX 9 文件含 4 原型 / 架构 5 puml / API E-01..E-30 / 计划 S0–S15 / GWT 89 场景 24/24 覆盖）；一致性=编号域机器校验 9/9、五方对账 40 点 0 冲突、矛盾 13 条全 minor 0 blocker；暴露清单 **E1–E6**（E1=依赖闸须对每个被依赖 leaf 逐一 verify——W1 卡 W6 案例归 F6 同源） | 报告 [t28-agent-prd-pilot-2026-11-15.md](../reports/t28-agent-prd-pilot-2026-11-15.md)；树 `t28a` 留证 |
+| 2 | **Tree Runs 面板两半**（session-tree v1.5.0 + tree-engine v0.11.0，均未发布 npm / 公开镜像） | **✅ 离线全绿 + 真机活体（服务端）**：引擎半 `/tree-panel` 三端点（**256/256**）——HTTP 探针 `/trees` 与 `/trees/t28a` **200×2**（真实数据，8 leaves 全 verify=True）；doctor 7/7·**v0.11.0**；两包 **link: 安装实时生效，无受控重载**；客户端半 pill + 右栏页签（panel-render **58/58**、render 153/153+9+11、style-guard 29/29、conformance 29/29 席位断言 3→5）——**UI 目检待用户刷新页面确认** | CHANGELOG `[1.5.0]` / `[0.11.0]`；探针记录见报告 §6 |
 | 3 | **RELOAD5 通报入库**（flow 引擎项目组 2026-11-15） | **P0/P1 两闸齐备**：rc.3 适配已装载 + smoke PASS、T-6 真机 E2E PASS；提示：续接指令建议纯文本 + waitMs≤300s、`flow_send` 错误渲染仍是 `?` 占位待修、TC-9 E_BORROWED_IDENTITY 边界仍在（t28 实测同款边界） | [RELOAD5-EVIDENCE-2026-11-15-from-flow-engine.md](RELOAD5-EVIDENCE-2026-11-15-from-flow-engine.md) |
 
 ## 3. 下一步候选（按建议优先级）

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>两道门 · 选一个你想怎么用 — 向导助手</title>
+<style>
+  :root{
+    --c-primary:#2E9E6B;--c-primary-deep:#1F7A52;--c-primary-soft:#E9F6EF;
+    --c-bg:#F7F5F0;--c-card:#FFFFFF;
+    --c-text:#2B2A26;--c-text-sub:#6E6A60;--c-text-weak:#9A958A;
+    --c-line:#E5E1D8;--c-warn:#E8A13C;--c-warn-soft:#FBF3E4;
+    --c-error:#D96459;--c-rollback:#4A7EBB;--c-snapshot:#8071A8;
+    --r-card:16px;--r-btn:12px;--r-chip:999px;
+    --shadow-card:0 2px 8px rgba(43,42,38,.06);
+    --shadow-pop:0 8px 24px rgba(43,42,38,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:var(--c-bg);color:var(--c-text);font-size:17px;line-height:1.7;
+    animation:pageIn .24s ease-out;
+  }
+  @keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .topbar{
+    display:flex;align-items:center;gap:12px;padding:14px 28px;
+    background:var(--c-card);border-bottom:1px solid var(--c-line);
+    position:sticky;top:0;z-index:10;
+  }
+  .topbar .logo{font-weight:700;font-size:19px}
+  .steps{display:flex;gap:6px;margin-left:auto;font-size:14px;color:var(--c-text-sub)}
+  .steps span{padding:3px 12px;border-radius:var(--r-chip);background:#F2EFE8}
+  .steps span.on{background:var(--c-primary-soft);color:var(--c-primary-deep);font-weight:600}
+  main{max-width:960px;margin:0 auto;padding:40px 28px 80px}
+  .hero{text-align:center;margin-bottom:44px}
+  .hero .face{font-size:52px;line-height:1}
+  .hero h1{font-size:26px;font-weight:700;margin:14px 0 6px}
+  .hero p{color:var(--c-text-sub)}
+  .privacy{
+    display:inline-flex;align-items:center;gap:6px;margin-top:10px;
+    font-size:14px;color:var(--c-text-sub);background:var(--c-card);
+    border:1px solid var(--c-line);border-radius:var(--r-chip);padding:4px 14px;
+  }
+  .doors{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
+  .door{
+    flex:1 1 340px;max-width:430px;background:var(--c-card);
+    border:2px solid var(--c-line);border-radius:var(--r-card);
+    padding:28px 26px 24px;position:relative;box-shadow:var(--shadow-card);
+    transition:transform .12s,box-shadow .12s,border-color .15s,background .15s;
+  }
+  .door:hover{transform:translateY(-2px);box-shadow:var(--shadow-pop)}
+  .door.selected{border-color:var(--c-primary);background:var(--c-primary-soft)}
+  .door .badge{
+    position:absolute;top:-12px;left:24px;background:#F2EFE8;color:var(--c-text-sub);
+    font-size:14px;padding:2px 14px;border-radius:var(--r-chip);border:1px solid var(--c-line);
+  }
+  .door h2{font-size:21px;font-weight:600;margin:8px 0 8px}
+  .door .desc{color:var(--c-text-sub);margin-bottom:14px}
+  .door ul{list-style:none;margin-bottom:20px}
+  .door li{padding-left:18px;position:relative;color:var(--c-text)}
+  .door li::before{content:"·";position:absolute;left:4px;color:var(--c-primary);font-weight:700}
+  .check{
+    position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;
+    background:var(--c-primary);color:#fff;font-size:16px;display:none;
+    align-items:center;justify-content:center;
+  }
+  .door.selected .check{display:flex;animation:pop .2s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+  .btn{
+    display:inline-block;border:none;cursor:pointer;font-size:17px;font-weight:600;
+    border-radius:var(--r-btn);padding:12px 20px;font-family:inherit;
+    transition:background .12s,transform .1s;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--c-primary);color:#fff}
+  .btn-primary:hover{background:var(--c-primary-deep)}
+  .btn-soft{background:var(--c-primary-soft);color:var(--c-primary-deep)}
+  .btn-soft:hover{background:#DCF0E6}
+  .btn-ghost{background:none;color:var(--c-text-sub)}
+  .btn-ghost:hover{text-decoration:underline}
+  .decide-row{text-align:center;margin-top:36px}
+  .decide-panel{
+    max-width:560px;margin:16px auto 0;background:var(--c-card);
+    border:1px solid var(--c-line);border-radius:var(--r-card);
+    box-shadow:var(--shadow-pop);padding:22px 24px;display:none;
+  }
+  .decide-panel.show{display:block;animation:pageIn .2s ease-out}
+  .decide-panel .tip{margin:8px 0 16px}
+  .confirm-bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    background:var(--c-card);border-top:2px solid var(--c-primary);
+    box-shadow:0 -4px 16px rgba(43,42,38,.10);
+    padding:16px 28px;display:none;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  .confirm-bar.show{display:flex;animation:pageIn .24s ease-out}
+  .confirm-bar .msg{font-weight:600}
+  .confirm-bar .go{margin-left:auto;text-decoration:none}
+  a.go{color:var(--c-primary-deep);font-weight:700}
+  footer{
+    text-align:center;color:var(--c-text-weak);font-size:14px;
+    padding:18px 28px 90px;
+  }
+  .swap-note{font-size:14px;color:var(--c-text-sub);margin-top:14px}
+  .other-pages{margin-top:48px;text-align:center;font-size:14px;color:var(--c-text-weak)}
+  .other-pages a{color:var(--c-rollback);text-decoration:none;margin:0 8px}
+  .other-pages a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="logo">🧭 向导助手</div>
+    <div class="steps"><span class="on">① 选个用法</span><span>② 聊聊想法</span><span>③ 看效果</span></div>
+  </div>
+
+  <main>
+    <div class="hero">
+      <div class="face">🧭</div>
+      <h1>你好呀，我是你的向导助手</h1>
+      <p>告诉我你想做什么，我帮你把它做出来。开始前，先选一个你想怎么用我。</p>
+      <div class="privacy">🔒 你的内容保存在你自己的电脑上。</div>
+    </div>
+
+    <div class="doors">
+      <div class="door" id="doorQuick">
+        <span class="badge">快消型</span>
+        <span class="check">✓</span>
+        <h2>快速做一个能用的</h2>
+        <p class="desc">一次性的小工具、验证一个想法。你说想法，我尽快做出来给你试。</p>
+        <ul>
+          <li>更快拿到能用的东西</li>
+          <li>做完就能试，不满意随时改</li>
+          <li>不用懂任何技术，交给我就行</li>
+        </ul>
+        <button class="btn btn-primary" onclick="pickDoor('quick')">选这个，马上开始</button>
+      </div>
+
+      <div class="door" id="doorLong">
+        <span class="badge">长期迭代型</span>
+        <span class="check">✓</span>
+        <h2>长期慢慢打磨</h2>
+        <p class="desc">想长期更新的项目，比如以后一直要用、还会不断变好的东西。</p>
+        <ul>
+          <li>计划更周全，一步一步来</li>
+          <li>每个重要决定都和你确认</li>
+          <li>适合想一直维护下去的项目</li>
+        </ul>
+        <button class="btn btn-primary" onclick="pickDoor('long')">选这个，认真开始</button>
+      </div>
+    </div>
+
+    <div class="swap-note">选错了也没关系：以后随时可以在「设置」里换。</div>
+
+    <div class="decide-row">
+      <button class="btn btn-soft" onclick="decideForMe()">✨ 你帮我决定</button>
+      <div class="decide-panel" id="decidePanel">
+        <strong>我的建议</strong>
+        <p class="tip">听起来你想先试试看？那我建议「快速做一个能用的」——先把想法变成真的，用过之后不合适，随时可以换另一种做法。</p>
+        <button class="btn btn-primary" onclick="pickDoor('quick')">就听你的</button>
+        <button class="btn btn-ghost" onclick="closeDecide()">我再想想</button>
+      </div>
+    </div>
+
+    <div class="other-pages">
+      原型目录预览：
+      <a href="page-chat-main.prototype.html">② 聊天主界面</a> ·
+      <a href="page-preview-fix.prototype.html">③ 预览与点选纠错</a> ·
+      <a href="page-timeline-rollback.prototype.html">④ 时间轴与回滚</a>
+    </div>
+  </main>
+
+  <div class="confirm-bar" id="confirmBar">
+    <span class="msg" id="confirmMsg"></span>
+    <a class="go" href="page-chat-main.prototype.html">进入对话 →</a>
+  </div>
+
+  <footer>向导助手 · 原型演示（模拟数据） · 你的内容保存在你自己的电脑上。</footer>
+
+<script>
+  var names = { quick: "快速做一个能用的", long: "长期慢慢打磨" };
+  function pickDoor(kind){
+    document.getElementById('doorQuick').classList.toggle('selected', kind==='quick');
+    document.getElementById('doorLong').classList.toggle('selected', kind==='long');
+    closeDecide();
+    var bar = document.getElementById('confirmBar');
+    document.getElementById('confirmMsg').textContent =
+      "好的，就按「" + names[kind] + "」来。以后想改也可以。";
+    bar.classList.add('show');
+  }
+  function decideForMe(){
+    document.getElementById('decidePanel').classList.add('show');
+  }
+  function closeDecide(){
+    document.getElementById('decidePanel').classList.remove('show');
+  }
+</script>
+</body>
+</html>

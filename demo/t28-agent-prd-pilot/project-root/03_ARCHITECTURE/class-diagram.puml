@@ -1,0 +1,445 @@
+@startuml class-diagram
+' =====================================================================
+' 向导Agent与编程Agent多智能体协同开发平台 —— 核心领域与运行时组件类图
+' 树/节点: t28a / t28a-W5-arch（架构设计师 G3）  版本: v1.0  日期: 2026-11-15
+' 机读约束（需求源 §8.4 / 裁判硬约束 H3/H8）: 本图为 .puml 文本规约，
+' 裁判引擎据此对代码结构做一致性比对；参与者类名与 sequence-diagrams/*.puml 一致。
+' =====================================================================
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide circle
+
+title 向导Agent协同开发平台 —— 核心领域与运行时组件类图 v1.0
+
+package "domain 领域模型" {
+
+  enum ProjectMode {
+    QUICK
+    LONGTERM
+  }
+
+  enum ProjectStatus {
+    ACTIVE
+    ARCHIVED
+    CLOSED
+  }
+
+  enum SessionStage {
+    MODE_GATE
+    REQUIREMENTS
+    PROTOTYPE
+    ARCHITECTURE
+    PLANNING
+    CODING
+    TESTING
+    DELIVERY
+  }
+
+  enum DocKind {
+    PRD
+    USER_STORY
+    ARCHITECTURE
+    CLASS_DIAGRAM
+    SEQUENCE_DIAGRAM
+    DATA_MODEL
+    API_SPEC
+    SPRINT_PLAN
+    TEAM_CONFIG
+    WORKFLOW
+    FEATURE
+    TEST_PLAN
+    CHANGELOG
+    PROTOTYPE
+  }
+
+  enum SnapshotTrigger {
+    INITIAL_GENERATED
+    BEFORE_CONFIRM
+    AFTER_CONFIRM
+    MODE_SWITCH
+    BEFORE_ROLLBACK
+  }
+
+  enum GwtCategory {
+    NORMAL
+    BOUNDARY
+    EXCEPTION
+  }
+
+  enum JudgeDecision {
+    PASS
+    SUGGEST
+    REJECT
+  }
+
+  enum TraceEventType {
+    PROJECT_CREATED
+    ROUND_SUBMITTED
+    ROLE_SWITCHED
+    PRD_CONFIRMED
+    PROTOTYPE_CONFIRMED
+    USER_UNDO
+    CLICK_FIX
+    MODE_SWITCHED
+    CODING_EXECUTED
+    REPAIR_TRIGGERED
+    JUDGE_VERDICT
+    SATISFACTION_MARKED
+    PROJECT_CLOSED
+  }
+
+  enum RoleFamily {
+    GUIDE
+    CODING
+  }
+
+  class Project {
+    +id: String
+    +name: String
+    +mode: ProjectMode
+    +templateKey: String
+    +status: ProjectStatus
+    +rootPath: String
+    +stage: SessionStage
+    +createdAt: DateTime
+    +updatedAt: DateTime
+    --
+    +changeMode(newMode: ProjectMode): Boolean
+    +advanceStage(next: SessionStage): Boolean
+    +close(finalStatus: ProjectStatus): void
+  }
+
+  class Session {
+    +id: String
+    +projectId: String
+    +stage: SessionStage
+    +startedAt: DateTime
+    +contextSummary: String
+    --
+    +appendRound(round: DialogueRound): void
+    +resume(): void
+    +exportContext(): String
+  }
+
+  class DialogueRound {
+    +id: String
+    +seq: int
+    +userInput: String
+    +inputKind: String
+    +guideReply: String
+    +cardOptions: List<String>
+    +decidedBy: String
+    +ts: DateTime
+    --
+    +toMessage(): String
+  }
+
+  class Document {
+    +id: String
+    +projectId: String
+    +kind: DocKind
+    +path: String
+    +version: int
+    +status: String
+    +confirmedByUser: Boolean
+    --
+    +validateStructure(): Boolean
+    +confirm(): void
+    +newVersion(): Document
+  }
+
+  class Snapshot {
+    +id: String
+    +projectId: String
+    +seq: int
+    +trigger: SnapshotTrigger
+    +description: String
+    +ts: DateTime
+    +archived: Boolean
+    +contentHash: String
+    --
+    +markArchived(): void
+  }
+
+  abstract class AgentRole {
+    +roleKey: String
+    +displayName: String
+    +family: RoleFamily
+    +systemPromptPath: String
+    +modelBinding: String
+    --
+    +loadPrompt(): String
+  }
+
+  class GuideAgentRole {
+    +activationStage: SessionStage
+    +parallelWith: List<String>
+  }
+
+  class CodingAgentRole {
+    +activationCondition: String
+    +deliverables: List<String>
+  }
+
+  class TeamConfig {
+    +id: String
+    +projectId: String
+    +collaborationFlow: String
+    +activatedAt: DateTime
+    --
+    +activate(role: AgentRole): void
+    +deactivate(roleKey: String): void
+  }
+
+  class Sprint {
+    +id: String
+    +projectId: String
+    +index: int
+    +goal: String
+    +durationWeeks: int
+    +status: String
+    +deliverables: List<String>
+    --
+    +confirmRhythm(): void
+    +deliver(): void
+  }
+
+  class GwtScenario {
+    +id: String
+    +projectId: String
+    +fRef: String
+    +featureFile: String
+    +category: GwtCategory
+    +given: List<String>
+    +when: List<String>
+    +then: List<String>
+    +lastPassed: Boolean
+    --
+    +run(): Boolean
+  }
+
+  class TestReport {
+    +id: String
+    +projectId: String
+    +sprintId: String
+    +total: int
+    +passed: int
+    +failed: int
+    +ts: DateTime
+    --
+    +passRate(): double
+    +failedScenarios(): List<GwtScenario>
+  }
+
+  class JudgeVerdict {
+    +id: String
+    +projectId: String
+    +targetKind: String
+    +targetRef: String
+    +hardResults: Map<String, Boolean>
+    +softResults: Map<String, String>
+    +decision: JudgeDecision
+    +rejectCount: int
+    +reasons: List<String>
+    +ts: DateTime
+    --
+    +isGateOpen(): Boolean
+    +recordReject(): void
+  }
+
+  class Template {
+    +key: String
+    +name: String
+    +teamPreset: List<String>
+    +docChecklist: List<String>
+    +workflow: String
+    +sprintRhythm: String
+    +builtin: Boolean
+    --
+    +match(keywords: List<String>): int
+    +importFrom(config: String): Template
+  }
+
+  class ModificationIntent {
+    +id: String
+    +projectId: String
+    +elementSelector: String
+    +elementType: String
+    +context: String
+    +userWish: String
+    +spec: String
+    +status: String
+    +createdAt: DateTime
+    --
+    +toSpec(): String
+    +cancel(): void
+  }
+
+  class TraceEvent {
+    +id: String
+    +projectId: String
+    +type: TraceEventType
+    +ts: DateTime
+    +roundNo: int
+    +payload: Map<String, String>
+    +anonymized: Boolean
+    --
+    +redact(): TraceEvent
+  }
+}
+
+package "runtime 运行时组件（模块类，与 architecture.md M0–M9 对应）" {
+
+  class DesktopShell {
+    --
+    +renderPage(pageId: String): void
+    +showCopy(text: String): void
+    +showProgress(stageLabel: String): void
+    +refreshPreview(): void
+    +callApi(endpoint: String, body: Map): Map
+  }
+
+  class DialogueRouter {
+    +activeRole: AgentRole
+    +currentStage: SessionStage
+    --
+    +submitRound(sessionId: String, content: String): Map
+    +route(stage: SessionStage): AgentRole
+    +switchRole(next: AgentRole): void
+    +broadcastCopy(scenario: String): String
+  }
+
+  class Orchestrator {
+    +projectId: String
+    --
+    +startProject(mode: ProjectMode, hint: String): Project
+    +advanceStage(): Boolean
+    +dispatch(workPackage: String): void
+    +executeFixIntents(ids: List<String>): String
+    +handleFailure(err: String): String
+    +retryWithNewStrategy(): void
+    +inferTemplate(dialogue: String): Template
+  }
+
+  class ModelGateway {
+    --
+    +invoke(role: AgentRole, prompt: String, context: String): String
+    +invokeVision(imageRef: String, prompt: String): String
+    +reportProgress(elapsedMs: int): void
+    +accountTokens(role: AgentRole, count: int): void
+  }
+
+  class DocGenEngine {
+    --
+    +generatePrd(project: Project): Document
+    +generateUserStories(prd: Document): Document
+    +generateGwt(prd: Document): List<GwtScenario>
+    +appendChangelog(entry: String): void
+  }
+
+  class PrototypeEngine {
+    --
+    +generatePrototype(prd: Document): Document
+    +reviewByVision(htmlPath: String): List<String>
+    +captureClickTarget(evt: Map): Map
+    +refreshPreview(): void
+    +importFigma(assetRef: String): void
+  }
+
+  class PlantUmlEngine {
+    --
+    +generateClassDiagram(spec: String): Document
+    +generateSequenceDiagram(spec: String): Document
+    +validate(text: String): List<String>
+    +extractStructure(text: String): Map
+  }
+
+  class JudgeEngine {
+    --
+    +hardCheck(targetRef: String): JudgeVerdict
+    +softEvaluate(targetRef: String): JudgeVerdict
+    +dispatchWorkPackage(pkg: String): void
+  }
+
+  class GwtTestRunner {
+    --
+    +runAll(projectId: String): TestReport
+    +runScenarios(ids: List<String>): TestReport
+  }
+
+  class SnapshotManager {
+    --
+    +autoSnapshot(project: Project, trigger: SnapshotTrigger, desc: String): Snapshot
+    +listSnapshots(projectId: String): List<Snapshot>
+    +rollbackTo(snapshotId: String): Snapshot
+  }
+
+  class TelemetryCollector {
+    --
+    +track(type: TraceEventType, payload: Map): void
+    +anonymize(payload: Map): Map
+    +export(projectId: String): String
+  }
+}
+
+' ------------------------- 领域关系 -------------------------
+Project "1" *-- "0..*" Session : 拥有会话
+Session "1" *-- "0..*" DialogueRound : 对话轮次
+Project "1" *-- "0..*" Document : 文档体系
+Project "1" *-- "0..*" Snapshot : 线性时间轴
+Project "1" *-- "0..*" TraceEvent : 埋点流
+Project "1" *-- "0..*" JudgeVerdict : 判定记录
+Project "1" *-- "0..1" TeamConfig : 团队配置
+Project "1" *-- "0..*" ModificationIntent : 想改清单
+Project "1" o-- "0..*" Sprint : Sprint序列
+Project ..> Template : 模板推断(F-14)
+
+TeamConfig o-- "1..*" AgentRole : 激活角色(F-13)
+AgentRole <|-- GuideAgentRole : 继承-向导系
+AgentRole <|-- CodingAgentRole : 继承-编程系
+
+Sprint "1" o-- "0..*" GwtScenario : 验收范围
+TestReport "1" o-- "0..*" GwtScenario : 覆盖场景
+GwtScenario ..> Document : 由PRD的F-xx生成(F-15)
+JudgeVerdict ..> Document : 校验对象(H1-H6)
+JudgeVerdict ..> TestReport : 校验输入(H7)
+JudgeVerdict ..> Sprint : 交付门禁(H5)
+ModificationIntent ..> Snapshot : 执行前强制快照(F-07联动F-08)
+
+' ------------------------- 运行时依赖 -------------------------
+DesktopShell ..> DialogueRouter : 提交轮次/文案呈现
+DesktopShell ..> Orchestrator : IPC/REST(E-01…E-30)
+DialogueRouter --> "1" AgentRole : 当前激活(F-09)
+DialogueRouter ..> ModelGateway : 模型调用
+DialogueRouter ..> TelemetryCollector : 埋点#2/#3/#7
+Orchestrator ..> ModelGateway : 统一网关(M9.a)
+Orchestrator ..> DocGenEngine : 产出编排
+Orchestrator ..> PrototypeEngine : 产出编排
+Orchestrator ..> PlantUmlEngine : 产出编排
+Orchestrator ..> JudgeEngine : 阶段门禁(C7)
+Orchestrator ..> GwtTestRunner : 产出编排
+Orchestrator ..> SnapshotManager : 快照时机触发
+Orchestrator ..> TelemetryCollector : 埋点#1/#8/#10
+DocGenEngine ..> ModelGateway : 模型调用
+DocGenEngine ..> Document : 产出
+DocGenEngine ..> GwtScenario : 产出场景
+PrototypeEngine ..> ModelGateway : 视觉审查(F-06)
+PrototypeEngine ..> ModificationIntent : 捕获生成(F-07)
+PrototypeEngine ..> Document : 产出原型
+PlantUmlEngine ..> Document : 产出规约(F-11)
+JudgeEngine ..> JudgeVerdict : 产出判定(F-16/F-17)
+GwtTestRunner ..> TestReport : 产出报告(F-15)
+GwtTestRunner ..> GwtScenario : 执行
+SnapshotManager ..> Snapshot : 创建/恢复(F-08)
+TelemetryCollector ..> TraceEvent : 产出事件(F-20)
+ModelGateway ..> AgentRole : 读取模型绑定(NFR-03)
+
+legend right
+  记号说明：*-- 组合（整体持有生命周期）；o-- 聚合（共享引用）；
+  父类<|--子类 继承；..>与--> 依赖/关联。
+  AgentRole 角色实例化：G1需求分析师·G2 UI/UX顾问·G3架构设计师·G4工程经理 = GuideAgentRole；
+  P1–P8 编程角色池 = CodingAgentRole（00_AGENT_ROLES.md §2/§3）。
+  TraceEventType 13 值 = 需求源 §12.4 埋点事件清单一一对应。
+endlegend
+
+@enduml

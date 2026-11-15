@@ -1,0 +1,86 @@
+@startuml seq-01-requirements-to-prd-gate
+' =====================================================================
+' 时序图① 需求对话 → PRD定稿 → 裁判第一道关（含向导角色静默切换）
+' 树/节点: t28a / t28a-W5-arch  对应旅程: UF-01/UF-02（user-flows.md）
+' 覆盖: F-02 多轮需求挖掘 · F-03/F-04 PRD定稿 · F-05/F-06 原型并行 ·
+'       F-09 角色静默切换 · F-16 裁判硬约束门禁 · F-19 安抚文案
+' =====================================================================
+actor 用户
+participant DesktopShell
+participant DialogueRouter
+participant Orchestrator
+participant ModelGateway
+participant DocGenEngine
+participant PrototypeEngine
+participant JudgeEngine
+participant SnapshotManager
+participant TelemetryCollector
+autonumber
+
+== 阶段一：需求对话（需求分析师 G1 ∥ UI/UX顾问 G2 并行）==
+
+用户 -> DesktopShell : 用生活化语言说出想法 / 点选卡片
+DesktopShell -> DialogueRouter : submitRound(sessionId, content)
+DialogueRouter -> Orchestrator : currentStage(projectId)
+Orchestrator --> DialogueRouter : stage = REQUIREMENTS
+DialogueRouter -> DialogueRouter : route(stage) 激活需求分析师G1\n(角色静默切换, 用户无感知 F-09)
+DialogueRouter -> ModelGateway : invoke(G1需求分析师, 3-5个引导问题, 已确认需求清单)
+ModelGateway -> TelemetryCollector : track(ROUND_SUBMITTED, 轮次+时间戳)
+ModelGateway --> DialogueRouter : 向导回复(卡片单选题, 每题附"你帮我决定")
+DialogueRouter --> DesktopShell : 向导消息 + 卡片题
+DesktopShell --> 用户 : 展示卡片（界面只呈现单一"向导"，不显示角色细节）
+
+loop 并行协作（关键协作关系C1: G1 ∥ G2）
+  DialogueRouter -> ModelGateway : invoke(G2 UI/UX顾问, 同轮答案的界面含义)
+  Orchestrator -> PrototypeEngine : generatePrototype(需求草稿)
+  PrototypeEngine -> ModelGateway : invokeVision(原型截图, 布局与可用性审查 F-06)
+  ModelGateway --> PrototypeEngine : 问题清单（明显问题自动修正后回预览）
+  PrototypeEngine --> Orchestrator : 单文件HTML原型(wireframes/*.prototype.html)
+end
+
+Orchestrator -> SnapshotManager : autoSnapshot(INITIAL_GENERATED, "画好第一版页面")
+SnapshotManager --> Orchestrator : Snapshot(初版, 线性时间轴追加)
+Orchestrator --> DesktopShell : 原型卡片("打开原型看看") + 快照轻提示
+DesktopShell --> 用户 : 原型预览入口（预览优先, 不显示源码 F-05）
+
+== 阶段二：PRD 定稿与用户确认 ==
+
+用户 -> DesktopShell : 确认「确认开工」（PRD + 原型都满意）
+DesktopShell -> Orchestrator : confirmDocument(prdDocId)
+Orchestrator -> SnapshotManager : autoSnapshot(BEFORE_CONFIRM, "确认开工前")
+Orchestrator -> DocGenEngine : finalizePrd(已确认需求清单)
+DocGenEngine -> DocGenEngine : 结构化front-matter + 生活化正文\n(NFR-05 文档双标准)
+DocGenEngine --> Orchestrator : Document(PRD, 定稿, 落盘 01_PRD/prd.md)
+note right of DocGenEngine
+  长期迭代型: 同时产出 user-stories.md
+  (每条US-xx对应一个F-xx, F-04)
+  快消型: 精简PRD四要素 (F-03)
+end note
+
+== 阶段三：裁判第一道关（需求源 §6.2 / §9.2）==
+
+Orchestrator -> JudgeEngine : hardCheck(PRD文档, mode)
+JudgeEngine -> JudgeEngine : H1 四要素存在性(项目名称/目标用户/功能列表/验收标准)\nH7 每个F-xx均有对应GWT场景
+alt 长期迭代型（全量软约束评估）
+  JudgeEngine -> ModelGateway : softEvaluate(S1逻辑一致性/S2可测试性/S3完整性/S4可读性)
+  ModelGateway --> JudgeEngine : 四维结论(通过/建议改进/退回)
+end
+JudgeEngine --> Orchestrator : JudgeVerdict(判定结果落 judgments/)
+
+alt Verdict = PASS
+  Orchestrator -> DialogueRouter : switchRole(G3架构设计师)\n快消型:G3隐于后台 / 长期型:G3跳到前台(F-09)
+  DialogueRouter -> ModelGateway : 预加载G3 System Prompt + 长上下文模型绑定(NFR-03)
+  Orchestrator -> TelemetryCollector : track(PRD_CONFIRMED) + track(JUDGE_VERDICT, PASS) + track(ROLE_SWITCHED)
+  Orchestrator --> DesktopShell : 阶段推进 ARCHITECTURE + 生活化告知
+  DesktopShell --> 用户 : "计划写好了，接下来聊聊怎么搭"
+
+else Verdict = REJECT（退回）
+  Orchestrator -> DocGenEngine : 退回补充(缺项清单)
+  Orchestrator -> TelemetryCollector : track(JUDGE_VERDICT, REJECT, 违规类型)
+  Orchestrator --> DesktopShell : 安抚文案"我再补充完善一下计划，很快"\n(不向用户暴露退回细节 F-19)
+  alt 快消型且 rejectCount ≥ 2（需求源 §9.3）
+    Orchestrator --> DesktopShell : 提示需要人工介入
+  end
+end
+
+@enduml

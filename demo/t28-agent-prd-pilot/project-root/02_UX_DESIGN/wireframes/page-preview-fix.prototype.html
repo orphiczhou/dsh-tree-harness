@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>看看效果 · 点选纠错 — 向导助手</title>
+<style>
+  :root{
+    --c-primary:#2E9E6B;--c-primary-deep:#1F7A52;--c-primary-soft:#E9F6EF;
+    --c-bg:#F7F5F0;--c-card:#FFFFFF;
+    --c-text:#2B2A26;--c-text-sub:#6E6A60;--c-text-weak:#9A958A;
+    --c-line:#E5E1D8;--c-warn:#E8A13C;--c-warn-soft:#FBF3E4;
+    --c-error:#D96459;--c-rollback:#4A7EBB;--c-snapshot:#8071A8;
+    --r-card:16px;--r-btn:12px;--r-input:12px;--r-chip:999px;
+    --shadow-card:0 2px 8px rgba(43,42,38,.06);
+    --shadow-pop:0 8px 24px rgba(43,42,38,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:var(--c-bg);color:var(--c-text);font-size:17px;line-height:1.7;
+    animation:pageIn .24s ease-out;min-height:100vh;
+  }
+  @keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .topbar{display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--c-card);
+    border-bottom:1px solid var(--c-line);flex-wrap:wrap}
+  .topbar a{color:var(--c-text-sub);text-decoration:none;font-size:14px}
+  .topbar a:hover{text-decoration:underline}
+  .logo{font-weight:700;font-size:19px}
+  .steps{font-size:14px;color:var(--c-text-sub);display:flex;gap:6px}
+  .steps span{padding:3px 12px;border-radius:var(--r-chip);background:#F2EFE8}
+  .steps span.on{background:var(--c-primary-soft);color:var(--c-primary-deep);font-weight:600}
+  .snapchip{margin-left:auto;display:inline-flex;gap:6px;background:#F4F1FA;color:var(--c-snapshot);
+    font-size:14px;border:1px solid #DDD6EC;border-radius:var(--r-chip);padding:4px 14px;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px;display:flex;gap:24px;flex-wrap:wrap}
+  .left{flex:1.6;min-width:340px}
+  .right{flex:1;min-width:300px}
+  .guide{
+    background:#EAF1F9;border:1px solid #CBDCEC;border-radius:var(--r-btn);
+    padding:10px 16px;margin-bottom:16px;font-size:16px;
+  }
+  .canvas{
+    background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r-card);
+    box-shadow:var(--shadow-card);padding:28px 26px;position:relative;min-height:420px;
+    transition:opacity .32s;
+  }
+  .canvas.fade{opacity:0}
+  .fx{cursor:pointer;border-radius:8px;transition:outline-color .12s}
+  .fx:hover{outline:2px dashed var(--c-primary);outline-offset:3px}
+  .fx.locked{outline:2px solid var(--c-primary);outline-offset:3px}
+  .proto-title{font-size:24px;font-weight:700;margin-bottom:4px}
+  .proto-sub{color:var(--c-text-sub);font-size:14px;margin-bottom:20px}
+  .cand{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    border:1px solid var(--c-line);border-radius:var(--r-btn);padding:12px 16px;margin-bottom:10px}
+  .cand .name{font-weight:600}
+  .cand .votes{font-size:14px;color:var(--c-text-weak)}
+  .vote{
+    font-family:inherit;font-size:16px;border:1.5px solid var(--c-line);background:var(--c-card);
+    border-radius:var(--r-btn);padding:8px 22px;cursor:pointer;color:var(--c-text);
+  }
+  .vote.fixed{background:var(--c-primary);border-color:var(--c-primary);color:#fff;font-size:18px;padding:10px 30px;font-weight:700;
+    box-shadow:0 2px 10px rgba(46,158,107,.35);transition:all .3s}
+  .result{margin-top:22px;border-top:1px dashed var(--c-line);padding-top:16px}
+  .bar{height:14px;border-radius:7px;background:#EDEAE2;overflow:hidden;margin:6px 0 14px}
+  .bar i{display:block;height:100%;border-radius:7px}
+  /* 标注气泡 */
+  .pop{
+    position:absolute;z-index:40;width:300px;display:none;
+    background:var(--c-card);border:1px solid var(--c-line);border-radius:14px;
+    box-shadow:var(--shadow-pop);padding:16px;animation:popIn .2s ease-out;
+  }
+  @keyframes popIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .pop .t{font-weight:600;margin-bottom:10px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .chip{
+    background:var(--c-card);border:1.5px solid var(--c-line);border-radius:var(--r-chip);
+    padding:5px 14px;font-size:14px;cursor:pointer;font-family:inherit;color:var(--c-text);
+    min-height:32px;
+  }
+  .chip:hover{background:var(--c-primary-soft);border-color:var(--c-primary)}
+  .pop textarea{
+    width:100%;font-family:inherit;font-size:16px;border:1.5px solid var(--c-line);
+    border-radius:var(--r-input);padding:10px 12px;min-height:64px;resize:vertical;outline:none;
+  }
+  .pop textarea:focus{border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(46,158,107,.15)}
+  .pop .acts{display:flex;justify-content:space-between;margin-top:10px}
+  /* 想改清单 */
+  .panel{background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r-card);
+    box-shadow:var(--shadow-card);padding:18px}
+  .panel h3{font-size:19px;margin-bottom:10px}
+  .intent{
+    background:#FBF6E8;border:1px solid #EFE6CB;border-radius:var(--r-btn);
+    padding:10px 14px;margin-bottom:10px;font-size:16px;
+  }
+  .intent .row2{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .intent small{color:var(--c-text-sub);display:block;font-size:14px}
+  .intent.done{opacity:.72}
+  .intent.done::after{content:" ✓ 已改好";color:var(--c-primary);font-size:14px;font-weight:700}
+  .nolink{background:none;border:none;color:var(--c-text-sub);cursor:pointer;font-size:14px;
+    font-family:inherit;text-decoration:underline}
+  .empty{color:var(--c-text-sub);font-size:14px}
+  .progress{display:none;margin-top:14px;background:var(--c-card);border:1px solid var(--c-line);
+    border-radius:var(--r-card);padding:14px 16px}
+  .progress.show{display:block;animation:pageIn .2s ease-out}
+  .progress .dot{font-size:20px;animation:breath 2.4s ease-in-out infinite}
+  @keyframes breath{0%,100%{opacity:.5}50%{opacity:1}}
+  .track{height:12px;border-radius:6px;background:#EDEAE2;margin-top:10px;overflow:hidden}
+  .fill{height:100%;width:15%;background:var(--c-primary);border-radius:6px;transition:width 1s linear}
+  .donebar{
+    display:none;margin-top:14px;background:var(--c-primary-soft);border:1px solid #CFE9DC;
+    border-radius:var(--r-btn);padding:12px 16px;
+  }
+  .donebar.show{display:flex;gap:10px;animation:pageIn .22s ease-out}
+  .toast{position:fixed;right:20px;bottom:24px;z-index:50;display:none;background:var(--c-card);
+    border:1px solid var(--c-line);border-left:3px solid var(--c-snapshot);border-radius:var(--r-btn);
+    box-shadow:var(--shadow-pop);padding:12px 16px;font-size:14px;max-width:340px}
+  .toast.show{display:block;animation:toastIn .26s ease-out}
+  @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .bottomnav{max-width:1080px;margin:0 auto;padding:0 20px 60px;display:flex;gap:16px}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="page-chat-main.prototype.html">← 回到对话</a>
+    <div class="logo">🧭 向导助手</div>
+    <div class="steps"><span>① 选个用法</span><span>② 聊聊想法</span><span class="on">③ 看效果</span></div>
+    <a class="snapchip" href="page-timeline-rollback.prototype.html">📸 已自动备份 · 14:02</a>
+  </div>
+
+  <div class="wrap">
+    <div class="left">
+      <div class="guide" id="guide">👆 看哪里不顺眼？直接点它试试。点错了也没关系，随时可以「算了，不改了」。</div>
+
+      <div class="canvas" id="canvas">
+        <div class="proto-title fx" data-label="页面标题">🗳️ 班委投票</div>
+        <div class="proto-sub fx" data-label="页面说明">选出你心目中的班委 · 每人限投一票</div>
+
+        <div class="cand"><span class="name">张三</span><span class="votes">12 票</span><button class="vote fx" data-label="投票按钮">投ta一票</button></div>
+        <div class="cand"><span class="name">李四</span><span class="votes">9 票</span><button class="vote fx" data-label="投票按钮">投ta一票</button></div>
+        <div class="cand"><span class="name">王五</span><span class="votes">5 票</span><button class="vote fx" data-label="投票按钮">投ta一票</button></div>
+
+        <div class="result fx" data-label="结果区">
+          <b style="font-size:16px">目前的结果</b>
+          <div style="font-size:14px;color:var(--c-text-sub)">张三</div>
+          <div class="bar"><i style="width:48%;background:#2E9E6B"></i></div>
+          <div style="font-size:14px;color:var(--c-text-sub)">李四</div>
+          <div class="bar"><i style="width:36%;background:#4A7EBB"></i></div>
+          <div style="font-size:14px;color:var(--c-text-sub)">王五</div>
+          <div class="bar"><i style="width:20%;background:#E8A13C"></i></div>
+        </div>
+
+        <div class="pop" id="pop">
+          <div class="t">你想把<strong id="popTarget">这里</strong>改成什么样？</div>
+          <div class="chips">
+            <button class="chip" onclick="pick('换个更醒目的颜色')">换个更醒目的颜色</button>
+            <button class="chip" onclick="pick('改一下文字')">改一下文字</button>
+            <button class="chip" onclick="pick('换个位置')">换个位置</button>
+            <button class="chip" onclick="pick('')">说点别的…</button>
+          </div>
+          <textarea id="popText" placeholder="也可以用自己的话说，比如：让它更大更醒目一点"></textarea>
+          <div class="acts">
+            <button class="btn btn-primary" style="border-radius:12px;font-size:16px;padding:10px 16px" onclick="keepIt()">先记下来</button>
+            <button class="btn btn-ghost" onclick="closePop()">算了，不改了</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="panel">
+        <h3>📝 想改的地方</h3>
+        <div id="intentList"><div class="empty">还没有记录。点左边预览里的任何东西，我都会先记下来，等你说「开始改」才动手。</div></div>
+        <div class="progress" id="prog">
+          <div class="main" style="display:flex;gap:10px">
+            <span class="dot">🧭</span>
+            <div style="flex:1"><b>我正在帮你生成可运行的版本，这个过程只发生在安全环境里，不会影响你的电脑文件。</b>
+              <div style="font-size:14px;color:var(--c-text-sub);margin-top:4px" id="stage">正在改你点的那 <span id="nfix">1</span> 处</div>
+              <div class="track"><div class="fill" id="fill"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="donebar" id="donebar">✅ <span><b>改好了，你看看效果？不满意随时告诉我。</b></span></div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="startBtn" style="font-size:16px;padding:10px 18px" onclick="startFix()" disabled>让向导开始改 →</button>
+          <a class="btn btn-ghost" style="text-decoration:none;font-size:16px" href="page-chat-main.prototype.html">整体都还行，去确认 →</a>
+        </div>
+      </div>
+      <p style="font-size:14px;color:var(--c-text-sub);margin-top:12px">
+        🔒 每次改动前我都会自动备份。改坏了随时可以在
+        <a href="page-timeline-rollback.prototype.html" style="color:var(--c-rollback)">历史足迹</a> 里回到之前的版本，不会丢东西。
+      </p>
+    </div>
+  </div>
+
+  <div class="toast" id="snapToast"></div>
+
+<script>
+var canvas = document.getElementById('canvas');
+var pop = document.getElementById('pop');
+var popText = document.getElementById('popText');
+var popTarget = document.getElementById('popTarget');
+var currentEl = null;
+var intents = [];      // {label, text, el, state}
+var fixedOnce = false;
+
+/* 可点元素 */
+document.querySelectorAll('.fx').forEach(function(el){
+  el.addEventListener('click', function(e){
+    if (el.classList.contains('donefx')) { /* 已改过的仍可再点 */ }
+    openPop(el, e);
+  });
+});
+
+function openPop(el){
+  if (currentEl) currentEl.classList.remove('locked');
+  currentEl = el; el.classList.add('locked');
+  popTarget.textContent = '【' + (el.dataset.label || '这里') + '】';
+  popText.value = '';
+  pop.style.display = 'block';
+  var cr = canvas.getBoundingClientRect(), er = el.getBoundingClientRect();
+  var left = er.left - cr.left, top = er.bottom - cr.top + 10;
+  if (left + 310 > cr.width) left = Math.max(8, cr.width - 310);
+  if (top + pop.offsetHeight > cr.height) top = Math.max(8, er.top - cr.top - pop.offsetHeight - 10);
+  pop.style.left = left + 'px'; pop.style.top = top + 'px';
+}
+function closePop(){
+  pop.style.display = 'none';
+  if (currentEl) { currentEl.classList.remove('locked'); currentEl = null; }
+}
+function pick(v){ popText.value = v || ''; popText.focus(); }
+canvas.addEventListener('click', function(e){ if(!pop.contains(e.target) && !e.target.classList.contains('fx')) closePop(); });
+
+function keepIt(){
+  var text = popText.value.trim() || '换个更好看的样子';
+  var label = currentEl ? (currentEl.dataset.label || '这里') : '这里';
+  intents.push({ label: label, text: text, el: currentEl, state: 'todo' });
+  closePop(); renderList();
+  var g = document.getElementById('guide');
+  g.textContent = '👍 记下来了。可以继续点别的地方，记完一起改。';
+}
+function removeIntent(i){
+  intents.splice(i,1); renderList();
+}
+function renderList(){
+  var box = document.getElementById('intentList');
+  if (!intents.length){
+    box.innerHTML = '<div class="empty">还没有记录。点左边预览里的任何东西，我都会先记下来，等你说「开始改」才动手。</div>';
+    document.getElementById('startBtn').disabled = true; return;
+  }
+  var h = '';
+  intents.forEach(function(it,i){
+    h += '<div class="intent '+(it.state==='done'?'done':'')+'"><div class="row2"><span>我点了【'+it.label+'】，想让它变成：'+it.text+'</span>'+
+         (it.state==='todo' ? '<button class="nolink" onclick="removeIntent('+i+')">不改了</button>' : '') +
+         '</div><small>'+(it.state==='done'?'已经按你说的改好啦':'先记着，还没动手改')+'</small></div>';
+  });
+  box.innerHTML = h;
+  var hasTodo = intents.some(function(it){ return it.state==='todo'; });
+  document.getElementById('startBtn').disabled = !hasTodo;
+  document.getElementById('nfix').textContent = intents.filter(function(it){return it.state==='todo';}).length;
+}
+
+function showToast(msg){
+  var t = document.getElementById('snapToast');
+  t.innerHTML = '📸 ' + msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 4000);
+}
+
+/* 开始改：先备份 → 进度 → 刷新 → 修改成功原文 */
+function startFix(){
+  document.getElementById('startBtn').disabled = true;
+  showToast('已自动备份：修改前（快照）');
+  setTimeout(function(){
+    document.getElementById('prog').classList.add('show');
+    setTimeout(function(){ document.getElementById('fill').style.width='62%'; }, 900);
+    setTimeout(finishFix, 2600);
+  }, 600);
+}
+function finishFix(){
+  canvas.classList.add('fade');
+  setTimeout(function(){
+    intents.forEach(function(it){ if(it.state==='todo'){ it.state='done'; if(it.el){ it.el.classList.add('fixed'); it.el.classList.add('donefx'); } } });
+    renderList();
+    canvas.classList.remove('fade');
+    document.getElementById('prog').classList.remove('show');
+    document.getElementById('donebar').classList.add('show');
+    showToast('已自动备份：把你点的地方改醒目了（快照）');
+    fixedOnce = true;
+    var g = document.getElementById('guide');
+    g.textContent = '✅ 改好了！绿色高亮的地方就是刚才改的。还有哪里不顺眼，继续点它。';
+  }, 350);
+}
+</script>
+</body>
+</html>
