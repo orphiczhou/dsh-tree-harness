@@ -23,7 +23,8 @@ import { VirtualClock } from '../src/clock.js'
 import {
   PANEL_LIMITS, TREE_PANEL_TREE_ID_RE, clampInt, truncateChars, textPreview,
   runtimeStateOf, displayStateOf,
-  statusCounts, projectAssignee, projectVerification, projectLeaf,
+  statusCounts,
+  treeStateOf, projectAssignee, projectVerification, projectLeaf,
   projectTreeSummary, projectTreeDetail, flattenEvents, projectEvents, createPanelView,
 } from '../src/panel-view.js'
 import {
@@ -191,6 +192,35 @@ describe('statusCounts / assignee / verification / leaf 投影', () => {
     assert.equal(displayStateOf({ status: 'quarantined' }), 'quarantined')
   })
 
+  test('treeStateOf：root 容器不进「在跑」判定 + 失败优先 + 单叶回落', () => {
+    // 真实成因：tree_plan 的 root leaf 是容器，永远拿不到 done 事件 →
+    // raw status 恒 active。若按 counts 派生，36 棵里 29 棵画成 running。
+    const root = { leaf_id: 'wave2-root', status: 'active' }
+    // 键必须与 leaf_id 一致：treeStateOf 用 leaf_id 认 root（状态文件里键=id）。
+    const withRoot = (extra) => Object.assign({ 'wave2-root': root }, extra)
+    const done = (id) => ({ leaf_id: id, status: 'pending_brief', runtime: { state: 'succeeded' } })
+    const pending = (id) => ({ leaf_id: id, status: 'pending_brief' })
+    const fail = (id) => ({ leaf_id: id, status: 'active', runtime: { state: 'timeout' } })
+    // 容器 root + 全部子叶结算 → 整树 succeeded（旧口径会报 running）
+    assert.equal(treeStateOf(withRoot({ 'w-a': done('w-a'), 'w-b': done('w-b') }), 'wave2-root'), 'succeeded')
+    // 子叶仍在跑 → running
+    assert.equal(treeStateOf(withRoot({ 'w-a': done('w-a'), 'w-b': { leaf_id: 'w-b', status: 'active' } }), 'wave2-root'), 'running')
+    // segment_pending 也算在跑
+    assert.equal(treeStateOf(withRoot({ s: { leaf_id: 's', status: 'segment_pending' } }), 'wave2-root'), 'running')
+    // 子叶全未开始 → pending（root 的 active 不算）
+    assert.equal(treeStateOf(withRoot({ p: pending('p') }), 'wave2-root'), 'pending')
+    // 失败类优先于一切：root 自己超时也算失败
+    assert.equal(treeStateOf({ 'wave2-root': { leaf_id: 'wave2-root', runtime: { state: 'failed' } }, w: done('w') }, 'wave2-root'), 'failed')
+    assert.equal(treeStateOf(withRoot({ w: fail('w'), p: pending('p') }), 'wave2-root'), 'failed')
+    // 只有 root（单叶树）→ 回落 root 自身展示态（这是真在跑）
+    assert.equal(treeStateOf({ r: { leaf_id: 'r', status: 'active' } }, 'r'), 'running')
+    assert.equal(treeStateOf({ r: { leaf_id: 'r', status: 'pruned' } }, 'r'), 'pruned')
+    // 脏数据：rootLeafId 缺失 / 不匹配 / 空 leaves → 不炸
+    assert.equal(treeStateOf({ a: done('a') }, 'nope'), 'succeeded')
+    assert.equal(treeStateOf({}, 'r'), 'pending')
+    assert.equal(treeStateOf(null, 'r'), 'pending')
+  })
+
   test('projectAssignee：只含 provider/model/effort 三键（preset/mechanism 剥除）', () => {
     const a = projectAssignee({ provider: 'zai', model: 'glm-5.3-flash', effort: 'high', preset: 'x', mechanism: 'spawn', secret: 'tok' })
     assert.deepEqual(a, { provider: 'zai', model: 'glm-5.3-flash', effort: 'high' })
@@ -258,11 +288,13 @@ describe('trees 列表 / 详情 / events 三形状', () => {
       leaves: { 'panel-root': { leaf_id: 'panel-root', role: 'root', status: 'active', brief: { goal: '完'.repeat(200) } }, 'panel-C1-worker': richLeafFixture() },
     }
     const s = projectTreeSummary(state, { updatedAt: '2023-11-14T09:00:00.000Z' })
-    assert.deepEqual(Object.keys(s), ['treeId', 'rootLeafId', 'createdAt', 'updatedAt', 'leafCount', 'counts', 'rootGoalPreview'])
+    assert.deepEqual(Object.keys(s), ['treeId', 'rootLeafId', 'createdAt', 'updatedAt', 'leafCount', 'counts', 'state', 'rootGoalPreview'])
     assert.equal(s.treeId, 'panel')
     assert.equal(s.rootLeafId, 'panel-root')
     assert.equal(s.leafCount, 2)
     assert.deepEqual(s.counts, { running: 1, succeeded: 1 })
+    // v1.7.0：root 容器只参与失败判定，不当成「在跑」——worker 已结算 → succeeded
+    assert.equal(s.state, 'succeeded')
     assert.equal(s.updatedAt, '2023-11-14T09:00:00.000Z')
     assert.equal(s.rootGoalPreview.length, PANEL_LIMITS.goalPreviewChars)   // {"goal":"完…" 截到 120 字符
     assert.ok(s.rootGoalPreview.endsWith('…'))
@@ -282,8 +314,9 @@ describe('trees 列表 / 详情 / events 三形状', () => {
       leaves: { 'panel-root': { leaf_id: 'panel-root', role: 'root', status: 'active', session_id: ROOT, brief: { goal: '面板夹具树' } }, 'panel-C1-worker': richLeafFixture() },
     }
     const d = projectTreeDetail(state)
-    assert.deepEqual(Object.keys(d), ['treeId', 'createdAt', 'updatedAt', 'root', 'leaves', 'stats'])
+    assert.deepEqual(Object.keys(d), ['treeId', 'createdAt', 'updatedAt', 'state', 'root', 'leaves', 'stats'])
     assert.equal(d.updatedAt, d.createdAt)
+    assert.equal(d.state, 'succeeded')
     assert.deepEqual(d.root, { leafId: 'panel-root', status: 'running', rawStatus: 'active', runtimeState: null, goalPreview: '{"goal":"面板夹具树"}' })
     assert.deepEqual(d.leaves.map((l) => l.leafId), ['panel-C1-worker', 'panel-root'])   // leafId 升序
     assert.deepEqual(d.stats, { total: 2, byStatus: { running: 1, succeeded: 1 }, sessions: 2 })   // registry(1) ∪ runtime(2)
@@ -354,7 +387,7 @@ describe('createPanelView：memoryStore / fsStore 读取面', () => {
     assert.ok(new Date(r.updatedAt).getTime() > 0)
     assert.deepEqual(r.trees.map((t) => t.treeId), ['aaab', 'aaac'])   // updatedAt 降序（新树在前）
     for (const t of r.trees) {
-      assert.deepEqual(Object.keys(t), ['treeId', 'rootLeafId', 'createdAt', 'updatedAt', 'leafCount', 'counts', 'rootGoalPreview'])
+      assert.deepEqual(Object.keys(t), ['treeId', 'rootLeafId', 'createdAt', 'updatedAt', 'leafCount', 'counts', 'state', 'rootGoalPreview'])
     }
     assert.equal((await view.listTrees({ limit: 0 })).trees.length, 1)     // 钳下限
     assert.equal((await view.listTrees({ limit: 9999 })).trees.length, 3)  // 钳 200 内全量
@@ -499,7 +532,7 @@ describe('createPanelRequestHandler（fake webServer handler 面）', () => {
     await handle(fakeReq('/tree-panel/trees/panel'), res)
     assert.equal(res.statusCode, 200)
     const detail = JSON.parse(res.body)
-    assert.deepEqual(Object.keys(detail), ['treeId', 'createdAt', 'updatedAt', 'root', 'leaves', 'stats'])
+    assert.deepEqual(Object.keys(detail), ['treeId', 'createdAt', 'updatedAt', 'state', 'root', 'leaves', 'stats'])
     assert.equal(detail.root.leafId, 'panel-root')
     assert.equal(detail.stats.total, 2)
     assert.equal(detail.leaves.length, 2)

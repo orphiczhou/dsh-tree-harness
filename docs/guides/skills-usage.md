@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.12.0**、`packages/dsh-session-tree` **v1.6.2** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA；v1.4.1–v1.6.2 未发布镜像）。
+> 适用版本：`packages/dsh-tree-engine` **v0.13.0**、`packages/dsh-session-tree` **v1.7.0** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA；v1.4.1–v1.7.0 未发布镜像）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -121,7 +121,7 @@ pnpm install
 
 排障：三条都不出现 → 检查 ① 包是否装（`plugin_manager list_plugins`）；② profile 是否同时有 `@deepseek-ai/dsh-skill-filesystem`（**随 DSH 桌面版内置，不要单独安装**）；③ 是否在改完 patch 后没做 disable→enable；④ 是否是**新开**会话（目录在会话启动时注入，旧会话不刷新）。
 
-> **安装后自检（推荐）：`tree_doctor {action:"run"}`**（tree-engine ≥ 0.12.0）。它是第 9 个 `tree_*` 工具、**只读零写副作用**：一次给出 7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`）与 `summary{pass,warn,fail}` + 一行 `hint`；传 `tree_id`（如 `tree_doctor {action:"run", tree_id:"wave1"}`）会额外校验该树并统计停滞节点。**FAIL 不 throw**——它是诊断器不是门禁，装完/重载后先跑它，比逐项猜「工具或 Skill 为什么没出现」快。
+> **安装后自检（推荐）：`tree_doctor {action:"run"}`**（tree-engine ≥ 0.13.0）。它是第 9 个 `tree_*` 工具、**只读零写副作用**：一次给出 7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`）与 `summary{pass,warn,fail}` + 一行 `hint`；传 `tree_id`（如 `tree_doctor {action:"run", tree_id:"wave1"}`）会额外校验该树并统计停滞节点。**FAIL 不 throw**——它是诊断器不是门禁，装完/重载后先跑它，比逐项猜「工具或 Skill 为什么没出现」快。
 
 ### 3.1 五分钟冒烟（第一次用就照这个顺序）
 
@@ -261,7 +261,8 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.12.0 / `dsh-session-tree` 1.6.2（公开镜像 tag `v1.4.0` = `0343f0c`；v1.4.1–v1.6.2 未发布镜像）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.13.0 / `dsh-session-tree` 1.7.0（公开镜像 tag `v1.4.0` = `0343f0c`；v1.4.1–v1.7.0 未发布镜像）。
+- **tree-engine 0.13.0**：新增第 9 个工具之后的**树级展示状态版（用户反馈轮）**—— ① `src/panel-view.js` 新增 `treeStateOf(leaves, rootLeafId)`：`tree_plan` 的 root 是容器叶、永远没有 done 事件（raw 恒 `active`），故 root 只参与**失败**判定，不参与「在跑/未开始」判定；子叶 running/segment_pending → running，有 pending → pending，全部结算 → succeeded，单叶树回落 root 展示态；② `projectTreeSummary` 新增 `state`、`projectTreeDetail` 新增顶层 `state`，列表徽标与详情共用权威字段（客户端不再自行按 counts 猜）；③ 真实 36 棵树 running 徽标 29→**7**（succeeded 23 / failed 4 / pending 2），4 棵 failed 均有子叶 `runtime.state=timeout` 实据；测试数 257→**258/258**（新增 `treeStateOf` 15 条断言）。安装/重载后 `tree_doctor` 应显示 `version=0.13.0`。
 - **tree-engine 0.12.0**：新增第 9 个工具之后的**面板投影派生展示态版（D34）**—— ① `src/panel-view.js` 新增 `runtimeStateOf`/`displayStateOf`：`runtime.state` 失败类（failed/timeout/cancelled）优先，其余按 `verification.pass===true` → `runtime.state=succeeded` → `pruned` → `segment_pending` → `last_event_type=done` → `active→running` → raw 别名归一 → `pending_brief/pending/缺失→pending`；② `projectLeaf.status` 改为派生展示态并新增 `state`/`rawStatus`/`runtimeState` 三键，`projectTreeDetail.root` 同步；③ `statusCounts`/`stats.byStatus` 同口径（真实 141 叶里 55 叶 `pending_brief & succeeded & pass` 不再显示 pending）；测试数 256→**257/257**（`tests/panel-view.test.js` 29→30 例，另 5 条断言改新契约）。安装/重载后 `tree_doctor` 应显示 `version=0.12.0`。
 - **tree-engine 0.11.0**：新增第 9 个工具之后的 `/tree-panel` 只读 HTTP 投影路由版（D30）—— ① 三端点 `GET /tree-panel/trees`、`/trees/<treeId>`、`/trees/<treeId>/events`（webServer 可选注入，缺席降级、不阻断工具面；跨实例幂等注册先 dispose 再 register）；② Host/Origin/Sec-Fetch-Site 三重校验 + `no-store` + 不回 ACAO；③ 投影纯函数 `src/panel-view.js` 脱敏截断——不透出 prompt/meta/环境变量，assignee 只留 provider/model/effort，preview 120/200 字符上限；④ 工具面仍 9 工具不变（`session-tree` v1.5.0 的 Tree Runs 面板数据源即此路由）；测试数 227→**256/256**（新增 `tests/panel-view.test.js` 29 例）。安装/重载后 `tree_doctor` 应显示 `version=0.11.0`。
 - **tree-engine 0.10.1**：新增第 9 个工具之后的 flash 审计第二批修复版（D24/D25）+ **宿主 rc.3 扁平 spec 适配（D28）**—— ① 依赖闸「已验证失败不放行」+ **依赖只认正向结算信号（三重闸 done ∨ verification.pass=true；自报 done 不再放行下游，#8 主旁路闭合）** + sweep stale-done 判据；② `leaf:set-verification` verdicts/pass 一致性校验 + 空 verdicts 的无证据 PASS 拒绝（#15）；③ 竹节接力会话预算预检 + 唯一性回滚 + 单账本口径（#20）；④ `audit_meta` 严格校验 + 消费键放宽留痕 / recorded-only 键上调拒收 / 编排键拒收 + 阈值回退修复（#21/#23）；⑤ `subagent_spawn` 仅 owner（#22）；⑥ `fsStore.read` `.tmp` 灾备恢复 + 损坏原件取证副本与 call-log 留痕（#28）；⑦ `tree_maintain {action:"gc"}`（archived 账本截断）+ call-log 10MB 滚动（#30）；⑧ `startActivation` rc.3 扁平 spec（`buildActivationSpec`，嵌套形状真机派发全量失败修复）；测试数 213→**227/227**（0.10.0 为 225/225，compat 14→16）。安装/重载后 `tree_doctor` 应显示 `version=0.10.1`。

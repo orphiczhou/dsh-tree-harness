@@ -943,6 +943,95 @@ async function main() {
     !!paneTab && paneTab.key === '@orphiczhou/dsh-session-tree',
     JSON.stringify(paneTab || {}))
 
+  // ================== v1.7.0 判定：树级派生态徽标 / 版本标记 / 新鲜度
+  // 用户反馈（m02442）：「为啥大多数列表中的树都是 runing 状态」「点击节点，
+  // 下面的详细信息没有变化」。① 的根因是 root 容器叶永远 active（无 done 事
+  // 件），旧徽标按 counts 派生 → 36 棵里 29 棵恒 running；现在徽标优先用服务
+  // 端派生的 tree.state，counts 仅作回落。②/③ 的根因是渲染进程旧 bundle，
+  // 故头部渲染构建版本号，与 package.json 逐字比对。
+  console.log('\n=== v1.7.0 判定：树级派生态徽标 / 客户端版本标记 / 头部新鲜度 ===')
+  check('V2-28 treeBadgeOf 优先 tree.state，缺失/空串时回落 treeStatusOf(counts)',
+    mod.treeBadgeOf({ state: 'succeeded', counts: { running: 1 } }) === 'succeeded' &&
+      mod.treeBadgeOf({ state: 'running', counts: { succeeded: 9, pruned: 1 } }) === 'running' &&
+      mod.treeBadgeOf({ state: 'pending', counts: { succeeded: 5 } }) === 'pending' &&
+      mod.treeBadgeOf({ state: '', counts: { running: 2, succeeded: 1 } }) === 'running' &&
+      mod.treeBadgeOf({ counts: { succeeded: 3 } }) === 'succeeded' &&
+      mod.treeBadgeOf({ counts: { failed: 1 } }) === 'failed' &&
+      mod.treeBadgeOf({}) === 'pending' &&
+      mod.treeBadgeOf(null) === 'pending' &&
+      mod.treeBadgeOf('tree-alpha') === 'pending',
+    `state-win=${mod.treeBadgeOf({ state: 'succeeded', counts: { running: 1 } })} ` +
+      `fallback=${mod.treeBadgeOf({ counts: { running: 2 } })} empty=${mod.treeBadgeOf(null)}`)
+  const pkgJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'))
+  const versionEls = byClass(listSink, 'st-tr2-version', true)
+  check('V2-29 头部渲染客户端构建版本，且与 package.json version 逐字一致（旧 bundle 一眼可辨）',
+    versionEls.length === 1 &&
+      sinkText(versionEls[0]) === 'v' + pkgJson.version &&
+      mod.PANEL_VERSION === pkgJson.version,
+    `rendered=${versionEls.length === 1 ? sinkText(versionEls[0]) : '(无)'} pkg=v${pkgJson.version} const=v${mod.PANEL_VERSION}`)
+  check('V2-30 头部新鲜度：页面级 updatedAt 缺失时取最新树戳（永不留 —）',
+    mod.panelFreshnessOf({}, [{ updatedAt: '2026-11-15T02:30:00.000Z' }, { updatedAt: '2026-11-16T01:00:00.000Z' }]) === '2026-11-16T01:00:00.000Z' &&
+      mod.panelFreshnessOf({}, [{ updatedAt: '2026-11-16T01:00:00.000Z' }, { updatedAt: '2026-11-15T02:30:00.000Z' }]) === '2026-11-16T01:00:00.000Z' &&
+      mod.panelFreshnessOf({ updatedAt: '2026-11-14T00:00:00.000Z' }, [{ updatedAt: '2026-11-16T01:00:00.000Z' }]) === '2026-11-14T00:00:00.000Z' &&
+      mod.panelFreshnessOf({ updatedAt: '' }, []) === null &&
+      mod.panelFreshnessOf({}, null) === null &&
+      mod.panelFreshnessOf(null, [{ updatedAt: '' }, { nope: 1 }]) === null,
+    `pick=${mod.panelFreshnessOf({}, [{ updatedAt: '2026-11-15T02:30:00.000Z' }, { updatedAt: '2026-11-16T01:00:00.000Z' }])} empty=${mod.panelFreshnessOf({}, [])}`)
+  // 详情字段栅格：Tree state（派生态标题）+ Leaf states（逐态计数）两行，
+  // 不再有一个含义暧昧的 'Status' 行。
+  const gridFields = byClass(detailSink, 'st-tr2-field', true)
+  const fieldValueOf = (label) => {
+    for (const field of gridFields) {
+      const kids = descendants(field)
+      const labelEl = kids.find((e) => String(e.props.className || '').includes('st-tr2-fieldlabel'))
+      if (labelEl && sinkText(labelEl) === label) {
+        const valueEl = kids.find((e) => String(e.props.className || '').includes('st-tr2-fieldvalue'))
+        return valueEl ? sinkText(valueEl) : null
+      }
+    }
+    return null
+  }
+  const treeStateValue = fieldValueOf('Tree state')
+  const leafStatesValue = fieldValueOf('Leaf states')
+  check('V2-31 详情栅格：Tree state 行（无 detail.state 时回落 counts 派生）+ Leaf states 行（逐态计数）',
+    treeStateValue === 'failed' &&
+      leafStatesValue === 'running=1 · succeeded=1 · failed=1' &&
+      fieldValueOf('Status') === null,
+    `treeState=${treeStateValue} leafStates=${leafStatesValue} bareStatus=${fieldValueOf('Status')}`)
+
+  // V2-32: a tree_plan root is a container — it never gets a done event, so its
+  // own display state may stay "running" after every worker settled. The grid
+  // labels that instead of letting it contradict the derived "Tree state".
+  // Patch the detail the store currently holds (the previous scenario left it on
+  // tree-beta), then restore, so the shared fixtures stay untouched.
+  const liveDetail = rtMain.store.get().detail
+  const savedRoot = liveDetail.root
+  const savedState = liveDetail.state
+  liveDetail.root = { leafId: 'la-root', status: 'running', rawStatus: 'active', runtimeState: null, goalPreview: '{}' }
+  liveDetail.state = 'succeeded'
+  const ctrSink = []
+  renderTree(rtMain.Body({}), ctrSink)
+  const ctrFields = byClass(ctrSink, 'st-tr2-field', true)
+  const ctrValueOf = (label) => {
+    for (const field of ctrFields) {
+      const kids = descendants(field)
+      const labelEl = kids.find((e) => String(e.props.className || '').includes('st-tr2-fieldlabel'))
+      if (labelEl && sinkText(labelEl) === label) {
+        const valueEl = kids.find((e) => String(e.props.className || '').includes('st-tr2-fieldvalue'))
+        return valueEl ? sinkText(valueEl) : null
+      }
+    }
+    return null
+  }
+  const ctrRoot = ctrValueOf('Root status')
+  const ctrTreeState = ctrValueOf('Tree state')
+  check('V2-32 详情栅格：整树已结算但 root 容器无结算事件时，Root status 标注 container（不与 Tree state 打架）',
+    ctrTreeState === 'succeeded' &&
+      ctrRoot === 'running · container (no settle event)',
+    `treeState=${ctrTreeState} rootStatus=${ctrRoot}`)
+  liveDetail.root = savedRoot
+  liveDetail.state = savedState
+
   // ----------------------------------------------------------------- summary
   console.log('\n==================== 结果 ====================')
   console.log(`合计 ${checks} 项判定，失败 ${failures} 项`)

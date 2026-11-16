@@ -2,6 +2,15 @@
 
 树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/architecture/engine-spec.md](../../docs/architecture/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 9 个工具 schema 为准（[docs/architecture/tools-mapping.md](../../docs/architecture/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
 
+## v0.13.0 增量：树级展示状态派生（root 容器不再把整棵树标成 running）
+
+**背景（2026-11-16 用户反馈）**：「为啥大多数列表中的树都是 runing 状态？」实测 36 棵树里 **29 棵**徽标为 running，其中 28 棵的 `counts.running` 恰好 =1 —— 唯一那个「在跑」的叶子是 `tree_plan` 造的 **root 容器叶**：它不承担工作，也永远收不到 done 事件，raw `status` 停在 `active`，旧的面板按 counts 派生就把整棵树判成 running。
+
+- **`src/panel-view.js` 新增 `treeStateOf(leaves, rootLeafId)`**：root 只参与**失败**判定，不参与「在跑 / 未开始」判定；子叶有 running/segment_pending → running；否则有 pending → pending；否则全部结算 → succeeded；单叶树回落 root 自身展示态；`failed|timeout|cancelled|error` 优先。
+- **投影口径**：`projectTreeSummary` 新增 `state`（在 `counts` 之后），`projectTreeDetail` 新增顶层 `state`（在 `updatedAt` 之后）——列表徽标与详情标题共用同一权威字段，客户端不再自行按 counts 猜树状态（旧字段 `counts`/`stats.byStatus` 保持原样，兼容旧客户端）。
+- **实测分布**（同一批 36 棵真实树）：`succeeded 23 / failed 4 / running 7 / pending 2`；剩余 running 的 7 棵中 6 棵是**单叶树**（root 自己就是干活的叶子），1 棵（`mvp1`）子叶真未结算；4 棵 failed 分别是 `chlog`/`tchlog`/`wave1`/`rkmes`，都能在子叶 `runtime.state=timeout` 上找到实据。
+- **测试**：`node --test` **257 → 258/258**（新增 `treeStateOf` 正反例 15 条断言 + summary/detail 新键断言）。
+
 ## v0.12.0 增量：面板投影派生展示态（`runtime`/`verification` 成为结算口径）
 
 **背景（2026-11-16 D34 轮）**：Tree Runs 面板直接显示 `leaf.status`，但引擎的 `status` 是**启封态**字段——真实状态文件里大量叶子 `status=pending_brief` 而 `runtime.state=succeeded` + `verification.pass=true`（141 叶全量：`pending_brief & succeeded & pass` **55** 叶），于是面板把已完成的叶子永远画成 pending。

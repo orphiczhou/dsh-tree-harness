@@ -81,6 +81,25 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.7.0] — 2026-11-16 · session-tree Tree Runs 树级展示状态 + 客户端自证（无发布）
+
+**触发**：用户三问（m02442）——「为啥大多数列表中的树都是 runing 状态」「为啥有些树没有节点图（wave2，状态成功、10 个 leaves）」「点击节点，下面的详细信息没有变化」。
+
+**① running 徽标（真因，已修）**：`tree_plan` 建的 root leaf 是**容器**，不承担工作、也永远收不到 done 事件，raw `status` 恒 `active`；旧徽标按 `counts` 派生 → 36 棵真实树里 **29 棵**恒显示 running（其中 28 棵 `counts.running` 恰好 =1，就是这个 root）。修复：徽标改为读服务端派生的 `tree.state`（tree-engine v0.13.0 的 `treeStateOf`），`counts` 仅作旧引擎回落；详情栅格把原来的 `Status` 行拆成 **`Tree state`**（整树）与 **`Leaf states`**（逐态计数）。同一批树现在 `succeeded 23 / failed 4 / running 7 / pending 2`。
+
+**② 无节点图 / ③ 点节点无详情（不是数据/布局问题）**：用 headless 渲染加载**当前** bundle 实测 wave2 —— 10 个节点、10 个可点、SVG 正常；模拟点击 → `store.selectedLeafId` 写入、`Leaf attributes` 区块出现、hint 消失。因此②③指向**渲染进程仍在跑旧客户端 bundle**（宿主侧热更未生效/缓存旧模块），不是本版代码缺陷。为此页头新增 **`v<PANEL_VERSION>`** 构建标记（10px 小标，`data-kind="version"`），旧 bundle 与数据问题一眼可分；V2-29 断言其与 `package.json` 版本逐字一致。
+
+**顺带**：页头「更新 <时间>」在页面级 `updatedAt` 缺失时回落列表里最新树戳（此前恒 `—`，`panelFreshnessOf`）；复制会话 id 不再冒泡选中该行（polish，`ebfd705`）。
+
+**验证**：`node test/panel-render.test.cjs` **85 → 90/90**（V2-28 徽标优先级/回落、V2-29 版本标记一致性、V2-30 新鲜度回落、V2-31 详情两行、V2-32 root 容器标注）；`node --check client.js` OK；仓根 `node --test` **352/352**；style-guard 50/50、render 153+9+11、conformance 29/29、`verify-bundle` 0 fail。
+
+## [0.13.0] — 2026-11-16 · tree-engine 树级展示状态派生（root 容器不再拖累整树，无发布）
+
+- **`src/panel-view.js` 新增 `treeStateOf(leaves, rootLeafId)`**：root 只参与**失败**判定，不参与「在跑 / 未开始」判定；子叶有 running/segment_pending → `running`；否则有 pending → `pending`；否则全部结算 → `succeeded`；单叶树回落 root 自身展示态；`failed|timeout|cancelled|error` 优先。
+- **投影口径**：`projectTreeSummary` 新增 `state`（`counts` 之后）、`projectTreeDetail` 新增顶层 `state`（`updatedAt` 之后）——列表徽标与详情共用同一权威字段，客户端不再自行按 counts 猜树状态。
+- **实测**（同一批 36 棵真实树）：`succeeded 23 / failed 4 / running 7 / pending 2`（旧口径 29 running）；4 棵 failed 均有子叶 `runtime.state=timeout` 实据（`chlog`/`tchlog`/`wave1`/`rkmes`）；7 棵 running 中 6 棵是**单叶树**（root 自己就是工作叶），1 棵 `mvp1` 子叶真未结算。
+- **测试**：`node --test` **257 → 258/258**（新增 `treeStateOf` 正反例 15 条断言 + summary/detail 新键断言 + README 版本节）。
+
 ## [1.6.2] — 2026-11-16 · session-tree Tree Runs 分层从属图 + 节点点击属性面板（无发布）
 
 ### 变更

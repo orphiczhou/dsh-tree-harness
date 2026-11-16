@@ -164,8 +164,51 @@ export function displayStateOf(leaf) {
   return raw
 }
 
-/** assignee 投影：只含 provider/model/effort 三键（preset/mechanism/未知键绝不透出）。 */
-export function projectAssignee(assignee) {
+/**
+ * 树级展示状态（派生；v0.13.0）。**列表徽标的权威口径**。
+ *
+ * 引擎的 root leaf 是「容器」：`tree_plan` 建树后不会给它 done 事件，raw status
+ * 永远停在 `active`。把 root 计入树级状态会让所有树永远显示 running（真实观测：
+ * 36 棵树里 29 棵仅因 root=active 被判 running，而它们的子叶其实已全部结算）。
+ * 因此：
+ * - root 仍参与**失败**判定（root 真失败 = 树失败），但不参与「在跑 / 未开始」判定；
+ * - 有子叶在跑（running / segment_pending）→ running；
+ * - 否则有子叶未开始（pending）→ pending；
+ * - 否则全部结算（succeeded / pruned / 其它终态）→ succeeded；
+ * - 单叶树（无子叶）→ root 自身的展示态。
+ * 失败优先于在跑优先于未开始优先于成功。
+ *
+ * @param {any} leaves 状态文件里的 leaves 映射
+ * @param {string|null|undefined} rootLeafId root 叶 id
+ * @returns {string}
+ */
+export function treeStateOf(leaves, rootLeafId) {
+  const list = leafList(leaves)
+  if (list.length === 0) return 'pending'
+  const rootId = asString(rootLeafId)
+  let root = null
+  const children = []
+  for (const leaf of list) {
+    if (rootId && asString(leaf?.leaf_id) === rootId) root = leaf
+    else children.push(leaf)
+  }
+  const failureStates = new Set(['failed', 'timeout', 'cancelled', 'error'])
+  if (root && failureStates.has(displayStateOf(root))) return 'failed'
+  if (children.length === 0) return root ? displayStateOf(root) : 'pending'
+  let running = false
+  let pending = false
+  for (const child of children) {
+    const state = displayStateOf(child)
+    if (failureStates.has(state)) return 'failed'
+    if (state === 'running' || state === 'segment_pending') running = true
+    else if (state === 'pending') pending = true
+  }
+  if (running) return 'running'
+  if (pending) return 'pending'
+  return 'succeeded'
+}
+
+/** assignee 投影：只含 provider/model/effort 三键（preset/mechanism/未知键绝不透出）。 */export function projectAssignee(assignee) {
   if (!isPlainObject(assignee)) return null
   const out = {}
   for (const key of /** @type {const} */ (['provider', 'model', 'effort'])) {
@@ -270,6 +313,8 @@ export function projectTreeSummary(state, extra = {}) {
     updatedAt,
     leafCount: Object.keys(leaves).length,
     counts: statusCounts(leaves),
+    // 树级展示态（root 容器不参与在跑判定，见 treeStateOf）
+    state: treeStateOf(leaves, rootLeafId),
     rootGoalPreview: root ? textPreview(root.brief, PANEL_LIMITS.goalPreviewChars) : null,
   }
 }
@@ -300,6 +345,8 @@ export function projectTreeDetail(state, extra = {}) {
     treeId: state.tree_id,
     createdAt: asString(state.created_at),
     updatedAt,
+    // 树级展示态（列表徽标同一口径）
+    state: treeStateOf(leaves, rootLeafId),
     root: {
       leafId: rootLeafId,
       // 展示状态（派生，见 displayStateOf）；rawStatus 保留启封态事实。

@@ -172,6 +172,7 @@ window.__ModuleLoader__.load({
 .st-tr2-top{display:flex;align-items:center;gap:8px;padding:8px 10px;flex:0 0 auto;border-bottom:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1)}
 .st-tr2-title{flex:none;font-weight:600;font-size:13px;color:var(--dsw-alias-label-primary)}
 .st-tr2-dim{flex:none;color:var(--dsw-alias-label-secondary);font-size:11px}
+.st-tr2-version{flex:none;padding:0 5px;border-radius:5px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-tertiary);font:500 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;line-height:15px}
 .st-tr2-body{flex:1 1 auto;display:flex;flex-direction:row;align-items:stretch;min-height:0}
 .st-tr2-list{flex:0 0 36%;min-width:150px;max-width:320px;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;border-right:1px solid var(--dsw-alias-border-l1)}
 .st-tr2-detail{flex:1 1 auto;min-width:0;min-height:0;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:8px}
@@ -964,6 +965,13 @@ window.__ModuleLoader__.load({
     /** Tab registry id (process-wide unique) and the kind the pill opens. */
     const PANEL_TAB_ID = '@orphiczhou/dsh-session-tree'
     const PANEL_TAB_KIND = 'tree-runs'
+    /**
+     * Build marker rendered in the panel header (v1.7.0). A renderer that kept
+     * an older bundle from a previous apply shows its own number here, which is
+     * how a stale client is told apart from a data problem (test asserts this
+     * equals package.json's version).
+     */
+    const PANEL_VERSION = '1.7.0'
 
     /** Optional-service lookup that never throws (flow spike :2737-2752). */
     function panelServiceOf(ctx, key) {
@@ -1118,6 +1126,24 @@ window.__ModuleLoader__.load({
       if (hasActive) return 'running'
       if (num(c.succeeded) > 0) return 'succeeded'
       return 'pending'
+    }
+
+    /**
+     * Whole-tree badge (v1.7.0): the server-derived `tree.state` wins when it
+     * is present, counts are only the fallback (older engines / fixtures).
+     *
+     * Why: `tree_plan`'s root leaf is a container — it never receives a done
+     * event, so its raw status stays `active` forever and a counts-based badge
+     * paints every finished tree as running (live tally before the fix: 29 of
+     * 36 trees). `projectTreeSummary`/`projectTreeDetail` derive the tree state
+     * with the root excluded from the running test (engine `treeStateOf`).
+     */
+    function treeBadgeOf(tree) {
+      const t = tree && typeof tree === 'object' ? tree : {}
+      const state = typeof t.state === 'string' && t.state !== '' ? t.state : null
+      if (state) return state
+      const counts = t.counts && typeof t.counts === 'object' && !Array.isArray(t.counts) ? t.counts : {}
+      return treeStatusOf(counts)
     }
 
     /**
@@ -1675,7 +1701,7 @@ window.__ModuleLoader__.load({
           )
         }
       }
-      const treeStatus = treeStatusOf(counts)
+      const treeStatus = treeBadgeOf(tree)
       // Row 1: tree id (mono, full id in title) + whole-tree status badge.
       const top = h(
         'span',
@@ -2221,17 +2247,37 @@ window.__ModuleLoader__.load({
     }
 
     /** Fixed header row of the v2 shell (design §2): title / root / count / stamp / refresh. */
+    /**
+     * Header freshness stamp (v1.7.0): the page-level `updatedAt` comes from
+     * the older list envelope and is absent on the current payload, so fall
+     * back to the newest per-tree stamp instead of rendering a permanent dash.
+     * Pure, exported for tests.
+     */
+    function panelFreshnessOf(state, trees) {
+      const st = state && typeof state === 'object' ? state : {}
+      if (typeof st.updatedAt === 'string' && st.updatedAt !== '') return st.updatedAt
+      let newest = null
+      const list = Array.isArray(trees) ? trees : []
+      for (const tree of list) {
+        const stamp = tree && typeof tree === 'object' ? tree.updatedAt : null
+        if (typeof stamp === 'string' && stamp !== '' && (newest === null || stamp > newest)) newest = stamp
+      }
+      return newest
+    }
+
     function PanelHeader(props) {
       const state = props.state
       const controller = props.controller
       const trees = props.trees
+      const updatedAt = panelFreshnessOf(state, trees)
       return h(
         'div',
         { className: 'st-tr2-top' },
         h('span', { className: 'st-tr2-title' }, 'Tree Runs · read-only'),
+        h('span', { className: 'st-tr2-version', 'data-kind': 'version', title: 'session-tree client build' }, 'v' + PANEL_VERSION),
         h('span', { className: 'st-tr-top-path', title: state.storageRoot || '' }, state.storageRoot || ''),
         h('span', { className: 'st-tr-top-count' }, String(trees.length) + (state.total > trees.length ? ' / ' + state.total : '')),
-        h('span', { className: 'st-tr2-dim' }, '更新 ' + panelTimeOf(state.updatedAt)),
+        h('span', { className: 'st-tr2-dim' }, '更新 ' + panelTimeOf(updatedAt)),
         h('button', { type: 'button', className: 'st-tr-btn', onClick: () => controller.refreshAll(true) }, 'Refresh'),
       )
     }
@@ -2284,16 +2330,34 @@ window.__ModuleLoader__.load({
         }
         if (parts.length > 0) statusText = parts.join(' · ')
       }
+      const treeBadge = treeBadgeOf({ state: detail.state, counts: byStatus })
+      const rootIsContainer =
+        root.rawStatus === 'active' &&
+        (root.runtimeState === null || root.runtimeState === undefined || root.runtimeState === '') &&
+        (treeBadge === 'succeeded' || treeBadge === 'failed')
+      const rootStatusText = root.status
+        ? String(root.status) + (rootIsContainer ? ' · container (no settle event)' : '')
+        : ''
       return h(
         'div',
         { className: 'st-tr2-fieldgrid' },
         h(PanelField, { label: 'Tree', value: detail.treeId, mono: true }),
         h(PanelField, { label: 'Root goal', value: root.goalPreview ? panelPreviewOf(root.goalPreview) : '' }),
-        h(PanelField, { label: 'Root status', value: root.status ? String(root.status) : '' }),
+        // v1.7.0: the headline state is the server-derived tree state (root
+        // container excluded from the running test); the per-leaf tally moves
+        // to its own row so the two can never be read as the same fact.
+        h(PanelField, {
+          label: 'Tree state',
+          value: treeBadge,
+        }),
+        h(PanelField, { label: 'Leaf states', value: statusText }),
+        // The root leaf of a `tree_plan` tree is a container: it never receives
+        // a done event, so its own display state can stay `running` after every
+        // worker settled. Label it instead of contradicting "Tree state".
+        h(PanelField, { label: 'Root status', value: rootStatusText }),
         h(PanelField, { label: 'Created', value: panelTimeOf(detail.createdAt) }),
         h(PanelField, { label: 'Updated', value: panelTimeOf(detail.updatedAt) }),
         h(PanelField, { label: 'Leaves', value: typeof stats.total === 'number' ? String(stats.total) : String(leaves.length) }),
-        h(PanelField, { label: 'Status', value: statusText }),
         h(PanelField, { label: 'Sessions', value: statsSessionsOf(stats) }),
       )
     }
@@ -4342,6 +4406,7 @@ window.__ModuleLoader__.load({
       createPanelRuntime,
       createPanelController,
       createPanelStore,
+      PANEL_VERSION,
       panelToneOf,
       panelTimeOf,
       panelPreviewOf,
@@ -4350,6 +4415,8 @@ window.__ModuleLoader__.load({
       // v1.6.2 adds the hierarchy helpers (parent edges + depth/order) that
       // back the "分层与从属关系" graph rewrite (user ask m01512).
       treeStatusOf,
+      treeBadgeOf,
+      panelFreshnessOf,
       treeEdgesOf,
       treeLevelsOf,
       treeParentEdgesOf,
