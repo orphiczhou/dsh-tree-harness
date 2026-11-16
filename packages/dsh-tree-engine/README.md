@@ -2,6 +2,14 @@
 
 树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/architecture/engine-spec.md](../../docs/architecture/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 9 个工具 schema 为准（[docs/architecture/tools-mapping.md](../../docs/architecture/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
 
+## v0.12.0 增量：面板投影派生展示态（`runtime`/`verification` 成为结算口径）
+
+**背景（2026-11-16 D34 轮）**：Tree Runs 面板直接显示 `leaf.status`，但引擎的 `status` 是**启封态**字段——真实状态文件里大量叶子 `status=pending_brief` 而 `runtime.state=succeeded` + `verification.pass=true`（141 叶全量：`pending_brief & succeeded & pass` **55** 叶），于是面板把已完成的叶子永远画成 pending。
+
+- **`src/panel-view.js` 新增纯函数**：`runtimeStateOf(leaf)` 只透出 `runtime.state` 一个字符串；`displayStateOf(leaf)` 派生展示态（失败类优先 → `verification.pass` → `runtime.state=succeeded` → `pruned` → `segment_pending` → `last_event_type=done` → `active→running` → raw 别名归一 → `pending`）。
+- **投影口径**：`projectLeaf.status` 改为派生展示态（键名保持兼容），新增 `state` / `rawStatus` / `runtimeState`；`projectTreeDetail.root` 同步为 `{leafId, status, rawStatus, runtimeState, goalPreview}`；`statusCounts` 与 `stats.byStatus` 改按派生展示态计数。raw runtime 对象仍不外泄（只透 `state` 字符串）。
+- **测试**：`node --test` **256 → 257/257**（`tests/panel-view.test.js` 29→30 例；另 5 条改断言）。
+
 ## v0.11.0 增量：`/tree-panel` 只读 HTTP 投影路由（Tree Runs 面板数据源）
 
 **背景（2026-11-15 D30 轮）**：session-tree v1.5.0 新增 Tree Runs 面板，需要引擎半提供**只读**树投影。本轮为已装载的 webServer 增加 `/tree-panel` 路由（`index.js` +336 行）与投影纯函数 `src/panel-view.js`（新）。

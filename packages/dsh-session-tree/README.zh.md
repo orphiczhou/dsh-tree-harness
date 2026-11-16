@@ -8,7 +8,7 @@
 
 一个 DeepSeek Harness 的 profile bundle：把左侧栏换成**会话树**——每个会话下面挂着它的 subagent 后代，可逐层展开、层数不限，点任意节点就能打开该会话的多轮对话。它还注册两个宿主工具：`tree_send` 让智能体能给**自己这棵会话树**里的可续聊子会话发消息（包括内置通讯 API 够不到的**兄弟会话**；跨树投递一律拒绝），`session_handoff` 则让当前会话在上下文将满时自我交接给**同层级**的新会话，并继承同一个工作区、Agent 预设（工作模式）、权限模式、模型与思考等级。
 
-**当前版本：v1.6.1。** 随包 `session-handoff` Skill 自 **v1.3.0** 起；接替提示语跟随 DSH 界面语言自 **v1.3.1** 起；`tree_send` 自 **v1.4.0** 起只允许同一棵会话树内投递、且不再接受 `parent` 参数（见 [releases](https://github.com/orphiczhou/dsh-session-tree/tags)）。v1.6.1 修复 Tree Runs 面板整体渲染成**无样式裸文本**：样式表现在会打上归属模块 id（宿主把无标的 `<style>` 视为无主、可合法移除），热升级后 `<head>` 里残留的旧表会**就地刷新**为本版 CSS——详见下方增量节。v1.6.0 把 Tree Runs 面板升级为 **panel v2**（与 Flow Runs 同布局同功能：列表 + 依赖 DAG 树图 + 详情分栏同屏），v1.5.0 引入 **Tree Runs 面板**（composer dock 入口 pill + 右栏页签，数据取自同源 `/tree-panel/*`），v1.4.1 修复侧栏收起态（rail）hook 数量崩溃（React #300/#310）。
+**当前版本：v1.6.2。** 随包 `session-handoff` Skill 自 **v1.3.0** 起；接替提示语跟随 DSH 界面语言自 **v1.3.1** 起；`tree_send` 自 **v1.4.0** 起只允许同一棵会话树内投递、且不再接受 `parent` 参数（见 [releases](https://github.com/orphiczhou/dsh-session-tree/tags)）。v1.6.1 修复 Tree Runs 面板整体渲染成**无样式裸文本**：样式表现在会打上归属模块 id（宿主把无标的 `<style>` 视为无主、可合法移除），热升级后 `<head>` 里残留的旧表会**就地刷新**为本版 CSS——详见下方增量节。v1.6.0 把 Tree Runs 面板升级为 **panel v2**（与 Flow Runs 同布局同功能：列表 + 依赖 DAG 树图 + 详情分栏同屏），v1.5.0 引入 **Tree Runs 面板**（composer dock 入口 pill + 右栏页签，数据取自同源 `/tree-panel/*`），v1.4.1 修复侧栏收起态（rail）hook 数量崩溃（React #300/#310）。
 
 <!-- 截图占位：有截图后再放到这里。
      不要引用仓库里并不存在的图片文件。 -->

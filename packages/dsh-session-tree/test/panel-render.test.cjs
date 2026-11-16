@@ -565,6 +565,11 @@ async function main() {
       mod.treeStatusOf({ running: 2, succeeded: 1 }) === 'running' &&
       mod.treeStatusOf({ succeeded: 3 }) === 'succeeded' &&
       mod.treeStatusOf({ pending: 1 }) === 'pending' &&
+      // v1.6.2 收敛：失败类多键（timeout/cancelled/error）也算 failed；pruned 是终态不算在跑。
+      mod.treeStatusOf({ timeout: 1 }) === 'failed' &&
+      mod.treeStatusOf({ cancelled: 1, succeeded: 2 }) === 'failed' &&
+      mod.treeStatusOf({ pruned: 2, succeeded: 1 }) === 'succeeded' &&
+      mod.treeStatusOf({ pruned: 3 }) === 'pending' &&
       alphaBadge && sinkText(alphaBadge) === 'running' &&
       (() => {
         const betaEl = cards.find((c) => sinkText(c).includes('tree-beta'))
@@ -681,6 +686,111 @@ async function main() {
     const l = mod.treeGraphLayout(cyc, 'c1')
     return l.nodes.length === 3 && l.nodes.every((n) => n.level >= 0 && n.level <= 3)
   })(), 'cycle settles within pass cap')
+
+  // ============ ③b 分层/从属（parent 链）+ 点击节点看详情（v1.6.2, m01512）
+  console.log('\n=== ③b 树链分层与从属 + 点击节点在下方看属性（v1.6.2）===')
+  // The beta switch above (V2-4) left the store on tree-beta; the graph
+  // snapshots above are alpha's. Re-select alpha so the selection detail
+  // renders against the leaves the captured nodes belong to.
+  sandbox.fetch = fetchMain.fetch // ③/empty scenarios replaced the stub; restore the main route table
+  rtMain.controller.select('tree-alpha')
+  await drain()
+  // V2-16 从属边 = parent → child（服务端 parent 字段是权威从属关系）。
+  const parentEdges = mod.treeParentEdgesOf(DETAIL_BODY.leaves)
+  check('V2-16 treeParentEdgesOf 按 parent 造从属边（la-root→lb-ver、lb-ver→lc-bad）',
+    JSON.stringify(parentEdges.map((e) => e.from + '→' + e.to)) ===
+      JSON.stringify(['la-root→lb-ver', 'lb-ver→lc-bad']),
+    JSON.stringify(parentEdges))
+  // V2-17 分层改由 parent 链深度决定（la-root@0 / lb-ver@1 / lc-bad@2），
+  // 无 parent 的旧投影仍回退到依赖分层（V2-9 已覆盖）。
+  const hierLayout = mod.treeGraphLayout(DETAIL_BODY.leaves, 'la-root')
+  check('V2-17 层级按 parent 链分层（la-root@0 / lb-ver@1 / lc-bad@2, hierarchy=true）',
+    JSON.stringify(hierLayout.nodes.map((n) => n.leafId + '@' + n.level)) ===
+      JSON.stringify(['la-root@0', 'lb-ver@1', 'lc-bad@2']) && hierLayout.hierarchy === true,
+    JSON.stringify(hierLayout.nodes.map((n) => `${n.leafId}@${n.level}`)))
+  // V2-18 重合的父子对只画一条实线（kind=parent）；依赖边仅在不重合时补虚线。
+  const drawnEdges = mod.treeGraphEdgesOf(DETAIL_BODY.leaves)
+  const mixedEdges = mod.treeGraphEdgesOf([
+    { leafId: 'p', parent: null, status: 'running' },
+    { leafId: 'a', parent: 'p', status: 'running' },
+    { leafId: 'b', parent: 'p', dependencies: ['a'], status: 'pending' },
+  ]).edges
+  check('V2-18 重合对只画 parent 一条；纯依赖对保留 kind=dep 虚线',
+    drawnEdges.edges.length === 2 && drawnEdges.edges.every((e) => e.kind === 'parent') &&
+      mixedEdges.some((e) => e.kind === 'parent' && e.from === 'p' && e.to === 'a') &&
+      mixedEdges.some((e) => e.kind === 'dep' && e.from === 'a' && e.to === 'b') &&
+      !mixedEdges.some((e) => e.kind === 'dep' && e.from === 'p'),
+    JSON.stringify(drawnEdges.edges) + ' | ' + JSON.stringify(mixedEdges))
+  // V2-19 渲染侧：从属边实线（data-kind=parent 且无 strokeDasharray），依赖边虚线。
+  const renderedPaths = edges
+    .map((g) => g.kids.find((k) => k && k.tag === 'path'))
+    .filter(Boolean)
+  check('V2-19 渲染边为从属实线（data-kind=parent、无 dash、父→子）',
+    edges.length === 2 && edges.every((g) => g.props['data-kind'] === 'parent') &&
+      renderedPaths.length === 2 && renderedPaths.every((p) => p.props.strokeDasharray === undefined),
+    JSON.stringify(edges.map((g) => g.props['data-kind'])))
+  // V2-20 节点可点：全部挂 onClick（点击 → controller.selectLeaf）。
+  check('V2-20 三个节点均挂 onClick 且 style.cursor=pointer',
+    nodes.length === 3 && nodes.every((n) => typeof n.props.onClick === 'function') &&
+      nodes.every((n) => n.props.style && n.props.style.cursor === 'pointer'))
+  const lcClickNode = nodes.find((n) => n.props['data-leaf-id'] === 'lc-bad')
+  lcClickNode.props.onClick({ stopPropagation: () => {} })
+  check('V2-21 点击 lc-bad → store.selectedLeafId=lc-bad',
+    rtMain.store.get().selectedLeafId === 'lc-bad', String(rtMain.store.get().selectedLeafId))
+  hookCalls = 0
+  const selSink = []
+  renderTree(rtMain.Body({}), selSink)
+  const selHookCalls = hookCalls
+  const selText = sinkAllText(selSink)
+  const selLeafGrid = selSink.filter((e) => e.props.className === 'st-tr2-fieldgrid st-tr2-leafgrid')
+  const selNodes = byClass(selSink, 'st-tr2-node', true)
+  const selRows = selSink.filter(
+    (e) => e.props.className === 'st-tr-row' && e.props['data-kind'] === 'leaf',
+  )
+  const selLcNode = selNodes.find((n) => n.props['data-leaf-id'] === 'lc-bad')
+  const selLcRow = selRows.find((r) => r.props['data-leaf-id'] === 'lc-bad')
+  check('V2-22 选中后节点/行高亮 + 下方出现「Leaf attributes · lc-bad」全部属性',
+    selText.includes('Leaf attributes · lc-bad') && selLeafGrid.length === 1 &&
+      !!selLcNode && selLcNode.props['data-selected'] === 'true' &&
+      !!selLcRow && selLcRow.props['data-selected'] === 'true' &&
+      selNodes.filter((n) => n.props['data-selected'] === 'true').length === 1 &&
+      selText.includes('Raw status') && selText.includes('Runtime') &&
+      selText.includes('Verification') && selText.includes('Dependencies') &&
+      selText.includes('Done summary'),
+    selText.slice(0, 90))
+  // V2-23 选中态不引入 hook：公式 B 仍成立。
+  check('V2-23 选中态 hook 数 = 基态 + GRAPH_HOOKS(2)',
+    selHookCalls === listHookCalls + 2, `base=${listHookCalls} selected=${selHookCalls}`)
+  // V2-24 Clear 清空选中 → 回到可发现的提示文案。
+  const clearBtn = byClass(selSink, 'st-tr2-graphbtn').find((b) => sinkText(b) === 'Clear')
+  if (clearBtn) clearBtn.props.onClick()
+  check('V2-24 Clear 点击后 selectedLeafId=null',
+    !!clearBtn && rtMain.store.get().selectedLeafId === null)
+  const clearedSink = []
+  renderTree(rtMain.Body({}), clearedSink)
+  check('V2-25 清空后显示「Click a node in the graph…」提示且无属性栅格',
+    sinkAllText(clearedSink).includes('Click a node in the graph') &&
+      clearedSink.filter((e) => e.props.className === 'st-tr2-fieldgrid st-tr2-leafgrid').length === 0)
+  // V2-26 切树重置叶子选中（控制器 select 清 selectedLeafId）。
+  rtMain.controller.select('tree-beta')
+  await drain()
+  check('V2-26 切树后 selectedLeafId 归零', rtMain.store.get().selectedLeafId === null,
+    String(rtMain.store.get().selectedLeafId))
+  // V2-27 脏数据：悬挂 parent / 自环 / 孤儿 / 双节点环 都能落位且不丢节点。
+  const dirtyHier = mod.treeHierarchyOf(
+    [
+      { leafId: 'root', parent: null },
+      { leafId: 'orphan', parent: 'ghost' },
+      { leafId: 'self', parent: 'self' },
+      { leafId: 'cyc-a', parent: 'cyc-b' },
+      { leafId: 'cyc-b', parent: 'cyc-a' },
+    ],
+    'root',
+  )
+  check('V2-27 悬挂 parent/自环/孤儿/环 全部安全落位（root 深度 0、节点不丢）',
+    dirtyHier.order.length === 5 && dirtyHier.order[0] === 'root' &&
+      dirtyHier.level.get('root') === 0 && dirtyHier.level.get('orphan') === 0,
+    JSON.stringify(dirtyHier.order))
 
   // ==================================================== ④ pill + overlay
   console.log('\n=== ④ 入口 pill：类名/文案/打开页签；无右栏服务时降级 overlay ===')

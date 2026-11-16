@@ -193,6 +193,13 @@ window.__ModuleLoader__.load({
 .st-tr2-copybtn{height:20px;padding:0 6px;border-radius:5px;border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);color:var(--dsw-alias-brand-primary);font:500 11px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;white-space:nowrap}
 .st-tr2-svg{display:block}
 .st-tr2-node text{user-select:none}
+.st-tr2-node{cursor:pointer}
+.st-tr2-node:hover rect:first-of-type{filter:brightness(1.06)}
+.st-tr-row[data-kind='leaf']{cursor:pointer}
+.st-tr-row[data-kind='leaf']:hover{background:var(--dsw-alias-bg-layer-1)}
+.st-tr-row[data-kind='leaf'][data-selected='true']{background:var(--dsw-alias-bg-layer-2);box-shadow:inset 2px 0 0 var(--dsw-alias-brand-primary)}
+.st-tr2-leafdetail-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.st-tr2-leafgrid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
 .st-tr2-edge{pointer-events:none}
 .st-tr-card[data-selected='true']{border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-bg-layer-2)}
 `
@@ -1063,7 +1070,7 @@ window.__ModuleLoader__.load({
     function panelToneOf(status) {
       if (status === 'running' || status === 'suspended' || status === 'dispatched') return 'running'
       if (status === 'succeeded' || status === 'done') return 'succeeded'
-      if (status === 'failed' || status === 'cancelled') return 'failed'
+      if (status === 'failed' || status === 'cancelled' || status === 'timeout' || status === 'error') return 'failed'
       if (status === 'active' || status === 'segment_pending') return 'running'
       return 'other'
     }
@@ -1093,18 +1100,19 @@ window.__ModuleLoader__.load({
 
     /**
      * Tree-level status derived from leaf counts (design §2.5 + §6.1 V2-3):
-     * any failed leaf paints the whole tree failed; any ACTIVE non-terminal
-     * leaf keeps it running (`pending` is NOT active — an all-pending tree
-     * stays pending, per the frozen V2-3 contract); otherwise at least one
+     * any failed/timeout/cancelled leaf paints the whole tree failed; any
+     * ACTIVE non-terminal leaf keeps it running (`pending` is NOT active — an
+     * all-pending tree stays pending, per the frozen V2-3 contract; `pruned`
+     * is terminal too and never counts as active); otherwise at least one
      * succeeded leaf means succeeded; anything else is pending.
      */
     function treeStatusOf(counts) {
       const c = counts && typeof counts === 'object' ? counts : {}
       const num = (v) => (typeof v === 'number' && isFinite(v) && v > 0 ? v : 0)
-      if (num(c.failed) > 0) return 'failed'
+      if (num(c.failed) > 0 || num(c.timeout) > 0 || num(c.cancelled) > 0 || num(c.error) > 0) return 'failed'
       let hasActive = false
       for (const key of Object.keys(c)) {
-        if (key === 'succeeded' || key === 'pending') continue
+        if (key === 'succeeded' || key === 'pending' || key === 'pruned') continue
         if (num(c[key]) > 0) hasActive = true
       }
       if (hasActive) return 'running'
@@ -1179,6 +1187,121 @@ window.__ModuleLoader__.load({
       return level
     }
 
+    /**
+     * Client-side hierarchy edges (v1.6.2, user ask m01512): one edge per
+     * leaf whose `parent` names another leaf present in the projection,
+     * direction parent → child (`data-from` = the commander, `data-to` = the
+     * leaf it spawned). The server's `parent` field is the authoritative
+     * 从属 relation; a dangling parent (parent not in `leaves`) is skipped,
+     * self-loops are dropped, and a duplicate child id is emitted once.
+     */
+    function treeParentEdgesOf(leaves) {
+      const list = Array.isArray(leaves) ? leaves : []
+      const present = new Set()
+      for (const leaf of list) {
+        if (!leaf || typeof leaf !== 'object' || leaf.leafId === undefined) continue
+        present.add(String(leaf.leafId))
+      }
+      const edges = []
+      const edgeKeys = new Set()
+      for (const leaf of list) {
+        if (!leaf || typeof leaf !== 'object' || leaf.leafId === undefined) continue
+        const to = String(leaf.leafId)
+        const parentRaw = leaf.parent
+        if (parentRaw === undefined || parentRaw === null || parentRaw === '') continue
+        const from = String(parentRaw)
+        if (from === to || !present.has(from)) continue
+        const key = from + '\u0000' + to
+        if (edgeKeys.has(key)) continue
+        edgeKeys.add(key)
+        edges.push({ from, to })
+      }
+      return edges
+    }
+
+    /**
+     * Hierarchy ordering + depth (v1.6.2, design §3.2 extended): depth 0 is
+     * the root (explicit `rootLeafId`, else every leaf without a present
+     * parent), children sit one column right of their parent, and the
+     * preorder walk fixes the within-column row order so siblings stay
+     * adjacent. Cycle-safe: a visited set stops a parent cycle from looping
+     * forever, and leaves unreachable from any root (orphans of a cycle) are
+     * appended at depth 0 in path order.
+     */
+    function treeHierarchyOf(leaves, rootLeafId) {
+      const list = Array.isArray(leaves) ? leaves : []
+      const byId = new Map()
+      const order0 = []
+      for (const leaf of list) {
+        if (!leaf || typeof leaf !== 'object' || leaf.leafId === undefined) continue
+        const id = String(leaf.leafId)
+        if (byId.has(id)) continue
+        byId.set(id, leaf)
+        order0.push(id)
+      }
+      const sortKey = (id) => {
+        const leaf = byId.get(id) || {}
+        const path = leaf.path === undefined || leaf.path === null ? '' : String(leaf.path)
+        return path + '\u0000' + id
+      }
+      const children = new Map()
+      const roots = []
+      for (const id of order0) {
+        const leaf = byId.get(id) || {}
+        const parentRaw = leaf.parent
+        const parent = parentRaw === undefined || parentRaw === null ? '' : String(parentRaw)
+        if (parent && parent !== id && byId.has(parent)) {
+          if (!children.has(parent)) children.set(parent, [])
+          children.get(parent).push(id)
+        } else {
+          roots.push(id)
+        }
+      }
+      const byPath = (a, b) => {
+        const ka = sortKey(a)
+        const kb = sortKey(b)
+        return ka < kb ? -1 : ka > kb ? 1 : 0
+      }
+      for (const ids of children.values()) ids.sort(byPath)
+      const root = rootLeafId !== undefined && rootLeafId !== null ? String(rootLeafId) : ''
+      const starts = root && byId.has(root) ? [root] : roots.slice().sort(byPath)
+      const order = []
+      const level = new Map()
+      const seen = new Set()
+      const walk = (id, depth) => {
+        if (seen.has(id)) return
+        seen.add(id)
+        order.push(id)
+        level.set(id, depth)
+        for (const child of children.get(id) || []) walk(child, depth + 1)
+      }
+      for (const id of starts) walk(id, 0)
+      for (const id of order0.slice().sort(byPath)) walk(id, 0)
+      return { order, level, roots: starts }
+    }
+
+    /**
+     * The drawn edge model (v1.6.2): one line per related pair, and a
+     * `parent` link wins over a declared dependency on the same pair, so the
+     * solid hierarchy line never overdraws a dashed dependency line. `kind`
+     * tells the renderer which style to use.
+     */
+    function treeGraphEdgesOf(leaves) {
+      const parentEdges = treeParentEdgesOf(leaves)
+      const depEdges = treeEdgesOf(leaves)
+      const parentPairs = new Set()
+      const edges = []
+      for (const edge of parentEdges) {
+        parentPairs.add(edge.from + '\u0000' + edge.to)
+        edges.push({ from: edge.from, to: edge.to, kind: 'parent' })
+      }
+      for (const edge of depEdges) {
+        if (parentPairs.has(edge.from + '\u0000' + edge.to)) continue
+        edges.push({ from: edge.from, to: edge.to, kind: 'dep' })
+      }
+      return { edges, parentEdges, depEdges }
+    }
+
     const GRAPH_PAD = 12
     const GRAPH_BOX_W = 192
     const GRAPH_BOX_H = 56
@@ -1186,19 +1309,34 @@ window.__ModuleLoader__.load({
     const GRAPH_ROW_GAP = 18
 
     /**
-     * Layout for the read-only dependency graph (design §3.2): nodes in
-     * server order into level columns, geometry per flow parity constants.
+     * Layout for the read-only graph (design §3.2, extended v1.6.2): columns
+     * are hierarchy depth when the projection carries `parent` links, so a
+     * commander sits one column left of the leaves it spawned; a projection
+     * without any parent link keeps the previous dependency-layering
+     * fallback. Rows pack per column in preorder, so a chain stays one row
+     * and siblings remain adjacent. `edges` are the declared dependencies
+     * (dashed), `parentEdges` the hierarchy (solid).
      */
     function treeGraphLayout(leaves, rootLeafId) {
       const list = Array.isArray(leaves) ? leaves : []
       const root = rootLeafId !== undefined && rootLeafId !== null ? String(rootLeafId) : ''
       const edges = treeEdgesOf(list)
-      const level = treeLevelsOf(list, edges)
-      const rowCounter = new Map()
-      const nodes = []
+      const parentEdges = treeParentEdgesOf(list)
+      const hierarchy = treeHierarchyOf(list, root)
+      const useHierarchy = parentEdges.length > 0
+      const level = useHierarchy ? hierarchy.level : treeLevelsOf(list, edges)
+      const byId = new Map()
       for (const leaf of list) {
         if (!leaf || typeof leaf !== 'object' || leaf.leafId === undefined) continue
         const id = String(leaf.leafId)
+        if (!byId.has(id)) byId.set(id, leaf)
+      }
+      const sequence = useHierarchy ? hierarchy.order : Array.from(byId.keys())
+      const rowCounter = new Map()
+      const nodes = []
+      for (const id of sequence) {
+        const leaf = byId.get(id)
+        if (!leaf) continue
         const col = level.get(id) || 0
         const row = rowCounter.get(col) || 0
         rowCounter.set(col, row + 1)
@@ -1219,7 +1357,7 @@ window.__ModuleLoader__.load({
       }
       const graphW = 2 * GRAPH_PAD + (maxLevel + 1) * GRAPH_BOX_W + maxLevel * GRAPH_COL_GAP
       const graphH = 2 * GRAPH_PAD + maxRows * GRAPH_BOX_H + (maxRows - 1) * GRAPH_ROW_GAP
-      return { nodes, edges, graphW, graphH, maxLevel, maxRows, root }
+      return { nodes, edges, parentEdges, graphW, graphH, maxLevel, maxRows, root, hierarchy: useHierarchy }
     }
 
     const ZOOM_MIN = 0.25
@@ -1352,11 +1490,23 @@ window.__ModuleLoader__.load({
           (body) => {
             // Ignore a stale response for a tree the user already left.
             if (store.get().selectedTreeId !== treeId) return null
-            store.set({
-              detail: body && typeof body === 'object' ? body : null,
+            const next = body && typeof body === 'object' ? body : null
+            const patch = {
+              detail: next,
               detailError: null,
               detailLoading: false,
-            })
+            }
+            // Drop a selection whose leaf vanished from the refreshed tree
+            // (pruned / re-projected leaf) instead of pinning a ghost detail.
+            const selectedLeafId = store.get().selectedLeafId
+            if (selectedLeafId) {
+              const leaves = next && Array.isArray(next.leaves) ? next.leaves : []
+              const stillThere = leaves.some(
+                (leaf) => leaf && String(leaf.leafId) === String(selectedLeafId),
+              )
+              if (!stillThere) patch.selectedLeafId = null
+            }
+            store.set(patch)
           },
           (error) => {
             if (store.get().selectedTreeId !== treeId) return null
@@ -1416,6 +1566,7 @@ window.__ModuleLoader__.load({
       function select(treeId) {
         store.set({
           selectedTreeId: treeId,
+          selectedLeafId: null,
           detail: null,
           detailLoading: true,
           detailError: null,
@@ -1428,10 +1579,21 @@ window.__ModuleLoader__.load({
         refreshEvents()
       }
 
+      /**
+       * Leaf selection for the detail pane (v1.6.2, user ask m01512): the
+       * graph node click and the leaf-table row click both land here. Passing
+       * null/'' clears the selection; no fetch — the detail is already loaded.
+       */
+      function selectLeaf(leafId) {
+        const next = leafId === undefined || leafId === null || leafId === '' ? null : String(leafId)
+        store.set({ selectedLeafId: next })
+      }
+
       function back() {
         abortAll()
         store.set({
           selectedTreeId: null,
+          selectedLeafId: null,
           detail: null,
           detailLoading: false,
           detailError: null,
@@ -1464,6 +1626,7 @@ window.__ModuleLoader__.load({
         start,
         stop,
         select,
+        selectLeaf,
         back,
         refreshAll,
         getTimerId: () => pollTimer,
@@ -1573,7 +1736,18 @@ window.__ModuleLoader__.load({
         h('span', { className: 'st-tr-cell', key: 'deps', title: deps }, deps || '—'),
         h(SessionCell, { key: 'session', sessionId: leaf.sessionId }),
       ]
-      return h('div', { className: 'st-tr-row', 'data-kind': 'leaf', 'data-leaf-id': leafId }, cells)
+      return h(
+        'div',
+        {
+          className: 'st-tr-row',
+          'data-kind': 'leaf',
+          'data-leaf-id': leafId,
+          'data-selected': props.selected === true ? 'true' : 'false',
+          onClick: typeof props.onSelect === 'function' ? () => props.onSelect(leafId) : undefined,
+          style: typeof props.onSelect === 'function' ? { cursor: 'pointer' } : undefined,
+        },
+        cells,
+      )
     }
 
     /**
@@ -1686,6 +1860,9 @@ window.__ModuleLoader__.load({
       const showDetail = zoom >= 0.85
       const fontFamily = 'system-ui,-apple-system,"Segoe UI",sans-serif'
       const monoFamily = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'
+      const selectedId =
+        props.selectedLeafId !== undefined && props.selectedLeafId !== null ? String(props.selectedLeafId) : ''
+      const selectLeaf = typeof props.onSelectLeaf === 'function' ? props.onSelectLeaf : null
       const statusFill = (status) => {
         const tone = panelToneOf(status)
         if (tone === 'running') return 'var(--dsw-static-blue-500,#3b82f6)'
@@ -1696,15 +1873,17 @@ window.__ModuleLoader__.load({
 
       const nodeById = new Map()
       for (const node of layout.nodes) nodeById.set(node.leafId, node)
+      const drawn = treeGraphEdgesOf(leaves).edges
       const bySource = new Map()
-      for (const edge of layout.edges) {
+      for (const edge of drawn) {
         if (!bySource.has(edge.from)) bySource.set(edge.from, [])
         bySource.get(edge.from).push(edge)
       }
-      const edgeEls = layout.edges.map((edge) => {
+      const edgeEls = drawn.map((edge) => {
         const from = nodeById.get(edge.from)
         const to = nodeById.get(edge.to)
         if (!from || !to) return null
+        const isParent = edge.kind === 'parent'
         const sx = from.x + GRAPH_BOX_W
         const sy = from.y + GRAPH_BOX_H / 2
         const ex = to.x - 8
@@ -1726,10 +1905,11 @@ window.__ModuleLoader__.load({
         return h(
           'g',
           {
-            key: edge.from + '\u0000' + edge.to,
+            key: edge.kind + '\u0000' + edge.from + '\u0000' + edge.to,
             className: 'st-tr2-edge',
             'data-from': edge.from,
             'data-to': edge.to,
+            'data-kind': edge.kind,
             'data-state': 'decl',
           },
           h('path', {
@@ -1739,11 +1919,12 @@ window.__ModuleLoader__.load({
               ', ' + c2x + ' ' + c2y +
               ', ' + ex + ' ' + ey,
             fill: 'none',
-            stroke: 'var(--dsw-alias-label-secondary)',
-            strokeWidth: 1.3 * scaleComp,
-            strokeDasharray: 7 * scaleComp + ' ' + 5 * scaleComp,
-            opacity: 0.85,
-            markerEnd: 'url(#st-tr2-arrow-decl)',
+            // Hierarchy = solid (authoritative 从属), dependency = dashed.
+            stroke: isParent ? 'var(--dsw-alias-brand-primary)' : 'var(--dsw-alias-label-secondary)',
+            strokeWidth: (isParent ? 1.6 : 1.3) * scaleComp,
+            strokeDasharray: isParent ? undefined : 7 * scaleComp + ' ' + 5 * scaleComp,
+            opacity: isParent ? 0.55 : 0.85,
+            markerEnd: isParent ? 'url(#st-tr2-arrow-parent)' : 'url(#st-tr2-arrow-decl)',
           }),
         )
       })
@@ -1753,6 +1934,7 @@ window.__ModuleLoader__.load({
         const status = leaf.status !== undefined && leaf.status !== null ? String(leaf.status) : ''
         const role = leaf.role !== undefined && leaf.role !== null ? String(leaf.role) : ''
         const isRoot = node.leafId === rootId
+        const isSelected = selectedId !== '' && node.leafId === selectedId
         const failed = status === 'failed'
         const stroke = failed
           ? 'var(--dsw-alias-state-error-primary)'
@@ -1846,6 +2028,18 @@ window.__ModuleLoader__.load({
             },
           }, '!'))
         }
+        if (isSelected) {
+          kids.push(h('rect', {
+            key: 'ring',
+            x: node.x - 3,
+            y: node.y - 3,
+            width: GRAPH_BOX_W + 6,
+            height: GRAPH_BOX_H + 6,
+            rx: 12,
+            fill: 'none',
+            style: { stroke: 'var(--dsw-alias-brand-primary)', strokeWidth: String(2 * scaleComp) },
+          }))
+        }
         return h(
           'g',
           {
@@ -1855,6 +2049,14 @@ window.__ModuleLoader__.load({
             'data-status': status,
             'data-tone': panelToneOf(status),
             'data-root': isRoot ? 'true' : 'false',
+            'data-selected': isSelected ? 'true' : 'false',
+            style: selectLeaf ? { cursor: 'pointer' } : undefined,
+            onClick: selectLeaf
+              ? (event) => {
+                  if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+                  selectLeaf(node.leafId)
+                }
+              : undefined,
           },
           kids,
         )
@@ -1924,7 +2126,7 @@ window.__ModuleLoader__.load({
             title: 'Fit graph',
           }, 'Fit'),
           h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => zoomTo(1), title: 'Reset zoom' }, '100%'),
-          h('span', { className: 'st-tr2-hint' }, 'Ctrl/⌘+wheel zoom · drag to pan · dashed = declared dependency'),
+          h('span', { className: 'st-tr2-hint' }, 'Ctrl/⌘+wheel zoom · drag to pan · click a node to inspect · solid = parent → child'),
         ),
         h(
           'div',
@@ -1972,6 +2174,20 @@ window.__ModuleLoader__.load({
                 h(
                   'marker',
                   {
+                    key: 'parent',
+                    id: 'st-tr2-arrow-parent',
+                    viewBox: '0 0 8 8',
+                    refX: 6,
+                    refY: 3,
+                    markerWidth: 8,
+                    markerHeight: 8,
+                    orient: 'auto',
+                  },
+                  h('path', { d: 'M0,0 L6,3 L0,6 z', style: { fill: 'var(--dsw-alias-brand-primary)', opacity: 0.7 } }),
+                ),
+                h(
+                  'marker',
+                  {
                     key: 'sat',
                     id: 'st-tr2-arrow-sat',
                     viewBox: '0 0 8 8',
@@ -1995,7 +2211,8 @@ window.__ModuleLoader__.load({
           ['succeeded', 'failed', 'running', 'other'].map((tone) =>
             h('span', { key: tone }, h('span', { className: 'st-tr-dot', 'data-tone': tone }), ' ' + tone),
           ),
-          h('span', { key: 'decl' }, '─── declared dependency (dashed)'),
+          h('span', { key: 'decl' }, '─── parent → child (solid)'),
+          h('span', { key: 'dep' }, '--- declared dependency (dashed)'),
         ),
       ]
     }
@@ -2081,6 +2298,9 @@ window.__ModuleLoader__.load({
     /** Leaf table with the 8 read-only columns incl. the session cell (§2/#8). */
     function PanelLeafTable(props) {
       const leaves = props.leaves
+      const selectedLeafId =
+        props.selectedLeafId === undefined || props.selectedLeafId === null ? null : String(props.selectedLeafId)
+      const onSelectLeaf = props.onSelectLeaf
       const headRow = h(
         'div',
         { className: 'st-tr-row', 'data-kind': 'head' },
@@ -2098,8 +2318,94 @@ window.__ModuleLoader__.load({
         { className: 'st-tr2-section' },
         h('div', { className: 'st-tr2-section-title' }, 'Leaves'),
         leaves.length > 0
-          ? h('div', { className: 'st-tr-tablewrap' }, headRow, leaves.map((leaf) => h(PanelLeafRow, { key: leaf && leaf.leafId, leaf })))
+          ? h(
+              'div',
+              { className: 'st-tr-tablewrap' },
+              headRow,
+              leaves.map((leaf) =>
+                h(PanelLeafRow, {
+                  key: leaf && leaf.leafId,
+                  leaf,
+                  selected: !!(leaf && selectedLeafId !== null && String(leaf.leafId) === selectedLeafId),
+                  onSelect: onSelectLeaf,
+                }),
+              ),
+            )
           : h('div', { className: 'st-tr-note' }, 'No leaves recorded.'),
+      )
+    }
+
+    /**
+     * Selected-leaf inspector (v1.6.2, user ask m01512): every projected leaf
+     * attribute in one read-only field grid, fed by the already-loaded tree
+     * detail (no extra fetch, no hooks). Nothing selected renders the hint so
+     * the affordance is discoverable.
+     */
+    function PanelLeafDetail(props) {
+      const leaf = props.leaf
+      const onClear = typeof props.onClear === 'function' ? props.onClear : null
+      if (!leaf || typeof leaf !== 'object') {
+        return h(
+          'div',
+          { className: 'st-tr2-section st-tr2-leafdetail' },
+          h('div', { className: 'st-tr2-section-title' }, 'Leaf attributes'),
+          h(
+            'div',
+            { className: 'st-tr-note', 'data-kind': 'hint' },
+            'Click a node in the graph (or a leaf row below) to inspect its attributes.',
+          ),
+        )
+      }
+      const leafId = leaf.leafId === undefined || leaf.leafId === null ? '' : String(leaf.leafId)
+      const verif = leaf.verification && typeof leaf.verification === 'object' ? leaf.verification : null
+      let verifText = ''
+      if (verif) {
+        const parts = [verif.pass === true ? 'pass' : verif.pass === false ? 'fail' : '—']
+        if (typeof verif.attempts === 'number') parts.push('attempts ' + verif.attempts)
+        if (verif.lastVerdict) parts.push(String(verif.lastVerdict))
+        if (verif.policy) parts.push('policy ' + String(verif.policy))
+        verifText = parts.join(' · ')
+      }
+      const assignee = leaf.assignee && typeof leaf.assignee === 'object' ? leaf.assignee : null
+      const assigneeText = assignee
+        ? [assignee.provider, assignee.model].filter((v) => v !== undefined && v !== null && v !== '').join(' / ')
+        : ''
+      const deps = Array.isArray(leaf.dependencies) ? leaf.dependencies.map(String).join(', ') : ''
+      const lastEvent =
+        (leaf.lastEventType ? String(leaf.lastEventType) : '') +
+        (leaf.lastEventAt ? ' · ' + panelTimeOf(leaf.lastEventAt) : '')
+      return h(
+        'div',
+        { className: 'st-tr2-section st-tr2-leafdetail' },
+        h(
+          'div',
+          { className: 'st-tr2-section-title st-tr2-leafdetail-head' },
+          'Leaf attributes · ' + leafId,
+          onClear
+            ? h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: onClear, title: 'Clear selection' }, 'Clear')
+            : null,
+        ),
+        h(
+          'div',
+          { className: 'st-tr2-fieldgrid st-tr2-leafgrid' },
+          h(PanelField, { label: 'Leaf', value: leafId, mono: true }),
+          h(PanelField, { label: 'Path', value: leaf.path === undefined || leaf.path === null ? '' : String(leaf.path), mono: true }),
+          h(PanelField, { label: 'Role', value: leaf.role ? String(leaf.role) : '' }),
+          h(PanelField, { label: 'Parent', value: leaf.parent ? String(leaf.parent) : '', mono: true }),
+          h(PanelField, { label: 'Status', value: h(PanelBadge, { status: leaf.status }) }),
+          h(PanelField, { label: 'Raw status', value: leaf.rawStatus ? String(leaf.rawStatus) : '' }),
+          h(PanelField, { label: 'Runtime', value: leaf.runtimeState ? String(leaf.runtimeState) : '' }),
+          h(PanelField, { label: 'Task', value: leaf.taskType ? String(leaf.taskType) : '' }),
+          h(PanelField, { label: 'Relay', value: leaf.relay === undefined || leaf.relay === null ? '' : String(leaf.relay) }),
+          h(PanelField, { label: 'Ctx', value: typeof leaf.ctxPct === 'number' ? leaf.ctxPct + '%' : '' }),
+          h(PanelField, { label: 'Added by', value: leaf.addedBy ? String(leaf.addedBy) : '', mono: true }),
+          h(PanelField, { label: 'Assignee', value: assigneeText }),
+          h(PanelField, { label: 'Verification', value: verifText }),
+          h(PanelField, { label: 'Dependencies', value: deps, mono: true }),
+          h(PanelField, { label: 'Last event', value: lastEvent }),
+          h(PanelField, { label: 'Session', value: h(SessionCell, { sessionId: leaf.sessionId }) }),
+          h(PanelField, { label: 'Done summary', value: leaf.doneSummaryPreview ? panelPreviewOf(leaf.doneSummaryPreview) : '' }),
+        ),
       )
     }
 
@@ -2137,6 +2443,7 @@ window.__ModuleLoader__.load({
      */
     function PanelDetail(props) {
       const state = props.state
+      const controller = props.controller
       const selected = state.selectedTreeId
       const detail = state.detail && typeof state.detail === 'object' ? state.detail : null
       const leaves = detail && Array.isArray(detail.leaves) ? detail.leaves : []
@@ -2155,10 +2462,32 @@ window.__ModuleLoader__.load({
       } else if (!detail) {
         inner = h('div', { className: 'st-tr-note' }, 'No detail for this tree yet.')
       } else {
+        const selectedLeafId =
+          state.selectedLeafId === undefined || state.selectedLeafId === null ? null : String(state.selectedLeafId)
+        const selectedLeaf =
+          selectedLeafId === null
+            ? null
+            : leaves.find((leaf) => leaf && String(leaf.leafId) === selectedLeafId) || null
+        const onSelectLeaf = (leafId) => controller.selectLeaf(leafId)
         inner = [
           h(PanelFieldGrid, { key: 'fields', detail }),
-          h(GraphBoundary, { key: 'graph' }, h(TreeGraph, { leaves, root: detail.root })),
-          h(PanelLeafTable, { key: 'leaves', leaves }),
+          h(GraphBoundary, { key: 'graph' }, h(TreeGraph, {
+            leaves,
+            root: detail.root,
+            selectedLeafId,
+            onSelectLeaf,
+          })),
+          h(PanelLeafDetail, {
+            key: 'leafdetail',
+            leaf: selectedLeaf,
+            onClear: () => controller.selectLeaf(null),
+          }),
+          h(PanelLeafTable, {
+            key: 'leaves',
+            leaves,
+            selectedLeafId,
+            onSelectLeaf,
+          }),
           h(PanelEventTail, { key: 'events', events, eventsError: state.eventsError }),
         ]
       }
@@ -2194,7 +2523,7 @@ window.__ModuleLoader__.load({
           'div',
           { className: 'st-tr2-body' },
           h(PanelList, { state, trees, controller }),
-          h(PanelDetail, { state }),
+          h(PanelDetail, { state, controller }),
         ),
       )
     }
@@ -2283,6 +2612,8 @@ window.__ModuleLoader__.load({
         storageRoot: null,
         total: 0,
         selectedTreeId: null,
+        // v1.6.2: selected leaf for the detail pane (node / row click).
+        selectedLeafId: null,
         detail: null,
         detailLoading: false,
         detailError: null,
@@ -4013,7 +4344,14 @@ window.__ModuleLoader__.load({
       panelPreviewOf,
       // panel-v2 pure helpers (design §5.5): tree status derivation, graph
       // layout, zoom constants, edge-state mapping and session counting.
+      // v1.6.2 adds the hierarchy helpers (parent edges + depth/order) that
+      // back the "分层与从属关系" graph rewrite (user ask m01512).
       treeStatusOf,
+      treeEdgesOf,
+      treeLevelsOf,
+      treeParentEdgesOf,
+      treeHierarchyOf,
+      treeGraphEdgesOf,
       treeGraphLayout,
       clampZoom,
       ZOOM_MIN,

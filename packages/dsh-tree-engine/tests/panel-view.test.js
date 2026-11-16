@@ -22,6 +22,7 @@ import { fsStore, memoryStore } from '../src/store.js'
 import { VirtualClock } from '../src/clock.js'
 import {
   PANEL_LIMITS, TREE_PANEL_TREE_ID_RE, clampInt, truncateChars, textPreview,
+  runtimeStateOf, displayStateOf,
   statusCounts, projectAssignee, projectVerification, projectLeaf,
   projectTreeSummary, projectTreeDetail, flattenEvents, projectEvents, createPanelView,
 } from '../src/panel-view.js'
@@ -148,10 +149,46 @@ describe('treeId 契约正则与基础工具', () => {
 // ===================== A2. 状态投影（纯函数形状） =====================
 
 describe('statusCounts / assignee / verification / leaf 投影', () => {
-  test('statusCounts：按 status 键统计（未知状态照实计数）', () => {
+  test('statusCounts：按派生展示态统计（v1.6.2 起 raw status 不再是口径）', () => {
     const counts = statusCounts({ a: { status: 'active' }, b: { status: 'active' }, c: { status: 'done' }, d: { status: 'segment_pending' }, e: {} })
-    assert.deepEqual(counts, { active: 2, done: 1, segment_pending: 1, unknown: 1 })
+    assert.deepEqual(counts, { running: 2, succeeded: 1, segment_pending: 1, pending: 1 })
+    // 结算权威在 runtime.state / verification：raw pending_brief 但已 done+verified 的叶子计入 succeeded
+    const settled = statusCounts({
+      x: { status: 'pending_brief', runtime: { state: 'succeeded' }, verification: { pass: true } },
+      y: { status: 'pending_brief', runtime: { state: 'succeeded' } },
+      z: { status: 'pending_brief', runtime: { state: 'timeout' } },
+    })
+    assert.deepEqual(settled, { succeeded: 2, timeout: 1 })
     assert.deepEqual(statusCounts(null), {})
+  })
+
+  test('displayStateOf / runtimeStateOf：失败类优先 + 结算归一 + raw 别名', () => {
+    assert.equal(runtimeStateOf({ runtime: { state: 'succeeded' } }), 'succeeded')
+    assert.equal(runtimeStateOf({ runtime: { state: 42 } }), null)
+    assert.equal(runtimeStateOf({}), null)
+    assert.equal(runtimeStateOf(null), null)
+    // runtime 失败类压过 verification.pass（真实数据存在 timeout + pass=true 的组合）
+    assert.equal(displayStateOf({ status: 'pending_brief', runtime: { state: 'failed' } }), 'failed')
+    assert.equal(displayStateOf({ status: 'active', runtime: { state: 'timeout' }, verification: { pass: true } }), 'timeout')
+    assert.equal(displayStateOf({ status: 'active', runtime: { state: 'aborted' } }), 'cancelled')
+    // verification.pass / runtime.succeeded 都收敛到 succeeded
+    assert.equal(displayStateOf({ status: 'pending_brief', verification: { pass: true } }), 'succeeded')
+    assert.equal(displayStateOf({ status: 'pending_brief', runtime: { state: 'succeeded' } }), 'succeeded')
+    // raw 别名归一：done 不能再被当成未知在跑态
+    assert.equal(displayStateOf({ status: 'done' }), 'succeeded')
+    assert.equal(displayStateOf({ status: 'running' }), 'running')
+    assert.equal(displayStateOf({ status: 'failed' }), 'failed')
+    // active → running；segment_pending / pruned 保留；pending_brief / 缺失 → pending
+    assert.equal(displayStateOf({ status: 'active' }), 'running')
+    assert.equal(displayStateOf({ status: 'segment_pending' }), 'segment_pending')
+    assert.equal(displayStateOf({ status: 'pruned' }), 'pruned')
+    assert.equal(displayStateOf({ status: 'pending_brief' }), 'pending')
+    assert.equal(displayStateOf({ status: 'pending' }), 'pending')
+    assert.equal(displayStateOf({}), 'pending')
+    // 无 runtime 的老状态文件：last_event_type=done 也算结算
+    assert.equal(displayStateOf({ status: 'active', last_event_type: 'done' }), 'succeeded')
+    // 未知自定义状态原样透出（面板按 grey 处理）
+    assert.equal(displayStateOf({ status: 'quarantined' }), 'quarantined')
   })
 
   test('projectAssignee：只含 provider/model/effort 三键（preset/mechanism 剥除）', () => {
@@ -181,9 +218,12 @@ describe('statusCounts / assignee / verification / leaf 投影', () => {
 
   test('projectLeaf：契约键逐字 + 脱敏（brief/dod/meta/runtime/handoffBrief 绝不出现在 JSON）', () => {
     const leaf = projectLeaf(richLeafFixture())
-    assert.deepEqual(Object.keys(leaf), ['leafId', 'parent', 'path', 'role', 'status', 'sessionId', 'relay', 'taskType', 'dependencies', 'addedBy', 'assignee', 'ctxPct', 'lastEventAt', 'lastEventType', 'verification', 'doneSummaryPreview'])
+    assert.deepEqual(Object.keys(leaf), ['leafId', 'parent', 'path', 'role', 'status', 'state', 'rawStatus', 'runtimeState', 'sessionId', 'relay', 'taskType', 'dependencies', 'addedBy', 'assignee', 'ctxPct', 'lastEventAt', 'lastEventType', 'verification', 'doneSummaryPreview'])
     assert.equal(leaf.leafId, 'panel-C1-worker')
-    assert.equal(leaf.status, 'done')
+    assert.equal(leaf.status, 'succeeded')     // 派生展示态（fixture runtime.state=succeeded + verification.pass）
+    assert.equal(leaf.state, 'succeeded')
+    assert.equal(leaf.rawStatus, 'done')       // raw 原样保留
+    assert.equal(leaf.runtimeState, 'succeeded')
     assert.equal(leaf.relay, 'off')
     assert.equal(leaf.taskType, 'code-change')
     assert.deepEqual(leaf.dependencies, ['panel-root'])
@@ -194,7 +234,8 @@ describe('statusCounts / assignee / verification / leaf 投影', () => {
     assert.equal(leaf.verification.policy, 'code-change')
     assert.equal(leaf.doneSummaryPreview, '已交付面板路由（含幂等注册）')
     const json = JSON.stringify(leaf)
-    for (const forbidden of ['DO-NOT-LEAK', 'secretPrompt', 'handoffBrief', 'K1 ', 'internal', 'milestones', 'runtime', 'brief', 'dod', '"meta"', 'segmentChain', 'glm-5.3-flash"channel']) {
+    // 注意：`runtimeState` 是 v1.6.2 的契约键（单字符串），故用 '"runtime"' 判 raw runtime 对象是否外泄。
+    for (const forbidden of ['DO-NOT-LEAK', 'secretPrompt', 'handoffBrief', 'K1 ', 'internal', 'milestones', '"runtime"', 'brief', 'dod', '"meta"', 'segmentChain', 'glm-5.3-flash"channel']) {
       assert.ok(!json.includes(forbidden), `投影不得包含 ${JSON.stringify(forbidden)}`)
     }
   })
@@ -221,7 +262,7 @@ describe('trees 列表 / 详情 / events 三形状', () => {
     assert.equal(s.treeId, 'panel')
     assert.equal(s.rootLeafId, 'panel-root')
     assert.equal(s.leafCount, 2)
-    assert.deepEqual(s.counts, { active: 1, done: 1 })
+    assert.deepEqual(s.counts, { running: 1, succeeded: 1 })
     assert.equal(s.updatedAt, '2023-11-14T09:00:00.000Z')
     assert.equal(s.rootGoalPreview.length, PANEL_LIMITS.goalPreviewChars)   // {"goal":"完…" 截到 120 字符
     assert.ok(s.rootGoalPreview.endsWith('…'))
@@ -243,9 +284,9 @@ describe('trees 列表 / 详情 / events 三形状', () => {
     const d = projectTreeDetail(state)
     assert.deepEqual(Object.keys(d), ['treeId', 'createdAt', 'updatedAt', 'root', 'leaves', 'stats'])
     assert.equal(d.updatedAt, d.createdAt)
-    assert.deepEqual(d.root, { leafId: 'panel-root', status: 'active', goalPreview: '{"goal":"面板夹具树"}' })
+    assert.deepEqual(d.root, { leafId: 'panel-root', status: 'running', rawStatus: 'active', runtimeState: null, goalPreview: '{"goal":"面板夹具树"}' })
     assert.deepEqual(d.leaves.map((l) => l.leafId), ['panel-C1-worker', 'panel-root'])   // leafId 升序
-    assert.deepEqual(d.stats, { total: 2, byStatus: { active: 1, done: 1 }, sessions: 2 })   // registry(1) ∪ runtime(2)
+    assert.deepEqual(d.stats, { total: 2, byStatus: { running: 1, succeeded: 1 }, sessions: 2 })   // registry(1) ∪ runtime(2)
     const json = JSON.stringify(d)
     // sessionId/addedBy 是契约键（会话 id 允许透出）；registry 明细 / verify_delegates / drift 原因 / runtime 不允许
     for (const forbidden of ['session_registry', 'DO-NOT-LEAK', 'verify_delegates', 'drift_log', '"runtime"', '"kind"']) {
@@ -253,7 +294,7 @@ describe('trees 列表 / 详情 / events 三形状', () => {
     }
     // root leaf 缺席（写坏状态）→ missing 面不炸
     const broken = projectTreeDetail({ tree_id: 'panel', leaves: {} })
-    assert.deepEqual(broken.root, { leafId: null, status: 'missing', goalPreview: null })
+    assert.deepEqual(broken.root, { leafId: null, status: 'missing', rawStatus: 'missing', runtimeState: null, goalPreview: null })
     assert.deepEqual(broken.stats, { total: 0, byStatus: {}, sessions: 0 })
   })
 
@@ -463,7 +504,7 @@ describe('createPanelRequestHandler（fake webServer handler 面）', () => {
     assert.equal(detail.stats.total, 2)
     assert.equal(detail.leaves.length, 2)
     for (const leaf of detail.leaves) {
-      assert.deepEqual(Object.keys(leaf), ['leafId', 'parent', 'path', 'role', 'status', 'sessionId', 'relay', 'taskType', 'dependencies', 'addedBy', 'assignee', 'ctxPct', 'lastEventAt', 'lastEventType', 'verification', 'doneSummaryPreview'])
+      assert.deepEqual(Object.keys(leaf), ['leafId', 'parent', 'path', 'role', 'status', 'state', 'rawStatus', 'runtimeState', 'sessionId', 'relay', 'taskType', 'dependencies', 'addedBy', 'assignee', 'ctxPct', 'lastEventAt', 'lastEventType', 'verification', 'doneSummaryPreview'])
     }
     assert.ok(detail.leaves.some((l) => l.leafId === 'panel-C1-worker' && l.doneSummaryPreview?.startsWith('完成：')), 'doneSummaryPreview 来自 done 事件 meta.summary')
 

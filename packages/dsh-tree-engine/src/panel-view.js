@@ -11,9 +11,13 @@
  *   - **绝不输出**：leaf.brief/dod 正文、事件 meta 内容、runtime.handoffBrief/runtime.history、
  *     drift reason、verdict detail（可能含 stderr/stdout 片段）、session_registry 的会话 id 明细、
  *     任何 token/密钥形态字段；done 事件只透出 meta.summary 且 ≤200 字符；
+ *     runtime 只透出结算态 `state` 一个字符串（v1.6.2 起，供派生展示状态）；
  *   - assignee 只透出 provider/model/effort 三键（preset/mechanism 等一律剥除）；
  *   - verification 投影为 {pass, attempts, lastVerdict, policy}（缺省 null）；
- *   - 事件只给信封（seq/ts/leafId/type），绝不给 payload/meta 全文。
+ *   - 事件只给信封（seq/ts/leafId/type），绝不给 payload/meta 全文；
+ *   - **展示状态派生**（v1.6.2 起，见 {@link displayStateOf}）：`leaf.status` 是启封态，
+ *     结算权威在 done 事件 → `runtime.state` + `verification.pass`；投影的 `status` 字段
+ *     因此是派生展示态，原始 `leaf.status` 另存 `rawStatus`、`runtime.state` 另存 `runtimeState`。
  *
  * seq 语义（本仓树状态无原生事件 seq，flow journal 的 seq 在此为派生序）：
  *   flattenEvents() 把全树事件按 (ts 升序, leafId 升序, 叶内序) 稳定排序后 1 起编号。
@@ -93,14 +97,71 @@ function leafList(leaves) {
   return Object.keys(leaves).map((id) => (isPlainObject(leaves[id]) ? leaves[id] : { leaf_id: id }))
 }
 
-/** 状态计数（counts: {<status>:n}；未知/缺失状态按 'unknown' 计）。 */
+/** 状态计数（counts: {<显示状态>:n}；未知/缺失状态按 'unknown' 计）。 */
 export function statusCounts(leaves) {
   const counts = {}
   for (const leaf of leafList(leaves)) {
-    const key = asString(leaf?.status) ?? 'unknown'
+    const key = displayStateOf(leaf)
     counts[key] = (counts[key] ?? 0) + 1
   }
   return counts
+}
+
+/**
+ * 叶的运行结算态（`leaf.runtime.state`）——**结算权威**。
+ *
+ * 引擎的闭式状态机把 `leaf.status` 保持在「启封时那一步」（`pending_brief` /
+ * `active` / `segment_pending` / `pruned`），结算走 done 事件 → `runtime.state`
+ * （`succeeded` / `timeout` …）+ `verification`。面板若直接显示 raw status，
+ * 已完成的叶子会永远显示 pending_brief（真实观测：wave2 10 叶里 8 叶是
+ * `runtime.state=succeeded` + `verification.pass=true` 但 `status=pending_brief`）。
+ * 所以投影层派生一个**展示状态**，raw status 另存 `rawStatus` 供追溯。
+ *
+ * @param {any} leaf
+ * @returns {string|null}
+ */
+export function runtimeStateOf(leaf) {
+  const rt = isPlainObject(leaf?.runtime) ? leaf.runtime : {}
+  return asString(rt.state)
+}
+
+/**
+ * 派生「展示状态」（决策见 {@link runtimeStateOf}）。优先级：
+ * 1. `runtime.state` 的失败类（failed / timeout / cancelled / aborted）原样透出（红色系）；
+ * 2. `verification.pass === true` → succeeded（已验证即结算成功）；
+ * 3. `runtime.state === 'succeeded'` → succeeded（已 done 但未（或未走）验证）；
+ * 4. `status === 'pruned'` → pruned（显式剪除，非 pending）；
+ * 5. `status === 'segment_pending'` → segment_pending（竹节接力中，按 running 上色）；
+ * 6. `last_event_type === 'done'` → succeeded（结算事件压过 raw 启封态；老状态文件 runtime 可能缺省）；
+ * 7. `status === 'active'` → running；
+ * 8. raw status 的结算/在跑别名归一（done|succeeded|completed → succeeded；running → running；
+ *    failed / timeout / cancelled|aborted 原样），避免面板把 `done` 当成未知在跑态；
+ * 9. `pending_brief` / `pending` / 缺失 → pending；其余 raw 原样透出。
+ *
+ * @param {any} leaf
+ * @returns {string}
+ */
+export function displayStateOf(leaf) {
+  const raw = asString(leaf?.status) ?? 'unknown'
+  const runtimeState = runtimeStateOf(leaf)
+  const verif = isPlainObject(leaf?.verification) ? leaf.verification : {}
+  if (runtimeState === 'failed') return 'failed'
+  if (runtimeState === 'timeout') return 'timeout'
+  if (runtimeState === 'cancelled' || runtimeState === 'aborted') return 'cancelled'
+  if (verif.pass === true) return 'succeeded'
+  if (runtimeState === 'succeeded') return 'succeeded'
+  if (raw === 'pruned') return 'pruned'
+  if (raw === 'segment_pending') return 'segment_pending'
+  // done 事件 = 结算事实，压过 raw 启封态（老状态文件常见 status=active + 末事件 done）
+  if (asString(leaf?.last_event_type) === 'done') return 'succeeded'
+  if (raw === 'active') return 'running'
+  if (raw === 'done' || raw === 'succeeded' || raw === 'completed') return 'succeeded'
+  if (raw === 'running') return 'running'
+  if (raw === 'failed') return 'failed'
+  if (raw === 'timeout') return 'timeout'
+  if (raw === 'cancelled' || raw === 'aborted') return 'cancelled'
+  if (raw === 'pending_brief' || raw === 'pending' || raw === 'unknown') return 'pending'
+  return raw
 }
 
 /** assignee 投影：只含 provider/model/effort 三键（preset/mechanism/未知键绝不透出）。 */
@@ -146,20 +207,28 @@ function lastDoneSummary(leaf) {
 }
 
 /**
- * 单叶投影（契约形状逐字；只输出白名单键，brief/dod/runtime/milestones/事件正文一概不透出）。
+ * 单叶投影（契约形状逐字；只输出白名单键，brief/dod/milestones/事件正文一概不透出；
+ * `runtime` 只透出结算态 `state` 一个字符串，handoffBrief/history 等正文绝不透出）。
  * @returns {{ leafId: string, parent: string|null, path: string, role: string, status: string,
+ *   state: string, rawStatus: string, runtimeState: string|null,
  *   sessionId: string|null, relay: string, taskType: string|null, dependencies: string[],
  *   addedBy: string|null, assignee: object|null, ctxPct: number|null, lastEventAt: string|null,
  *   lastEventType: string|null, verification: object|null, doneSummaryPreview: string|null }}
  */
 export function projectLeaf(leaf) {
   const src = isPlainObject(leaf) ? leaf : {}
+  const rawStatus = asString(src.status) ?? 'unknown'
+  const state = displayStateOf(src)
   return {
     leafId: asString(src.leaf_id) ?? '?',
     parent: asString(src.parent),
     path: asString(src.path) ?? '',
     role: asString(src.role) ?? 'unknown',
-    status: asString(src.status) ?? 'unknown',
+    // status = 展示状态（派生；v1.6.2 起）。rawStatus / runtimeState 保留原始事实。
+    status: state,
+    state,
+    rawStatus,
+    runtimeState: runtimeStateOf(src),
     sessionId: asString(src.session_id),
     relay: asString(src.relay) ?? 'auto',
     taskType: asString(src.taskType),
@@ -233,7 +302,10 @@ export function projectTreeDetail(state, extra = {}) {
     updatedAt,
     root: {
       leafId: rootLeafId,
-      status: isPlainObject(root) ? (asString(root.status) ?? 'unknown') : 'missing',
+      // 展示状态（派生，见 displayStateOf）；rawStatus 保留启封态事实。
+      status: isPlainObject(root) ? displayStateOf(root) : 'missing',
+      rawStatus: isPlainObject(root) ? (asString(root.status) ?? 'unknown') : 'missing',
+      runtimeState: isPlainObject(root) ? runtimeStateOf(root) : null,
       goalPreview: isPlainObject(root) ? textPreview(root.brief, PANEL_LIMITS.goalPreviewChars) : null,
     },
     leaves: ids.sort().map((id) => projectLeaf(leaves[id])),

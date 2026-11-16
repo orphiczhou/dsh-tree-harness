@@ -81,6 +81,44 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.6.2] — 2026-11-16 · session-tree Tree Runs 分层从属图 + 节点点击属性面板（无发布）
+
+### 变更
+
+- **版本**：`packages/dsh-session-tree` `1.6.1` → **`1.6.2`**；配套 `packages/dsh-tree-engine` `0.11.0` → **`0.12.0`**（投影派生展示态，见下节。仓内插件，**未发布 npm / 公开镜像**——镜像 tag 仍为 `v1.4.0` = `0343f0c`）。
+- **问题②（树链没体现分层与从属）**：v1.6.1 的 `treeEdgesOf` 只造 `dependencies` 依赖边、`treeLevelsOf` 按依赖 DAG 最长路径分层，**完全不看 `parent`**——真实树 `d27fl`（root → C1-commander → C1a1/C1a2-worker 三层）被压成一层、从属关系不可见。新增：
+  - `treeParentEdgesOf(leaves)`：`parent` → 从属边（父不在树内/自环丢弃、按子 id 去重）。
+  - `treeHierarchyOf(leaves, rootLeafId)`：按 `parent` 链算深度（显式 root 或「父不在场」的叶为深度 0，preorder 定同列行序，visited 防环，不可达孤儿补在深度 0）。
+  - `treeGraphEdgesOf(leaves)`：返回 `{ edges, parentEdges, depEdges }`，**父子对与依赖对重合时只画一条 `kind:'parent'`**（实线优先，避免双线重叠），纯依赖对保留 `kind:'dep'` 虚线。
+  - `treeGraphLayout` 改用层级列（有 parent 边时走 hierarchy，否则回退旧依赖分层）；3 节点链布局尺寸不变（752×80），夹具断言不回归。
+  - 渲染：从属边 `--dsw-alias-brand-primary` 实线 + `marker#st-tr2-arrow-parent`，依赖边保持虚线 `#st-tr2-arrow-decl`；图例改 `─── parent → child (solid)` / `--- declared dependency (dashed)`。
+- **问题③（点节点在下方看详情）**：`TreeGraph` 节点 `<g>` 加 `data-selected` / `cursor:pointer` / `onClick`（`stopPropagation` → `controller.selectLeaf(id)`）；controller 新增 `selectLeaf`（写 store、不触发 fetch），`select(treeId)` / `back()` 时归零，`refreshDetail` 成功后若选中叶已不在树内则清空（防幽灵详情）。新增零 hook 组件 `PanelLeafDetail`：未选中显示提示，选中显示 `Leaf attributes · <id>` + Clear + 17 个字段（Leaf/Path/Role/Parent/Status/Raw status/Runtime/Task/Relay/Ctx/Added by/Assignee/Verification/Dependencies/Last event/Session/Done summary）；叶表行同样可点选并高亮（`data-selected` + 左侧品牌条）。
+- **问题①（状态细节）**：客户端 `panelToneOf` 失败分支补 `timeout` / `error`；`treeStatusOf` 把 `timeout` / `cancelled` / `error` 计入 failed，`pruned` 视为终态不再算在跑（此前 `pruned` 叶子会让整树永远显示 running）。真正的状态口径修在 tree-engine 投影（下节）。
+- 变更文件：`client.js`（`treeParentEdgesOf` / `treeHierarchyOf` / `treeGraphEdgesOf` / layout 重写 / TreeGraph 选中 / `selectLeaf` / `PanelLeafDetail` / `PanelLeafRow` 可点选 / CSS 6 条）、`test/panel-render.test.cjs`（V2-16..V2-27 + V2-3 扩展）。
+
+### 验证
+
+- `packages/dsh-session-tree`: `node test/panel-render.test.cjs` → **85/85**（新增 V2-16..27：从属边、parent 链三层、重合对只画一条、kind 区分、实线无 dash、onClick+cursor、点击写 store、选中高亮 + 全属性、选中态 hook = 基态+2、Clear、提示回归、切树归零、脏数据安全）；`node --check client.js` OK。
+- `packages/dsh-tree-engine`: `node --test` → **257/257**（新增 `displayStateOf`/`runtimeStateOf` 正反例 1 例，其余 5 条断言改到新契约）。
+
+## [0.12.0] — 2026-11-16 · tree-engine 面板投影派生展示态（`runtime`/`verification` 成为结算口径，无发布）
+
+### 变更
+
+- **版本**：`packages/dsh-tree-engine` `0.11.0` → **`0.12.0`**（仓内插件，非 npm 发布；`dsh-session-tree` 见上节 1.6.2）。
+- **问题（状态细节不对）**：面板直接显示 `leaf.status`，但引擎的 `status` 是**启封态**字段——真实状态文件里大量叶子 `status=pending_brief` 而 `runtime.state=succeeded` + `verification.pass=true`（wave2 十叶八叶如此；141 叶全量统计：`pending_brief & succeeded & pass` **55** 叶、`active & runtime 空` 39 叶）。面板照抄 raw status → 已完成任务永远显示 pending。
+- **新增派生展示态**（`src/panel-view.js`）：
+  - `runtimeStateOf(leaf)`：只透出 `runtime.state` 一个字符串（raw runtime 对象仍不外泄）。
+  - `displayStateOf(leaf)`：失败类（failed / timeout / cancelled|aborted）优先 → `verification.pass===true` → `runtime.state==='succeeded'` → `pruned` → `segment_pending` → `last_event_type==='done'`（结算事件压过 raw 启封态，老状态文件兼容）→ `active`→running → raw 结算/在跑别名归一（done|succeeded|completed→succeeded，running/failed/timeout/cancelled 原样）→ `pending_brief|pending|缺失`→pending。
+  - `statusCounts()` 改按派生展示态计数（`counts` / `stats.byStatus` 同口径）。
+  - `projectLeaf` 的 `status` 改为**派生展示态**（键名保持兼容），另加 `state`（同值，语义清楚）、`rawStatus`（原始 status）、`runtimeState`；`projectTreeDetail.root` 同步为 `{leafId, status(派生), rawStatus, runtimeState, goalPreview}`。
+- 变更文件：`src/panel-view.js`、`tests/panel-view.test.js`（5 条断言改契约 + 新增 1 例）。
+
+### 验证
+
+- `packages/dsh-tree-engine`: `node --test` → **257/257**（原 256 + 1 新增；改断言的 5 条覆盖 statusCounts / projectLeaf 键集与脱敏 / projectTreeSummary counts / projectTreeDetail root+byStatus / HTTP 详情逐字键集）。
+- 冒烟：`node -e "import('./src/panel-view.js')…"` → counts `{succeeded:1, running:1, pruned:1, timeout:1}`，`projectLeaf` 输出 `status:'succeeded', state:'succeeded', rawStatus:'pending_brief', runtimeState:'succeeded'`。
+
 ## [1.6.1] — 2026-11-16 · session-tree Tree Runs 面板无样式根因修复（样式所有权契约 + 守卫一次性旗标，无发布）
 
 ### 变更
