@@ -1765,6 +1765,9 @@ window.__ModuleLoader__.load({
         return [h('span', { className: 'st-tr-cell', key: 'sess-none' }, '—')]
       }
       const onCopy = (event) => {
+        // The row itself is clickable (v1.6.2 leaf selection): copying a
+        // session id must not also select the row.
+        if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
         if (
           typeof navigator === 'undefined' ||
           !navigator.clipboard ||
