@@ -1032,6 +1032,87 @@ async function main() {
   liveDetail.root = savedRoot
   liveDetail.state = savedState
 
+  // ================== v1.8.0 判定：树图高度可调 + 初始全图可见
+  // 用户反馈（m03016）：「你给树图的部分高度太小了，一条缝，这块要保证高度，
+  // 且要可以调节，最好能初始就显示全里面的树内容。」根因是详情列是 flex 容器，
+  // 而 .st-tr2-viewport 是 overflow:auto → 自动最小尺寸为 0，被兄弟区块挤成一条缝。
+  console.log('\n=== v1.8.0 判定：树图视口高度可调 + Fit 全图 ===')
+  check('V2-33 clampGraphHeight：缺省 420 / 下限 220 / 上限 900 / 取整（非法值回落默认）',
+    mod.clampGraphHeight(undefined) === 420 &&
+      mod.clampGraphHeight(null) === 420 &&
+      mod.clampGraphHeight(NaN) === 420 &&
+      mod.clampGraphHeight('640') === 420 &&
+      mod.clampGraphHeight(120) === 220 &&
+      mod.clampGraphHeight(5000) === 900 &&
+      mod.clampGraphHeight(333.7) === 334 &&
+      mod.GRAPH_HEIGHT_DEFAULT === 420 &&
+      mod.GRAPH_HEIGHT_MIN === 220 &&
+      mod.GRAPH_HEIGHT_MAX === 900,
+    `undef=${mod.clampGraphHeight(undefined)} low=${mod.clampGraphHeight(120)} high=${mod.clampGraphHeight(5000)} frac=${mod.clampGraphHeight(333.7)}`)
+  check('V2-34 fitZoomOf：按两轴取小值装满视口，未测量 → 1×，夹在 [0.25, 2]',
+    mod.fitZoomOf(700, 420, 484, 672) === 0.613 &&
+      mod.fitZoomOf(700, 900, 484, 672) === 1.327 &&
+      mod.fitZoomOf(0, 0, 484, 672) === 1 &&
+      mod.fitZoomOf(NaN, 500, 484, 672) === 1 &&
+      mod.fitZoomOf(700, 420, 0, 672) === 1 &&
+      mod.fitZoomOf(100, 100, 5000, 5000) === 0.25 &&
+      mod.fitZoomOf(9000, 9000, 100, 100) === 2,
+    `height-limited=${mod.fitZoomOf(700, 420, 484, 672)} width-limited=${mod.fitZoomOf(700, 900, 484, 672)} unmeasured=${mod.fitZoomOf(0, 0, 484, 672)} min=${mod.fitZoomOf(100, 100, 5000, 5000)} max=${mod.fitZoomOf(9000, 9000, 100, 100)}`)
+  const storeBefore = rtMain.store.get().graphHeight
+  const fakeStore = new Map()
+  fakeStore.setItem = (k, v) => Map.prototype.set.call(fakeStore, k, String(v))
+  fakeStore.getItem = (k) => (Map.prototype.has.call(fakeStore, k) ? Map.prototype.get.call(fakeStore, k) : null)
+  mod.writeStoredGraphHeight(555, fakeStore)
+  const readBack = mod.readStoredGraphHeight(fakeStore)
+  fakeStore.setItem(mod.GRAPH_HEIGHT_KEY, 'not-a-number')
+  const badStored = mod.readStoredGraphHeight(fakeStore)
+  check('V2-35 视口高度持久化：写入取整后可读回、脏值回落默认、无 localStorage 时不抛',
+    storeBefore === 420 &&
+      readBack === 555 &&
+      badStored === 420 &&
+      mod.readStoredGraphHeight(undefined) === 420 &&
+      mod.writeStoredGraphHeight(5000, fakeStore) === 900 &&
+      fakeStore.getItem(mod.GRAPH_HEIGHT_KEY) === '900',
+    `default=${storeBefore} readBack=${readBack} dirty=${badStored}`)
+  rtMain.controller.resizeGraph(100)
+  const clampedLow = rtMain.store.get().graphHeight
+  rtMain.controller.resizeGraph(5000)
+  const clampedHigh = rtMain.store.get().graphHeight
+  check('V2-36 controller.resizeGraph：写入 store 前夹到 [220, 900]（拖拽与双击复位共用）',
+    clampedLow === 220 && clampedHigh === 900,
+    `low=${clampedLow} high=${clampedHigh}`)
+  // 渲染面：视口带显式高度（这就是那条「缝」的修法），分隔条可拖，外层成 section。
+  rtMain.store.set({ graphHeight: 640, selectedTreeId: 'tree-alpha', selectedLeafId: null })
+  rtMain.store.set({
+    detail: {
+      treeId: 'tree-alpha',
+      state: 'running',
+      root: { leafId: 'n1', status: 'running' },
+      leaves: [
+        { leafId: 'n1', status: 'succeeded', role: 'commander' },
+        { leafId: 'n2', status: 'running', role: 'worker', parent: 'n1', dependencies: ['n1'] },
+      ],
+      stats: { total: 2, byStatus: { running: 1, succeeded: 1 } },
+      events: [],
+    },
+  })
+  const geoL = []
+  renderTree(rtMain.Body({}), geoL)
+  const viewports = byClass(geoL, 'st-tr2-viewport', true)
+  const resizeHandles = byClass(geoL, 'st-tr2-graphresize', true)
+  const graphSections = byClass(geoL, 'st-tr2-graphsection')
+  check('V2-37 渲染面：视口显式高度 = graphHeight（不被 flex 挤成一条缝）+ 分隔条 + graph section',
+    viewports.length === 1 &&
+      !!viewports[0].props.style &&
+      viewports[0].props.style.height === '640px' &&
+      resizeHandles.length === 1 &&
+      resizeHandles[0].props.role === 'separator' &&
+      typeof resizeHandles[0].props.onMouseDown === 'function' &&
+      typeof resizeHandles[0].props.onDoubleClick === 'function' &&
+      graphSections.length === 1,
+    `viewports=${viewports.length} height=${viewports[0] && viewports[0].props.style && viewports[0].props.style.height} handles=${resizeHandles.length} sections=${graphSections.length}`)
+  rtMain.store.set({ graphHeight: 420 })
+
   // ----------------------------------------------------------------- summary
   console.log('\n==================== 结果 ====================')
   console.log(`合计 ${checks} 项判定，失败 ${failures} 项`)

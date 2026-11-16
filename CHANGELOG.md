@@ -81,6 +81,21 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.8.0] — 2026-11-16 · session-tree Tree Runs 树图区高度可调 + 打开即 Fit 全图（无发布）
+
+用户反馈（「你给树图的部分高度太小了，一条缝，这块要保证高度，且要可以调节，最好能初始就显示全里面的树内容」）。
+
+**根因**：详情列 `.st-tr2-detail` 是 flex 容器，图形视口 `.st-tr2-viewport` 是 `overflow:auto` 的 flex 子项 —— 自动最小尺寸为 0，被字段栅格 / 叶表 / 事件尾挤成一条缝；旧 CSS 只有 `max-height:520px`、没有高度。附带问题：`TreeGraph` 返回的是工具条 / 视口 / 图例三个散装兄弟节点。
+
+**变更**（`packages/dsh-session-tree` 1.7.0 → 1.8.0）：
+- 视口**显式高度**：`GRAPH_HEIGHT_DEFAULT 420` / `GRAPH_HEIGHT_MIN 220` / `GRAPH_HEIGHT_MAX 900`，`clampGraphHeight` 夹紧取整，`localStorage['dsh.session-tree.graph-height']` 记忆；controller 新增 `resizeGraph(height)`；CSS 改 `min-height:120px; max-height:900px`。
+- 10px **分隔条**（`.st-tr2-graphresize`，`role=separator`、`ns-resize`、拖拽实时改高度、双击复位默认 420）。
+- **打开即 Fit 全图**：`fitZoomOf(viewW, viewH, graphW, graphH)`（pad 8、未测量 → 1×、夹 `[ZOOM_MIN, 2]`）+ `useEffect` 在视口测量后自动缩放并归零滚动；`__stTreeFitKey` 幂等记忆，轮询不会夺走用户手动缩放；Fit 按钮改按两轴实测。
+- `TreeGraph` 收成单个 `.st-tr2-graphsection` section（工具条 / 视口 / 分隔条 / 图例同一容器）。
+- 客户端构建标记同步 `1.8.0`（页头可辨新旧 bundle）。
+
+**验证**：`panel-render` **90 → 95/95**（新增 V2-33 夹紧、V2-34 Fit 缩放、V2-35 持久化、V2-36 resizeGraph、V2-37 渲染面）；`style-guard` **50 → 51/51**（A8f 改视口高度契约 + 新增 A8f2 分隔条）；tree-engine **258/258** 未改；全仓 `node --test` **352/352**；强制重载 session-tree 后页头显示 `v1.8.0`，真实树按视口 fit 完整可见。
+
 ## [1.7.0] — 2026-11-16 · session-tree Tree Runs 树级展示状态 + 客户端自证（无发布）
 
 **触发**：用户三问（m02442）——「为啥大多数列表中的树都是 runing 状态」「为啥有些树没有节点图（wave2，状态成功、10 个 leaves）」「点击节点，下面的详细信息没有变化」。

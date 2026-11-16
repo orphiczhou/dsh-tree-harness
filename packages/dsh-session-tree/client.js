@@ -186,7 +186,11 @@ window.__ModuleLoader__.load({
 .st-tr2-section-title{font-weight:600;font-size:12px;margin-bottom:6px;color:var(--dsw-alias-label-primary)}
 .st-tr2-graphbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .st-tr2-graphbtn{padding:2px 8px;border-radius:6px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-2);font-size:11px;line-height:18px}
-.st-tr2-viewport{border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1);max-height:520px;overflow:auto;touch-action:none;cursor:grab}
+.st-tr2-graphsection{flex:0 0 auto}
+.st-tr2-viewport{border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1);min-height:120px;max-height:900px;overflow:auto;touch-action:none;cursor:grab}
+.st-tr2-graphresize{height:10px;margin:2px 0;display:flex;align-items:center;justify-content:center;cursor:ns-resize;border-radius:6px}
+.st-tr2-graphresize::before{content:'';width:46px;height:3px;border-radius:2px;background:var(--dsw-alias-border-l1)}
+.st-tr2-graphresize:hover::before{background:var(--dsw-alias-brand-primary)}
 .st-tr2-hint{flex:none;color:var(--dsw-alias-label-secondary);font-size:11px}
 .st-tr2-legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--dsw-alias-label-secondary)}
 .st-tr2-event-seq{flex:none;color:var(--dsw-alias-label-secondary)}
@@ -971,7 +975,7 @@ window.__ModuleLoader__.load({
      * how a stale client is told apart from a data problem (test asserts this
      * equals package.json's version).
      */
-    const PANEL_VERSION = '1.7.0'
+    const PANEL_VERSION = '1.8.0'
 
     /** Optional-service lookup that never throws (flow spike :2737-2752). */
     function panelServiceOf(ctx, key) {
@@ -1397,6 +1401,69 @@ window.__ModuleLoader__.load({
     }
 
     /**
+     * Graph viewport height (v1.8.0, user ask m03016: "树图的部分高度太小了，
+     * 一条缝"). The detail column is a flex container, and `.st-tr2-viewport`
+     * is `overflow:auto` — which makes its automatic minimum size 0, so the
+     * viewport was being squeezed down to a slit by the sibling sections.
+     * The viewport therefore always renders with an explicit height that the
+     * user can drag, clamped into a legible band.
+     */
+    const GRAPH_HEIGHT_DEFAULT = 420
+    const GRAPH_HEIGHT_MIN = 220
+    const GRAPH_HEIGHT_MAX = 900
+    const GRAPH_HEIGHT_KEY = 'dsh.session-tree.graph-height'
+
+    /** Clamp a viewport height: non-finite falls back to the default, then [MIN, MAX], integer px. */
+    function clampGraphHeight(value) {
+      const n = typeof value === 'number' && isFinite(value) ? Math.round(value) : GRAPH_HEIGHT_DEFAULT
+      return Math.min(GRAPH_HEIGHT_MAX, Math.max(GRAPH_HEIGHT_MIN, n))
+    }
+
+    /**
+     * Read the remembered viewport height. `storage` is injectable (tests pass
+     * a fake; the renderer passes localStorage) and every access is guarded —
+     * localStorage throws in sandboxed/opaque origins.
+     */
+    function readStoredGraphHeight(storage) {
+      try {
+        const s = storage || (typeof localStorage !== 'undefined' ? localStorage : null)
+        if (!s || typeof s.getItem !== 'function') return GRAPH_HEIGHT_DEFAULT
+        const raw = s.getItem(GRAPH_HEIGHT_KEY)
+        if (raw === null || raw === undefined || raw === '') return GRAPH_HEIGHT_DEFAULT
+        return clampGraphHeight(Number(raw))
+      } catch (e) {
+        return GRAPH_HEIGHT_DEFAULT
+      }
+    }
+
+    /** Persist the viewport height; failures (quota/private mode) stay silent. */
+    function writeStoredGraphHeight(height, storage) {
+      const clamped = clampGraphHeight(height)
+      try {
+        const s = storage || (typeof localStorage !== 'undefined' ? localStorage : null)
+        if (s && typeof s.setItem === 'function') s.setItem(GRAPH_HEIGHT_KEY, String(clamped))
+      } catch (e) {}
+      return clamped
+    }
+
+    /**
+     * Zoom that makes the whole laid-out graph fit the viewport (the "initial
+     * view shows the entire tree" ask). Padding 8px; unmeasurable viewport
+     * (0 / NaN, which is what a headless test sees) falls back to 1×. Fit only
+     * shrinks-to-fit up to 2×, never blows small trees past the zoom ceiling.
+     */
+    function fitZoomOf(viewW, viewH, graphW, graphH) {
+      const vw = typeof viewW === 'number' && isFinite(viewW) ? viewW : 0
+      const vh = typeof viewH === 'number' && isFinite(viewH) ? viewH : 0
+      const gw = typeof graphW === 'number' && isFinite(graphW) && graphW > 0 ? graphW : 0
+      const gh = typeof graphH === 'number' && isFinite(graphH) && graphH > 0 ? graphH : 0
+      if (!(vw > 0) || !(vh > 0) || !(gw > 0) || !(gh > 0)) return 1
+      const zoom = Math.min((vw - 8) / gw, (vh - 8) / gh)
+      if (!isFinite(zoom) || zoom <= 0) return ZOOM_MIN
+      return Math.min(2, Math.max(ZOOM_MIN, Math.round(zoom * 1000) / 1000))
+    }
+
+    /**
      * Edge state per flow parity (design §3.4): an edge is "satisfied" when
      * its source leaf already succeeded, otherwise it stays the declared
      * baseline. The P0 panel renders every edge in the declared state; the
@@ -1615,6 +1682,16 @@ window.__ModuleLoader__.load({
         store.set({ selectedLeafId: next })
       }
 
+      /**
+       * Graph viewport height (v1.8.0, user ask m03016). Clamped, remembered in
+       * localStorage, and kept in the store so the drag handle, the auto-fit and
+       * the next panel mount all agree.
+       */
+      function resizeGraph(height) {
+        const next = writeStoredGraphHeight(height)
+        store.set({ graphHeight: next })
+      }
+
       function back() {
         abortAll()
         store.set({
@@ -1653,6 +1730,7 @@ window.__ModuleLoader__.load({
         stop,
         select,
         selectLeaf,
+        resizeGraph,
         back,
         refreshAll,
         getTimerId: () => pollTimer,
@@ -1860,12 +1938,25 @@ window.__ModuleLoader__.load({
       }
     }
 
+    /** Root id of the drawn graph: the detail's root leaf, else the first leaf. */
+    function graphRootIdOf(props, leaves) {
+      const rootObj = props && props.root && typeof props.root === 'object' ? props.root : {}
+      if (rootObj.leafId !== undefined && rootObj.leafId !== null && String(rootObj.leafId) !== '') {
+        return String(rootObj.leafId)
+      }
+      return String(leaves[0] && leaves[0].leafId)
+    }
+
     /**
-     * Read-only dependency graph (design §3). F8 DISCIPLINE: the two hooks
-     * (zoom state + viewport ref) run unconditionally first; the empty-graph
-     * early return happens after them, so GRAPH_HOOKS = 2 is constant and
-     * asserted by V2-12. Zoom/pan never enter the store — zoom is local
-     * state, pan/scroll are written straight to the DOM element.
+     * Read-only dependency graph (design §3). F8 DISCIPLINE: every hook runs
+     * unconditionally first; the empty-graph early return happens after them,
+     * so the graph keeps a constant hook count across loading / empty /
+     * selected states. The test stub counts useState+useRef only (two, V2-12);
+     * the auto-fit effect below is a third, also unconditional.
+     *
+     * Zoom stays graph-local (pan/scroll are written straight to the DOM),
+     * and the viewport height comes from the store so it survives re-renders,
+     * tree switches and panel remounts.
      */
     function TreeGraph(props) {
       // [HOOKS] zoom is graph-local; pan/scroll stay in the DOM.
@@ -1875,15 +1966,30 @@ window.__ModuleLoader__.load({
       const viewportRef = useRef(null)
 
       const leaves = Array.isArray(props.leaves) ? props.leaves : []
+      const graphHeight = clampGraphHeight(props.graphHeight)
+      const resizeTo = typeof props.onResizeGraph === 'function' ? props.onResizeGraph : null
+      const layout = leaves.length === 0 ? null : treeGraphLayout(leaves, graphRootIdOf(props, leaves))
+
+      /**
+       * v1.8.0: open a tree with the whole graph visible. Sizes are only
+       * measurable after commit, so the fit runs in an effect; the viewport
+       * element doubles as the "already fitted for this tree/layout/height"
+       * memo, which keeps a manual zoom from being reset on every poll tick.
+       */
+      useEffect(() => {
+        const el = viewportRef.current
+        if (!el || typeof el.clientWidth !== 'number' || !(el.clientWidth > 0) || !layout) return
+        const key = String(props.treeId || '') + '|' + layout.graphW + 'x' + layout.graphH + '@' + graphHeight
+        if (el.__stTreeFitKey === key) return
+        el.__stTreeFitKey = key
+        setZoom(fitZoomOf(el.clientWidth, el.clientHeight, layout.graphW, layout.graphH))
+        el.scrollLeft = 0
+        el.scrollTop = 0
+      }, [layout ? layout.graphW : 0, layout ? layout.graphH : 0, graphHeight, props.treeId])
+
       if (leaves.length === 0) return null // empty graph = the section disappears (§3.7)
 
-      const rootObj = props.root && typeof props.root === 'object' ? props.root : {}
-      const rootId =
-        rootObj.leafId !== undefined && rootObj.leafId !== null && String(rootObj.leafId) !== ''
-          ? String(rootObj.leafId)
-          : String(leaves[0] && leaves[0].leafId)
-
-      const layout = treeGraphLayout(leaves, rootId)
+      const rootId = graphRootIdOf(props, leaves)
       const scaleComp = 1 / Math.max(zoom, ZOOM_MIN)
       const showLabels = zoom >= 0.5
       const showDetail = zoom >= 0.85
@@ -2137,23 +2243,55 @@ window.__ModuleLoader__.load({
         }
         setZoom(clampZoom(target))
       }
+      /** Whole-graph fit against the *measured* viewport (both axes, v1.8.0). */
+      const fitNow = () => {
+        const el = viewportRef.current
+        const width = el && typeof el.clientWidth === 'number' ? el.clientWidth : 0
+        const height = el && typeof el.clientHeight === 'number' ? el.clientHeight : 0
+        zoomTo(fitZoomOf(width, height, layout.graphW, layout.graphH))
+      }
 
-      return [
+      /**
+       * Drag the split handle under the graph to resize the viewport (v1.8.0).
+       * Listeners live on the document for the duration of the drag so the
+       * pointer can leave the 10px handle; text selection is suppressed.
+       */
+      const onResizeStart = (event) => {
+        if (!resizeTo || !event) return
+        if (typeof event.preventDefault === 'function') event.preventDefault()
+        const startY = typeof event.clientY === 'number' ? event.clientY : 0
+        const startH = graphHeight
+        const doc = typeof document !== 'undefined' ? document : null
+        if (!doc || typeof doc.addEventListener !== 'function') return
+        const move = (moveEvent) => {
+          const y = moveEvent && typeof moveEvent.clientY === 'number' ? moveEvent.clientY : startY
+          resizeTo(clampGraphHeight(startH + (y - startY)))
+        }
+        const stop = () => {
+          try {
+            doc.removeEventListener('mousemove', move)
+            doc.removeEventListener('mouseup', stop)
+          } catch (e) {}
+          try {
+            if (doc.body && doc.body.style) doc.body.style.userSelect = ''
+          } catch (e) {}
+        }
+        doc.addEventListener('mousemove', move)
+        doc.addEventListener('mouseup', stop)
+        try {
+          if (doc.body && doc.body.style) doc.body.style.userSelect = 'none'
+        } catch (e) {}
+      }
+
+      return h(
+        'div',
+        { className: 'st-tr2-section st-tr2-graphsection', key: 'graph', 'data-kind': 'graph-section' },
         h(
           'div',
           { className: 'st-tr2-graphbar', key: 'bar' },
           h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => stepZoom(1 / 1.2), title: 'Zoom out' }, '−'),
           h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => stepZoom(1.2), title: 'Zoom in' }, '＋'),
-          h('button', {
-            type: 'button',
-            className: 'st-tr2-graphbtn',
-            onClick: () => {
-              const el = viewportRef.current
-              const width = el && typeof el.clientWidth === 'number' ? el.clientWidth : 0
-              zoomTo(Math.min(2, Math.max(0.25, (width - 8) / layout.graphW)))
-            },
-            title: 'Fit graph',
-          }, 'Fit'),
+          h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: fitNow, title: 'Fit the whole graph into the viewport' }, 'Fit'),
           h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => zoomTo(1), title: 'Reset zoom' }, '100%'),
           h('span', { className: 'st-tr2-hint' }, 'Ctrl/⌘+wheel zoom · drag to pan · click a node to inspect · solid = parent → child'),
         ),
@@ -2162,6 +2300,10 @@ window.__ModuleLoader__.load({
           {
             className: 'st-tr2-viewport',
             key: 'viewport',
+            'data-kind': 'graph-viewport',
+            // Explicit height (v1.8.0): without it a flex child that scrolls
+            // collapses to zero and the graph reads as a thin slit.
+            style: { height: graphHeight + 'px' },
             ref: viewportRef,
             onWheel,
             onPointerDown,
@@ -2234,6 +2376,17 @@ window.__ModuleLoader__.load({
             ),
           ),
         ),
+        h('div', {
+          key: 'resize',
+          className: 'st-tr2-graphresize',
+          'data-kind': 'graph-resize',
+          role: 'separator',
+          'aria-orientation': 'vertical',
+          'aria-label': 'Resize graph area',
+          title: 'Drag to resize the graph · double-click to reset',
+          onMouseDown: onResizeStart,
+          onDoubleClick: resizeTo ? () => resizeTo(GRAPH_HEIGHT_DEFAULT) : undefined,
+        }),
         h(
           'div',
           { className: 'st-tr2-legend', key: 'legend' },
@@ -2243,7 +2396,7 @@ window.__ModuleLoader__.load({
           h('span', { key: 'decl' }, '─── parent → child (solid)'),
           h('span', { key: 'dep' }, '--- declared dependency (dashed)'),
         ),
-      ]
+      )
     }
 
     /** Fixed header row of the v2 shell (design §2): title / root / count / stamp / refresh. */
@@ -2541,8 +2694,11 @@ window.__ModuleLoader__.load({
           h(GraphBoundary, { key: 'graph' }, h(TreeGraph, {
             leaves,
             root: detail.root,
+            treeId: detail.treeId,
             selectedLeafId,
             onSelectLeaf,
+            graphHeight: state.graphHeight,
+            onResizeGraph: (height) => controller.resizeGraph(height),
           })),
           h(PanelLeafDetail, {
             key: 'leafdetail',
@@ -2681,6 +2837,8 @@ window.__ModuleLoader__.load({
         selectedTreeId: null,
         // v1.6.2: selected leaf for the detail pane (node / row click).
         selectedLeafId: null,
+        // v1.8.0: resizable graph viewport height (remembered across mounts).
+        graphHeight: readStoredGraphHeight(),
         detail: null,
         detailLoading: false,
         detailError: null,
@@ -4427,6 +4585,14 @@ window.__ModuleLoader__.load({
       ZOOM_MIN,
       ZOOM_MAX,
       ZOOM_STEP,
+      clampGraphHeight,
+      fitZoomOf,
+      readStoredGraphHeight,
+      writeStoredGraphHeight,
+      GRAPH_HEIGHT_DEFAULT,
+      GRAPH_HEIGHT_MIN,
+      GRAPH_HEIGHT_MAX,
+      GRAPH_HEIGHT_KEY,
       edgeStateOf,
       statsSessionsOf,
     }

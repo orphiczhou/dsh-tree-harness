@@ -361,9 +361,20 @@ async function main() {
         'A8e the v2 list column keeps the 36% split clamp (min-width:150px / max-width:320px)',
         /\.st-tr2-list\{[^}]*min-width:150px/.test(sheet) && /\.st-tr2-list\{[^}]*max-width:320px/.test(sheet),
       )
+      // v1.8.0: the viewport is sized by JS (explicit height from the resize
+      // store), so the sheet must carry the clamp bounds + min-height floor —
+      // without them a flex child with overflow:auto collapses to a sliver.
       check(
-        'A8f the v2 graph viewport keeps the scroll/pan contract (max-height:520px + touch-action:none)',
-        /\.st-tr2-viewport\{[^}]*max-height:520px/.test(sheet) && /\.st-tr2-viewport\{[^}]*touch-action:none/.test(sheet),
+        'A8f the v2 graph viewport keeps the scroll/pan contract (min-height:120px + max-height:900px + touch-action:none)',
+        /\.st-tr2-viewport\{[^}]*min-height:120px/.test(sheet) &&
+          /\.st-tr2-viewport\{[^}]*max-height:900px/.test(sheet) &&
+          /\.st-tr2-viewport\{[^}]*touch-action:none/.test(sheet),
+      )
+      check(
+        'A8f2 the graph resize handle is present and drag-shaped (ns-resize)',
+        /\.st-tr2-graphresize\{[^}]*cursor:ns-resize/.test(sheet) &&
+          /\.st-tr2-graphresize\{[^}]*height:10px/.test(sheet) &&
+          /\.st-tr2-graphsection\{[^}]*flex:0 0 auto/.test(sheet),
       )
       check(
         'A8g the v2 field grid keeps the auto-fill track (minmax(260px,1fr))',

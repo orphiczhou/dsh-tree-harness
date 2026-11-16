@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.13.0**、`packages/dsh-session-tree` **v1.7.0** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA；v1.4.1–v1.7.0 未发布镜像）。
+> 适用版本：`packages/dsh-tree-engine` **v0.13.0**、`packages/dsh-session-tree` **v1.8.0** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA；v1.4.1–v1.8.0 未发布镜像）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -261,7 +261,8 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.13.0 / `dsh-session-tree` 1.7.0（公开镜像 tag `v1.4.0` = `0343f0c`；v1.4.1–v1.7.0 未发布镜像）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.13.0 / `dsh-session-tree` 1.8.0（公开镜像 tag `v1.4.0` = `0343f0c`；v1.4.1–v1.8.0 未发布镜像）。
+- **session-tree 1.8.0**：Tree Runs 树图区**高度可调 + 打开即 Fit 全图**（用户反馈「一条缝」）—— ① 视口显式高度（默认 420px / 拖拽 220–900px / `localStorage` 记忆）替代旧 `max-height:520px`（flex 列里自动最小尺寸为 0，会被挤成一条缝）；② 10px 分隔条可拖、双击复位；③ 打开/换树/改高度按视口 `fitZoomOf` 自动 Fit（幂等记忆，不夺用户手动缩放）；测试 panel-render 90→**95/95**（V2-33..37）、style-guard 50→**51/51**。安装/重载后页头应显示 `v1.8.0`。
 - **tree-engine 0.13.0**：新增第 9 个工具之后的**树级展示状态版（用户反馈轮）**—— ① `src/panel-view.js` 新增 `treeStateOf(leaves, rootLeafId)`：`tree_plan` 的 root 是容器叶、永远没有 done 事件（raw 恒 `active`），故 root 只参与**失败**判定，不参与「在跑/未开始」判定；子叶 running/segment_pending → running，有 pending → pending，全部结算 → succeeded，单叶树回落 root 展示态；② `projectTreeSummary` 新增 `state`、`projectTreeDetail` 新增顶层 `state`，列表徽标与详情共用权威字段（客户端不再自行按 counts 猜）；③ 真实 36 棵树 running 徽标 29→**7**（succeeded 23 / failed 4 / pending 2），4 棵 failed 均有子叶 `runtime.state=timeout` 实据；测试数 257→**258/258**（新增 `treeStateOf` 15 条断言）。安装/重载后 `tree_doctor` 应显示 `version=0.13.0`。
 - **tree-engine 0.12.0**：新增第 9 个工具之后的**面板投影派生展示态版（D34）**—— ① `src/panel-view.js` 新增 `runtimeStateOf`/`displayStateOf`：`runtime.state` 失败类（failed/timeout/cancelled）优先，其余按 `verification.pass===true` → `runtime.state=succeeded` → `pruned` → `segment_pending` → `last_event_type=done` → `active→running` → raw 别名归一 → `pending_brief/pending/缺失→pending`；② `projectLeaf.status` 改为派生展示态并新增 `state`/`rawStatus`/`runtimeState` 三键，`projectTreeDetail.root` 同步；③ `statusCounts`/`stats.byStatus` 同口径（真实 141 叶里 55 叶 `pending_brief & succeeded & pass` 不再显示 pending）；测试数 256→**257/257**（`tests/panel-view.test.js` 29→30 例，另 5 条断言改新契约）。安装/重载后 `tree_doctor` 应显示 `version=0.12.0`。
 - **tree-engine 0.11.0**：新增第 9 个工具之后的 `/tree-panel` 只读 HTTP 投影路由版（D30）—— ① 三端点 `GET /tree-panel/trees`、`/trees/<treeId>`、`/trees/<treeId>/events`（webServer 可选注入，缺席降级、不阻断工具面；跨实例幂等注册先 dispose 再 register）；② Host/Origin/Sec-Fetch-Site 三重校验 + `no-store` + 不回 ACAO；③ 投影纯函数 `src/panel-view.js` 脱敏截断——不透出 prompt/meta/环境变量，assignee 只留 provider/model/effort，preview 120/200 字符上限；④ 工具面仍 9 工具不变（`session-tree` v1.5.0 的 Tree Runs 面板数据源即此路由）；测试数 227→**256/256**（新增 `tests/panel-view.test.js` 29 例）。安装/重载后 `tree_doctor` 应显示 `version=0.11.0`。
