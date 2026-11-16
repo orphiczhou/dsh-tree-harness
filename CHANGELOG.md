@@ -81,6 +81,24 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.6.1] — 2026-11-16 · session-tree Tree Runs 面板无样式根因修复（样式所有权契约 + 守卫一次性旗标，无发布）
+
+### 变更
+
+- **版本**：`packages/dsh-session-tree` `1.6.0` → **`1.6.1`**（仓内插件；**未发布 npm / 公开镜像**——镜像 tag 仍为 `v1.4.0` = `0343f0c`）。
+- **根因（真机目检）**：Tree Runs 面板整体裸文本渲染——markup 与全部 `st-*` 类名在场、`<head>` 里样式表消失（截图证据 `dsh-panel-check-3.png`）。逆向宿主 `@deepseek-ai/dsh-client-modules` 浏览器半（asar 提取逐字核对）：**无 `data-plugin` 标的 `<style>` 视为无主**——`untaggedStyles()` / `claimStyles(ownerId, before)` 把 materialize 窗口内新增的未打标 sheet 全部重打到当时在场的模块名下，该模块 replace/prune/失败时 `removeOwnedStyles(id)` 把我们的 sheet **合法移除**；守卫治愈出的新 sheet 依旧无标，循环裸奔。内置包全部自打标（`dsh-client-ui-theme/lib/client.js`：`tag.dataset.plugin='@deepseek-ai/dsh-client-ui-theme'`），我们没有 → 契约违约。
+- **#A 自打标（契约修复）**：`ensureStylesheet` 注入时补 `el.setAttribute('data-plugin', '@orphiczhou/dsh-session-tree')`——与 `window.__ModuleLoader__.load({ id })` 注册 id 经宿主 `stripClientSuffix` 得到的 ownerId 逐字一致；claim 从此跳过我们的 sheet，只有我们自己的 replace/prune 能移除它（新一代 apply 在面板重绘前重新注入）。
+- **#B 迁移补标**：`ensureStylesheet` 的 selector 早退分支对既有旧 sheet **就地补标**（仅当其尚无 `data-plugin`；已被他模块 claim 的不覆盖、不注入重复表）——热替换长命页面里 pre-1.6.1 的无标旧 sheet 也被契约覆盖。
+- **#C 守卫一次性旗标烧毁缺陷**：`guardStylesheet` 原 `stylesGuarded = true` 在 `if (!stylesInHead) return` **之前**置位——任何一次「注入尚未发生」的调用会把守卫永久废掉（正是本次无样式后无人自愈的帮凶）；改序为先探 sheet 再烧旗标。
+- **#D 陈旧 sheet 永不刷新（真正的裸文本机制）**：活体探针实测 `<head>` 里已打标的 sheet **只有 6966 字符**，而本 bundle 的 `CSS` 常量是 **15754**——即长命页面里挂着 v1.5 时代的旧表；`ensureStylesheet` 的 selector 早退分支只补标、**不回写内容**，于是 v2 的 `st-tr2-*` 22 类全部无规则（面板裸文本、pill 无圆点皆由此）。修复：早退分支在补标后加 `if (existing.textContent !== CSS) existing.textContent = CSS`（幂等），热升级后旧表当场刷新为本版 CSS（实测 6966 → 15756）。
+- **#E 入口 pill 改为内联样式（照抄 flow）**：用户原话「不能简简单单的看人家怎么写的，对应功能区抄一个也行哈」。`PanelEntry` 不再依赖 `.st-tr-pill` 样式表，改用内联样式常量 `DOCK_PILL` / `DOCK_PILL_OPEN` / `DOCK_PILL_DOT`，**逐值照抄** Flow Runs 的 `styles.pill` / `styles.pillActive` / `styles.dot`（`@local/dsh-flow-engine` 的 `spike/dsh-flow-plugin/client.js:744-778`：`inline-flex` / `gap:6px` / `height:26px` / `padding:0 10px` / `border-radius:999px` / `1px solid --dsw-alias-border-l1` / `--dsw-alias-bg-layer-1` / `--dsw-alias-label-primary` / `font:600 12px system-ui,…` / 7px 品牌圆点）。内联天然压过宿主对 dock 按钮的任何规则，样式表缺席时 pill 也保持与 Flow Runs 同视觉；`.st-tr-pill` 类名保留（测试与样式表双轨，互不冲突）。
+- 变更文件：`client.js`（`MODULE_ID` 常量 + ensureStylesheet/guardStylesheet + 陈旧刷新 + `DOCK_PILL*` 内联样式 + 契约注释块）、`test/style-guard.cjs`（stub 补 `getAttribute`；新增断言与场景）。
+
+### 验证
+
+- style-guard **34 → 50/50**：新增 A1g（注入 sheet 自带 `data-plugin=@orphiczhou/dsh-session-tree`）、场景 D（无 document 的 apply 不烧守卫旗标，二次 apply 照常武装 + 自愈）、场景 E（pre-1.6.1 无标旧 sheet 迁移补标 / 他模块已 claim 的 sheet 不覆盖且不重复注入）、场景 F（**已打标但内容陈旧**的 sheet 就地刷新为本版 CSS、不重复注入、归属不变、守卫照常武装）；panel-render **73/73**、render **153/153 + 9 + 11**、provider-conformance **29/29**、handoff **41/41**、meta **41/41**、skills **3/3**、tree-send **25/25**、仓根 `node --test` **350/350** 全保持。
+- 真机：bundle = `exports["./client"]` 源文件直挂（无构建漂移），修复落盘即由 dsh-hmr 热替换进活页面；活体探针实测 sheet 内容 6966 → **15756** 字符，截图 `dsh-dock-zoom2.png` 里 Flow Runs 与 Tree Runs 两个 pill 已同视觉（深色胶囊 + 品牌圆点 + 600 12px）。
+
 ## [1.6.0] — 2026-11-15 · session-tree Tree Runs 面板 v2（Flow Runs 同布局多区域，无发布）
 
 ### 变更

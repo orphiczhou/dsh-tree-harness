@@ -74,6 +74,9 @@ function makeDocument() {
     setAttribute(name, value) {
       this.attrs[name] = value
     },
+    getAttribute(name) {
+      return Object.prototype.hasOwnProperty.call(this.attrs, name) ? this.attrs[name] : null
+    },
     remove() {
       const i = state.headChildren.indexOf(this)
       if (i >= 0) state.headChildren.splice(i, 1)
@@ -228,6 +231,18 @@ async function main() {
       check('A0 apply() does not throw', threw === null, threw && threw.message)
       check('A1 exactly one tagged sheet injected into <head>', state.injected.length === 1, String(state.injected.length))
       check('A1b the sheet is reachable via the documented selector', doc.querySelector(SELECTOR) !== null)
+      // v1.6.1 style-ownership contract: the client-module loader treats any
+      // <style> without `data-plugin` as unowned — claimStyles() re-tags it
+      // into whichever module materializes next, and that module's replace /
+      // prune then deletes it (the 2026-11-16 bare-text panel regression).
+      // The sheet must self-tag with exactly the registered module id, the
+      // same way the shipped packages do (dsh-client-ui-theme et al.).
+      check(
+        'A1g the sheet self-tags data-plugin=@orphiczhou/dsh-session-tree (loader ownership contract)',
+        state.injected.length > 0 &&
+          state.injected.every((el) => el.attrs['data-plugin'] === '@orphiczhou/dsh-session-tree'),
+        JSON.stringify(state.injected.map((el) => el.attrs['data-plugin'] || null)),
+      )
       // v1.4.0 conversation-UI metadata (composer dock strip + read-only header
       // chip). The sidebar tree itself must NOT carry the row badge any more.
       const sheet = sheetText(state)
@@ -404,6 +419,130 @@ async function main() {
         threw = e
       }
       check('C1 apply() does not throw without document', threw === null, threw && threw.message)
+    } finally {
+      undo()
+    }
+  }
+
+  // ------------------------------------- D. guard must not burn its once-flag
+  console.log('\n=== D. a no-document apply must NOT burn the guard\'s once-per-load flag ===')
+  {
+    const undo0 = withGlobals({ doc: null, Observer: null })
+    try {
+      globalThis.__CAPTURED_SESSION_TREE__ = null
+      const plugin = await loadClient()
+      const { ctx } = makeCtx()
+      // First apply with no document: inject fails, and (before v1.6.1) this
+      // burned `stylesGuarded` before checking `stylesInHead`, disarming the
+      // guard for the whole page life even though the sheet only arrives later.
+      plugin.apply(ctx)
+      const { doc, state } = makeDocument()
+      const { MutationObserver, armed } = makeObserverClass()
+      const undo1 = withGlobals({ doc, Observer: MutationObserver })
+      try {
+        plugin.apply(ctx) // the document arrives only now
+        check('D2 the late document gets the sheet', state.injected.length === 1 && doc.querySelector(SELECTOR) !== null, String(state.injected.length))
+        check('D3 the guard arms on the second apply (flag was not burned by the first)', armed.length === 2, String(armed.length))
+        doc.querySelector(SELECTOR).remove()
+        armed[0].fire()
+        check('D4 the healed sheet is back in <head>', doc.querySelector(SELECTOR) !== null)
+        check('D5 exactly one re-injection', state.injected.length === 2, String(state.injected.length))
+      } finally {
+        undo1()
+      }
+    } finally {
+      undo0()
+    }
+  }
+
+  // --------------------------------- E. migration of a legacy untagged sheet
+  console.log('\n=== E. a pre-v1.6.1 UNTAGGED sheet already in <head> gets re-tagged in place ===')
+  {
+    const { doc, state } = makeDocument()
+    const { MutationObserver, armed } = makeObserverClass()
+    const undo = withGlobals({ doc, Observer: MutationObserver })
+    try {
+      globalThis.__CAPTURED_SESSION_TREE__ = null
+      // Pre-seed the head with a legacy sheet: correct data-plugin-css, but
+      // no data-plugin — exactly what a hot-swapped long-lived page holds
+      // after upgrading from v1.6.0.
+      const legacy = doc.createElement('style')
+      legacy.setAttribute('data-plugin-css', 'session-tree')
+      legacy.textContent = '/* legacy untagged sheet */'
+      doc.head.appendChild(legacy)
+      const plugin = await loadClient()
+      const { ctx } = makeCtx()
+      plugin.apply(ctx)
+      check('E1 no duplicate injection — the legacy sheet is reused', state.injected.length === 1, String(state.injected.length))
+      check('E2 the legacy sheet is reachable via the documented selector', doc.querySelector(SELECTOR) === legacy)
+      check(
+        'E3 the legacy sheet now carries data-plugin=@orphiczhou/dsh-session-tree',
+        legacy.attrs['data-plugin'] === '@orphiczhou/dsh-session-tree',
+        String(legacy.attrs['data-plugin'] || null),
+      )
+      check('E4 the guard still arms (sheet counts as in-head)', armed.length === 2, String(armed.length))
+      // A sheet already claimed by ANOTHER module must be left alone.
+      const { doc: doc2, state: state2 } = makeDocument()
+      const undo2 = withGlobals({ doc: doc2, Observer: makeObserverClass().MutationObserver })
+      try {
+        globalThis.__CAPTURED_SESSION_TREE__ = null
+        const plugin2 = await loadClient()
+        const claimed = doc2.createElement('style')
+        claimed.setAttribute('data-plugin-css', 'session-tree')
+        claimed.setAttribute('data-plugin', '@deepseek-ai/dsh-client-ui-workspace')
+        claimed.textContent = '/* claimed by another module */'
+        doc2.head.appendChild(claimed)
+        plugin2.apply(ctx)
+        check(
+          'E5 a sheet claimed by another module is not re-tagged',
+          claimed.attrs['data-plugin'] === '@deepseek-ai/dsh-client-ui-workspace',
+          String(claimed.attrs['data-plugin']),
+        )
+        check('E6 and no duplicate sheet is injected for it', state2.injected.length === 1, String(state2.injected.length))
+      } finally {
+        undo2()
+      }
+    } finally {
+      undo()
+    }
+  }
+
+  // ------------------------------- F. a STALE sheet is refreshed in place
+  console.log('\n=== F. a tagged-but-STALE sheet is refreshed to this bundle\'s CSS ===')
+  {
+    const { doc, state } = makeDocument()
+    const { MutationObserver, armed } = makeObserverClass()
+    const undo = withGlobals({ doc, Observer: MutationObserver })
+    try {
+      globalThis.__CAPTURED_SESSION_TREE__ = null
+      // Measured live 2026-11-16: a long-lived page that had been hot-swapped
+      // from v1.5 still held the OLD 6.9 KB sheet. The early return kept it, so
+      // every v2 class (`.st-tr2-*`) stayed unstyled while the panel kept
+      // rendering — the "bare text" regression. The sheet must be re-texted.
+      const stale = doc.createElement('style')
+      stale.setAttribute('data-plugin-css', 'session-tree')
+      stale.setAttribute('data-plugin', '@orphiczhou/dsh-session-tree')
+      stale.textContent = '/* v1.5 sheet: 6966 chars, no st-tr2-* rules */'
+      doc.head.appendChild(stale)
+      const plugin = await loadClient()
+      const { ctx } = makeCtx()
+      plugin.apply(ctx)
+      check(
+        'F1 the stale sheet is reused, not duplicated',
+        state.injected.length === 1 && doc.querySelector(SELECTOR) === stale,
+        String(state.injected.length),
+      )
+      check(
+        'F2 its content is refreshed to this bundle\'s CSS (st-tr2 rules present)',
+        stale.textContent.length > 5000 && /\.st-tr2-list\{/.test(stale.textContent),
+        String(stale.textContent.length),
+      )
+      check(
+        'F3 and the refresh keeps our module ownership',
+        stale.attrs['data-plugin'] === '@orphiczhou/dsh-session-tree',
+        String(stale.attrs['data-plugin'] || null),
+      )
+      check('F4 the guard still arms on the refreshed sheet', armed.length === 2, String(armed.length))
     } finally {
       undo()
     }

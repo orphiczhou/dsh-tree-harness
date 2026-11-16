@@ -8,11 +8,26 @@
 
 A DeepSeek Harness profile bundle that turns the left sidebar into a **session tree**: every session plus its nested subagent descendants, expandable to arbitrary depth, each node one click away from its multi-turn conversation. It also adds two Host tools: `tree_send`, which lets an agent message a continuable subagent session **inside its own session tree** — including a sibling, which the built-in messaging APIs cannot reach, while cross-tree delivery is refused — and `session_handoff`, which hands the current session off to a fresh successor at the **same level** before its context budget fills, carrying the same workspace, Agent preset, permission preset, model and reasoning effort.
 
-**Current release: v1.6.0.** Bundled `session-handoff` Skill since **v1.3.0**; the successor kickoff prompt follows the DSH interface language since **v1.3.1**; `tree_send` is limited to the caller's own session tree and no longer accepts a `parent` argument since **v1.4.0** (see [releases](https://github.com/orphiczhou/dsh-session-tree/tags)). v1.6.0 upgrades the Tree Runs panel to **panel v2** — same layout and feature set as the Flow Runs panel, a multi-area side-by-side panel (list + dependency-DAG tree graph + details on one screen) — see the release note below. v1.5.0 adds the **Tree Runs panel** (composer-dock entry pill + right-sidebar tab, data from the same-origin `/tree-panel/*` routes) — see the release note below. v1.4.1 fixed a collapsed-sidebar (rail) hook-count crash (React #300/#310) — see its release note below.
+**Current release: v1.6.1.** Bundled `session-handoff` Skill since **v1.3.0**; the successor kickoff prompt follows the DSH interface language since **v1.3.1**; `tree_send` is limited to the caller's own session tree and no longer accepts a `parent` argument since **v1.4.0** (see [releases](https://github.com/orphiczhou/dsh-session-tree/tags)). v1.6.1 fixes the Tree Runs panel rendering as **unstyled plain text**: the stylesheet is now tagged with its owning module id (the host treats an untagged `<style>` as unowned and may remove it) and a stale sheet left in `<head>` by a hot upgrade is refreshed in place — see the release note below. v1.6.0 upgrades the Tree Runs panel to **panel v2** — same layout and feature set as the Flow Runs panel, a multi-area side-by-side panel (list + dependency-DAG tree graph + details on one screen) — see the release note below. v1.5.0 adds the **Tree Runs panel** (composer-dock entry pill + right-sidebar tab, data from the same-origin `/tree-panel/*` routes) — see the release note below. v1.4.1 fixed a collapsed-sidebar (rail) hook-count crash (React #300/#310) — see its release note below.
 
 <!-- Screenshot placeholder: add a screenshot of the left sidebar tree here once one exists.
      Do not reference an image file that is not in the repository. -->
 <!-- ![Session tree in the left sidebar](docs/screenshot.png) -->
+
+## v1.6.1 增量：面板无样式根因修复（样式所有权 + 陈旧 sheet）
+
+> 2026-11-16 D32/D33 轮交付。v1.6.1 为仓内版本，**未发布 npm / 公开镜像**（镜像 tag 仍为 `v1.4.0` = `0343f0c`）。
+
+**症状**：面板整体裸文本（markup 与 `st-*` 类名都在，`<head>` 里的规则不生效）；入口 pill 与 Flow Runs 不同视觉。
+
+**根因两条**：
+
+1. **样式所有权违约**：宿主 `@deepseek-ai/dsh-client-modules` 浏览器半把**无 `data-plugin` 标的 `<style>` 视为无主**——materialize 窗口内的新增未打标 sheet 会被 `claimStyles(ownerId)` 重打到在场模块名下，该模块 replace/prune 时 `removeOwnedStyles(id)` 合法移除我们的表（内置包全部自打标）。修复：注入时 `setAttribute('data-plugin','@orphiczhou/dsh-session-tree')`（= `__ModuleLoader__.load({id})` 经宿主 `stripClientSuffix` 的 ownerId 逐字一致）；selector 早退分支对既有无标旧表**就地迁移补标**（他模块已 claim 的不覆盖）；
+2. **陈旧 sheet 永不刷新**（裸文本的真机制）：活体探针实测 head 里那张已打标的表只有 **6966** 字符（v1.5 旧表），而本 bundle 的 CSS 是 **15754**——早退分支只补标不回写内容，v2 的 `st-tr2-*` 全部无规则。修复：补 `if (existing.textContent !== CSS) existing.textContent = CSS`（幂等，实测 6966 → 15756）；`guardStylesheet` 的一次性旗标烧毁缺陷同时改序（原先 `stylesGuarded = true` 在 `!stylesInHead` 早退**之前**置位，注入前任何一次调用永久废掉守卫）。
+
+**入口 pill 改为内联样式**（照抄 Flow Runs）：`DOCK_PILL` / `DOCK_PILL_OPEN` / `DOCK_PILL_DOT` 逐值照抄 `@local/dsh-flow-engine` 的 `styles.pill/pillActive/dot`（`inline-flex` / `gap:6px` / `height:26px` / `padding:0 10px` / `border-radius:999px` / `1px solid --dsw-alias-border-l1` / `--dsw-alias-bg-layer-1` / `--dsw-alias-label-primary` / `font:600 12px system-ui,…` / 7px 品牌圆点）；样式表缺席时 pill 也保持与 Flow Runs 同视觉，`.st-tr-pill` 类名保留（测试与样式表双轨）。
+
+**测试**：`test/style-guard.cjs` **34 → 50/50**（A1g 自打标 + D 旗标不烧毁 + E 迁移补标/不覆盖他模块 + F 陈旧 sheet 就地刷新：复用不重复注入 / 内容刷新 / 归属不变 / 守卫照常武装）；panel-render **73/73**、render **153/153** + 9 + 11、provider-conformance **29/29**、handoff 41/41、meta 41/41、skills 3/3、tree-send 25/25、仓根 `node --test` **350/350** 全部保持。
 
 ## v1.6.0 增量：Tree Runs 面板 v2（Flow Runs 同布局）
 

@@ -2,7 +2,7 @@
 
 > **Audience**: an AI coding agent (DSH / any harness) asked to install, upgrade, verify or troubleshoot this plugin on a user's machine.
 > **Repo role**: `orphiczhou/dsh-session-tree` is the **release mirror** of `packages/dsh-session-tree` in the source repo [orphiczhou/dsh-tree-harness](https://github.com/orphiczhou/dsh-tree-harness). Source of truth = the monorepo. Never edit this repo directly; changes are published from the monorepo by `scripts/release-plugin.mjs` (18 files, SHA-256 verified).
-> **Snapshot**: `v1.6.0` · 2026-11-15 · tested on DSH desktop `0.2.2-rc.1` (Windows 11).
+> **Snapshot**: `v1.6.1` · 2026-11-16 · tested on DSH desktop `0.2.2-rc.1` (Windows 11). **The newest mirror tag is still `v1.4.0`** — v1.4.1 … v1.6.1 are monorepo-only so far; when pinning a git ref, use the newest tag that actually exists (`v1.4.0`) unless the repo's tag list shows a newer one.
 
 ## 0. TL;DR decision tree
 
@@ -46,7 +46,7 @@ dsh plugin --profile <name> add /absolute/path/to/dsh-session-tree   # local che
 
 `dsh plugin <args...>` forwards to pnpm inside the profile; a Git install fetches sources (plain ESM, no build step, so no pnpm build-script allowlist is needed).
 
-**A3. Pin a version** (recommended for reproducibility): use a pnpm git ref, e.g. `github:orphiczhou/dsh-session-tree#v1.6.0` in the Add-plugin spec / profile dependency. Tag = `package.json.version` = what a community catalog indexes.
+**A3. Pin a version** (recommended for reproducibility): use a pnpm git ref, e.g. `github:orphiczhou/dsh-session-tree#v1.4.0` in the Add-plugin spec / profile dependency — **a ref must name a tag that exists** (newest mirror tag is `v1.4.0`; the package source in the monorepo is at `v1.6.1`). Tag = `package.json.version` = what a community catalog indexes.
 
 ### Route B — full tree stack (session-tree + tree-engine + agent-introspect)
 
@@ -122,7 +122,7 @@ Quick reference for #1/#3: the render line of `status` is the cheapest machine-c
 ```sh
 # upgrade (Git install)
 dsh plugin remove orphiczhou/dsh-session-tree     # or disable in the Plugins page
-dsh plugin add orphiczhou/dsh-session-tree#v1.6.0 # pinned
+dsh plugin add orphiczhou/dsh-session-tree#v1.4.0 # pinned (newest tag that exists)
 # then reload: disable → enable, open a new session
 
 # uninstall

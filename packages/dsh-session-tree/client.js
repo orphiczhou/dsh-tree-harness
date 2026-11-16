@@ -198,6 +198,50 @@ window.__ModuleLoader__.load({
 `
 
     /**
+     * Composer-dock pill, copied value-for-value from the Flow Runs entry that
+     * ships next to us (`@local/dsh-flow-engine` spike client, `styles.pill` /
+     * `styles.pillActive` / `styles.dot`): inline style objects, no stylesheet
+     * dependency. Inline wins over any host rule that targets dock buttons, so
+     * the pill looks identical to Flow Runs even when our `<style>` sheet is
+     * absent — and it is the reason flow never shows this class of bug.
+     */
+    const DOCK_PILL = {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      height: '26px',
+      padding: '0 10px',
+      borderRadius: '999px',
+      border: '1px solid var(--dsw-alias-border-l1)',
+      background: 'var(--dsw-alias-bg-layer-1)',
+      color: 'var(--dsw-alias-label-primary)',
+      font: '600 12px system-ui, -apple-system, "Segoe UI", sans-serif',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+    }
+    const DOCK_PILL_OPEN = {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      height: '26px',
+      padding: '0 10px',
+      borderRadius: '999px',
+      border: '1px solid var(--dsw-alias-brand-primary)',
+      background: 'var(--dsw-alias-brand-primary)',
+      color: 'var(--dsw-alias-bg-base)',
+      font: '600 12px system-ui, -apple-system, "Segoe UI", sans-serif',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+    }
+    const DOCK_PILL_DOT = {
+      width: '7px',
+      height: '7px',
+      borderRadius: '50%',
+      background: 'var(--dsw-alias-brand-primary)',
+      display: 'inline-block',
+    }
+
+    /**
      * Stylesheet identity, following the convention the shipped client packages
      * use (`document.querySelector('style[data-plugin-css="…"]')`): the sheet
      * lives in <head>, injected once, and is not part of the render output.
@@ -209,7 +253,25 @@ window.__ModuleLoader__.load({
      * `<body>` contained no `<style>` at all, and the unstyled inline folder SVG
      * blew up to 262x262, breaking the whole tree layout. A stylesheet the shell
      * renders must not depend on React keeping one child alive.
+     *
+     * Ownership (v1.6.1): the browser-half module loader
+     * (@deepseek-ai/dsh-client-modules) treats `<style>` nodes without a
+     * `data-plugin` attribute as unowned: `untaggedStyles()` /
+     * `claimStyles(ownerId, before)` re-tags every sheet that appears during a
+     * module's materialize window to that module, and `removeOwnedStyles(id)`
+     * deletes all sheets tagged `data-plugin=id` whenever that module is
+     * replaced, pruned, or fails to materialize. An untagged sheet injected
+     * during someone else's window is therefore legally stolen and later
+     * dropped — the live Tree Runs panel rendered as bare text on 2026-11-16
+     * through exactly this path. Every shipped package self-tags its sheets at
+     * creation (e.g. dsh-client-ui-theme: `tag.dataset.plugin =
+     * '@deepseek-ai/dsh-client-ui-theme'`); we do the same with the id this
+     * module registers under (`window.__ModuleLoader__.load({ id: MODULE_ID,
+     * … })` → ownerId after the loader strips a `/client` suffix). Claiming
+     * skips tagged sheets, and only our own lifecycle can retire ours — the
+     * next generation re-injects before the panel repaints.
      */
+    const MODULE_ID = '@orphiczhou/dsh-session-tree'
     const STYLE_TAG = 'session-tree'
     const STYLE_SELECTOR = 'style[data-plugin-css="' + STYLE_TAG + '"]'
     /** True once the sheet is in <head>; the React child is only a fallback. */
@@ -223,9 +285,33 @@ window.__ModuleLoader__.load({
     function ensureStylesheet() {
       try {
         if (typeof document === 'undefined' || !document.head) return false
-        if (document.querySelector(STYLE_SELECTOR) !== null) return true
+        const existing = document.querySelector(STYLE_SELECTOR)
+        if (existing !== null) {
+          // Migration: a pre-v1.6.1 page can still hold an UNTAGGED sheet —
+          // a hot module swap keeps the old sheet (it matches this selector,
+          // so the early return would otherwise keep it unowned forever, and
+          // the 2026-11-16 bare-text regression starts exactly there). Re-tag
+          // it in place unless another module already claimed it (it then
+          // carries that module's `data-plugin`, which we must not overwrite).
+          if (!existing.getAttribute('data-plugin')) existing.setAttribute('data-plugin', MODULE_ID)
+          // Refresh a STALE sheet: a page that predates this bundle keeps the
+          // old <style> alive across hot swaps (it matches STYLE_SELECTOR), and
+          // the early return below would then pin the OLD css for the rest of
+          // the page life. Measured live 2026-11-16: head held 6966 chars of
+          // the v1.5 sheet while this bundle carries 15754 → every v2 class
+          // (st-tr2-*, the pill's data-open state) silently unstyled. Replacing
+          // the text is idempotent and cheap (one string compare).
+          if (existing.textContent !== CSS) existing.textContent = CSS
+          return true
+        }
         const el = document.createElement('style')
         el.setAttribute('data-plugin-css', STYLE_TAG)
+        // Style-ownership contract of the client-module loader: a sheet must
+        // carry `data-plugin=<registered module id>` or it is "unowned" and
+        // can be re-tagged into another module's ownership by claimStyles()
+        // and removed by that module's replace/prune (see block comment on
+        // STYLE_TAG). Keep this attribute identical to the load() id.
+        el.setAttribute('data-plugin', MODULE_ID)
         el.textContent = CSS
         document.head.appendChild(el)
         return true
@@ -260,8 +346,13 @@ window.__ModuleLoader__.load({
     let stylesGuarded = false
     function guardStylesheet() {
       if (stylesGuarded) return
-      stylesGuarded = true
+      // v1.6.1: probe the sheet BEFORE burning the once-per-load flag. The old
+      // order set `stylesGuarded = true` first, so a call that arrived before a
+      // successful injection (no `document` yet, or the inject fallback path)
+      // armed nothing and disarmed the guard for the rest of the page life —
+      // exactly the silent, unhealed loss this guard exists to prevent.
       if (!stylesInHead) return
+      stylesGuarded = true
       if (typeof document === 'undefined' || typeof MutationObserver !== 'function') return
       const reassert = () => {
         if (document.querySelector(STYLE_SELECTOR) === null) ensureStylesheet()
@@ -2161,12 +2252,13 @@ window.__ModuleLoader__.load({
         {
           type: 'button',
           className: 'st-tr-pill',
+          style: state.open ? DOCK_PILL_OPEN : DOCK_PILL,
           'data-open': state.open ? 'true' : 'false',
           'aria-pressed': state.open ? 'true' : 'false',
           title: 'Tree Runs (read-only task-tree panel)',
           onClick: () => props.openPanel(),
         },
-        h('span', { className: 'st-tr-pill-dot' }),
+        h('span', { className: 'st-tr-pill-dot', style: DOCK_PILL_DOT }),
         'Tree Runs',
       )
     }
