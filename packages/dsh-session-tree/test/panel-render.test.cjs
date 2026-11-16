@@ -1112,6 +1112,41 @@ async function main() {
       graphSections.length === 1,
     `viewports=${viewports.length} height=${viewports[0] && viewports[0].props.style && viewports[0].props.style.height} handles=${resizeHandles.length} sections=${graphSections.length}`)
   rtMain.store.set({ graphHeight: 420 })
+  // v1.8.1：图内节点点击失效的根因是 pointerdown 就 setPointerCapture —— 浏览器会把
+  // 随后的 click 重定向到捕获元素（视口），节点自身 onClick 永不触发。改为「拖拽超过
+  // 阈值才武装捕获」，节点点击回到原生路径。下面锁住阈值判定与视口的指针接线。
+  check('V2-38 panMovedEnough：阈值 4px（曼哈顿）以下仍算点击，超过才算拖拽',
+    mod.GRAPH_PAN_THRESHOLD === 4 &&
+      mod.panMovedEnough(0, 0) === false &&
+      mod.panMovedEnough(3, 1) === false &&
+      mod.panMovedEnough(4, 0) === false &&
+      mod.panMovedEnough(2, 3) === true &&
+      mod.panMovedEnough(-5, 0) === true &&
+      mod.panMovedEnough(NaN, 5) === true,
+    `threshold=${mod.GRAPH_PAN_THRESHOLD} idle=${mod.panMovedEnough(0, 0)} tiny=${mod.panMovedEnough(3, 1)} edge=${mod.panMovedEnough(4, 0)} drag=${mod.panMovedEnough(2, 3)}`)
+  rtMain.store.set({ selectedLeafId: null })
+  const geoTap = []
+  renderTree(rtMain.Body({}), geoTap)
+  const tapViewport = byClass(geoTap, 'st-tr2-viewport', true)[0]
+  const tapNodes = byClass(geoTap, 'st-tr2-node', true)
+  const vpProps = (tapViewport && tapViewport.props) || {}
+  check('V2-39 图内节点仍是点击主入口：节点带 cursor=pointer/onClick，视口接线 down/move/up/cancel',
+    tapNodes.length === 2 &&
+      typeof tapNodes[0].props.onClick === 'function' &&
+      !!tapNodes[0].props.style &&
+      tapNodes[0].props.style.cursor === 'pointer' &&
+      typeof vpProps.onPointerDown === 'function' &&
+      typeof vpProps.onPointerMove === 'function' &&
+      typeof vpProps.onPointerUp === 'function' &&
+      typeof vpProps.onPointerCancel === 'function',
+    `nodes=${tapNodes.length} vp=${['onPointerDown', 'onPointerMove', 'onPointerUp', 'onPointerCancel'].filter((k) => typeof vpProps[k] === 'function').join('+')}`)
+  if (tapNodes.length === 2) {
+    tapNodes[1].props.onClick({ stopPropagation() {}, target: tapNodes[1] })
+    check('V2-40 点击图上第二个节点 → 选中该 leaf（列表行点击只是次要入口）',
+      rtMain.store.get().selectedLeafId === 'n2',
+      `selected=${rtMain.store.get().selectedLeafId}`)
+    rtMain.store.set({ selectedLeafId: null })
+  }
 
   // ----------------------------------------------------------------- summary
   console.log('\n==================== 结果 ====================')

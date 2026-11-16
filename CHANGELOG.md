@@ -81,6 +81,20 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.8.1] — 2026-11-17 · session-tree Tree Runs 图内节点点击修复（pointer capture 抢走 click，无发布）
+
+**触发**（用户 m03251）：「我要的是点击图上的各个节点，显示详细信息；现在是点击列表里面再显示详细信息，做错了。」
+
+**根因**：`TreeGraph` 的滚动视口在 `pointerdown` 就调用 `setPointerCapture(event.pointerId)`。命中指针捕获后，浏览器把随后的 `click` 重定向到捕获元素（视口本身），节点 `<g>` 上的 `onClick` 因此永不触发；叶表行没有捕获，所以表现为「点列表能出详情、点图上的节点没反应」。
+
+**修复**（`packages/dsh-session-tree/client.js`）：
+- 新增 `GRAPH_PAN_THRESHOLD = 4` 与纯函数 `panMovedEnough(dx, dy)`（曼哈顿距离，非数值按 0 计）。
+- `onPointerDown` 只记录起点/滚动位置/pointerId，**不再捕获**；`onPointerMove` 首次超过阈值才 `setPointerCapture`；新增 `endPan()` 统一 `releasePointerCapture` 并清状态，`onPointerUp` / `onPointerCancel` 共用。
+- 未拖动时手势保持原生 click → 点图内节点即 `selectLeaf`，下方 `PanelLeafDetail` 填满 17 项属性；拖拽平移行为不变（阈值内抖动仍算点击）。
+- `PANEL_VERSION` 与 `package.json` → **1.8.1**（页头 `v1.8.1` 可辨新 bundle）。
+
+**验证**：panel-render **95 → 98/98**（V2-38 阈值边界、V2-39 节点 cursor+onClick 与视口 down/move/up/cancel 接线、V2-40 点图内节点选中）；style-guard 51/51、render 153+9+11、meta 41/41、handoff 41/41、skills 3/3、tree-send 25/25、provider-conformance 29/29、verify-bundle 0 fail、tree-engine 258/258、仓根 `node --test` 352/352 保持全绿。
+
 ## [1.8.0] — 2026-11-16 · session-tree Tree Runs 树图区高度可调 + 打开即 Fit 全图（无发布）
 
 用户反馈（「你给树图的部分高度太小了，一条缝，这块要保证高度，且要可以调节，最好能初始就显示全里面的树内容」）。

@@ -975,7 +975,7 @@ window.__ModuleLoader__.load({
      * how a stale client is told apart from a data problem (test asserts this
      * equals package.json's version).
      */
-    const PANEL_VERSION = '1.8.0'
+    const PANEL_VERSION = '1.8.1'
 
     /** Optional-service lookup that never throws (flow spike :2737-2752). */
     function panelServiceOf(ctx, key) {
@@ -1398,6 +1398,23 @@ window.__ModuleLoader__.load({
     function clampZoom(v) {
       const n = typeof v === 'number' && isFinite(v) ? v : 1
       return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, n))
+    }
+
+    /**
+     * Pan-vs-click discriminator (v1.8.1, user ask m03251: "我要的是点击图上的
+     * 各个节点，显示详细信息"). The viewport used to call `setPointerCapture` on
+     * pointerdown, which retargets the following `click` to the viewport itself —
+     * so a node's own onClick never fired in the real renderer (the leaf-table
+     * rows, which never capture, kept working). Capture is now armed only after
+     * the pointer has travelled this far, i.e. only for a real drag.
+     */
+    const GRAPH_PAN_THRESHOLD = 4
+
+    /** True once |dx|+|dy| exceeds the pan threshold (Manhattan distance keeps it cheap). */
+    function panMovedEnough(dx, dy) {
+      const ax = typeof dx === 'number' && isFinite(dx) ? Math.abs(dx) : 0
+      const ay = typeof dy === 'number' && isFinite(dy) ? Math.abs(dy) : 0
+      return ax + ay > GRAPH_PAN_THRESHOLD
     }
 
     /**
@@ -2217,21 +2234,49 @@ window.__ModuleLoader__.load({
       const onPointerDown = (event) => {
         const el = viewportRef.current
         if (!el || !event || event.button !== 0) return
-        el.__stTreeGraphPan = { x: event.clientX, y: event.clientY, sl: el.scrollLeft, st: el.scrollTop }
-        try {
-          if (typeof el.setPointerCapture === 'function') el.setPointerCapture(event.pointerId)
-        } catch (e) {}
+        el.__stTreeGraphPan = {
+          x: event.clientX,
+          y: event.clientY,
+          sl: el.scrollLeft,
+          st: el.scrollTop,
+          pointerId: event.pointerId,
+          captured: false,
+        }
+        // v1.8.1: pointer capture is armed only once the gesture is clearly a
+        // drag (see onPointerMove). Capturing on pointerdown retargets the
+        // subsequent `click` to the viewport, so a node's own onClick never
+        // fired in the real renderer — the graph looked dead while the leaf
+        // table rows (no capture) still worked.
       }
       const onPointerMove = (event) => {
         const el = viewportRef.current
         const pan = el ? el.__stTreeGraphPan : null
         if (!el || !pan || !event) return
-        el.scrollLeft = pan.sl - (event.clientX - pan.x)
-        el.scrollTop = pan.st - (event.clientY - pan.y)
+        const dx = event.clientX - pan.x
+        const dy = event.clientY - pan.y
+        if (!pan.captured && panMovedEnough(dx, dy)) {
+          try {
+            if (typeof el.setPointerCapture === 'function' && pan.pointerId !== undefined) {
+              el.setPointerCapture(pan.pointerId)
+              pan.captured = true
+            }
+          } catch (e) {}
+        }
+        el.scrollLeft = pan.sl - dx
+        el.scrollTop = pan.st - dy
       }
-      const onPointerUp = () => {
+      const endPan = () => {
         const el = viewportRef.current
-        if (el) el.__stTreeGraphPan = null
+        if (!el) return
+        const pan = el.__stTreeGraphPan
+        el.__stTreeGraphPan = null
+        if (pan && pan.captured) {
+          try {
+            if (typeof el.releasePointerCapture === 'function' && pan.pointerId !== undefined) {
+              el.releasePointerCapture(pan.pointerId)
+            }
+          } catch (e) {}
+        }
       }
 
       const stepZoom = (factor) => setZoom((current) => clampZoom(current * factor))
@@ -2308,8 +2353,8 @@ window.__ModuleLoader__.load({
             onWheel,
             onPointerDown,
             onPointerMove,
-            onPointerUp,
-            onPointerCancel: onPointerUp,
+            onPointerUp: endPan,
+            onPointerCancel: endPan,
           },
           h(
             'div',
@@ -4593,6 +4638,8 @@ window.__ModuleLoader__.load({
       GRAPH_HEIGHT_MIN,
       GRAPH_HEIGHT_MAX,
       GRAPH_HEIGHT_KEY,
+      panMovedEnough,
+      GRAPH_PAN_THRESHOLD,
       edgeStateOf,
       statsSessionsOf,
     }
