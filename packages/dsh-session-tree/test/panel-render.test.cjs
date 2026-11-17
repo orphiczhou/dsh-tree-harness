@@ -1148,6 +1148,78 @@ async function main() {
     rtMain.store.set({ selectedLeafId: null })
   }
 
+  // ================== v1.8.2 判定：依赖虚线可读性 + 图外关系标识
+  // 用户反馈（m03377）：「图里面的节点之间的虚线是啥意思？被挡住了看不清关系。
+  // 除了图形的虚线，其他地方有这种关系的标识么？」虚线 = 声明依赖（目标等前置结算），
+  // 实线 = 父子从属；虚线画在节点盒之前会被遮挡，故选中节点时只提亮它的边、其余压暗，
+  // 并给每条边挂 <title>；栅格另加 Blocks（谁依赖它）与 Dependencies（它依赖谁）成对。
+  console.log('\n=== v1.8.2 判定：依赖边可读性 + 关系在别处的标识 ===')
+  rtMain.store.set({ graphHeight: 420, selectedTreeId: 'tree-alpha' })
+  rtMain.store.set({
+    detail: {
+      treeId: 'tree-alpha',
+      state: 'running',
+      root: { leafId: 'n1', status: 'running' },
+      leaves: [
+        { leafId: 'n1', status: 'succeeded', role: 'commander' },
+        { leafId: 'n2', status: 'running', role: 'worker', parent: 'n1' },
+        { leafId: 'n3', status: 'pending', role: 'worker', parent: 'n2', dependencies: ['n1'] },
+      ],
+      stats: { total: 3, byStatus: { running: 1, succeeded: 1, pending: 1 } },
+      events: [],
+    },
+  })
+  // n2 选中：依赖边 n1→n3 与它无关 → 压到 0.12；两条父子边都相关 → 0.8。
+  rtMain.store.set({ selectedLeafId: 'n2' })
+  const dimSink = []
+  renderTree(rtMain.Body({}), dimSink)
+  const dimEdges = byClass(dimSink, 'st-tr2-edge', true)
+  const dimDep = dimEdges.filter((g) => g.props['data-kind'] === 'dep')
+  const dimParent = dimEdges.filter((g) => g.props['data-kind'] === 'parent')
+  const pathOf = (g) => g.kids.find((k) => k && k.tag === 'path')
+  const titleOf = (g) => g.kids.find((k) => k && k.tag === 'title')
+  const dimDepPath = dimDep.length === 1 ? pathOf(dimDep[0]) : null
+  check('V2-41 依赖边带 <title>「B depends on A」，选中 n2 时无关虚线压到 0.12、相关父边 0.8',
+    dimEdges.length === 3 && dimDep.length === 1 && dimParent.length === 2 &&
+      !!dimDepPath && !!titleOf(dimDep[0]) && sinkText(titleOf(dimDep[0])) === 'n3 depends on n1' &&
+      dimDep[0].props['data-related'] === 'false' &&
+      Math.abs(Number(dimDepPath.props.opacity) - 0.12) < 1e-9 &&
+      dimParent.every((g) => g.props['data-related'] === 'true') &&
+      dimParent.every((g) => Math.abs(Number(pathOf(g).props.opacity) - 0.8) < 1e-9),
+    `edges=${dimEdges.length} dep=${dimDep.length} title=${dimDep.length === 1 ? sinkText(titleOf(dimDep[0])) : '(无)'} ` +
+      `depOpacity=${dimDepPath ? dimDepPath.props.opacity : '?'}`)
+  // n1 选中：依赖边变成本节点的边 → 提亮；与 n1 无关的父边（n2→n3）压暗。
+  rtMain.store.set({ selectedLeafId: 'n1' })
+  const relSink = []
+  renderTree(rtMain.Body({}), relSink)
+  const relEdges = byClass(relSink, 'st-tr2-edge', true)
+  const relDep = relEdges.filter((g) => g.props['data-kind'] === 'dep')
+  const relDepPath = relDep.length === 1 ? pathOf(relDep[0]) : null
+  const relDimParent = relEdges.filter(
+    (g) => g.props['data-kind'] === 'parent' && g.props['data-related'] === 'false',
+  )
+  check('V2-42 选中 n1：依赖边视为相关（opacity 1 + 加粗），无关父边 n2→n3 压到 0.12',
+    relDep.length === 1 && !!relDepPath && Number(relDepPath.props.opacity) === 1 &&
+      relDimParent.length === 1 && Math.abs(Number(pathOf(relDimParent[0]).props.opacity) - 0.12) < 1e-9,
+    `dep=${relDep.length} depOpacity=${relDepPath ? relDepPath.props.opacity : '?'} dimParent=${relDimParent.length}`)
+  // 栅格：Blocks = 谁依赖它（n1 的 Blocks 是 n3），与 Dependencies 成对出现。
+  const relGridFields = byClass(relSink, 'st-tr2-field', true)
+  const relValueOf = (label) => {
+    for (const field of relGridFields) {
+      const kids = descendants(field)
+      const labelEl = kids.find((e) => String(e.props.className || '').includes('st-tr2-fieldlabel'))
+      if (labelEl && sinkText(labelEl) === label) {
+        const valueEl = kids.find((e) => String(e.props.className || '').includes('st-tr2-fieldvalue'))
+        return valueEl ? sinkText(valueEl) : null
+      }
+    }
+    return null
+  }
+  const blocksValue = relValueOf('Blocks')
+  check('V2-43 叶属性栅格新增 Blocks（反向依赖：谁在等它），与 Dependencies 成对',
+    blocksValue === 'n3' && relValueOf('Dependencies') !== undefined && sinkAllText(relSink).includes('Leaf attributes · n1'),
+    `blocks=${blocksValue} deps=${relValueOf('Dependencies')}`)
+
   // ----------------------------------------------------------------- summary
   console.log('\n==================== 结果 ====================')
   console.log(`合计 ${checks} 项判定，失败 ${failures} 项`)

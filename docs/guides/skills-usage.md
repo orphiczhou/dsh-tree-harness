@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.13.0**、`packages/dsh-session-tree` **v1.8.1** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA；v1.4.1–v1.8.1 未发布镜像）。
+> 适用版本：`packages/dsh-tree-engine` **v0.13.0**、`packages/dsh-session-tree` **v1.8.2** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA；v1.4.1–v1.8.2 未发布镜像）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -261,7 +261,8 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.13.0 / `dsh-session-tree` 1.8.1（公开镜像 tag `v1.4.0` = `0343f0c`；v1.4.1–v1.8.1 未发布镜像）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.13.0 / `dsh-session-tree` 1.8.2（公开镜像 tag `v1.4.0` = `0343f0c`；v1.4.1–v1.8.2 未发布镜像）。
+- **session-tree 1.8.2**：Tree Runs **依赖关系可读性**（用户反馈「图里面的节点之间的虚线是啥意思？被挡住了看不清关系」）—— 虚线 = `dependencies` 声明依赖（目标等前置结算才可派发）、实线 = `parent` 父子从属；边先于节点绘制会被遮挡，故每条边挂 `<title>`（`A is parent of B` / `B depends on A`）、选中节点只提亮它的边（无关边压到 0.12），图例与 hint 写明语义；叶属性栅格新增 `Blocks`（反向依赖）与 `Dependencies` 成对（17→18 项）；测试 panel-render 98→**101/101**（V2-41..43）。安装/重载后页头应显示 `v1.8.2`。
 - **session-tree 1.8.1**：Tree Runs **图内节点点击失效**修复（用户反馈「我要的是点击图上的各个节点，显示详细信息」）—— 视口在 `pointerdown` 就 `setPointerCapture`，浏览器把随后的 `click` 重定向到捕获元素，节点自身 `onClick` 永不触发（叶表行没有捕获，所以「点列表才出详情」）；改为拖拽阈值（`GRAPH_PAN_THRESHOLD` 4px，曼哈顿距离）之后才武装捕获、`endPan` 释放，未拖动时点击走原生路径；测试 panel-render 95→**98/98**（V2-38..40）。安装/重载后页头应显示 `v1.8.1`。
 - **session-tree 1.8.0**：Tree Runs 树图区**高度可调 + 打开即 Fit 全图**（用户反馈「一条缝」）—— ① 视口显式高度（默认 420px / 拖拽 220–900px / `localStorage` 记忆）替代旧 `max-height:520px`（flex 列里自动最小尺寸为 0，会被挤成一条缝）；② 10px 分隔条可拖、双击复位；③ 打开/换树/改高度按视口 `fitZoomOf` 自动 Fit（幂等记忆，不夺用户手动缩放）；测试 panel-render 90→**95/95**（V2-33..37）、style-guard 50→**51/51**。安装/重载后页头应显示 `v1.8.0`。
 - **tree-engine 0.13.0**：新增第 9 个工具之后的**树级展示状态版（用户反馈轮）**—— ① `src/panel-view.js` 新增 `treeStateOf(leaves, rootLeafId)`：`tree_plan` 的 root 是容器叶、永远没有 done 事件（raw 恒 `active`），故 root 只参与**失败**判定，不参与「在跑/未开始」判定；子叶 running/segment_pending → running，有 pending → pending，全部结算 → succeeded，单叶树回落 root 展示态；② `projectTreeSummary` 新增 `state`、`projectTreeDetail` 新增顶层 `state`，列表徽标与详情共用权威字段（客户端不再自行按 counts 猜）；③ 真实 36 棵树 running 徽标 29→**7**（succeeded 23 / failed 4 / pending 2），4 棵 failed 均有子叶 `runtime.state=timeout` 实据；测试数 257→**258/258**（新增 `treeStateOf` 15 条断言）。安装/重载后 `tree_doctor` 应显示 `version=0.13.0`。

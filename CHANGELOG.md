@@ -81,6 +81,23 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.8.2] — 2026-11-17 · session-tree Tree Runs 依赖关系可读性（虚线被节点遮挡 / 图外补 Blocks，无发布）
+
+**触发**（用户 m03377）：「图里面的节点之间的虚线是啥意思？被挡住了看不清关系。除了图形的虚线，其他地方有这种关系的标识么？」
+
+**语义**：实线 = `parent` 父子从属（commander → worker）；虚线 = `dependencies` **声明依赖**（目标叶要等前置叶结算后才可派发）。
+
+**问题**：边先于节点盒绘制，虚线从盒底穿过被遮挡；图例只有 "declared dependency (dashed)"，没解释方向与含义。
+
+**修复**（`packages/dsh-session-tree/client.js`）：
+- 每条边挂 `<title>`：父边 `A is parent of B`，依赖边 `B depends on A`（悬浮即读）。
+- 选中节点时只提亮它的边：相关父边 opacity 0.55 → 0.8、依赖边 0.9 → 1 且线宽 ×1.4；无关边一律压到 **0.12**（`data-related` 可断言）。
+- 图例改为 `─── parent → child (solid, 从属)` 与 `--- declared dependency: target waits for source (dashed)`，后者带 title 解释「前置结算完才可派发」；hint 补「点节点会高亮它的边」。
+- 栅格新增 **`Blocks`**（反向依赖：谁在等它，由 `props.leaves` 反查）与 `Dependencies`（它依赖谁）成对 → 字段 17 → **18**。
+- `PANEL_VERSION` 与 `package.json` → **1.8.2**。
+
+**验证**：panel-render **98 → 101/101**（V2-41 依赖边 title + 无关边 0.12 / V2-42 选中 n1 时依赖边提亮且无关父边压暗 / V2-43 Blocks 字段）；style-guard 51/51、render 153+9+11、meta 41/41、handoff 41/41、skills 3/3、tree-send 25/25、provider-conformance 29/29、verify-bundle 0 fail、tree-engine 258/258、仓根 `node --test` 352/352 全绿。
+
 ## [1.8.1] — 2026-11-17 · session-tree Tree Runs 图内节点点击修复（pointer capture 抢走 click，无发布）
 
 **触发**（用户 m03251）：「我要的是点击图上的各个节点，显示详细信息；现在是点击列表里面再显示详细信息，做错了。」

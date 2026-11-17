@@ -975,7 +975,7 @@ window.__ModuleLoader__.load({
      * how a stale client is told apart from a data problem (test asserts this
      * equals package.json's version).
      */
-    const PANEL_VERSION = '1.8.1'
+    const PANEL_VERSION = '1.8.2'
 
     /** Optional-service lookup that never throws (flow spike :2737-2752). */
     function panelServiceOf(ctx, key) {
@@ -2054,6 +2054,14 @@ window.__ModuleLoader__.load({
         const bend = (siblings.indexOf(edge) - (siblings.length - 1) / 2) * 14
         const c1y = sy + bend
         const c2y = sy + bend / 4
+        // v1.8.2: with a node selected, its own edges stay bright and every
+        // unrelated edge dims — dashed dependencies run behind the node boxes,
+        // so highlighting is what makes "who waits for whom" readable.
+        const related = selectedId !== '' && (edge.from === selectedId || edge.to === selectedId)
+        const dim = selectedId !== '' && !related
+        const edgeTitle = isParent
+          ? edge.from + ' is parent of ' + edge.to
+          : edge.to + ' depends on ' + edge.from
         return h(
           'g',
           {
@@ -2063,7 +2071,9 @@ window.__ModuleLoader__.load({
             'data-to': edge.to,
             'data-kind': edge.kind,
             'data-state': 'decl',
+            'data-related': related ? 'true' : 'false',
           },
+          h('title', { key: 'tip' }, edgeTitle),
           h('path', {
             d:
               'M ' + sx + ' ' + sy +
@@ -2073,9 +2083,9 @@ window.__ModuleLoader__.load({
             fill: 'none',
             // Hierarchy = solid (authoritative 从属), dependency = dashed.
             stroke: isParent ? 'var(--dsw-alias-brand-primary)' : 'var(--dsw-alias-label-secondary)',
-            strokeWidth: (isParent ? 1.6 : 1.3) * scaleComp,
+            strokeWidth: (isParent ? 1.6 : 1.4) * scaleComp * (related ? 1.4 : 1),
             strokeDasharray: isParent ? undefined : 7 * scaleComp + ' ' + 5 * scaleComp,
-            opacity: isParent ? 0.55 : 0.85,
+            opacity: dim ? 0.12 : isParent ? (related ? 0.8 : 0.55) : related ? 1 : 0.9,
             markerEnd: isParent ? 'url(#st-tr2-arrow-parent)' : 'url(#st-tr2-arrow-decl)',
           }),
         )
@@ -2338,7 +2348,7 @@ window.__ModuleLoader__.load({
           h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => stepZoom(1.2), title: 'Zoom in' }, '＋'),
           h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: fitNow, title: 'Fit the whole graph into the viewport' }, 'Fit'),
           h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => zoomTo(1), title: 'Reset zoom' }, '100%'),
-          h('span', { className: 'st-tr2-hint' }, 'Ctrl/⌘+wheel zoom · drag to pan · click a node to inspect · solid = parent → child'),
+          h('span', { className: 'st-tr2-hint' }, 'Ctrl/⌘+wheel zoom · drag to pan · click a node to inspect it and highlight its edges · solid = parent → child, dashed = dependency'),
         ),
         h(
           'div',
@@ -2438,8 +2448,9 @@ window.__ModuleLoader__.load({
           ['succeeded', 'failed', 'running', 'other'].map((tone) =>
             h('span', { key: tone }, h('span', { className: 'st-tr-dot', 'data-tone': tone }), ' ' + tone),
           ),
-          h('span', { key: 'decl' }, '─── parent → child (solid)'),
-          h('span', { key: 'dep' }, '--- declared dependency (dashed)'),
+          h('span', { key: 'decl' }, '─── parent → child (solid, 从属)'),
+          h('span', { key: 'dep', title: 'The target leaf cannot be dispatched until every leaf it depends on has settled.' },
+            '--- declared dependency: target waits for source (dashed)'),
         ),
       )
     }
@@ -2608,6 +2619,7 @@ window.__ModuleLoader__.load({
      */
     function PanelLeafDetail(props) {
       const leaf = props.leaf
+      const allLeaves = Array.isArray(props.leaves) ? props.leaves : []
       const onClear = typeof props.onClear === 'function' ? props.onClear : null
       if (!leaf || typeof leaf !== 'object') {
         return h(
@@ -2636,6 +2648,19 @@ window.__ModuleLoader__.load({
         ? [assignee.provider, assignee.model].filter((v) => v !== undefined && v !== null && v !== '').join(' / ')
         : ''
       const deps = Array.isArray(leaf.dependencies) ? leaf.dependencies.map(String).join(', ') : ''
+      // v1.8.2: the inverse relation — which leaves named this one. The graph
+      // dashed edges are the only visual cue for dependencies, and they run
+      // behind the node boxes, so the same fact is spelled out here.
+      const dependents = allLeaves
+        .filter(
+          (other) =>
+            other &&
+            String(other.leafId) !== String(leafId) &&
+            Array.isArray(other.dependencies) &&
+            other.dependencies.map(String).indexOf(String(leafId)) !== -1,
+        )
+        .map((other) => String(other.leafId))
+        .join(', ')
       const lastEvent =
         (leaf.lastEventType ? String(leaf.lastEventType) : '') +
         (leaf.lastEventAt ? ' · ' + panelTimeOf(leaf.lastEventAt) : '')
@@ -2667,6 +2692,7 @@ window.__ModuleLoader__.load({
           h(PanelField, { label: 'Assignee', value: assigneeText }),
           h(PanelField, { label: 'Verification', value: verifText }),
           h(PanelField, { label: 'Dependencies', value: deps, mono: true }),
+          h(PanelField, { label: 'Blocks', value: dependents, mono: true }),
           h(PanelField, { label: 'Last event', value: lastEvent }),
           h(PanelField, { label: 'Session', value: h(SessionCell, { sessionId: leaf.sessionId }) }),
           h(PanelField, { label: 'Done summary', value: leaf.doneSummaryPreview ? panelPreviewOf(leaf.doneSummaryPreview) : '' }),
@@ -2748,6 +2774,7 @@ window.__ModuleLoader__.load({
           h(PanelLeafDetail, {
             key: 'leafdetail',
             leaf: selectedLeaf,
+            leaves,
             onClear: () => controller.selectLeaf(null),
           }),
           h(PanelLeafTable, {
