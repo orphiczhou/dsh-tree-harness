@@ -2,7 +2,7 @@
 
 > **Audience**: an AI coding agent (DSH / any harness) asked to install, upgrade, verify or troubleshoot this plugin on a user's machine.
 > **Repo role**: `orphiczhou/dsh-session-tree` is the **release mirror** of `packages/dsh-session-tree` in the source repo [orphiczhou/dsh-tree-harness](https://github.com/orphiczhou/dsh-tree-harness). Source of truth = the monorepo. Never edit this repo directly; changes are published from the monorepo by `scripts/release-plugin.mjs` (18 files, SHA-256 verified).
-> **Snapshot**: `v1.8.2` · 2026-11-16 · tested on DSH desktop `0.2.2-rc.1` (Windows 11). **The newest mirror tag is still `v1.4.0`** — v1.4.1 … v1.8.2 are monorepo-only so far; when pinning a git ref, use the newest tag that actually exists (`v1.4.0`) unless the repo's tag list shows a newer one.
+> **Snapshot**: `v1.8.3` · 2026-11-16 · tested on DSH desktop `0.2.2-rc.1` (Windows 11). **The newest mirror tag is still `v1.4.0`** — v1.4.1 … v1.8.3 are monorepo-only so far; when pinning a git ref, use the newest tag that actually exists (`v1.4.0`) unless the repo's tag list shows a newer one.
 
 ## 0. TL;DR decision tree
 

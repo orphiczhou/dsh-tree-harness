@@ -1220,6 +1220,110 @@ async function main() {
     blocksValue === 'n3' && relValueOf('Dependencies') !== undefined && sinkAllText(relSink).includes('Leaf attributes · n1'),
     `blocks=${blocksValue} deps=${relValueOf('Dependencies')}`)
 
+  // ================== v1.8.3 判定：点亮置顶 + 依赖边弧线绕行（A 方案）
+  // 用户（m03546）：「这种依赖虚线，在点亮后要放在图层前面，不要被节点挡住；
+  // 虚线是否能不要是直线，作成弧形线，尽量绕开节点不被挡住？」A 方案 = 保留分层树
+  // 主视图，边分 back/front 两层（点亮边在节点盒之上），依赖边改正交折线 + 圆角弧，
+  // 走列间空道 / 同列右侧通道，反向依赖无法绕行时保留贝塞尔但强制进前层。
+  console.log('\n=== v1.8.3 判定：点亮置顶与依赖边绕行（A 方案） ===')
+  const svgOf = (sink) => sink.find((e) => e && e.tag === 'svg')
+  const groupByClass = (sink, cls) => sink.filter((e) => e && String(e.props.className || '').split(' ').includes(cls))
+  const edgesIn = (group) =>
+    group && Array.isArray(group.kids)
+      ? group.kids.filter((k) => k && String(k.props.className || '').split(' ').includes('st-tr2-edge'))
+      : []
+  rtMain.store.set({ graphHeight: 420, selectedTreeId: 'tree-alpha' })
+  rtMain.store.set({
+    detail: {
+      treeId: 'tree-alpha',
+      state: 'running',
+      root: { leafId: 'n1', status: 'running' },
+      leaves: [
+        { leafId: 'n1', status: 'succeeded', role: 'commander' },
+        { leafId: 'n2', status: 'running', role: 'worker', parent: 'n1' },
+        { leafId: 'n3', status: 'pending', role: 'worker', parent: 'n2' },
+        { leafId: 'n4', status: 'pending', role: 'worker', parent: 'n2', dependencies: ['n1'] },
+      ],
+      stats: { total: 4, byStatus: { running: 1, succeeded: 1, pending: 2 } },
+      events: [],
+    },
+  })
+  rtMain.store.set({ selectedLeafId: 'n2' })
+  const layerSink = []
+  renderTree(rtMain.Body({}), layerSink)
+  const svgEl = svgOf(layerSink)
+  const backGroups = groupByClass(layerSink, 'st-tr2-edges-back')
+  const frontGroups = groupByClass(layerSink, 'st-tr2-edges-front')
+  const backEdges = backGroups.length === 1 ? edgesIn(backGroups[0]) : []
+  const frontEdges = frontGroups.length === 1 ? edgesIn(frontGroups[0]) : []
+  const idxOfClass = (cls) =>
+    svgEl ? svgEl.kids.findIndex((k) => k && String(k.props.className || '').split(' ').includes(cls)) : -1
+  const nodeIndexes = svgEl
+    ? svgEl.kids
+        .map((k, i) => [k, i])
+        .filter(([k]) => k && String(k.props.className || '').split(' ').includes('st-tr2-node'))
+        .map(([, i]) => i)
+    : []
+  const backIdx = idxOfClass('st-tr2-edges-back')
+  const frontIdx = idxOfClass('st-tr2-edges-front')
+  const depBack = backEdges.filter((g) => g.props['data-kind'] === 'dep')
+  const depPath = depBack.length === 1 ? pathOf(depBack[0]) : null
+  check('V2-44 边分 back/front：SVG 顺序 未点亮边 → 节点 → 点亮边；点亮边带 halo，未点亮边不带',
+    !!svgEl && backIdx >= 0 && frontIdx > 0 && backIdx < frontIdx &&
+      nodeIndexes.length === 4 && nodeIndexes.every((i) => i > backIdx && i < frontIdx) &&
+      backEdges.length === 1 && depBack.length === 1 &&
+      frontEdges.length === 3 && frontEdges.every((g) => g.props['data-kind'] === 'parent') &&
+      frontEdges.every((g) => g.kids.filter((k) => k && k.tag === 'path').length === 2) &&
+      depBack[0].kids.filter((k) => k && k.tag === 'path').length === 1,
+    `back=${backEdges.length} front=${frontEdges.length} backIdx=${backIdx} frontIdx=${frontIdx} nodes=${nodeIndexes.join(',')}`)
+  check('V2-45 依赖边改为绕行折线 + 圆角弧（Q 控制点），箭头与 title 保留',
+    !!depPath && typeof depPath.props.d === 'string' &&
+      depPath.props.d.startsWith('M ') && depPath.props.d.includes(' Q ') &&
+      !/NaN|Infinity/.test(depPath.props.d) &&
+      sinkText(depBack[0].kids.find((k) => k && k.tag === 'title')) === 'n4 depends on n1' &&
+      depPath.props.markerEnd === 'url(#st-tr2-arrow-decl)',
+    `d=${depPath ? depPath.props.d : '(无)'}`)
+  // 反向依赖（目标在更左的列）：无法绕行 → 贝塞尔兜底，但必须进前层。
+  rtMain.store.set({
+    detail: {
+      treeId: 'tree-alpha',
+      state: 'running',
+      root: { leafId: 'r0', status: 'running' },
+      leaves: [
+        { leafId: 'r0', status: 'succeeded', role: 'commander' },
+        { leafId: 'c1', status: 'running', role: 'worker', parent: 'r0', dependencies: ['g1'] },
+        { leafId: 'g1', status: 'succeeded', role: 'worker', parent: 'c1' },
+      ],
+      stats: { total: 3, byStatus: { running: 1, succeeded: 2 } },
+      events: [],
+    },
+  })
+  rtMain.store.set({ selectedLeafId: null })
+  const backSink = []
+  renderTree(rtMain.Body({}), backSink)
+  const backwardDep = byClass(backSink, 'st-tr2-edge', true).filter((g) => g.props['data-kind'] === 'dep')
+  check('V2-46 反向依赖无法绕行时保留贝塞尔，但强制进前层（不再被节点盒遮挡）',
+    backwardDep.length === 1 && backwardDep[0].props['data-layer'] === 'front' &&
+      backwardDep[0].props['data-related'] === 'false' &&
+      String(pathOf(backwardDep[0]).props.d).includes(' C ') &&
+      sinkText(backwardDep[0].kids.find((k) => k && k.tag === 'title')) === 'c1 depends on g1',
+    `dep=${backwardDep.length} layer=${backwardDep.length ? backwardDep[0].props['data-layer'] : '?'}`)
+  // 纯函数：前向走列间空道、同列绕列右侧、反向交回贝塞尔、脏输入不抛。
+  const fwd = mod.depRoutePoints({ x: 12, y: 12 }, { x: 400, y: 200 }, 0)
+  const same = mod.depRoutePoints({ x: 12, y: 12 }, { x: 12, y: 200 }, 0)
+  const back = mod.depRoutePoints({ x: 400, y: 12 }, { x: 12, y: 200 }, 0)
+  const empty = mod.depRoutePoints(null, { x: 1, y: 2 }, 0)
+  const fwdPath = mod.roundedPathOf(fwd.points, 10)
+  check('V2-47 depRoutePoints / roundedPathOf：前向空道、同列右绕、反向回落、脏输入安全',
+    fwd.mode === 'forward' && fwd.points.length === 4 && fwd.points[0].x === 204 && fwd.points[0].y === 40 &&
+      fwd.points[1].x > 204 && fwd.points[1].x < 392 &&
+      fwd.points[3].x === 392 && fwd.points[3].y === 228 &&
+      same.mode === 'same' && same.points[3].x === 204 && same.points[1].x >= 218 &&
+      back.mode === 'backward' && back.points.length === 0 && empty.points.length === 0 &&
+      fwdPath.startsWith('M 204 40') && fwdPath.includes(' Q ') && !/NaN/.test(fwdPath) &&
+      mod.roundedPathOf([], 10) === '' && mod.DEP_ROUTE_RADIUS === 10,
+    `fwd=${JSON.stringify(fwd.points)} sameEnd=${same.points[3].x} back=${back.mode} path=${fwdPath.slice(0, 48)}`)
+
   // ----------------------------------------------------------------- summary
   console.log('\n==================== 结果 ====================')
   console.log(`合计 ${checks} 项判定，失败 ${failures} 项`)

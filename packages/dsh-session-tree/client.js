@@ -975,7 +975,7 @@ window.__ModuleLoader__.load({
      * how a stale client is told apart from a data problem (test asserts this
      * equals package.json's version).
      */
-    const PANEL_VERSION = '1.8.2'
+    const PANEL_VERSION = '1.8.3'
 
     /** Optional-service lookup that never throws (flow spike :2737-2752). */
     function panelServiceOf(ctx, key) {
@@ -1415,6 +1415,104 @@ window.__ModuleLoader__.load({
       const ax = typeof dx === 'number' && isFinite(dx) ? Math.abs(dx) : 0
       const ay = typeof dy === 'number' && isFinite(dy) ? Math.abs(dy) : 0
       return ax + ay > GRAPH_PAN_THRESHOLD
+    }
+
+    /**
+     * Dependency-edge routing (v1.8.3, user ask m03546: the dashed lines are
+     * hidden behind the node boxes and should bend around them). Parent edges
+     * keep the bezier — they run between adjacent columns and rarely cross
+     * anything. A declared dependency may point anywhere in the grid, so it is
+     * routed as an orthogonal polyline through the empty gaps: forward edges
+     * use the channel between the two columns, and same-column edges (the
+     * common case — e.g. wave2's D1 waiting on A1/C1/C2) loop out to the right
+     * of that column. Backward edges keep the bezier fallback but are always
+     * painted in the front layer so the boxes cannot hide them.
+     */
+    const DEP_ROUTE_RADIUS = 10
+    const DEP_ROUTE_LANE_PAD = 14
+
+    /** Two-decimal rounding keeps the path strings stable for assertions. */
+    function pathNum(value) {
+      return Math.round(Number(value) * 100) / 100
+    }
+
+    /**
+     * Route a dependency edge between two node boxes (pure, exported for
+     * tests). `laneIndex` fans parallel edges of the same column pair apart.
+     * Returns `{ mode, points }` with mode 'forward' | 'same' | 'backward'.
+     */
+    function depRoutePoints(fromRect, toRect, laneIndex) {
+      const from = fromRect && typeof fromRect === 'object' ? fromRect : {}
+      const to = toRect && typeof toRect === 'object' ? toRect : {}
+      const fx = Number(from.x)
+      const fy = Number(from.y)
+      const tx = Number(to.x)
+      const ty = Number(to.y)
+      if (!isFinite(fx) || !isFinite(fy) || !isFinite(tx) || !isFinite(ty)) {
+        return { mode: 'forward', points: [] }
+      }
+      const lane = isFinite(Number(laneIndex)) ? Number(laneIndex) : 0
+      const sy = fy + GRAPH_BOX_H / 2
+      const ey = ty + GRAPH_BOX_H / 2
+      if (tx > fx + 8) {
+        const gapStart = fx + GRAPH_BOX_W
+        const laneX = Math.min(
+          Math.max(gapStart + DEP_ROUTE_LANE_PAD + lane * 10, gapStart + DEP_ROUTE_LANE_PAD),
+          tx - 8,
+        )
+        return {
+          mode: 'forward',
+          points: [
+            { x: pathNum(gapStart), y: pathNum(sy) },
+            { x: pathNum(laneX), y: pathNum(sy) },
+            { x: pathNum(laneX), y: pathNum(ey) },
+            { x: pathNum(tx - 8), y: pathNum(ey) },
+          ],
+        }
+      }
+      if (tx < fx - 8) return { mode: 'backward', points: [] }
+      const laneX = fx + GRAPH_BOX_W + DEP_ROUTE_LANE_PAD + lane * 10
+      return {
+        mode: 'same',
+        points: [
+          { x: pathNum(fx + GRAPH_BOX_W), y: pathNum(sy) },
+          { x: pathNum(laneX), y: pathNum(sy) },
+          { x: pathNum(laneX), y: pathNum(ey) },
+          { x: pathNum(tx + GRAPH_BOX_W), y: pathNum(ey) },
+        ],
+      }
+    }
+
+    /** Orthogonal polyline whose corners are quadratic arcs (the "弧线" ask). */
+    function roundedPathOf(points, radius) {
+      const list = Array.isArray(points)
+        ? points
+            .filter((p) => p && isFinite(Number(p.x)) && isFinite(Number(p.y)))
+            .map((p) => ({ x: pathNum(p.x), y: pathNum(p.y) }))
+        : []
+      if (list.length === 0) return ''
+      let d = 'M ' + list[0].x + ' ' + list[0].y
+      const r0 = isFinite(Number(radius)) ? Math.max(0, Number(radius)) : 0
+      for (let i = 1; i < list.length - 1; i += 1) {
+        const prev = list[i - 1]
+        const cur = list[i]
+        const next = list[i + 1]
+        const inLen = Math.hypot(cur.x - prev.x, cur.y - prev.y)
+        const outLen = Math.hypot(next.x - cur.x, next.y - cur.y)
+        if (inLen === 0 || outLen === 0) continue
+        const r = Math.min(r0, inLen / 2, outLen / 2)
+        if (r <= 0.5) {
+          d += ' L ' + cur.x + ' ' + cur.y
+          continue
+        }
+        const ix = pathNum(cur.x - ((cur.x - prev.x) / inLen) * r)
+        const iy = pathNum(cur.y - ((cur.y - prev.y) / inLen) * r)
+        const ox = pathNum(cur.x + ((next.x - cur.x) / outLen) * r)
+        const oy = pathNum(cur.y + ((next.y - cur.y) / outLen) * r)
+        d += ' L ' + ix + ' ' + iy + ' Q ' + cur.x + ' ' + cur.y + ' ' + ox + ' ' + oy
+      }
+      const last = list[list.length - 1]
+      return d + ' L ' + last.x + ' ' + last.y
     }
 
     /**
@@ -2031,37 +2129,109 @@ window.__ModuleLoader__.load({
         if (!bySource.has(edge.from)) bySource.set(edge.from, [])
         bySource.get(edge.from).push(edge)
       }
-      const edgeEls = drawn.map((edge) => {
-        const from = nodeById.get(edge.from)
-        const to = nodeById.get(edge.to)
-        if (!from || !to) return null
-        const isParent = edge.kind === 'parent'
+      const laneCounters = new Map()
+      const edgeMeta = drawn
+        .map((edge) => {
+          const from = nodeById.get(edge.from)
+          const to = nodeById.get(edge.to)
+          if (!from || !to) return null
+          const isParent = edge.kind === 'parent'
+          // v1.8.2: with a node selected, its own edges stay bright and every
+          // unrelated edge dims. v1.8.3 raises the selected node's edges (and
+          // the backward dependencies that cannot be routed) above the boxes.
+          const related = selectedId !== '' && (edge.from === selectedId || edge.to === selectedId)
+          const dim = selectedId !== '' && !related
+          let route = null
+          if (!isParent) {
+            const groupKey = to.x > from.x + 8 ? 'f:' + from.x + ':' + to.x : 's:' + from.x
+            const lane = laneCounters.get(groupKey) || 0
+            laneCounters.set(groupKey, lane + 1)
+            route = depRoutePoints(from, to, lane)
+          }
+          const layer = related || (route !== null && route.mode === 'backward') ? 'front' : 'back'
+          return { edge, from, to, isParent, related, dim, route, layer }
+        })
+        .filter(Boolean)
+
+      const edgeElOf = (meta) => {
+        const { edge, from, to, isParent, related, dim, route, layer } = meta
         const sx = from.x + GRAPH_BOX_W
         const sy = from.y + GRAPH_BOX_H / 2
         const ex = to.x - 8
         const ey = to.y + GRAPH_BOX_H / 2
-        let c1x
-        let c2x
-        if (to.x > from.x + 8) {
-          const off = Math.max(36, Math.min((to.x - from.x) * 0.5, 160))
-          c1x = from.x + off
-          c2x = to.x - off
+        let d = ''
+        if (route !== null && route.points.length >= 2) {
+          d = roundedPathOf(route.points, DEP_ROUTE_RADIUS)
         } else {
-          c1x = from.x - 70
-          c2x = to.x + 70
+          let c1x
+          let c2x
+          if (to.x > from.x + 8) {
+            const off = Math.max(36, Math.min((to.x - from.x) * 0.5, 160))
+            c1x = from.x + off
+            c2x = to.x - off
+          } else {
+            c1x = from.x - 70
+            c2x = to.x + 70
+          }
+          const siblings = bySource.get(edge.from) || []
+          const bend = (siblings.indexOf(edge) - (siblings.length - 1) / 2) * 14
+          const c1y = sy + bend
+          const c2y = sy + bend / 4
+          d =
+            'M ' + sx + ' ' + sy +
+            ' C ' + c1x + ' ' + c1y +
+            ', ' + c2x + ' ' + c2y +
+            ', ' + ex + ' ' + ey
         }
-        const siblings = bySource.get(edge.from) || []
-        const bend = (siblings.indexOf(edge) - (siblings.length - 1) / 2) * 14
-        const c1y = sy + bend
-        const c2y = sy + bend / 4
-        // v1.8.2: with a node selected, its own edges stay bright and every
-        // unrelated edge dims — dashed dependencies run behind the node boxes,
-        // so highlighting is what makes "who waits for whom" readable.
-        const related = selectedId !== '' && (edge.from === selectedId || edge.to === selectedId)
-        const dim = selectedId !== '' && !related
         const edgeTitle = isParent
           ? edge.from + ' is parent of ' + edge.to
           : edge.to + ' depends on ' + edge.from
+        const stroke = isParent
+          ? 'var(--dsw-alias-brand-primary)'
+          : layer === 'front'
+            ? 'var(--dsw-alias-label-primary)'
+            : 'var(--dsw-alias-label-secondary)'
+        const width = (isParent ? 1.6 : 1.3) * scaleComp * (layer === 'front' && related ? 1.35 : 1)
+        const opacity = dim
+          ? 0.12
+          : isParent
+            ? layer === 'front'
+              ? 0.8
+              : 0.55
+            : layer === 'front'
+              ? 1
+              : 0.72
+        const kids = [h('title', { key: 'tip' }, edgeTitle)]
+        kids.push(
+          h('path', {
+            key: 'line',
+            d,
+            fill: 'none',
+            // Hierarchy = solid (authoritative 从属), dependency = dashed.
+            stroke,
+            strokeWidth: String(width),
+            strokeDasharray: isParent ? undefined : 6 * scaleComp + ' ' + 4 * scaleComp,
+            opacity,
+            markerEnd: isParent ? 'url(#st-tr2-arrow-parent)' : 'url(#st-tr2-arrow-decl)',
+          }),
+        )
+        if (layer === 'front') {
+          // Soft halo on top: the raised edge reads as "selected", not as a
+          // second line (16% alpha of the same hue).
+          kids.push(
+            h('path', {
+              key: 'halo',
+              d,
+              fill: 'none',
+              style: {
+                stroke,
+                strokeWidth: String(6 * scaleComp),
+                opacity: 0.16,
+                strokeDasharray: isParent ? undefined : 6 * scaleComp + ' ' + 4 * scaleComp,
+              },
+            }),
+          )
+        }
         return h(
           'g',
           {
@@ -2072,24 +2242,16 @@ window.__ModuleLoader__.load({
             'data-kind': edge.kind,
             'data-state': 'decl',
             'data-related': related ? 'true' : 'false',
+            'data-layer': layer,
+            // Only the stroke is interactive, so the boxes stay clickable.
+            style: { pointerEvents: 'stroke' },
           },
-          h('title', { key: 'tip' }, edgeTitle),
-          h('path', {
-            d:
-              'M ' + sx + ' ' + sy +
-              ' C ' + c1x + ' ' + c1y +
-              ', ' + c2x + ' ' + c2y +
-              ', ' + ex + ' ' + ey,
-            fill: 'none',
-            // Hierarchy = solid (authoritative 从属), dependency = dashed.
-            stroke: isParent ? 'var(--dsw-alias-brand-primary)' : 'var(--dsw-alias-label-secondary)',
-            strokeWidth: (isParent ? 1.6 : 1.4) * scaleComp * (related ? 1.4 : 1),
-            strokeDasharray: isParent ? undefined : 7 * scaleComp + ' ' + 5 * scaleComp,
-            opacity: dim ? 0.12 : isParent ? (related ? 0.8 : 0.55) : related ? 1 : 0.9,
-            markerEnd: isParent ? 'url(#st-tr2-arrow-parent)' : 'url(#st-tr2-arrow-decl)',
-          }),
+          kids,
         )
-      })
+      }
+
+      const backEdgeEls = edgeMeta.filter((meta) => meta.layer === 'back').map(edgeElOf)
+      const frontEdgeEls = edgeMeta.filter((meta) => meta.layer === 'front').map(edgeElOf)
 
       const nodeEls = layout.nodes.map((node) => {
         const leaf = node.leaf || {}
@@ -2426,8 +2588,9 @@ window.__ModuleLoader__.load({
                   h('path', { d: 'M0,0 L6,3 L0,6 z', style: { fill: 'var(--dsw-alias-brand-primary)' } }),
                 ),
               ),
-              edgeEls,
+              h('g', { key: 'edges-back', className: 'st-tr2-edges-back', 'data-layer': 'back' }, backEdgeEls),
               nodeEls,
+              h('g', { key: 'edges-front', className: 'st-tr2-edges-front', 'data-layer': 'front' }, frontEdgeEls),
             ),
           ),
         ),
@@ -4667,6 +4830,9 @@ window.__ModuleLoader__.load({
       GRAPH_HEIGHT_KEY,
       panMovedEnough,
       GRAPH_PAN_THRESHOLD,
+      depRoutePoints,
+      roundedPathOf,
+      DEP_ROUTE_RADIUS,
       edgeStateOf,
       statsSessionsOf,
     }

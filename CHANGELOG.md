@@ -81,6 +81,26 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.8.3] — 2026-11-17 · session-tree Tree Runs 关系图可读性 A 方案（点亮置顶 + 障碍感知弧线路由，无发布）
+
+### 触发
+
+用户（m03546）：「这种依赖虚线，在点亮后要放在图层前面，不要被节点挡住；虚线是否能不要是直线，作成弧形线，尽量绕开节点不被挡住？」并追问 tree 的依赖关系与 Flow Runs 的关系图是否同一回事、要方案选择。评估 A/B/C 后用户裁决（m03566）：「先做A，把B和C记录为升级方案，待后续评估是否实施。」
+
+### 变更
+
+- **边分两层**：新增 `st-tr2-edges-back`（未点亮边，节点盒之前）与 `st-tr2-edges-front`（点亮边 + 无法绕行的反向依赖，节点盒之后）。SVG 子节点顺序 = `defs` → back → 节点 → front，点亮边永远压在最上层；前层边加 16% 同色 halo，读作“选中”而非第二条线。
+- **依赖边障碍感知路由**（导出纯函数）：`depRoutePoints(fromRect, toRect, laneIndex)` → `{ mode: 'forward' | 'same' | 'backward', points }`；forward 走列间空道，same-column 绕该列右侧 lane（wave2 的 D1 等前置全在同列，是主场景），backward 保留贝塞尔兜底但强制进前层；同组平行边按 `laneIndex × 10px` 扇出。
+- **圆角弧**：`roundedPathOf(points, radius)` 在拐点用二次贝塞尔（`DEP_ROUTE_RADIUS = 10`），满足“弧线”诉求且路径不穿任何节点盒。
+- 边组 `pointerEvents` 设为 `stroke`，不挡节点点击；`<title>`（`A is parent of B` / `B depends on A`）、图例、hint 语义保留。**不新增 hook**（纯计算，`GRAPH_HOOKS` 仍 2）。
+- **B/C 记录为升级方案**（不实施）：`docs/operations/panel-v2/ROADMAP-relations-2026-11-17.md`——B = `Hierarchy | Dependency` 双视图（借 flow DAG 布局语言）；C = 统一 flow 风格单图（压平层级，不推荐）；含 parent=从属 / dependencies=派发前置门 / flow 边=控制流的语义对照与复评触发条件。
+
+### 验证
+
+- `packages/dsh-session-tree`: panel-render **101 → 105/105**（新增 V2-44 边分层与 halo、V2-45 绕行折线 + 圆角 + title、V2-46 反向依赖前层兜底、V2-47 `depRoutePoints`/`roundedPathOf` 正反例）；style-guard **51/51**；render 153+9+11、meta 41/41、handoff 41/41、skills 3/3、tree-send 25/25、provider-conformance 29/29、verify-bundle 0 fail。
+- `packages/dsh-tree-engine`：**258/258**（零改动）。
+- 仓根 `node --test`：**352/352**；`check-version-consistency` / `check-doc-links` / `check-md-tables` 全绿；plugin_manager 重载后页头 `v1.8.3`。
+
 ## [1.8.2] — 2026-11-17 · session-tree Tree Runs 依赖关系可读性（虚线被节点遮挡 / 图外补 Blocks，无发布）
 
 **触发**（用户 m03377）：「图里面的节点之间的虚线是啥意思？被挡住了看不清关系。除了图形的虚线，其他地方有这种关系的标识么？」
