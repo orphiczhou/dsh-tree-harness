@@ -81,6 +81,24 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.8.4] — 2026-11-18 · session-tree 依赖虚线消失修复（画布未计同列 lane，无发布）
+
+### 触发
+
+用户：「之前的前后依赖的虚线不见了！」——v1.8.3 把依赖边改成障碍感知正交路由后，wave2 / d27fl 这类**同列**依赖全部走「列右侧 lane」，而画布（`canvas` 尺寸 / `svg viewBox`）仍按 `treeGraphLayout` 的 `graphW` 出图，lane 落在右边界之外被 viewBox 裁掉，整层虚线看起来消失了。
+
+### 变更
+
+- 新增导出纯函数 `graphCanvasOf(leaves, rootLeafId, layout)`：按渲染同款 lane 计数复算每条依赖边的 `depRoutePoints`，把路由点纳入画布边界（`max(layout, routeMax + GRAPH_PAD)`）。
+- 画布 div、`svg` 的 `width/height/viewBox`、自动 Fit 与 Fit 按钮全部改用 `graphCanvasOf` 的尺寸，虚线不再被裁。
+- 实测：wave2 `484 → 578`、d27fl `752 → 766`；9 条依赖弧线全部落在画布内，SVG 仍为 `defs → back → 节点 → front` 分层。
+
+### 验证
+
+- `packages/dsh-session-tree`: panel-render **105 → 107/107**（V2-48 `graphCanvasOf` 同列 lane 扩宽、V2-49 渲染面 svg viewBox/width 用扩宽画布）；style-guard 51/51；其它入口全绿。
+- `packages/dsh-tree-engine`：258/258（零改动）；仓根 `node --test` 352/352。
+- 活体 headless 渲染 wave2：18 条边（9 parent / 9 dep），back 14 / front 4，9 条依赖均为含 `Q` 的圆角路径且 viewBox 内，无 NaN。
+
 ## [1.8.3] — 2026-11-17 · session-tree Tree Runs 关系图可读性 A 方案（点亮置顶 + 障碍感知弧线路由，无发布）
 
 ### 触发

@@ -1324,6 +1324,41 @@ async function main() {
       mod.roundedPathOf([], 10) === '' && mod.DEP_ROUTE_RADIUS === 10,
     `fwd=${JSON.stringify(fwd.points)} sameEnd=${same.points[3].x} back=${back.mode} path=${fwdPath.slice(0, 48)}`)
 
+  // v1.8.4：同列依赖的绕行 lane 落在最后一列的右侧，画布若仍按 layout
+  // 尺寸出图就把整层虚线裁掉（wave2 的 9 条依赖全是同列 → 虚线全消失）。
+  // graphCanvasOf 把 lane 也算进画布，下面同时锁纯函数与渲染面的 svg 尺寸。
+  {
+    const leaves = [
+      { leafId: 'p1', parent: null, path: 'A', role: 'commander', status: 'succeeded' },
+      { leafId: 'p2', parent: 'p1', path: 'B', role: 'worker', status: 'succeeded' },
+      { leafId: 'p3', parent: 'p1', path: 'C', role: 'worker', status: 'succeeded', dependencies: ['p2'] },
+    ]
+    const layout = mod.treeGraphLayout(leaves, 'p1')
+    const canvas = mod.graphCanvasOf(leaves, 'p1', layout)
+    check('V2-48 graphCanvasOf：同列 lane 超出 layout 右边界时画布扩宽（虚线不再被 viewBox 裁掉）',
+      layout.graphW === 484 && canvas.w === 498 && canvas.w > layout.graphW &&
+        mod.graphCanvasOf([], 'p1', layout).w === 484,
+      `graphW=${layout.graphW} canvasW=${canvas.w}`)
+    rtMain.store.set({ graphHeight: 420, selectedTreeId: 'tree-alpha', selectedLeafId: null })
+    rtMain.store.set({
+      detail: {
+        treeId: 'tree-alpha',
+        state: 'succeeded',
+        root: { leafId: 'p1', status: 'succeeded', rawStatus: 'succeeded', runtimeState: 'succeeded' },
+        leaves,
+        stats: { total: 3, byStatus: { succeeded: 3 } },
+        events: [],
+      },
+    })
+    const geo = []
+    renderTree(rtMain.Body({}), geo)
+    const svg = byClass(geo, 'st-tr2-svg', true)[0]
+    const viewBox = svg && svg.props ? String(svg.props.viewBox || svg.props['viewBox'] || '') : ''
+    check('V2-49 渲染面：svg viewBox / width 用扩宽后的画布（498），而非 layout 的 484',
+      !!svg && viewBox === '0 0 498 154' && Number(svg.props.width) === 498,
+      `viewBox="${viewBox}" width=${svg && svg.props && svg.props.width}`)
+  }
+
   // ----------------------------------------------------------------- summary
   console.log('\n==================== 结果 ====================')
   console.log(`合计 ${checks} 项判定，失败 ${failures} 项`)

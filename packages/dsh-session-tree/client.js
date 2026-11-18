@@ -975,7 +975,7 @@ window.__ModuleLoader__.load({
      * how a stale client is told apart from a data problem (test asserts this
      * equals package.json's version).
      */
-    const PANEL_VERSION = '1.8.3'
+    const PANEL_VERSION = '1.8.4'
 
     /** Optional-service lookup that never throws (flow spike :2737-2752). */
     function panelServiceOf(ctx, key) {
@@ -1513,6 +1513,44 @@ window.__ModuleLoader__.load({
       }
       const last = list[list.length - 1]
       return d + ' L ' + last.x + ' ' + last.y
+    }
+
+    /**
+     * v1.8.4: the drawn canvas is not always the layout box. Same-column
+     * dependency lanes sit to the RIGHT of the last column (see
+     * depRoutePoints 'same'), so a layout-sized viewBox clips them — with
+     * wave2 every dashed edge runs in such a lane and the whole dashed layer
+     * disappeared. This returns the extent that actually has to be drawn.
+     */
+    function graphCanvasOf(leaves, rootLeafId, layout) {
+      const box = layout && typeof layout === 'object' ? layout : {}
+      const graphW = isFinite(Number(box.graphW)) ? Number(box.graphW) : 0
+      const graphH = isFinite(Number(box.graphH)) ? Number(box.graphH) : 0
+      let maxX = 0
+      let maxY = 0
+      if (Array.isArray(box.nodes) && box.nodes.length > 0 && Array.isArray(leaves)) {
+        const nodeById = new Map()
+        for (const node of box.nodes) nodeById.set(node.leafId, node)
+        const laneCounters = new Map()
+        for (const edge of treeGraphEdgesOf(leaves).edges) {
+          if (edge.kind === 'parent') continue
+          const from = nodeById.get(edge.from)
+          const to = nodeById.get(edge.to)
+          if (!from || !to) continue
+          const groupKey = to.x > from.x + 8 ? 'f:' + from.x + ':' + to.x : 's:' + from.x
+          const lane = laneCounters.get(groupKey) || 0
+          laneCounters.set(groupKey, lane + 1)
+          const route = depRoutePoints(from, to, lane)
+          for (const point of route.points) {
+            if (point.x > maxX) maxX = point.x
+            if (point.y > maxY) maxY = point.y
+          }
+        }
+      }
+      return {
+        w: Math.max(graphW, maxX > 0 ? maxX + GRAPH_PAD : 0),
+        h: Math.max(graphH, maxY > 0 ? maxY + GRAPH_PAD : 0),
+      }
     }
 
     /**
@@ -2094,10 +2132,11 @@ window.__ModuleLoader__.load({
       useEffect(() => {
         const el = viewportRef.current
         if (!el || typeof el.clientWidth !== 'number' || !(el.clientWidth > 0) || !layout) return
-        const key = String(props.treeId || '') + '|' + layout.graphW + 'x' + layout.graphH + '@' + graphHeight
+        const canvas = graphCanvasOf(leaves, graphRootIdOf(props, leaves), layout)
+        const key = String(props.treeId || '') + '|' + canvas.w + 'x' + canvas.h + '@' + graphHeight
         if (el.__stTreeFitKey === key) return
         el.__stTreeFitKey = key
-        setZoom(fitZoomOf(el.clientWidth, el.clientHeight, layout.graphW, layout.graphH))
+        setZoom(fitZoomOf(el.clientWidth, el.clientHeight, canvas.w, canvas.h))
         el.scrollLeft = 0
         el.scrollTop = 0
       }, [layout ? layout.graphW : 0, layout ? layout.graphH : 0, graphHeight, props.treeId])
@@ -2105,6 +2144,8 @@ window.__ModuleLoader__.load({
       if (leaves.length === 0) return null // empty graph = the section disappears (§3.7)
 
       const rootId = graphRootIdOf(props, leaves)
+      // v1.8.4: draw the canvas the routes actually need (see graphCanvasOf).
+      const canvas = graphCanvasOf(leaves, rootId, layout)
       const scaleComp = 1 / Math.max(zoom, ZOOM_MIN)
       const showLabels = zoom >= 0.5
       const showDetail = zoom >= 0.85
@@ -2465,7 +2506,8 @@ window.__ModuleLoader__.load({
         const el = viewportRef.current
         const width = el && typeof el.clientWidth === 'number' ? el.clientWidth : 0
         const height = el && typeof el.clientHeight === 'number' ? el.clientHeight : 0
-        zoomTo(fitZoomOf(width, height, layout.graphW, layout.graphH))
+        const canvas = graphCanvasOf(leaves, rootId, layout)
+        zoomTo(fitZoomOf(width, height, canvas.w, canvas.h))
       }
 
       /**
@@ -2530,14 +2572,14 @@ window.__ModuleLoader__.load({
           },
           h(
             'div',
-            { key: 'canvas', style: { width: layout.graphW * zoom + 'px', height: layout.graphH * zoom + 'px' } },
+            { key: 'canvas', style: { width: canvas.w * zoom + 'px', height: canvas.h * zoom + 'px' } },
             h(
               'svg',
               {
                 className: 'st-tr2-svg',
-                viewBox: '0 0 ' + layout.graphW + ' ' + layout.graphH,
-                width: layout.graphW * zoom,
-                height: layout.graphH * zoom,
+                viewBox: '0 0 ' + canvas.w + ' ' + canvas.h,
+                width: canvas.w * zoom,
+                height: canvas.h * zoom,
               },
               h(
                 'defs',
@@ -4832,6 +4874,7 @@ window.__ModuleLoader__.load({
       GRAPH_PAN_THRESHOLD,
       depRoutePoints,
       roundedPathOf,
+      graphCanvasOf,
       DEP_ROUTE_RADIUS,
       edgeStateOf,
       statsSessionsOf,
