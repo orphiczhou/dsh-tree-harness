@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.13.1**、`packages/dsh-session-tree` **v1.8.4** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA；v1.4.1–v1.8.4 未发布镜像）。
+> 适用版本：`packages/dsh-tree-engine` **v0.13.1**、`packages/dsh-session-tree` **v1.9.0** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA；v1.4.1–v1.9.0 未发布镜像）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -261,7 +261,8 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.13.1 / `dsh-session-tree` 1.8.4（公开镜像 tag `v1.4.0` = `0343f0c`；v1.4.1–v1.8.3 未发布镜像）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.13.1 / `dsh-session-tree` 1.9.0（公开镜像 tag `v1.4.0` = `0343f0c`；v1.4.1–v1.8.3 未发布镜像）。
+- **session-tree 1.9.0**：Tree Runs **Hierarchy | Dependency 双视图（B 方案）** —— Hierarchy 仍是默认主视图（组织从属）；新增 Dependency 视图只画声明依赖，按最长路径分列（`depGraphLayout`）、列顶层级带 `level N (可立即派发/收口)`、入度 ≥ 2 的节点显示 join 徽标「等 N 个前置」（`depJoinCountsOf`）；视图切换在工具栏最前，持久化到 localStorage `dsh.session-tree.graph-view`（脏值回落 hierarchy）。`graphCanvasOf` 改为复用 `graphDrawEdgesOf(leaves, view)`，依赖视图的列右侧 lane 也计入画布宽度，避免 v1.8.4 那类裁切复发。`tree-state.json` 契约、投影字段、依赖闸语义均未改动。测试 panel-render **107 → 113/113**（V2-50..55）。
 - **session-tree 1.8.4**：Tree Runs **依赖虚线消失修复** —— v1.8.3 的同列 lane 落在最后一列右侧、超出 `layout.graphW`（wave2 484 / lane 486..526），被 `svg viewBox` 裁掉；新增 `graphCanvasOf(leaves, rootLeafId, layout)` 把路由点纳入画布（canvas / svg width·viewBox / Fit 全用它；wave2 484→578、d27fl 752→766）；测试 panel-render 105→**107/107**（V2-48..49）。
 - **session-tree 1.8.3**：Tree Runs **关系图可读性 A 方案** —— 点亮边置顶（`st-tr2-edges-back` / `st-tr2-edges-front` 两层 + 16% 同色 halo）、依赖边障碍感知正交路由 + 圆角弧（`depRoutePoints`：列间空道 / 同列右侧 lane；`roundedPathOf(points, 10)`；反向依赖保留贝塞尔但强制前层）、lane 扇出防重叠、不新增 hook；B/C 升级方案见 `docs/operations/panel-v2/ROADMAP-relations-2026-11-17.md`；测试 panel-render 101→**105/105**。
 - **session-tree 1.8.2**：Tree Runs **依赖关系可读性**（用户反馈「图里面的节点之间的虚线是啥意思？被挡住了看不清关系」）—— 虚线 = `dependencies` 声明依赖（目标等前置结算才可派发）、实线 = `parent` 父子从属；边先于节点绘制会被遮挡，故每条边挂 `<title>`（`A is parent of B` / `B depends on A`）、选中节点只提亮它的边（无关边压到 0.12），图例与 hint 写明语义；叶属性栅格新增 `Blocks`（反向依赖）与 `Dependencies` 成对（17→18 项）；测试 panel-render 98→**101/101**（V2-41..43）。安装/重载后页头应显示 `v1.8.2`。

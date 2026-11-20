@@ -186,6 +186,12 @@ window.__ModuleLoader__.load({
 .st-tr2-section-title{font-weight:600;font-size:12px;margin-bottom:6px;color:var(--dsw-alias-label-primary)}
 .st-tr2-graphbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .st-tr2-graphbtn{padding:2px 8px;border-radius:6px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-2);font-size:11px;line-height:18px}
+  .st-tr2-viewtoggle{display:inline-flex;align-items:stretch;border-radius:6px;overflow:hidden}
+  .st-tr2-viewbtn{border-radius:0;border-right-width:0}
+  .st-tr2-viewbtn:last-child{border-right-width:1px}
+  .st-tr2-viewbtn[data-active='true']{background:var(--dsw-alias-brand-primary);color:var(--dsw-alias-bg-base);border-color:transparent;font-weight:600}
+  .st-tr2-viewbtn[data-active='true']:hover{filter:brightness(1.05)}
+  .st-tr2-levelband{fill:var(--dsw-alias-label-secondary);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:10px;font-weight:600}
 .st-tr2-graphsection{flex:0 0 auto}
 .st-tr2-viewport{border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1);min-height:120px;max-height:900px;overflow:auto;touch-action:none;cursor:grab}
 .st-tr2-graphresize{height:10px;margin:2px 0;display:flex;align-items:center;justify-content:center;cursor:ns-resize;border-radius:6px}
@@ -975,7 +981,7 @@ window.__ModuleLoader__.load({
      * how a stale client is told apart from a data problem (test asserts this
      * equals package.json's version).
      */
-    const PANEL_VERSION = '1.8.4'
+    const PANEL_VERSION = '1.9.0'
 
     /** Optional-service lookup that never throws (flow spike :2737-2752). */
     function panelServiceOf(ctx, key) {
@@ -1390,6 +1396,144 @@ window.__ModuleLoader__.load({
       return { nodes, edges, parentEdges, graphW, graphH, maxLevel, maxRows, root, hierarchy: useHierarchy }
     }
 
+    // ---------------------------------------------------------------------
+    // B plan (v1.9.0, user decision m04606 "用B方案，开干"): a second graph
+    // view that draws *only* the declared dependencies, layered by longest
+    // path. The hierarchy view stays the default — B is an additional lens,
+    // not a replacement (ROADMAP-relations-2026-11-17.md §2).
+    // ---------------------------------------------------------------------
+    const GRAPH_VIEW_HIERARCHY = 'hierarchy'
+    const GRAPH_VIEW_DEPENDENCY = 'dependency'
+    const GRAPH_VIEW_KEY = 'dsh.session-tree.graph-view'
+    const GRAPH_LEVEL_BAND = 20
+
+    /** Normalise a stored/propped view id; anything unknown means hierarchy. */
+    function clampGraphView(view) {
+      return view === GRAPH_VIEW_DEPENDENCY ? GRAPH_VIEW_DEPENDENCY : GRAPH_VIEW_HIERARCHY
+    }
+
+    /** Read the remembered view (injectable storage; every access guarded). */
+    function readStoredGraphView(storage) {
+      try {
+        const st = storage || (typeof localStorage !== 'undefined' ? localStorage : null)
+        if (!st || typeof st.getItem !== 'function') return GRAPH_VIEW_HIERARCHY
+        return clampGraphView(st.getItem(GRAPH_VIEW_KEY))
+      } catch (e) {
+        return GRAPH_VIEW_HIERARCHY
+      }
+    }
+
+    /** Persist the chosen view; failures (quota/private mode) stay silent. */
+    function writeStoredGraphView(view, storage) {
+      const next = clampGraphView(view)
+      try {
+        const st = storage || (typeof localStorage !== 'undefined' ? localStorage : null)
+        if (st && typeof st.setItem === 'function') st.setItem(GRAPH_VIEW_KEY, next)
+      } catch (e) {}
+      return next
+    }
+
+    /** Stable per-column ordering for the dependency layout: path, then id. */
+    function graphPathKey(leaf) {
+      if (!leaf || typeof leaf !== 'object') return ''
+      const path = leaf.path !== undefined && leaf.path !== null ? String(leaf.path) : ''
+      const id = leaf.leafId !== undefined && leaf.leafId !== null ? String(leaf.leafId) : ''
+      return path + '\u0000' + id
+    }
+
+    /**
+     * Dependency-only layout (B plan): columns are longest-path dependency
+     * levels, so every dependency points strictly rightward and no dashed line
+     * has to double back; rows pack per column in path order. A level band on
+     * top carries the "level N" labels. Depth of a level is bounded by
+     * treeLevelsOf(), which already stops at a cycle.
+     */
+    function depGraphLayout(leaves) {
+      const list = Array.isArray(leaves) ? leaves : []
+      const depEdges = treeEdgesOf(list)
+      const level = treeLevelsOf(list, depEdges)
+      const byId = new Map()
+      for (const leaf of list) {
+        if (!leaf || typeof leaf !== 'object' || leaf.leafId === undefined) continue
+        const id = String(leaf.leafId)
+        if (!byId.has(id)) byId.set(id, leaf)
+      }
+      const ordered = Array.from(byId.values()).sort((a, b) => {
+        const ka = graphPathKey(a)
+        const kb = graphPathKey(b)
+        return ka < kb ? -1 : ka > kb ? 1 : 0
+      })
+      const rowCounter = new Map()
+      const nodes = []
+      for (const leaf of ordered) {
+        const id = String(leaf.leafId)
+        const col = level.get(id) || 0
+        const row = rowCounter.get(col) || 0
+        rowCounter.set(col, row + 1)
+        nodes.push({
+          leafId: id,
+          leaf,
+          level: col,
+          row,
+          x: GRAPH_PAD + col * (GRAPH_BOX_W + GRAPH_COL_GAP),
+          y: GRAPH_PAD + GRAPH_LEVEL_BAND + row * (GRAPH_BOX_H + GRAPH_ROW_GAP),
+        })
+      }
+      let maxLevel = 0
+      let maxRows = 0
+      for (const node of nodes) {
+        if (node.level > maxLevel) maxLevel = node.level
+        if (node.row + 1 > maxRows) maxRows = node.row + 1
+      }
+      const graphW = 2 * GRAPH_PAD + (maxLevel + 1) * GRAPH_BOX_W + maxLevel * GRAPH_COL_GAP
+      const graphH = 2 * GRAPH_PAD + GRAPH_LEVEL_BAND + maxRows * GRAPH_BOX_H + (maxRows - 1) * GRAPH_ROW_GAP
+      return {
+        nodes,
+        edges: depEdges,
+        parentEdges: [],
+        graphW,
+        graphH,
+        maxLevel,
+        maxRows,
+        root: '',
+        hierarchy: false,
+        view: GRAPH_VIEW_DEPENDENCY,
+      }
+    }
+
+    /** Pick the layout for a view; both layouts share the node shape. */
+    function graphLayoutOf(leaves, rootLeafId, view) {
+      return clampGraphView(view) === GRAPH_VIEW_DEPENDENCY
+        ? depGraphLayout(leaves)
+        : treeGraphLayout(leaves, rootLeafId)
+    }
+
+    /**
+     * Edges actually drawn for a view: hierarchy keeps the parent/dep mix
+     * (parent wins a shared pair), dependency view drops the parent lines so
+     * only "who waits for whom" remains.
+     */
+    function graphDrawEdgesOf(leaves, view) {
+      // The dependency view draws ONLY declared dependencies; tag them 'dep' so
+      // downstream rendering (dash, arrow marker, data-kind assertions) has the
+      // same shape as the hierarchy view instead of an undefined kind.
+      return clampGraphView(view) === GRAPH_VIEW_DEPENDENCY
+        ? treeEdgesOf(leaves).map((edge) => ({ from: edge.from, to: edge.to, kind: 'dep' }))
+        : treeGraphEdgesOf(leaves).edges
+    }
+
+    /**
+     * In-degree of every dependency target — the join badge ("等 N 个前置")
+     * only appears for targets with two or more declared prerequisites.
+     */
+    function depJoinCountsOf(leaves) {
+      const counts = new Map()
+      for (const edge of treeEdgesOf(leaves)) {
+        counts.set(edge.to, (counts.get(edge.to) || 0) + 1)
+      }
+      return counts
+    }
+
     const ZOOM_MIN = 0.25
     const ZOOM_MAX = 2.5
     const ZOOM_STEP = 1.12
@@ -1532,7 +1676,7 @@ window.__ModuleLoader__.load({
         const nodeById = new Map()
         for (const node of box.nodes) nodeById.set(node.leafId, node)
         const laneCounters = new Map()
-        for (const edge of treeGraphEdgesOf(leaves).edges) {
+        for (const edge of graphDrawEdgesOf(leaves, box.view)) {
           if (edge.kind === 'parent') continue
           const from = nodeById.get(edge.from)
           const to = nodeById.get(edge.to)
@@ -1845,6 +1989,16 @@ window.__ModuleLoader__.load({
         store.set({ graphHeight: next })
       }
 
+      /**
+       * Graph view switch (v1.9.0, B plan): "hierarchy" (default) or
+       * "dependency". Persisted like the viewport height so a reload keeps the
+       * operator's lens; no refetch — both views render the same projection.
+       */
+      function setGraphView(view) {
+        const next = writeStoredGraphView(view)
+        store.set({ graphView: next })
+      }
+
       function back() {
         abortAll()
         store.set({
@@ -1884,6 +2038,7 @@ window.__ModuleLoader__.load({
         select,
         selectLeaf,
         resizeGraph,
+        setGraphView,
         back,
         refreshAll,
         getTimerId: () => pollTimer,
@@ -2121,7 +2276,11 @@ window.__ModuleLoader__.load({
       const leaves = Array.isArray(props.leaves) ? props.leaves : []
       const graphHeight = clampGraphHeight(props.graphHeight)
       const resizeTo = typeof props.onResizeGraph === 'function' ? props.onResizeGraph : null
-      const layout = leaves.length === 0 ? null : treeGraphLayout(leaves, graphRootIdOf(props, leaves))
+      // v1.9.0 (B plan): the toolbar switches between the hierarchy layout and
+      // the dependency-only layout; the view id comes from the store so it
+      // survives tree switches and panel remounts.
+      const view = clampGraphView(props.graphView)
+      const layout = leaves.length === 0 ? null : graphLayoutOf(leaves, graphRootIdOf(props, leaves), view)
 
       /**
        * v1.8.0: open a tree with the whole graph visible. Sizes are only
@@ -2133,13 +2292,13 @@ window.__ModuleLoader__.load({
         const el = viewportRef.current
         if (!el || typeof el.clientWidth !== 'number' || !(el.clientWidth > 0) || !layout) return
         const canvas = graphCanvasOf(leaves, graphRootIdOf(props, leaves), layout)
-        const key = String(props.treeId || '') + '|' + canvas.w + 'x' + canvas.h + '@' + graphHeight
+        const key = String(props.treeId || '') + '|' + view + '|' + canvas.w + 'x' + canvas.h + '@' + graphHeight
         if (el.__stTreeFitKey === key) return
         el.__stTreeFitKey = key
         setZoom(fitZoomOf(el.clientWidth, el.clientHeight, canvas.w, canvas.h))
         el.scrollLeft = 0
         el.scrollTop = 0
-      }, [layout ? layout.graphW : 0, layout ? layout.graphH : 0, graphHeight, props.treeId])
+      }, [layout ? layout.graphW : 0, layout ? layout.graphH : 0, graphHeight, props.treeId, view])
 
       if (leaves.length === 0) return null // empty graph = the section disappears (§3.7)
 
@@ -2154,6 +2313,7 @@ window.__ModuleLoader__.load({
       const selectedId =
         props.selectedLeafId !== undefined && props.selectedLeafId !== null ? String(props.selectedLeafId) : ''
       const selectLeaf = typeof props.onSelectLeaf === 'function' ? props.onSelectLeaf : null
+      const setView = typeof props.onGraphView === 'function' ? props.onGraphView : () => {}
       const statusFill = (status) => {
         const tone = panelToneOf(status)
         if (tone === 'running') return 'var(--dsw-static-blue-500,#3b82f6)'
@@ -2164,7 +2324,10 @@ window.__ModuleLoader__.load({
 
       const nodeById = new Map()
       for (const node of layout.nodes) nodeById.set(node.leafId, node)
-      const drawn = treeGraphEdgesOf(leaves).edges
+      const drawn = graphDrawEdgesOf(leaves, view)
+      // Dependency view only: a target waiting on two or more prerequisites is
+      // the "join" the flow layout would annotate.
+      const joinCounts = view === GRAPH_VIEW_DEPENDENCY ? depJoinCountsOf(leaves) : new Map()
       const bySource = new Map()
       for (const edge of drawn) {
         if (!bySource.has(edge.from)) bySource.set(edge.from, [])
@@ -2291,6 +2454,26 @@ window.__ModuleLoader__.load({
         )
       }
 
+      const levelLabels =
+        view === GRAPH_VIEW_DEPENDENCY && layout.maxLevel >= 0
+          ? Array.from({ length: layout.maxLevel + 1 }, (_, level) => {
+              const x = GRAPH_PAD + level * (GRAPH_BOX_W + GRAPH_COL_GAP)
+              const suffix =
+                layout.maxLevel === 0
+                  ? ''
+                  : level === 0
+                    ? ' (可立即派发)'
+                    : level === layout.maxLevel
+                      ? ' (收口)'
+                      : ''
+              return h(
+                'text',
+                { key: 'lv' + level, className: 'st-tr2-levelband', 'data-level': level, x, y: GRAPH_PAD + 13 },
+                'level ' + (level + 1) + suffix,
+              )
+            })
+          : []
+
       const backEdgeEls = edgeMeta.filter((meta) => meta.layer === 'back').map(edgeElOf)
       const frontEdgeEls = edgeMeta.filter((meta) => meta.layer === 'front').map(edgeElOf)
 
@@ -2392,6 +2575,32 @@ window.__ModuleLoader__.load({
               fontWeight: 700,
             },
           }, '!'))
+        }
+        const joinCount = view === GRAPH_VIEW_DEPENDENCY ? joinCounts.get(node.leafId) || 0 : 0
+        if (joinCount >= 2) {
+          kids.push(h('circle', {
+            key: 'join',
+            cx: node.x + GRAPH_BOX_W - 14,
+            cy: node.y + 14,
+            r: 8 * scaleComp,
+            style: {
+              fill: 'var(--dsw-alias-bg-layer-1)',
+              stroke: 'var(--dsw-alias-brand-primary)',
+              strokeWidth: String(1.2 * scaleComp),
+            },
+          }))
+          kids.push(h('text', {
+            key: 'jointext',
+            x: node.x + GRAPH_BOX_W - 14,
+            y: node.y + 18,
+            textAnchor: 'middle',
+            style: {
+              fill: 'var(--dsw-alias-brand-primary)',
+              fontFamily,
+              fontSize: 10 * scaleComp,
+              fontWeight: 700,
+            },
+          }, String(joinCount)))
         }
         if (isSelected) {
           kids.push(h('rect', {
@@ -2544,15 +2753,39 @@ window.__ModuleLoader__.load({
 
       return h(
         'div',
-        { className: 'st-tr2-section st-tr2-graphsection', key: 'graph', 'data-kind': 'graph-section' },
+        { className: 'st-tr2-section st-tr2-graphsection', key: 'graph', 'data-kind': 'graph-section', 'data-view': view },
         h(
           'div',
           { className: 'st-tr2-graphbar', key: 'bar' },
+          h(
+            'span',
+            { key: 'viewtoggle', className: 'st-tr2-viewtoggle', role: 'group', 'aria-label': 'Graph view' },
+            h('button', {
+              type: 'button',
+              className: 'st-tr2-graphbtn st-tr2-viewbtn',
+              'data-view': GRAPH_VIEW_HIERARCHY,
+              'data-active': view === GRAPH_VIEW_HIERARCHY ? 'true' : 'false',
+              'aria-pressed': view === GRAPH_VIEW_HIERARCHY ? 'true' : 'false',
+              onClick: () => setView(GRAPH_VIEW_HIERARCHY),
+              title: 'Hierarchy: parent → child (从属) plus declared dependencies',
+            }, 'Hierarchy'),
+            h('button', {
+              type: 'button',
+              className: 'st-tr2-graphbtn st-tr2-viewbtn',
+              'data-view': GRAPH_VIEW_DEPENDENCY,
+              'data-active': view === GRAPH_VIEW_DEPENDENCY ? 'true' : 'false',
+              'aria-pressed': view === GRAPH_VIEW_DEPENDENCY ? 'true' : 'false',
+              onClick: () => setView(GRAPH_VIEW_DEPENDENCY),
+              title: 'Dependency: only “who waits for whom”, layered by longest path',
+            }, 'Dependency'),
+          ),
           h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => stepZoom(1 / 1.2), title: 'Zoom out' }, '−'),
           h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => stepZoom(1.2), title: 'Zoom in' }, '＋'),
           h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: fitNow, title: 'Fit the whole graph into the viewport' }, 'Fit'),
           h('button', { type: 'button', className: 'st-tr2-graphbtn', onClick: () => zoomTo(1), title: 'Reset zoom' }, '100%'),
-          h('span', { className: 'st-tr2-hint' }, 'Ctrl/⌘+wheel zoom · drag to pan · click a node to inspect it and highlight its edges · solid = parent → child, dashed = dependency'),
+          h('span', { className: 'st-tr2-hint' }, view === GRAPH_VIEW_DEPENDENCY
+            ? 'Dependency view · columns = 依赖层级（最长路径分层）· click a node to inspect it and highlight its edges'
+            : 'Ctrl/⌘+wheel zoom · drag to pan · click a node to inspect it and highlight its edges · solid = parent → child, dashed = dependency'),
         ),
         h(
           'div',
@@ -2577,6 +2810,7 @@ window.__ModuleLoader__.load({
               'svg',
               {
                 className: 'st-tr2-svg',
+                'data-view': view,
                 viewBox: '0 0 ' + canvas.w + ' ' + canvas.h,
                 width: canvas.w * zoom,
                 height: canvas.h * zoom,
@@ -2630,6 +2864,9 @@ window.__ModuleLoader__.load({
                   h('path', { d: 'M0,0 L6,3 L0,6 z', style: { fill: 'var(--dsw-alias-brand-primary)' } }),
                 ),
               ),
+              levelLabels.length > 0
+                ? h('g', { key: 'levels', className: 'st-tr2-levels', 'data-layer': 'levels' }, levelLabels)
+                : null,
               h('g', { key: 'edges-back', className: 'st-tr2-edges-back', 'data-layer': 'back' }, backEdgeEls),
               nodeEls,
               h('g', { key: 'edges-front', className: 'st-tr2-edges-front', 'data-layer': 'front' }, frontEdgeEls),
@@ -2653,9 +2890,14 @@ window.__ModuleLoader__.load({
           ['succeeded', 'failed', 'running', 'other'].map((tone) =>
             h('span', { key: tone }, h('span', { className: 'st-tr-dot', 'data-tone': tone }), ' ' + tone),
           ),
-          h('span', { key: 'decl' }, '─── parent → child (solid, 从属)'),
-          h('span', { key: 'dep', title: 'The target leaf cannot be dispatched until every leaf it depends on has settled.' },
-            '--- declared dependency: target waits for source (dashed)'),
+          view === GRAPH_VIEW_DEPENDENCY
+            ? h('span', { key: 'dep', title: 'The target leaf cannot be dispatched until every leaf it depends on has settled.' },
+                '--- declared dependency: target waits for source (dashed)')
+            : h('span', { key: 'decl' }, '─── parent → child (solid, 从属)'),
+          view === GRAPH_VIEW_DEPENDENCY
+            ? h('span', { key: 'join' }, '⬤ N = 等待的前置数（入边 ≥ 2 时显示）')
+            : h('span', { key: 'dep', title: 'The target leaf cannot be dispatched until every leaf it depends on has settled.' },
+                '--- declared dependency: target waits for source (dashed)'),
         ),
       )
     }
@@ -2975,6 +3217,8 @@ window.__ModuleLoader__.load({
             onSelectLeaf,
             graphHeight: state.graphHeight,
             onResizeGraph: (height) => controller.resizeGraph(height),
+            graphView: state.graphView,
+            onGraphView: (view) => controller.setGraphView(view),
           })),
           h(PanelLeafDetail, {
             key: 'leafdetail',
@@ -3116,6 +3360,8 @@ window.__ModuleLoader__.load({
         selectedLeafId: null,
         // v1.8.0: resizable graph viewport height (remembered across mounts).
         graphHeight: readStoredGraphHeight(),
+        // v1.9.0 (B plan): Hierarchy | Dependency graph view, also remembered.
+        graphView: readStoredGraphView(),
         detail: null,
         detailLoading: false,
         detailError: null,
@@ -4858,6 +5104,16 @@ window.__ModuleLoader__.load({
       treeHierarchyOf,
       treeGraphEdgesOf,
       treeGraphLayout,
+      depGraphLayout,
+      graphLayoutOf,
+      graphDrawEdgesOf,
+      depJoinCountsOf,
+      clampGraphView,
+      readStoredGraphView,
+      writeStoredGraphView,
+      GRAPH_VIEW_HIERARCHY,
+      GRAPH_VIEW_DEPENDENCY,
+      GRAPH_VIEW_KEY,
       clampZoom,
       ZOOM_MIN,
       ZOOM_MAX,

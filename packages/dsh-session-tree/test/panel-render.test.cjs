@@ -1359,6 +1359,135 @@ async function main() {
       `viewBox="${viewBox}" width=${svg && svg.props && svg.props.width}`)
   }
 
+  // ============ v1.9.0 判定：Hierarchy | Dependency 双视图（B 方案）
+  // 用户（m04606）：「好，用B方案，开干」——B = 保留现有分层树主视图，新增
+  // 只画依赖边的 Dependency 视图：按最长路径分层、同源扇出、入度 ≥2 的 join
+  // 徽标；视图选择持久化。两视图共用同一份服务端投影，不动 tree-state 契约。
+  console.log('\n=== v1.9.0 判定：Hierarchy | Dependency 双视图（B 方案） ===')
+  const depLeaves = [
+    { leafId: 'd-root', status: 'running', role: 'commander' },
+    { leafId: 'd-a', status: 'succeeded', role: 'worker', parent: 'd-root' },
+    { leafId: 'd-b', status: 'succeeded', role: 'worker', parent: 'd-root' },
+    { leafId: 'd-c', status: 'running', role: 'worker', parent: 'd-root', dependencies: ['d-a', 'd-b'] },
+  ]
+  const depLayout = mod.depGraphLayout(depLeaves)
+  const depNodesById = new Map(depLayout.nodes.map((n) => [n.leafId, n]))
+  const cycLayout = mod.depGraphLayout([
+    { leafId: 'x', dependencies: ['y'] },
+    { leafId: 'y', dependencies: ['x'] },
+  ])
+  check('V2-50 depGraphLayout：按依赖最长路径分层（d-c 在 level 2）、父子边不参与、环有界',
+    depLayout.view === 'dependency' && depLayout.parentEdges.length === 0 &&
+      depLayout.nodes.length === 4 && depLayout.maxLevel === 1 &&
+      depNodesById.get('d-c').level === 1 && depNodesById.get('d-a').level === 0 &&
+      depNodesById.get('d-a').row !== depNodesById.get('d-b').row &&
+      depLayout.graphW === 484 && depLayout.graphH === 248 &&
+      cycLayout.nodes.length === 2 && cycLayout.maxLevel <= 2,
+    'level(c)=' + depNodesById.get('d-c').level + ' w=' + depLayout.graphW + ' h=' + depLayout.graphH + ' cyc=' + cycLayout.maxLevel)
+
+  const fakeViewStore = new Map()
+  const fakeViewStorage = {
+    getItem: (k) => (fakeViewStore.has(k) ? fakeViewStore.get(k) : null),
+    setItem: (k, v) => fakeViewStore.set(k, String(v)),
+  }
+  const noopStorage = { getItem: () => null }
+  check('V2-51 视图选择持久化：默认 hierarchy、写入可读回、脏值回落、storage 异常不抛',
+    mod.readStoredGraphView() === 'hierarchy' &&
+      mod.graphLayoutOf(depLeaves, 'd-root', undefined).view === undefined &&
+      mod.clampGraphView('weird') === 'hierarchy' &&
+      mod.writeStoredGraphView('dependency', fakeViewStorage) === 'dependency' &&
+      mod.readStoredGraphView(fakeViewStorage) === 'dependency' &&
+      mod.writeStoredGraphView('bogus', fakeViewStorage) === 'hierarchy' &&
+      mod.readStoredGraphView(fakeViewStorage) === 'hierarchy' &&
+      mod.writeStoredGraphView('dependency', noopStorage) === 'dependency' &&
+      mod.readStoredGraphView(noopStorage) === 'hierarchy',
+    'default=' + mod.readStoredGraphView() + ' key=' + mod.GRAPH_VIEW_KEY)
+
+  const dNodeOf = (sink, id) =>
+    sink.find(
+      (e) =>
+        e && e.props &&
+        String(e.props.className || "").split(" ").includes("st-tr2-node") &&
+        e.props["data-leaf-id"] === id,
+    )
+  const badgeTextOf = (nodeEl) => {
+    if (!nodeEl) return ""
+    const t = (nodeEl.kids || []).find((k) => k && k.props && k.props.key === "jointext")
+    return t ? sinkText(t) : ""
+  }
+
+  rtMain.store.set({ graphHeight: 420, selectedTreeId: 'tree-alpha', selectedLeafId: null, graphView: 'hierarchy' })
+  rtMain.store.set({
+    detail: {
+      treeId: 'tree-alpha',
+      state: 'running',
+      root: { leafId: 'd-root', status: 'running' },
+      leaves: depLeaves,
+      stats: { total: 4, byStatus: { running: 2, succeeded: 2 } },
+      events: [],
+    },
+  })
+  const hierSink = []
+  renderTree(rtMain.Body({}), hierSink)
+  const hierSection = byClass(hierSink, 'st-tr2-graphsection')[0]
+  const viewButtons = byClass(hierSink, 'st-tr2-viewbtn')
+  const hierEdges = byClass(hierSink, 'st-tr2-edge', true)
+  check('V2-52 默认仍是 Hierarchy：切换按钮两枚、无层级标签、父子实线与依赖虚线都在',
+    !!hierSection && hierSection.props['data-view'] === 'hierarchy' &&
+      viewButtons.length === 2 &&
+      viewButtons.some((b) => b.props['data-view'] === 'hierarchy' && b.props['aria-pressed'] === 'true') &&
+      viewButtons.some((b) => b.props['data-view'] === 'dependency' && b.props['aria-pressed'] === 'false') &&
+      byClass(hierSink, 'st-tr2-levels').length === 0 &&
+      hierEdges.some((g) => g.props['data-kind'] === 'parent') &&
+      hierEdges.some((g) => g.props['data-kind'] === 'dep') &&
+      sinkAllText(hierSink).includes('parent → child (solid, 从属)'),
+    'view=' + (hierSection && hierSection.props['data-view']) + ' edges=' + hierEdges.length + ' btns=' + viewButtons.length)
+
+  rtMain.store.set({ graphView: 'dependency' })
+  const depSink = []
+  renderTree(rtMain.Body({}), depSink)
+  const depSection = byClass(depSink, 'st-tr2-graphsection')[0]
+  const depSvg = byClass(depSink, 'st-tr2-svg', true)[0]
+  const depDrawn = byClass(depSink, 'st-tr2-edge', true)
+  const levelGroup = byClass(depSink, 'st-tr2-levels', true)[0]
+  const depToggle = byClass(depSink, 'st-tr2-viewbtn').find((b) => b.props['data-view'] === 'dependency')
+  const dRoot = dNodeOf(depSink, 'd-root')
+  const dC = dNodeOf(depSink, 'd-c')
+  check('V2-53 Dependency 视图：只画依赖边、层级标签、join 徽标（入度 2）、视图可切换',
+    !!depSection && depSection.props['data-view'] === 'dependency' &&
+      !!depSvg && depSvg.props['data-view'] === 'dependency' &&
+      depDrawn.length === 2 && depDrawn.every((g) => g.props['data-kind'] === 'dep') &&
+      !!levelGroup && levelGroup.kids.length === 2 &&
+      sinkText(levelGroup.kids[0]).includes('level 1') && sinkText(levelGroup.kids[0]).includes('可立即派发') &&
+      sinkText(levelGroup.kids[1]).includes('level 2') && sinkText(levelGroup.kids[1]).includes('收口') &&
+      badgeTextOf(dC) === '2' && badgeTextOf(dRoot) === '' &&
+      !!depToggle && depToggle.props['aria-pressed'] === 'true' &&
+      sinkAllText(depSink).includes('入边 ≥ 2 时显示'),
+    'edges=' + depDrawn.length + ' levels=' + (levelGroup ? levelGroup.kids.length : 0) + ' badge=' + badgeTextOf(dC) +
+      ' sec=' + (depSection && depSection.props['data-view']) + ' svg=' + (depSvg && depSvg.props['data-view']) +
+      ' lv0=' + (levelGroup ? sinkText(levelGroup.kids[0]) : '?') + ' toggle=' + (depToggle && depToggle.props['aria-pressed']) +
+      ' joinLegend=' + sinkAllText(depSink).includes('入边 ≥ 2 时显示'))
+
+  // 视图切换走 controller（写 store；持久化由 V2-51 的纯函数锁定）。
+  rtMain.controller.setGraphView('dependency')
+  const switchedToDep = rtMain.store.get().graphView
+  rtMain.controller.setGraphView('nonsense')
+  const switchedBack = rtMain.store.get().graphView
+  check('V2-54 controller.setGraphView：写入 store、未知值回落 hierarchy',
+    switchedToDep === 'dependency' && switchedBack === 'hierarchy',
+    'dep=' + switchedToDep + ' bogus=' + switchedBack)
+
+  // 双视图不新增 hook：Dependency 渲染的 hook 数仍 = 基态 + GRAPH_HOOKS(2)。
+  rtMain.store.set({ graphView: 'dependency' })
+  hookCalls = 0
+  const hookSink = []
+  renderTree(rtMain.Body({}), hookSink)
+  const depHookCalls = hookCalls
+  check('V2-55 Dependency 视图 hook 数 = 基态 + GRAPH_HOOKS(2)（切换不引入新 hook）',
+    depHookCalls === listHookCalls + 2 && hookSink.length > 0,
+    'base=' + listHookCalls + ' dep=' + depHookCalls)
+  rtMain.store.set({ graphView: 'hierarchy' })
+
   // ----------------------------------------------------------------- summary
   console.log('\n==================== 结果 ====================')
   console.log(`合计 ${checks} 项判定，失败 ${failures} 项`)

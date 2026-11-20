@@ -81,6 +81,25 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [1.9.0] — 2026-11-20 · session-tree Tree Runs 双视图：Hierarchy | Dependency（B 方案落地，无发布）
+
+### 触发
+
+ROADMAP `docs/operations/panel-v2/ROADMAP-relations-2026-11-17.md` 方案 B：树图主视图保留"组织从属"（parent），但依赖关系（dependencies）在分层树里被压成同列短虚线，指挥官看不出"先跑谁、后跑谁"。用户裁决「好，用B方案，开干」。
+
+### 变更
+
+- **双视图**：工具栏最前新增分段按钮 `Hierarchy | Dependency`（`data-view` + `aria-pressed`），选择写入 localStorage `dsh.session-tree.graph-view`，刷新后保持；未知值回落 `hierarchy`。
+- **依赖视图**：只画声明依赖（虚线 + 箭头），按**最长路径**分列（`depGraphLayout`），行按 path 排序；列顶显示 `level N (可立即派发)` / `level N (收口)` 层级带（`st-tr2-levelband`）。
+- **join 徽标**：节点入度 ≥ 2 时在盒内右侧显示 `⬤ N`（`depJoinCountsOf`），图例注明"等待的前置数（入边 ≥ 2 时显示）"。
+- **纯函数与复用**：新增导出 `depGraphLayout / graphLayoutOf / graphDrawEdgesOf / depJoinCountsOf / clampGraphView / readStoredGraphView / writeStoredGraphView`；`graphCanvasOf` 改用 `graphDrawEdgesOf(leaves, view)`，依赖视图的同列 lane 也计入画布宽度。
+- **零契约变更**：不动 `tree-state.json`、不动投影字段、不动依赖闸语义；只改客户端投影与持久化。
+
+### 验证
+
+- `packages/dsh-session-tree/test/panel-render.test.cjs`：**107 → 113/113**（新增 V2-50 `depGraphLayout` 分层/环有界、V2-51 视图持久化与脏值回落、V2-52 默认仍 Hierarchy、V2-53 依赖视图只画 dep 边 + 层级标签 + join 徽标 + 可切换、V2-54 `controller.setGraphView`、V2-55 依赖视图 hook 恒定 = 基态 + 2）。
+- 其余套件不变：style-guard **51/51**、render 全通过、meta **41/41**、handoff **41/41**、skills **3/3**、tree-send **25/25**、provider-conformance **29/29**、verify-bundle **0 failing**；tree-engine **262/262**；仓根 `node --test` **356/356**。
+
 ## [0.13.1] — 2026-11-20 · tree-engine 洁净室修复（派发文本按 role / 渲染可机读 / verify 必带 leaf_id）+ 随包 SKILL v2.5（无发布）
 
 ### 触发
