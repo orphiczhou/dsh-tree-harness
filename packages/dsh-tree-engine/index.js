@@ -57,6 +57,20 @@ function safeJson(value) {
   }
 }
 
+/**
+ * 派发尾部的结算指令（v0.13.1：按 role 区分，纯函数可单测）。
+ * commander/auditor 需要在自己 leaf 下继续分解与验收——旧版对**所有**角色统一追加
+ * 「除此之外不得操作树」，与「被派发者不建新树、在自己 leaf 下加子节点」的 SKILL 契约互斥，
+ * 洁净室实测（2026-11-20）中派发指挥官因此撞上自相矛盾的说明书。worker 保持最小权限。
+ */
+export function settleTextFor(role, treeId, leafId) {
+  const manage = role === 'commander' || role === 'auditor'
+  const tail = manage
+    ? '你可以在本树内使用 tree_node / tree_dispatch / tree_verify / tree_status / tree_log 继续分解与验收（不要操作其他树）。'
+    : '除此之外不得操作树。'
+  return `\n\n[结算指令] 你是树节点 ${treeId}/${leafId} 的执行者（role=${role ?? 'worker'}）。任务完成（含结论自述与关键产出）后，必须调用工具 tree_report {action:"event", tree_id:"${treeId}", leaf_id:"${leafId}", type:"done", meta:{summary:"<一句话结论>"}} 登记完成；失败/无法完成时同样回报 done 并在 summary 写明失败原因。${tail}`
+}
+
 /** 宿主 makePorts 装配（v0.8.0 起导出：P1-D parent Agent 重解析等可单测）。 */
 export function makePorts(services, log, opts = {}) {
   /** 派发者捕获表（E2E 实证 startContinuable 的 request.parent 必须是活 Agent；
@@ -98,7 +112,7 @@ export function makePorts(services, log, opts = {}) {
      *  → 两者返回 { childId } | { sessionId }。parent 必须是 ctx.agents 中的活 Agent（非字符串 id）。 */
     async dispatch(spec) {
       const dodText = verifier ? verifier.dodPrompt(spec.policyId ?? spec.taskType ?? 'default') : `[DoD] ${JSON.stringify(spec.dod ?? {})}`
-      const settleText = `\n\n[结算指令] 你是树节点 ${spec.treeId}/${spec.leafId} 的执行者。任务完成（含结论自述与关键产出）后，必须调用工具 tree_report {action:"event", tree_id:"${spec.treeId}", leaf_id:"${spec.leafId}", type:"done", meta:{summary:"<一句话结论>"}} 登记完成；失败/无法完成时同样回报 done 并在 summary 写明失败原因。除此之外不得操作树。`
+      const settleText = settleTextFor(spec.role, spec.treeId, spec.leafId)
       // [agspec-C3] 自描述块已移至引擎侧渲染(engine dispatchStart,随 taskPrompt 持久化+竹节接力保持)
       const promptText = (spec.handoffBrief != null
         ? `${spec.prompt ?? ''}\n\n${dodText}${settleText}\n\n[竹节第 ${spec.segmentIndex} 节 · 交接简报]\n${spec.handoffBrief ?? '（no-handoff-summary：前会话未产出简报，依任务书与 DoD 继续）'}`
@@ -578,7 +592,9 @@ const TREE_NODE = {
   name: 'tree_node',
   description:
     'Node CRUD. add: {leaf_id, session_id, parent, path, role(commander|worker|auditor), added_by, dependencies?[], taskType?}; naming <prefix>-<Role><seq>-<name> (path segment must start uppercase). ' +
-    'dependencies must be existing leaf_ids (cycle-checked; dispatch requires all deps done). taskType routes verification policy (research|question|doc|code-change|default). ' +
+    'dependencies must be existing leaf_ids (cycle-checked; dispatch requires each dep settled: verification.pass=true, or status=done via the triple gate). ' +
+    'Omit the dependencies key entirely when there are none — an empty array is rejected ("dependencies must be a non-empty array"). ' +
+    'taskType routes verification policy (research|question|doc|code-change|default). ' +
     'set-relay: toggles the per-leaf bamboo-joint relay — {leaf_id, relay:"auto"|"off"} (default auto). relay="off" makes the periodic sweep skip bamboo relay for that leaf ' +
     '(timeout/harvest semantics unchanged, runtime.state untouched) — use it for leaves waiting on external orchestration (flow run / tree_verify / long command) so a relay cannot interrupt them. ' +
     'Only the leaf creator (added_by) or the root session may toggle it; the executor (owner) cannot. ' +
@@ -598,7 +614,13 @@ const TREE_NODE = {
     schema: { type: 'object' },
     render: ok((v) => {
       const l = v?.leaf
-      if (!l) return `tree_node: ${v?.leaves?.length ?? '?'} leaves`
+      if (!l) {
+        const leaves = Array.isArray(v?.leaves) ? v.leaves : []
+        if (leaves.length === 0) return 'tree_node: 0 leaves'
+        const shown = leaves.slice(0, 12).map((x) => `${x.leaf_id} status=${x.status ?? '?'} rt=${x.runtime?.state ?? '-'} role=${x.role ?? '-'} parent=${x.parent ?? '-'} ctx=${x.context_usage_pct ?? 0}%`)
+        const more = leaves.length > 12 ? [`…(+${leaves.length - 12} more; tree_node get <leaf_id> for one line of detail)`] : []
+        return [`tree_node: ${leaves.length} leaves`, ...shown, ...more].join('\n')
+      }
       const rt = l.runtime
       const rtText = rt ? ` · runtime[state=${rt.state} attempt=${rt.attempt} chain=${(rt.segmentChain ?? []).length} sess=${String(rt.subagentSessionId ?? '').slice(0, 8)}]` : ' · (未派发)'
       const ms = (l.milestones ?? []).length ? ` · ms[${l.milestones.map((m) => `${m.id}:${m.audit_pass ? 'pass' : '...'}`).join(',')}]` : ''
@@ -626,7 +648,9 @@ const TREE_NODE = {
 const TREE_DISPATCH = {
   name: 'tree_dispatch',
   description:
-    'Dispatch / cancel a node execution (engine relays to continuable subagents). start: {prompt?, assignee?{provider?,model?,effort?}, dod?} — ' +
+    'Dispatch / cancel a node execution (engine relays to continuable subagents). start: {prompt, assignee?{provider?,model?,effort?}, dod?} — ' +
+    'prompt must be provided (without it the leaf brief object would render as [object Object]); there is no cwd field — the child inherits the dispatcher cwd, so pass absolute artifact paths in the prompt. ' +
+    'A running leaf cannot be re-dispatched ("already running (cancel or wait harvest first)"): cancel first or wait for the terminal state. ' +
     'assignee is persisted on the leaf and survives bamboo relays; a <session-config-declared> self-descriptor block is appended to the dispatch prompt. ' +
     'dod is accepted for compatibility but does NOT reach the child prompt: the acceptance text comes from the leaf taskType policy ' +
     '(leaf.dod is only used by the verifier fallback). assignee.preset is accepted by the schema but is not applied to the child session (known limitation). ' +
@@ -684,7 +708,7 @@ const TREE_REPORT = {
 
 const TREE_STATUS = {
   name: 'tree_status',
-  description: 'Query: overview (dump), validate (invariants; a FAIL returns {ok:false, issues:[...]} with the issue list instead of throwing), sessions (budget precheck), harvest (immediate sweep; the engine also sweeps periodically on its timer, or on an in-process interval when no timer service is available).',
+  description: 'Query: overview (leaf list + runtime distribution + root id), validate (invariants; a FAIL returns {ok:false, issues:[...]} with the issue list instead of throwing), sessions (budget precheck: count/max/reached), harvest (immediate sweep; the engine also sweeps periodically on its timer, or on an in-process interval when no timer service is available; when no leaf is running it renders "all settled").',
   parameters: {
     type: 'object', additionalProperties: false,
     properties: {
@@ -693,7 +717,26 @@ const TREE_STATUS = {
     },
     required: ['action', 'tree_id'],
   },
-  output: { schema: { type: 'object' }, render: ok((v) => v?.swept ? `tree_status: harvest ${v.swept.map((s) => `${s.tree_id}:${(s.events ?? []).map((e) => e.event + (e.relay ? `(${e.relay})` : '')).join(',') || '∅'}`).join(' | ')} (sweepMode=${v.sweepMode})` : v?.issues ? `tree_status: validate ${v.ok ? 'PASS' : 'FAIL'} (${v.issues.length} issues${v.issues.length ? `: ${v.issues.slice(0, 3).map((i) => `${i.type}${i.leaf_id ? `@${i.leaf_id}` : ''}`).join('; ')}${v.issues.length > 3 ? '; …' : ''}` : ''})` : `tree_status: ok (sweepMode=${v?.sweepMode ?? '?'})`) },
+  output: { schema: { type: 'object' }, render: ok((v) => {
+    if (v?.swept) {
+      const total = v.swept.reduce((n, s) => n + (s.events ?? []).length, 0)
+      if (total === 0) return `tree_status: harvest all settled (no running leaves; sweepMode=${v.sweepMode})`
+      const lines = v.swept.map((s) => `${s.tree_id}:${(s.events ?? []).map((e) => e.event + (e.relay ? `(${e.relay})` : '')).join(',') || '∅'}`)
+      return `tree_status: harvest ${lines.join(' | ')} (sweepMode=${v.sweepMode})`
+    }
+    if (v?.issues) return `tree_status: validate ${v.ok ? 'PASS' : 'FAIL'} (${v.issues.length} issues${v.issues.length ? `: ${v.issues.slice(0, 3).map((i) => `${i.type}${i.leaf_id ? `@${i.leaf_id}` : ''}`).join('; ')}${v.issues.length > 3 ? '; …' : ''}` : ''})`
+    if (v?.tree) {
+      const leaves = Object.values(v.tree.leaves ?? {})
+      const counts = {}
+      for (const l of leaves) { const k = l.runtime?.state || l.status || 'unknown'; counts[k] = (counts[k] ?? 0) + 1 }
+      const dist = Object.entries(counts).sort((a, b) => String(a[0]).localeCompare(String(b[0]))).map(([k, n]) => `${k}=${n}`).join(' ') || 'none'
+      // tree-state.json has no root field: derive from the parentless leaf (root container).
+      const rootId = v.tree.root_leaf_id ?? v.tree.rootLeafId ?? leaves.find((l) => l.parent == null)?.leaf_id ?? `${v.tree.tree_id ?? '?'}-root`
+      return `tree_status: overview ${v.tree.tree_id ?? '?'} leaves=${leaves.length} [${dist}] root=${rootId} (sweepMode=${v.sweepMode ?? '?'})`
+    }
+    if (v && typeof v.count === 'number') return `tree_status: sessions ${v.count}/${v.max}${v.reached ? ' (budget reached)' : ''}`
+    return `tree_status: ok (sweepMode=${v?.sweepMode ?? '?'})`
+  }) },
   execute: async (args) => {
     if (args.action === 'harvest') {
       const r = await engine.sweepTick()
@@ -710,8 +753,9 @@ const TREE_VERIFY = {
   name: 'tree_verify',
   description:
     'Run verification policies on a node (modes: self-report | artifact | command | llm-judge | composite | human). Policy resolution: explicit policyId → leaf.taskType map → default. ' +
-    'cwd defaults to the caller exec cwd (or the explicit cwd parameter); it is not derived from leaf.path. Verdicts are recorded to leaf.verification, ' +
-    'but FAIL is returned as result.pass=false — it does not throw and does not block runtime.succeeded, so the commander must read result.pass before accepting the node. ' +
+    'cwd defaults to the caller exec cwd (or the explicit cwd parameter); it is not derived from leaf.path. run requires leaf_id — without it the call errors instead of silently running a self-report. ' +
+    'The dod action returns a policy PREVIEW (not a verdict; render shows "DoD preview (<policy>)"). Verdicts are recorded to leaf.verification by callers with verification write right (creator/root/delegate); ' +
+    'FAIL comes back as result.pass=false without throwing, but a caller without write right gets E_BORROWED_IDENTITY — so the commander must hold the right and read result.pass before accepting the node. ' +
     'adversarial: attack-defense-audit iteration (≤max_rounds, default 3) — structural checks + cross-family judge attack; FAIL rounds feed findings back to the executor for repair.',
   parameters: {
     type: 'object', additionalProperties: false,
@@ -725,9 +769,26 @@ const TREE_VERIFY = {
     },
     required: ['action', 'tree_id'],
   },
-  output: { schema: { type: 'object' }, render: ok((v) => `tree_verify: ${v?.result?.pass ? 'PASS' : 'FAIL'} (${(v?.result?.verdicts ?? []).map((x) => x.mode).join(',')}${v?.result?.rounds ? ` × ${v.result.rounds.length} 轮` : ''})`) },
+  output: { schema: { type: 'object' }, render: ok((v) => {
+    // dod 是「策略预览」而非裁决：旧 render 读 v.result.pass → 恒显示 FAIL ()（洁净室 P0）。
+    if (v && typeof v.dod === 'string' && !v.result) {
+      const preview = String(v.dod).replace(/\s+/g, ' ').trim().slice(0, 160)
+      return `tree_verify: DoD preview (${v.resolved_policy_id ?? 'default'}) ${preview}${String(v.dod).length > 160 ? '…' : ''}`
+    }
+    const r = v?.result
+    if (!r) return 'tree_verify: ok'
+    const verdicts = (r.verdicts ?? []).map((x) => {
+      const detail = x.detail ? ` detail="${String(x.detail).replace(/\s+/g, ' ').slice(0, 100)}${String(x.detail).length > 100 ? '…' : ''}"` : ''
+      return `${x.mode}:${x.pass ? 'PASS' : 'FAIL'}${detail}`
+    })
+    const rounds = r.rounds ? ` × ${r.rounds.length} 轮` : ''
+    return `tree_verify: ${r.pass ? 'PASS' : 'FAIL'} (${verdicts.join(', ')}${rounds})`
+  }) },
   execute: async (args, exec) => {
     verifyExec = exec   // 攻击会话派发的 parent Agent 捕获（同 dispatch 模式）
+    // 洁净室实测 P1：run 漏 leaf_id 时会落到 default 策略、以调用者 cwd 跑 self-report 且不落账
+    // （假验收），依赖闸仍 E_DEPENDENCY_NOT_MET。显式报错优于静默降级。
+    if (args.action === 'run' && !args.leaf_id) throw new Error('tree_verify run requires leaf_id (use action:"dod" for a policy preview)')
     // P1-05 写权矩阵：verification 落账仅 creator/root、非 done event 仅 owner/creator——
     // 两处落账都必须带上真实写入者，否则 fail-closed 报 E_BORROWED_IDENTITY。
     const verifyCaller = callerOf(exec)

@@ -634,7 +634,7 @@ export function createEngine(opts) {
       needPort('dispatch')
       const session = await ports.dispatch({
         treeId, leafId, prompt: spec?.prompt ?? leaf.brief, assignee: spec?.assignee, dod: spec?.dod ?? leaf.dod,
-        taskType: spec?.taskType ?? leaf.taskType,
+        taskType: spec?.taskType ?? leaf.taskType, role: leaf.role,
         parentAgent: spec?.parentAgent, parentSessionId: spec?.parentSessionId ?? caller,
         attempt: rt.attempt + 1,
         // v0.8.1（D22）：显式携带绝对深度上限（宿主只在显式传入时校验；不传=无上限）
@@ -734,7 +734,7 @@ export function createEngine(opts) {
     // ② 后 dispatch 新会话（提示词 = 任务正文（E2E#4 修复：rt.taskPrompt 持久化）+ 简报 + 同一 DoD）
     // [agspec-C2] 接力 assignee 原样透传(此前只恢复 model 且 leaf.model 恒 'unknown' → 接力零路由保持,静默降级)
     const session = await ports.dispatch({
-      treeId, leafId: leaf.leaf_id, prompt: rt.taskPrompt ?? leaf.brief, dod: leaf.dod,
+      treeId, leafId: leaf.leaf_id, prompt: rt.taskPrompt ?? leaf.brief, dod: leaf.dod, role: leaf.role,
       assignee: leaf.assignee ?? (leaf.model && leaf.model !== 'unknown' ? { model: leaf.model } : undefined),
       handoffBrief: brief, segmentIndex: (rt.segmentChain ?? []).length + 1, attempt: rt.attempt,
       // v0.8.0（P1-D）：持久父地址随 relay 传给宿主端口——热更后进程内 Agent 缓存丢失时，

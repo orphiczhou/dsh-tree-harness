@@ -1,6 +1,6 @@
 # 随包 Skill 完整使用指南（tree-commander / tree-worker / session-handoff）
 
-> 适用版本：`packages/dsh-tree-engine` **v0.13.0**、`packages/dsh-session-tree` **v1.8.4** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA；v1.4.1–v1.8.4 未发布镜像）。
+> 适用版本：`packages/dsh-tree-engine` **v0.13.1**、`packages/dsh-session-tree` **v1.8.4** 及以上（公开镜像 tag `v1.4.0` = `0343f0c`，21/21 SHA；v1.4.1–v1.8.4 未发布镜像）。
 > 本文是「怎么用」的单一入口：从安装、确认 Skill 已进会话目录，到三层任务树、逐层干活、50% 交接、语种与排障，全部给可复制的样例。实现与设计说明见文末索引。
 
 ---
@@ -121,7 +121,7 @@ pnpm install
 
 排障：三条都不出现 → 检查 ① 包是否装（`plugin_manager list_plugins`）；② profile 是否同时有 `@deepseek-ai/dsh-skill-filesystem`（**随 DSH 桌面版内置，不要单独安装**）；③ 是否在改完 patch 后没做 disable→enable；④ 是否是**新开**会话（目录在会话启动时注入，旧会话不刷新）。
 
-> **安装后自检（推荐）：`tree_doctor {action:"run"}`**（tree-engine ≥ 0.13.0）。它是第 9 个 `tree_*` 工具、**只读零写副作用**：一次给出 7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`）与 `summary{pass,warn,fail}` + 一行 `hint`；传 `tree_id`（如 `tree_doctor {action:"run", tree_id:"wave1"}`）会额外校验该树并统计停滞节点。**FAIL 不 throw**——它是诊断器不是门禁，装完/重载后先跑它，比逐项猜「工具或 Skill 为什么没出现」快。
+> **安装后自检（推荐）：`tree_doctor {action:"run"}`**（tree-engine ≥ 0.13.1）。它是第 9 个 `tree_*` 工具、**只读零写副作用**：一次给出 7 项检查（`package` / `tool-count` / `skills` / `tree-data` / `stale` / `sweep` / `env`）与 `summary{pass,warn,fail}` + 一行 `hint`；传 `tree_id`（如 `tree_doctor {action:"run", tree_id:"wave1"}`）会额外校验该树并统计停滞节点。**FAIL 不 throw**——它是诊断器不是门禁，装完/重载后先跑它，比逐项猜「工具或 Skill 为什么没出现」快。
 
 ### 3.1 五分钟冒烟（第一次用就照这个顺序）
 
@@ -261,12 +261,13 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 
 ## 9. 版本与升级
 
-- 三个 Skill 随包版本走：`dsh-tree-engine` 0.13.0 / `dsh-session-tree` 1.8.4（公开镜像 tag `v1.4.0` = `0343f0c`；v1.4.1–v1.8.3 未发布镜像）。
+- 三个 Skill 随包版本走：`dsh-tree-engine` 0.13.1 / `dsh-session-tree` 1.8.4（公开镜像 tag `v1.4.0` = `0343f0c`；v1.4.1–v1.8.3 未发布镜像）。
 - **session-tree 1.8.4**：Tree Runs **依赖虚线消失修复** —— v1.8.3 的同列 lane 落在最后一列右侧、超出 `layout.graphW`（wave2 484 / lane 486..526），被 `svg viewBox` 裁掉；新增 `graphCanvasOf(leaves, rootLeafId, layout)` 把路由点纳入画布（canvas / svg width·viewBox / Fit 全用它；wave2 484→578、d27fl 752→766）；测试 panel-render 105→**107/107**（V2-48..49）。
 - **session-tree 1.8.3**：Tree Runs **关系图可读性 A 方案** —— 点亮边置顶（`st-tr2-edges-back` / `st-tr2-edges-front` 两层 + 16% 同色 halo）、依赖边障碍感知正交路由 + 圆角弧（`depRoutePoints`：列间空道 / 同列右侧 lane；`roundedPathOf(points, 10)`；反向依赖保留贝塞尔但强制前层）、lane 扇出防重叠、不新增 hook；B/C 升级方案见 `docs/operations/panel-v2/ROADMAP-relations-2026-11-17.md`；测试 panel-render 101→**105/105**。
 - **session-tree 1.8.2**：Tree Runs **依赖关系可读性**（用户反馈「图里面的节点之间的虚线是啥意思？被挡住了看不清关系」）—— 虚线 = `dependencies` 声明依赖（目标等前置结算才可派发）、实线 = `parent` 父子从属；边先于节点绘制会被遮挡，故每条边挂 `<title>`（`A is parent of B` / `B depends on A`）、选中节点只提亮它的边（无关边压到 0.12），图例与 hint 写明语义；叶属性栅格新增 `Blocks`（反向依赖）与 `Dependencies` 成对（17→18 项）；测试 panel-render 98→**101/101**（V2-41..43）。安装/重载后页头应显示 `v1.8.2`。
 - **session-tree 1.8.1**：Tree Runs **图内节点点击失效**修复（用户反馈「我要的是点击图上的各个节点，显示详细信息」）—— 视口在 `pointerdown` 就 `setPointerCapture`，浏览器把随后的 `click` 重定向到捕获元素，节点自身 `onClick` 永不触发（叶表行没有捕获，所以「点列表才出详情」）；改为拖拽阈值（`GRAPH_PAN_THRESHOLD` 4px，曼哈顿距离）之后才武装捕获、`endPan` 释放，未拖动时点击走原生路径；测试 panel-render 95→**98/98**（V2-38..40）。安装/重载后页头应显示 `v1.8.1`。
 - **session-tree 1.8.0**：Tree Runs 树图区**高度可调 + 打开即 Fit 全图**（用户反馈「一条缝」）—— ① 视口显式高度（默认 420px / 拖拽 220–900px / `localStorage` 记忆）替代旧 `max-height:520px`（flex 列里自动最小尺寸为 0，会被挤成一条缝）；② 10px 分隔条可拖、双击复位；③ 打开/换树/改高度按视口 `fitZoomOf` 自动 Fit（幂等记忆，不夺用户手动缩放）；测试 panel-render 90→**95/95**（V2-33..37）、style-guard 50→**51/51**。安装/重载后页头应显示 `v1.8.0`。
+- **tree-engine 0.13.1**：新增第 9 个工具之后的**洁净室修复版（D41）**—— ① 引擎新增导出纯函数 `settleTextFor(role, treeId, leafId)`：派发尾部的结算指令按 role 分支，commander/auditor 被允许在本树内使用 `tree_node / tree_dispatch / tree_verify / tree_status / tree_log` 继续分解与验收（旧版对所有 leaf 统一追加「除此之外不得操作树」，被派发的 commander 因此撞上自相矛盾的说明书），worker 与缺省角色保持最小权限；`dispatch:start` 与竹节接力都把 `role` 传给 ports。② 渲染可机读：`tree_verify {action:"dod"}` 改为 `DoD preview (<policy>)`（旧版读 `result.pass` 恒显示 `FAIL ()`）、`run` 补 `verdicts[].detail`、`tree_status overview` 显示 `leaves=N [runtime 分布] root=<id>`、`harvest` 无运行叶显示 `all settled`、`tree_node list/list-all` 一行一叶（12 行封顶）。③ `tree_verify {action:"run"}` 缺 `leaf_id` 直接报错（旧版静默跑 self-report 且不落账 = 假验收）。④ 随包 Skill 正文升到 **v2.5**（tree-commander 16 项 / tree-worker 10 项修订：失败恢复矩阵、parent vs dependencies 与水平依赖示例、`dependencies` 空数组必须省略、`session_id` 不传的后果、逐叶 verify 闭环、证据链与可机检 DoD、观测与面板、drift 申报只进事件流、owner 不随 handoff 迁移）。测试数 258→**262/262**（新增 `tests/tool-render.test.js` 4 例）。安装/重载后 `tree_doctor` 应显示 `version=0.13.1`。
 - **tree-engine 0.13.0**：新增第 9 个工具之后的**树级展示状态版（用户反馈轮）**—— ① `src/panel-view.js` 新增 `treeStateOf(leaves, rootLeafId)`：`tree_plan` 的 root 是容器叶、永远没有 done 事件（raw 恒 `active`），故 root 只参与**失败**判定，不参与「在跑/未开始」判定；子叶 running/segment_pending → running，有 pending → pending，全部结算 → succeeded，单叶树回落 root 展示态；② `projectTreeSummary` 新增 `state`、`projectTreeDetail` 新增顶层 `state`，列表徽标与详情共用权威字段（客户端不再自行按 counts 猜）；③ 真实 36 棵树 running 徽标 29→**7**（succeeded 23 / failed 4 / pending 2），4 棵 failed 均有子叶 `runtime.state=timeout` 实据；测试数 257→**258/258**（新增 `treeStateOf` 15 条断言）。安装/重载后 `tree_doctor` 应显示 `version=0.13.0`。
 - **tree-engine 0.12.0**：新增第 9 个工具之后的**面板投影派生展示态版（D34）**—— ① `src/panel-view.js` 新增 `runtimeStateOf`/`displayStateOf`：`runtime.state` 失败类（failed/timeout/cancelled）优先，其余按 `verification.pass===true` → `runtime.state=succeeded` → `pruned` → `segment_pending` → `last_event_type=done` → `active→running` → raw 别名归一 → `pending_brief/pending/缺失→pending`；② `projectLeaf.status` 改为派生展示态并新增 `state`/`rawStatus`/`runtimeState` 三键，`projectTreeDetail.root` 同步；③ `statusCounts`/`stats.byStatus` 同口径（真实 141 叶里 55 叶 `pending_brief & succeeded & pass` 不再显示 pending）；测试数 256→**257/257**（`tests/panel-view.test.js` 29→30 例，另 5 条断言改新契约）。安装/重载后 `tree_doctor` 应显示 `version=0.12.0`。
 - **tree-engine 0.11.0**：新增第 9 个工具之后的 `/tree-panel` 只读 HTTP 投影路由版（D30）—— ① 三端点 `GET /tree-panel/trees`、`/trees/<treeId>`、`/trees/<treeId>/events`（webServer 可选注入，缺席降级、不阻断工具面；跨实例幂等注册先 dispose 再 register）；② Host/Origin/Sec-Fetch-Site 三重校验 + `no-store` + 不回 ACAO；③ 投影纯函数 `src/panel-view.js` 脱敏截断——不透出 prompt/meta/环境变量，assignee 只留 provider/model/effort，preview 120/200 字符上限；④ 工具面仍 9 工具不变（`session-tree` v1.5.0 的 Tree Runs 面板数据源即此路由）；测试数 227→**256/256**（新增 `tests/panel-view.test.js` 29 例）。安装/重载后 `tree_doctor` 应显示 `version=0.11.0`。
@@ -276,7 +277,7 @@ node scripts/e2e/verify-handoff.mjs --source <源会话> --successor <接替会�
 - **tree-engine 0.8.0**：新增第 9 个工具之后的组合修复版 —— ① per-leaf relay 开关（`tree_node {action:"set-relay", relay:"auto"|"off"}`，等待 flow/verify/长命令的 leaf 设 `off`，sweep 只跳过竹节）；② usagePct 测量端口修复（宿主 tokenMeter 安全获取 + 5 形状提取）；③ sweep 跨实例（热更僵尸）生命周期；④ relay parent 安全重解析；Skill 正文升到 **v2.2**；测试数 112→**165/165**。安装/重载后推荐先跑一次 `tree_doctor` 自检（见 §3）。
 - **tree-engine 0.7.0**：新增第 9 个工具（`tree_doctor`）之后的引擎收口版 —— ① W2.1 会话预算计入竹节链 `runtime.segmentChain`；② W2.3 RC2 兼容层单测 11 例；③ W2.6 root/主会话 id 归一化（可选 `session-` 前缀）；Skill 正文升到 **v2.1**；测试数 84→**112/112**。
 - **tree-engine 0.6.0**：新增第 9 个工具 **`tree_doctor`**（只读自检，7 检查项）+ leaf 写面护栏（`LEAF_WRITE_MATRIX`），测试数 67→84。
-- **Skill 版本差（v2.2）**：`tree-commander` / `tree-worker` SKILL 正文为 **v2.2**（随 tree-engine v0.8.0 分发：工具面 9 个、`session-` 前缀归一化、`max_sessions` 计入竹节链、per-leaf relay 开关）；`session-handoff` SKILL 随 session-tree **v1.4.0**（补 `tree_send` 仅同树 / 无 `parent` 入参说明）。
+- **Skill 版本差（v2.5）**：`tree-commander` / `tree-worker` SKILL 正文为 **v2.5**（随 tree-engine v0.13.1 分发：洁净室与三路审计修订——失败恢复矩阵 / parent vs dependencies / `dependencies` 空数组必须省略 / `session_id` 与 root owner / 逐叶 verify / 证据链与可机检 DoD / 观测与 Tree Runs 面板 / drift 申报只进事件流 / owner 不随 handoff 迁移；工具面仍是 9 个）：工具面 9 个、`session-` 前缀归一化、`max_sessions` 计入竹节链、per-leaf relay 开关）；`session-handoff` SKILL 随 session-tree **v1.4.0**（补 `tree_send` 仅同树 / 无 `parent` 入参说明）。
 - **版本差异速查**：
   - **1.3.0**：随包 `session-handoff` Skill + skill provider patch 行（此前无 Skill）；
   - **1.3.1**：接替提示语跟随 DSH 界面语言（zh/en；`lang=` + `interface_language`）；

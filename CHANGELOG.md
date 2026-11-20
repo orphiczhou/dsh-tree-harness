@@ -81,6 +81,24 @@
 - `tree_status {action:"validate"}` → `t3c3` / `t3c4` 均 **PASS (0 issues)**；外层两叶 `tree_verify run` **PASS**（self-report）；内层两叶 verify 因 creator 已结束被 `E_BORROWED_IDENTITY` 拒（报告 §6，验收用 runtime+validate）。
 - `flow_status T3C3-R1` → succeeded / integrity=verified；journal `run/ended` 14 事件；深度探针 journal `T3C3-DEPTHNEG-1` 11 事件。
 
+## [0.13.1] — 2026-11-20 · tree-engine 洁净室修复（派发文本按 role / 渲染可机读 / verify 必带 leaf_id）+ 随包 SKILL v2.5（无发布）
+
+### 触发
+
+用户要求「对比最新工程实践检查 tree harness 相关 skill，需要更新则派多模型团队交叉校验改进，并派子会话指挥官做洁净室测试」。实测（tree `skcr`）：被派发的 commander 按说明书加子节点即撞到引擎追加的「除此之外不得操作树」；`tree_verify {action:"dod"}` 恒显示 `FAIL ()`；`tree_status overview` 无 dump；`tree_verify run` 漏 leaf_id 时静默跑 self-report 且不落账。三路审计（glm-5.3-flash 工程实践 / deepseek-v4-pro 实操走查 / qwen3.8-flash 规格一致性）交叉校验后 34 条结论收敛为 CONFIRM 24 / DUP 9 / REFUTE 1。
+
+### 变更
+
+- **派发文本按 role 分支**：新增 `settleTextFor(role, treeId, leafId)`（index.js 导出，纯函数）；commander/auditor 获得本树内的 `tree_node/tree_dispatch/tree_verify/tree_status/tree_log` 许可，worker 与缺省角色保持「除此之外不得操作树」；`dispatch:start` 与竹节接力均把 `leaf.role` 传给 ports。
+- **渲染可机读**：`tree_verify` dod 预览不再假 FAIL、run 渲染 `verdicts[].detail`；`tree_status` overview 渲染叶数 + runtime 分布 + root、harvest 无运行叶显示 `all settled`、sessions 渲染 `count/max`；`tree_node` 的 list/list-all 一行一叶（12 行封顶）。
+- **verify 防假验收**：`tree_verify {action:"run"}` 缺 `leaf_id` 直接报错；工具描述同步说明「无 verification 写权者抛 E_BORROWED_IDENTITY」。
+- **SKILL v2.5**：tree-commander（16 项修订：失败恢复矩阵、parent vs dependencies、逐叶 verify、session_id 权威获取、证据链/可机检 DoD、观测与面板、错误码补齐等）与 tree-worker（绝对路径纪律、done meta 结构化、drift 申报真实落点、owner 不随 handoff 迁移、失败恢复矩阵）。
+
+### 验证
+
+- `packages/dsh-tree-engine`：`node --test` **258 → 262/262**（新增 `tests/tool-render.test.js`：settleTextFor 角色分支；node 多叶列表与 12 行封顶；status overview/harvest/sessions；dod 预览、verdict detail、缺 leaf_id 报错）。
+- **洁净室第二轮（tree `skc2`，v0.13.1 + SKILL v2.4 副本）**：新指挥官仅凭说明书独立跑通「加子节点 → 派发 → harvest → verify → done」→ **PASS（有保留）**。实测确认：① 结算指令按 role 生效（commander 全程未被 `E_BORROWED_IDENTITY` 拒）；② `dod` 渲染为 `DoD preview (doc)` 而非 `FAIL ()`；③ node list 一行一叶；④ harvest 无运行叶 `all settled`。新暴露并修复/记载：`tree_status overview` 的 root 取错键（projection 用 `rootLeafId` 驼峰，render 只认 `root_leaf_id` → 显示 `root=?`，已加兼容并补断言）；assignee 渠道 spawn 即死（宿主 `failed ... no closing message`、events=0、runtime 停 running）无引擎日志 → 写入 SKILL §1.3/§2.3 排障行；同目录多 `.md` 时 artifact 仍字典序假阳性 → 写入 §1.4「独占目录」配方。
+
 ## [1.8.4] — 2026-11-18 · session-tree 依赖虚线消失修复（画布未计同列 lane，无发布）
 
 ### 触发

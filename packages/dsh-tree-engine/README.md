@@ -2,6 +2,20 @@
 
 树形任务分解执行引擎（DSH 宿主插件）。行为基准：[docs/architecture/engine-spec.md](../../docs/architecture/engine-spec.md)（S0 冻结）；工具面契约以本包 `index.js` 的 9 个工具 schema 为准（[docs/architecture/tools-mapping.md](../../docs/architecture/tools-mapping.md) 是 S0 设计表，含未实现的 action，仅供设计参考）。
 
+## v0.13.1 增量：洁净室修复（派发文本按 role / 渲染可机读 / verify 必带 leaf_id）
+
+**背景（2026-11-20）**：用「子会话指挥官洁净室实测 + 三路模型审计（工程实践 / 实操走查 / 规格一致性）+ 交叉校验」跑了说明书与工具面的对照，确认 4 个 P0/P1 缺陷——它们都不是「文档写得不清楚」，而是**工具文本与引擎行为自相矛盾**：
+
+- **派发尾部一刀切**：`makePorts.dispatch` 对所有 leaf 追加「除此之外不得操作树」，而被派发的 commander 按 SKILL 必须在自己 leaf 下 `tree_node add` 子节点 → 干净会话里指挥官第一屏就撞上自相矛盾的指令。→ 抽出导出纯函数 `settleTextFor(role, treeId, leafId)`：`commander` / `auditor` 允许 `tree_node / tree_dispatch / tree_verify / tree_status / tree_log` 在本树内继续分解与验收；`worker` 与缺省角色保持最小权限。`dispatch:start` 与竹节接力都把 `role` 传给 ports。
+- **dod 恒显示 FAIL**：`tree_verify {action:"dod"}` 返回 `{dod, resolved_policy_id}`（策略预览），而 render 读 `v.result.pass` → 恒 `tree_verify: FAIL ()`。→ render 识别预览分支，输出 `tree_verify: DoD preview (<policy>) …`；`run` 分支补 `verdicts[].detail`（单条截断 100 字符）与轮数。
+- **status / node 渲染看不到内容**：overview 只剩 `ok (sweepMode=…)`、`tree_node list` 只回数量、`harvest` 无运行叶时显示 `tree:∅`。→ overview 渲染 `leaves=N [runtime 分布] root=<id>`；node 的 list/list-all 一行一叶（id/status/runtime/role/parent/ctx，12 行封顶 + 提示）；harvest 无运行叶时渲染 `harvest all settled`；sessions 渲染 `count/max`。
+- **verify run 漏 leaf_id = 假验收**：无 leaf_id 时落到 default 策略、以调用者 cwd 跑 self-report 且**不落账**，依赖闸仍 `E_DEPENDENCY_NOT_MET`。→ `run` 缺 leaf_id 直接报错（`tree_verify run requires leaf_id (use action:"dod" for a policy preview)`）。
+
+配套 SKILL 升到 **v2.4**（`skills/tree-commander`、`skills/tree-worker`）：补失败恢复矩阵、parent vs dependencies 语义与水平依赖示例、`dependencies` 空数组必须省略、`session_id` 不传的后果、逐叶 verify 闭环、evidence 格式与可机检 DoD、drift 申报的真实落点（progress 事件 ≠ drift_history）、owner 不随 session_handoff 迁移的两条续写路径。
+
+**测试**：`node --test` **258 → 262/262**（新增 `tests/tool-render.test.js` 4 例：settleTextFor 角色分支、node 多叶列表、status overview/harvest/sessions、dod 预览与 verdict detail + 缺 leaf_id 报错）。
+- **第二轮洁净室**（tree `skc2`，新指挥官 + 隔离目录）：按 SKILL 说明书独立跑通加子节点 / 派发 / 收割 / 验证 / 收口，**PASS（有保留）**；据其报告补 `root=` 渲染兼容（projection 用 `rootLeafId` 驼峰键）、assignee spawn 即死排障与 artifact 独占目录配方（SKILL v2.5）。
+
 ## v0.13.0 增量：树级展示状态派生（root 容器不再把整棵树标成 running）
 
 **背景（2026-11-16 用户反馈）**：「为啥大多数列表中的树都是 runing 状态？」实测 36 棵树里 **29 棵**徽标为 running，其中 28 棵的 `counts.running` 恰好 =1 —— 唯一那个「在跑」的叶子是 `tree_plan` 造的 **root 容器叶**：它不承担工作，也永远收不到 done 事件，raw `status` 停在 `active`，旧的面板按 counts 派生就把整棵树判成 running。
