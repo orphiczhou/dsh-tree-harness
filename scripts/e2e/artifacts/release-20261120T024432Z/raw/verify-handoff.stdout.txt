@@ -1,0 +1,504 @@
+{
+  "tool": "verify-handoff",
+  "generatedAt": "2026-11-20T02:44:33.257Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "options": {
+    "source": "session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016",
+    "successor": "session-89dd537d-352f-4242-adf0-6edb8bd70308",
+    "expectKind": "root",
+    "expectPermissionPreset": null,
+    "expectAgentPreset": null
+  },
+  "paths": {
+    "sourceLog": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016\\session.v4.jsonl.zstd",
+    "successorLog": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\session-89dd537d-352f-4242-adf0-6edb8bd70308\\session.v4.jsonl.zstd",
+    "workspaceRegistry": "C:\\Users\\sir_c\\.dsh\\storages\\workspace.json",
+    "sourceProjcache": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016.json",
+    "successorProjcache": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\session-89dd537d-352f-4242-adf0-6edb8bd70308.json"
+  },
+  "sessions": {
+    "source": {
+      "id": "session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": null,
+        "origin": null,
+        "delegationDepth": 0,
+        "agentPreset": "standard",
+        "createdAt": 1794577894431,
+        "isSeeded": false
+      },
+      "firstFrame": {
+        "permissionPreset": {
+          "preset": "danger-full-access"
+        },
+        "sandboxMode": {
+          "mode": "danger-full-access",
+          "source": "delegation"
+        },
+        "approvalPolicy": {
+          "policy": "never",
+          "source": "delegation"
+        }
+      },
+      "lastFrame": {
+        "permissionPreset": {
+          "preset": "danger-full-access"
+        },
+        "sandboxMode": {
+          "mode": "danger-full-access",
+          "source": "delegation"
+        },
+        "approvalPolicy": {
+          "policy": "never",
+          "source": "delegation"
+        }
+      },
+      "projcache": {
+        "found": true,
+        "path": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016.json",
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "permissions": {
+          "preset": "danger-full-access",
+          "sandbox": "danger-full-access",
+          "approval": "never",
+          "seeded": true
+        },
+        "agentPreset": "standard",
+        "modelSelection": {
+          "lastUsed": {
+            "provider": "zai-coding-cn",
+            "model": "glm-5.3-flash",
+            "reasoningEffort": "max"
+          },
+          "pending": null
+        },
+        "workingDirectory": "D:\\Codes\\dsh-tree-harness"
+      },
+      "firstHeader": {
+        "seq": 14,
+        "config": {
+          "maxTokens": 131072,
+          "provider": "zai-coding-cn",
+          "model": "glm-5.3-flash",
+          "reasoningEffort": "max"
+        },
+        "toolCount": 157
+      },
+      "lastHeader": {
+        "seq": 2029,
+        "config": {
+          "provider": "zai-coding-cn",
+          "model": "glm-5.3-flash",
+          "reasoningEffort": "max",
+          "maxTokens": 131072
+        },
+        "toolCount": 86
+      },
+      "headerCount": 15,
+      "eventCount": 2055
+    },
+    "successor": {
+      "id": "session-89dd537d-352f-4242-adf0-6edb8bd70308",
+      "session": {
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "parentSession": null,
+        "origin": null,
+        "delegationDepth": 0,
+        "agentPreset": "standard",
+        "createdAt": 1794711473290,
+        "isSeeded": false
+      },
+      "firstFrame": {
+        "permissionPreset": {
+          "preset": "danger-full-access"
+        },
+        "sandboxMode": {
+          "mode": "danger-full-access",
+          "source": "delegation"
+        },
+        "approvalPolicy": {
+          "policy": "never",
+          "source": "delegation"
+        }
+      },
+      "projcache": {
+        "found": true,
+        "path": "C:\\Users\\sir_c\\.dsh\\storages\\session_projcache\\sessions\\session-89dd537d-352f-4242-adf0-6edb8bd70308.json",
+        "cwd": "D:\\Codes\\dsh-tree-harness",
+        "permissions": {
+          "preset": "danger-full-access",
+          "sandbox": "danger-full-access",
+          "approval": "never",
+          "seeded": true
+        },
+        "agentPreset": "standard",
+        "modelSelection": {
+          "lastUsed": {
+            "provider": "opencode-go",
+            "model": "deepseek-v4.1-flash",
+            "reasoningEffort": "max"
+          },
+          "pending": null
+        },
+        "workingDirectory": "D:\\Codes\\dsh-tree-harness"
+      },
+      "firstHeader": {
+        "seq": 14,
+        "config": {
+          "maxTokens": 131072,
+          "provider": "zai-coding-cn",
+          "model": "glm-5.3-flash",
+          "reasoningEffort": "max"
+        },
+        "toolCount": 86
+      },
+      "eventCount": 8577,
+      "firstUserMessage": "你是 session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016 的接替会话。上一个会话因上下文预算接近上限而把工作交棒给你。\n\n请先读取交接文件：D:\\Codes\\dsh-tree-harness\\HANDOFF-be9f4f06-20261115-105753.md\n\n文件中记录了任务、当前状态、决策、变更文件、下一步与未决问题。\n请从「下一步」继续推进：不要重做文件中已记为完成的工作，保持相同的工作目录与\n模型/思考等级，并用一小段话说明你接下来要做什么。",
+      "handoffPrompt": {
+        "isHandoffPrompt": true,
+        "language": "zh",
+        "namedSource": "session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016",
+        "handoffFileMentioned": "D:\\Codes\\dsh-tree-harness\\HANDOFF-be9f4f06-20261115-105753.md"
+      },
+      "readEvidence": {
+        "strong": [
+          {
+            "kind": "tool_call",
+            "tool": "read",
+            "seq": 20,
+            "file": "D:\\Codes\\dsh-tree-harness\\HANDOFF-be9f4f06-20261115-105753.md"
+          },
+          {
+            "kind": "tool_result",
+            "seq": 21,
+            "head": "<path>D:\\Codes\\dsh-tree-harness\\HANDOFF-be9f4f06-20261115-105753.md</path>\n<type>file</type>\n<content>\n1: # Session handoff — 20261115-105753\n2: \n3: > Generated by the `session_handoff` tool. Read thi"
+          }
+        ],
+        "weak": [
+          {
+            "kind": "tool_result_mention",
+            "seq": 544,
+            "head": "Found 22 matches\n\nCHANGELOG.md\nLine 84: ## [1.4.1] — 2026-11-14 · session-tree rail 收起态 React #300/#310 hook 崩溃修复（F8，无发布）\nLine 88: - **版本**：`packages/dsh-session-tree` `1.4.0` → **`1.4.1`**（仓内插件；**未发布"
+          },
+          {
+            "kind": "assistant_claim",
+            "seq": 597,
+            "head": "doc-sync-t30 finished: all version touchpoints synced, consistency scripts all green (version 23-24 checks, links 134 files, tables OK). Some leftover items noted (README.zh.md / AGENT-INSTALL.md v1.4"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 1530,
+            "head": "Found 216 matches\n\nD:\\Codes\\DSH动态流程引擎插件\\HANDOFF-089efdfa-20261111-174619.md\nLine 36: 3. M1 收口（依赖用户，先催）：①R-m1-05c——用户新开 root 聊天窗口把审批策略切 ask，发 `flow_run({\"flowPath\":\"D:/Codes/DSH动态流程引擎插件/evidence/m1/rea"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 1632,
+            "head": "Found 98 matches\n\nCHANGELOG.md\nLine 35:   - [ISSUE-draft-hmr-reload-race.md](docs/operations/ISSUE-draft-hmr-reload-race.md)：HMR 热重载替换工具注册对象 → 跨重载模型步对同名工具报 `UNKNOWN_TOOL`。含 2 个会话 18 次错误原文（`a3624bf7` s"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 2050,
+            "head": "Found 53 matches\n\nCHANGELOG.md\nLine 88: - **版本**：`packages/dsh-session-tree` `1.6.0` → **`1.6.1`**（仓内插件；**未发布 npm / 公开镜像**——镜像 tag 仍为 `v1.4.0` = `0343f0c`）。\nLine 97: - style-guard **34 → 46/46**：新增 A1"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 2815,
+            "head": "Found 22 matches\n\nCHANGELOG.md\nLine 84: ## [1.4.1] — 2026-11-14 · session-tree rail 收起态 React #300/#310 hook 崩溃修复（F8，无发布）\nLine 88: - **版本**：`packages/dsh-session-tree` `1.4.0` → **`1.4.1`**（仓内插件；**未发布"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 2837,
+            "head": "Found 216 matches\n\nD:\\Codes\\DSH动态流程引擎插件\\HANDOFF-089efdfa-20261111-174619.md\nLine 36: 3. M1 收口（依赖用户，先催）：①R-m1-05c——用户新开 root 聊天窗口把审批策略切 ask，发 `flow_run({\"flowPath\":\"D:/Codes/DSH动态流程引擎插件/evidence/m1/rea"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 2847,
+            "head": "Found 53 matches\n\nCHANGELOG.md\nLine 88: - **版本**：`packages/dsh-session-tree` `1.6.0` → **`1.6.1`**（仓内插件；**未发布 npm / 公开镜像**——镜像 tag 仍为 `v1.4.0` = `0343f0c`）。\nLine 97: - style-guard **34 → 46/46**：新增 A1"
+          }
+        ],
+        "basename": "HANDOFF-be9f4f06-20261115-105753.md"
+      }
+    }
+  },
+  "workspace": {
+    "registryFound": true,
+    "sourceWorkspaces": [
+      {
+        "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+        "path": "D:\\Codes\\dsh-tree-harness"
+      }
+    ],
+    "successorWorkspaces": [
+      {
+        "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+        "path": "D:\\Codes\\dsh-tree-harness"
+      }
+    ],
+    "workspacesWithSuccessorCwd": [
+      {
+        "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+        "path": "D:\\Codes\\dsh-tree-harness"
+      }
+    ],
+    "archivedSessionIdsContainsSuccessor": false
+  },
+  "assertions": [
+    {
+      "id": "cwd_match",
+      "label": "successor cwd 与源相同",
+      "pass": true,
+      "expected": "D:\\Codes\\dsh-tree-harness",
+      "actual": "D:\\Codes\\dsh-tree-harness",
+      "detail": {
+        "sourceProjcacheWorkingDirectory": "D:\\Codes\\dsh-tree-harness",
+        "successorProjcacheWorkingDirectory": "D:\\Codes\\dsh-tree-harness"
+      }
+    },
+    {
+      "id": "workspace_attribution",
+      "label": "successor 归属源 workspace（分组可见）",
+      "pass": true,
+      "expected": {
+        "workspaceWithCwd": {
+          "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+          "path": "D:\\Codes\\dsh-tree-harness"
+        },
+        "sessionIdsContainsSuccessor": true
+      },
+      "actual": {
+        "successor": [
+          {
+            "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+            "path": "D:\\Codes\\dsh-tree-harness"
+          }
+        ],
+        "workspacesWithSamePath": [
+          {
+            "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+            "path": "D:\\Codes\\dsh-tree-harness"
+          }
+        ]
+      },
+      "detail": {
+        "successorWorkspaces": [
+          {
+            "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+            "path": "D:\\Codes\\dsh-tree-harness",
+            "title": "dsh-tree-harness"
+          }
+        ],
+        "sourceWorkspaces": [
+          {
+            "id": "6f48f173-d9bf-485c-9425-67faeddc4653",
+            "path": "D:\\Codes\\dsh-tree-harness",
+            "title": "dsh-tree-harness"
+          }
+        ]
+      }
+    },
+    {
+      "id": "first_frame_permission_preset",
+      "label": "successor 首帧 permission/preset == 源生效权限预设",
+      "pass": true,
+      "expected": "danger-full-access",
+      "actual": "danger-full-access",
+      "detail": {
+        "sourceFromProjcache": "danger-full-access",
+        "sourceFromLogLastEvent": "danger-full-access",
+        "sourceFirstFrame": "danger-full-access"
+      }
+    },
+    {
+      "id": "first_frame_sandbox_mode",
+      "label": "successor 首帧 sandbox/mode == 源生效 sandbox 模式",
+      "pass": true,
+      "expected": "danger-full-access",
+      "actual": "danger-full-access",
+      "detail": {
+        "sourceFromProjcache": "danger-full-access",
+        "sourceFromLogLastEvent": "danger-full-access",
+        "sourceFirstFrame": "danger-full-access"
+      }
+    },
+    {
+      "id": "first_frame_approval_policy",
+      "label": "successor 首帧 approval/policy == 源生效审批策略",
+      "pass": true,
+      "expected": "never",
+      "actual": "never",
+      "detail": {
+        "sourceFromProjcache": "never",
+        "sourceFromLogLastEvent": "never",
+        "sourceFirstFrame": "never"
+      }
+    },
+    {
+      "id": "agent_preset",
+      "label": "successor agentPreset == 源 agentPreset",
+      "pass": true,
+      "expected": "standard",
+      "actual": "standard",
+      "detail": {
+        "sourceSessionEvent": "standard",
+        "sourceProjcache": "standard",
+        "successorSessionEvent": "standard",
+        "successorProjcache": "standard"
+      }
+    },
+    {
+      "id": "header_config",
+      "label": "request/header config（provider/model/reasoningEffort/maxTokens）与源相等",
+      "pass": true,
+      "expected": {
+        "provider": "zai-coding-cn",
+        "model": "glm-5.3-flash",
+        "reasoningEffort": "max",
+        "maxTokens": 131072
+      },
+      "actual": {
+        "provider": "zai-coding-cn",
+        "model": "glm-5.3-flash",
+        "reasoningEffort": "max",
+        "maxTokens": 131072
+      },
+      "detail": {
+        "sourceHeaderSeq": 2029,
+        "successorHeaderSeq": 14,
+        "diffs": [],
+        "sourceFirstHeaderConfig": {
+          "maxTokens": 131072,
+          "provider": "zai-coding-cn",
+          "model": "glm-5.3-flash",
+          "reasoningEffort": "max"
+        }
+      }
+    },
+    {
+      "id": "tools_count",
+      "label": "successor 首帧 tools 数量 == 源最近一帧 tools 数量",
+      "pass": true,
+      "expected": 86,
+      "actual": 86,
+      "detail": {
+        "sourceHeaderSeq": 2029,
+        "successorHeaderSeq": 14,
+        "missingInSuccessorCount": 0,
+        "extraInSuccessorCount": 0,
+        "missingInSuccessor": [],
+        "extraInSuccessor": []
+      }
+    },
+    {
+      "id": "handoff_prompt_present",
+      "label": "successor 首轮 user/message 是交接提示（含 handoff 文件路径；zh/en 均可）",
+      "pass": true,
+      "expected": {
+        "isHandoffPrompt": true,
+        "handoffFile": "HANDOFF-*.md"
+      },
+      "actual": {
+        "isHandoffPrompt": true,
+        "language": "zh",
+        "handoffFile": "D:\\Codes\\dsh-tree-harness\\HANDOFF-be9f4f06-20261115-105753.md",
+        "firstUserSeq": 10,
+        "textHead": "你是 session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016 的接替会话。上一个会话因上下文预算接近上限而把工作交棒给你。\n\n请先读取交接文件：D:\\Codes\\dsh-tree-harness\\HANDOFF-be9f4f06-20261115-105753.md\n\n文件中记录了任务、当前状态、决策、变更文件、下一步与未决问题。\n请从「下一步」继续推进：不要重做"
+      }
+    },
+    {
+      "id": "handoff_prompt_names_source",
+      "label": "交接提示点名的源会话 == --source（防止配对错误）",
+      "pass": true,
+      "expected": "session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016",
+      "actual": "session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016",
+      "detail": {
+        "normalized": {
+          "named": "be9f4f06-bb69-48e4-8ddb-710fdfdfc016",
+          "expected": "be9f4f06-bb69-48e4-8ddb-710fdfdfc016"
+        },
+        "language": "zh"
+      }
+    },
+    {
+      "id": "handoff_file_read",
+      "label": "successor 首轮确有读取 HANDOFF 文件的证据（read 调用 / 含文件内容的 tool/result）",
+      "pass": true,
+      "expected": ">=1 条强证据",
+      "actual": 2,
+      "detail": {
+        "strong": [
+          {
+            "kind": "tool_call",
+            "tool": "read",
+            "seq": 20,
+            "file": "D:\\Codes\\dsh-tree-harness\\HANDOFF-be9f4f06-20261115-105753.md"
+          },
+          {
+            "kind": "tool_result",
+            "seq": 21,
+            "head": "<path>D:\\Codes\\dsh-tree-harness\\HANDOFF-be9f4f06-20261115-105753.md</path>\n<type>file</type>\n<content>\n1: # Session handoff — 20261115-105753\n2: \n3: > Generated by the `session_handoff` tool. Read thi"
+          }
+        ],
+        "weakClaims": [
+          {
+            "kind": "tool_result_mention",
+            "seq": 544,
+            "head": "Found 22 matches\n\nCHANGELOG.md\nLine 84: ## [1.4.1] — 2026-11-14 · session-tree rail 收起态 React #300/#310 hook 崩溃修复（F8，无发布）\nLine 88: - **版本**：`packages/dsh-session-tree` `1.4.0` → **`1.4.1`**（仓内插件；**未发布"
+          },
+          {
+            "kind": "assistant_claim",
+            "seq": 597,
+            "head": "doc-sync-t30 finished: all version touchpoints synced, consistency scripts all green (version 23-24 checks, links 134 files, tables OK). Some leftover items noted (README.zh.md / AGENT-INSTALL.md v1.4"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 1530,
+            "head": "Found 216 matches\n\nD:\\Codes\\DSH动态流程引擎插件\\HANDOFF-089efdfa-20261111-174619.md\nLine 36: 3. M1 收口（依赖用户，先催）：①R-m1-05c——用户新开 root 聊天窗口把审批策略切 ask，发 `flow_run({\"flowPath\":\"D:/Codes/DSH动态流程引擎插件/evidence/m1/rea"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 1632,
+            "head": "Found 98 matches\n\nCHANGELOG.md\nLine 35:   - [ISSUE-draft-hmr-reload-race.md](docs/operations/ISSUE-draft-hmr-reload-race.md)：HMR 热重载替换工具注册对象 → 跨重载模型步对同名工具报 `UNKNOWN_TOOL`。含 2 个会话 18 次错误原文（`a3624bf7` s"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 2050,
+            "head": "Found 53 matches\n\nCHANGELOG.md\nLine 88: - **版本**：`packages/dsh-session-tree` `1.6.0` → **`1.6.1`**（仓内插件；**未发布 npm / 公开镜像**——镜像 tag 仍为 `v1.4.0` = `0343f0c`）。\nLine 97: - style-guard **34 → 46/46**：新增 A1"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 2815,
+            "head": "Found 22 matches\n\nCHANGELOG.md\nLine 84: ## [1.4.1] — 2026-11-14 · session-tree rail 收起态 React #300/#310 hook 崩溃修复（F8，无发布）\nLine 88: - **版本**：`packages/dsh-session-tree` `1.4.0` → **`1.4.1`**（仓内插件；**未发布"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 2837,
+            "head": "Found 216 matches\n\nD:\\Codes\\DSH动态流程引擎插件\\HANDOFF-089efdfa-20261111-174619.md\nLine 36: 3. M1 收口（依赖用户，先催）：①R-m1-05c——用户新开 root 聊天窗口把审批策略切 ask，发 `flow_run({\"flowPath\":\"D:/Codes/DSH动态流程引擎插件/evidence/m1/rea"
+          },
+          {
+            "kind": "tool_result_mention",
+            "seq": 2847,
+            "head": "Found 53 matches\n\nCHANGELOG.md\nLine 88: - **版本**：`packages/dsh-session-tree` `1.6.0` → **`1.6.1`**（仓内插件；**未发布 npm / 公开镜像**——镜像 tag 仍为 `v1.4.0` = `0343f0c`）。\nLine 97: - style-guard **34 → 46/46**：新增 A1"
+          }
+        ],
+        "basename": "HANDOFF-be9f4f06-20261115-105753.md"
+      }
+    },
+    {
+      "id": "successor_kind",
+      "label": "successor 接替类型 == root",
+      "pass": true,
+      "expected": "root",
+      "actual": {
+        "parentSession": null,
+        "delegationDepth": 0
+      }
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "pass": 12,
+    "fail": 0,
+    "verdict": "PASS"
+  }
+}

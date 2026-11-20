@@ -1,0 +1,399 @@
+{
+  "tool": "collect-skills",
+  "generatedAt": "2026-11-20T02:40:54.368Z",
+  "dshHome": "C:\\Users\\sir_c\\.dsh",
+  "expected": [
+    "tree-commander",
+    "tree-worker",
+    "session-handoff"
+  ],
+  "expectAt": "latest",
+  "sessions": [
+    {
+      "id": "89dd537d-352f-4242-adf0-6edb8bd70308",
+      "ok": true,
+      "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\session-89dd537d-352f-4242-adf0-6edb8bd70308\\session.v4.jsonl.zstd",
+      "logBytes": 8571962,
+      "frames": 4720,
+      "eventCount": 8495,
+      "found": true,
+      "expectAt": "latest",
+      "atCreation": {
+        "present": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "missing": [],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "seq": 12,
+        "count": 14,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "dsh-doc",
+          "html-explainer",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-pptx",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ]
+      },
+      "latest": {
+        "present": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "missing": [],
+        "targets": {
+          "tree-commander": true,
+          "tree-worker": true,
+          "session-handoff": true
+        },
+        "seq": 8303,
+        "count": 15,
+        "names": [
+          "archify",
+          "autoglm-browser-agent",
+          "diagnose-windows-sandbox-acl",
+          "dsh-doc",
+          "html-explainer",
+          "jiaoyuan-perspective",
+          "meta-run-intake",
+          "office",
+          "office-docx",
+          "office-pptx",
+          "office-xlsx",
+          "rsi-harness",
+          "session-handoff",
+          "tree-commander",
+          "tree-worker"
+        ]
+      },
+      "evolution": [
+        {
+          "seq": 12,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 14,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 1519,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 13,
+          "targets": [
+            "tree-commander",
+            "tree-worker"
+          ]
+        },
+        {
+          "seq": 1728,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 14,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 2347,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 3406,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 13,
+          "targets": [
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 3414,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 4473,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 14,
+          "targets": [
+            "tree-commander",
+            "tree-worker"
+          ]
+        },
+        {
+          "seq": 4481,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 4489,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 13,
+          "targets": [
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 4497,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 4740,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 14,
+          "targets": [
+            "tree-commander",
+            "tree-worker"
+          ]
+        },
+        {
+          "seq": 4748,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 5308,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 14,
+          "targets": [
+            "tree-commander",
+            "tree-worker"
+          ]
+        },
+        {
+          "seq": 5316,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 5645,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 14,
+          "targets": [
+            "tree-commander",
+            "tree-worker"
+          ]
+        },
+        {
+          "seq": 5653,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 6068,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 14,
+          "targets": [
+            "tree-commander",
+            "tree-worker"
+          ]
+        },
+        {
+          "seq": 6076,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 6627,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 14,
+          "targets": [
+            "tree-commander",
+            "tree-worker"
+          ]
+        },
+        {
+          "seq": 6635,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 7096,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 14,
+          "targets": [
+            "tree-commander",
+            "tree-worker"
+          ]
+        },
+        {
+          "seq": 7104,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 7926,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 13,
+          "targets": [
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 7934,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 8236,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 13,
+          "targets": [
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 8244,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 8290,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 13,
+          "targets": [
+            "session-handoff"
+          ]
+        },
+        {
+          "seq": 8303,
+          "type": "user/message",
+          "surfaceOp": "append",
+          "count": 15,
+          "targets": [
+            "tree-commander",
+            "tree-worker",
+            "session-handoff"
+          ]
+        }
+      ],
+      "expected": [
+        "tree-commander",
+        "tree-worker",
+        "session-handoff"
+      ],
+      "missing": [],
+      "skillLoads": [
+        {
+          "seq": 8418,
+          "name": "html-explainer"
+        }
+      ],
+      "firstUserMessageSeq": 10,
+      "firstUserMessageHead": "你是 session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016 的接替会话。上一个会话因上下文预算接近上限而把工作交棒给你。\n\n请先读取交接文件：D:\\Codes\\dsh-tree-harness\\HANDOFF-be9f4f06-20261115-105753.md\n\n文件中记录了任务、当前状态、决策、变更文件、下一步与未决问题。\n请从「下一步」继续推进：不要重做文件中已记为完成的工作，保持相同的工作目录与\n模型/思考等级，并用一小段话说明你…"
+    }
+  ],
+  "summary": {
+    "sessions": 1,
+    "found": 1,
+    "missingSessions": 0,
+    "allExpectedPresent": true,
+    "verdict": "PASS"
+  }
+}

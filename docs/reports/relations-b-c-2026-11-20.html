@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tree Runs 关系图升级方案解读 · B / C · 2026-11-20</title>
+<script>
+/* 尽早标记 JS 可用（供 CSS 隐藏降级提示），并尝试恢复主题；沙箱里 localStorage 会抛错 → try/catch */
+(function () {
+  var root = document.documentElement;
+  root.className += ' js';
+  try {
+    var m = localStorage.getItem('html-explainer-theme');
+    if (m === 'light' || m === 'dark') root.setAttribute('data-theme', m);
+  } catch (e) { /* 忽略：无存储权限 */ }
+})();
+</script>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#ffffff; --ink:#16202d; --ink2:#374553; --muted:#6a7684;
+    --line:#e2e8f0; --line2:#cdd7e3;
+    --brand:#2f6fed; --brand-soft:#eaf1ff;
+    --ok:#147a4b; --ok-soft:#e8f7ef; --ok-line:#b9e2cc;
+    --warn:#945700; --warn-soft:#fff4e0; --warn-line:#efd8ac;
+    --bad:#b02318; --bad-soft:#fdeceb; --bad-line:#f2c8c3;
+    --accent:#7a4bd0; --accent-soft:#f1ecff;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 10px 26px rgba(16,24,40,.07);
+    --radius:16px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  html[data-theme="dark"]{
+    --bg:#0d141e; --card:#141e2b; --ink:#e9eff8; --ink2:#c4d1e1; --muted:#9aabbf;
+    --line:#243141; --line2:#324256;
+    --brand:#6ea1ff; --brand-soft:#1a2740;
+    --ok:#5ed7a0; --ok-soft:#122a21; --ok-line:#24503d;
+    --warn:#f0b45a; --warn-soft:#2a2010; --warn-line:#574221;
+    --bad:#ff8f84; --bad-soft:#2c1614; --bad-line:#5a2b27;
+    --accent:#b79bff; --accent-soft:#221b36;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px rgba(0,0,0,.35);
+  }
+  @media (prefers-color-scheme: dark){
+    html:not([data-theme="light"]){
+      --bg:#0d141e; --card:#141e2b; --ink:#e9eff8; --ink2:#c4d1e1; --muted:#9aabbf;
+      --line:#243141; --line2:#324256;
+      --brand:#6ea1ff; --brand-soft:#1a2740;
+      --ok:#5ed7a0; --ok-soft:#122a21; --ok-line:#24503d;
+      --warn:#f0b45a; --warn-soft:#2a2010; --warn-line:#574221;
+      --bad:#ff8f84; --bad-soft:#2c1614; --bad-line:#5a2b27;
+      --accent:#b79bff; --accent-soft:#221b36;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:70px}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.72;font-size:16px;
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    -webkit-font-smoothing:antialiased;transition:background .18s,color .18s}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+  h1,h2,h3,h4{margin:0;line-height:1.3}
+  h2{font-size:25px;letter-spacing:.2px}
+  h3{font-size:18px}
+  p{margin:.55em 0}
+  a{color:var(--brand);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font-family:var(--mono);font-size:.86em;background:var(--brand-soft);border:1px solid var(--line);
+    border-radius:5px;padding:1px 5px;word-break:break-all}
+  .jsoff{margin:0;background:var(--warn-soft);border-bottom:1px solid var(--warn-line);color:var(--warn);
+    font-size:13.5px;padding:9px 0}
+  html.js .jsoff{display:none}
+
+  .hero{background:linear-gradient(135deg,var(--brand-soft),var(--card) 55%,var(--accent-soft));
+    border-bottom:1px solid var(--line);padding:34px 0 26px}
+  .hero-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .kicker{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:31px;margin:10px 0 6px}
+  .sub{color:var(--ink2);max-width:840px}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;
+    padding:4px 10px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--ink2)}
+  .badge.ok{border-color:var(--ok-line);background:var(--ok-soft);color:var(--ok)}
+  .badge.warn{border-color:var(--warn-line);background:var(--warn-soft);color:var(--warn)}
+  .badge.bad{border-color:var(--bad-line);background:var(--bad-soft);color:var(--bad)}
+  .badge.accent{border-color:var(--accent-soft);background:var(--accent-soft);color:var(--accent)}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  button.btn{font:inherit;font-size:13.5px;font-weight:600;padding:6px 12px;border-radius:9px;cursor:pointer;
+    border:1px solid var(--line2);background:var(--card);color:var(--ink2)}
+  button.btn:hover{border-color:var(--brand);color:var(--brand)}
+  nav.toc{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--card) 92%,transparent);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  html:not(.js) nav.toc{position:static}
+  .toc-in{display:flex;gap:6px;overflow-x:auto;padding:9px 0;white-space:nowrap;scrollbar-width:none}
+  .toc-in::-webkit-scrollbar{display:none}
+  .toc-in a{font-size:13px;font-weight:600;color:var(--ink2);padding:5px 10px;border-radius:8px}
+  .toc-in a:hover{background:var(--brand-soft);color:var(--brand);text-decoration:none}
+  main{padding:26px 0 12px}
+  section{margin:0 0 34px}
+  .sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+  .sec-num{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--brand);
+    background:var(--brand-soft);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+  .lead{font-size:16.5px;color:var(--ink);font-weight:600;margin:0 0 12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .pad{padding:18px 20px}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(238px,1fr))}
+  .kpi{padding:14px 16px}
+  .kpi .n{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:.3px}
+  .kpi .t{font-size:12.5px;color:var(--muted);font-weight:600}
+  .kpi .d{font-size:13px;color:var(--ink2);margin-top:4px}
+  .kpi.ok .n{color:var(--ok)} .kpi.warn .n{color:var(--warn)} .kpi.bad .n{color:var(--bad)} .kpi.accent .n{color:var(--accent)}
+  .concl{display:flex;gap:12px;padding:13px 16px;border-radius:12px;background:var(--card);
+    border:1px solid var(--line);box-shadow:var(--shadow);margin:10px 0}
+  .concl .tag{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+    font-weight:800;font-size:13px;background:var(--brand-soft);color:var(--brand);border:1px solid var(--line)}
+  .concl.ok .tag{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
+  .concl.bad .tag{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
+  .concl.warn .tag{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-line)}
+  .concl p{margin:0}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+  .tw table{min-width:660px} /* 窄屏横向滚动，别把表格压成一行一字的竖条 */
+  th,td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+  thead th{background:var(--brand-soft);color:var(--ink);font-size:12.5px;letter-spacing:.04em;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  td.center,th.center{text-align:center;white-space:nowrap}
+  th:first-child,td:first-child{min-width:158px}
+  td:first-child code{word-break:keep-all}
+  .ok-t{color:var(--ok);font-weight:700} .bad-t{color:var(--bad);font-weight:700} .warn-t{color:var(--warn);font-weight:700}
+  .dim{color:var(--muted)}
+  .cols{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .panel{padding:16px 18px}
+  .panel h3{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:17px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);flex:none}
+  .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)} .dot.accent{background:var(--accent)}
+  ul.tight{margin:.4em 0 .2em;padding-left:1.15em}
+  ul.tight li{margin:.28em 0}
+  .fig{padding:14px;border-radius:14px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+  .fig svg{width:100%;height:auto;display:block}
+  .fig .cap{font-size:12.5px;color:var(--muted);margin-top:8px;text-align:center}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--ink2);margin-top:10px;justify-content:center}
+  .legend i{display:inline-block;width:26px;height:0;border-top:2px solid var(--brand);vertical-align:middle;margin-right:6px}
+  .legend i.dash{border-top-style:dashed;border-top-color:var(--muted)}
+  .legend i.warnline{border-top-color:var(--warn);border-top-width:3px}
+  .legend .box{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid var(--line2);background:var(--card);vertical-align:-2px;margin-right:6px}
+  .quote{border-left:3px solid var(--brand);background:var(--brand-soft);border-radius:0 10px 10px 0;
+    padding:10px 14px;font-size:14.5px;color:var(--ink2);margin:12px 0}
+  details{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:0 16px;margin:10px 0}
+  details[open]{padding-bottom:10px}
+  summary{cursor:pointer;font-weight:700;padding:12px 0;font-size:14.5px}
+  summary::marker{color:var(--brand)}
+  .evid{font-size:12.5px;color:var(--muted);margin-top:6px}
+  .evid code{background:transparent;border:none;padding:0;color:var(--ink2)}
+  .path{font-family:var(--mono);font-size:12px;color:var(--ink2);word-break:break-all}
+  .footer{border-top:1px solid var(--line);margin-top:26px;padding:18px 0 40px;color:var(--muted);font-size:12.8px}
+  #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(12px);opacity:0;
+    background:var(--ink);color:var(--bg);font-size:13px;padding:8px 14px;border-radius:999px;
+    pointer-events:none;transition:.18s;z-index:60}
+  #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .grid2{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  .choice{padding:16px 18px;border-radius:14px;border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow)}
+  .choice.rec{border-color:var(--ok-line);box-shadow:0 0 0 2px var(--ok-soft),var(--shadow)}
+  .choice h3{margin-bottom:6px}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;
+    background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok-line);margin-left:6px;vertical-align:2px}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:8px 0 0}
+  .steps li{counter-increment:s;position:relative;padding-left:28px;margin:6px 0;font-size:14px}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:19px;height:19px;border-radius:50%;
+    background:var(--brand-soft);color:var(--brand);font-size:11.5px;font-weight:800;display:grid;place-items:center;border:1px solid var(--line)}
+  @media (max-width:1060px){ h1{font-size:27px} .wrap{padding:0 16px} }
+  @media (max-width:720px){
+    body{font-size:15px} h1{font-size:23px} h2{font-size:21px}
+    .hero{padding:24px 0 18px} .pad{padding:15px 14px} .kpi .n{font-size:22px}
+    .sec-head{flex-wrap:wrap}
+  }
+  @media print{
+    nav.toc,.controls,#toast,.jsoff{display:none !important}
+    body{background:#fff;color:#000}
+    .card,.fig,.choice,details{box-shadow:none}
+    details{border:1px solid #bbb}
+    a{color:#000;text-decoration:none}
+    section{break-inside:avoid}
+  }
+</style>
+</head>
+<body data-page-path="D:\Codes\dsh-tree-harness\docs\reports\relations-b-c-2026-11-20.html">
+<p class="jsoff">脚本未启用：本页正文、表格与图示均为静态内容，可正常阅读；主题切换与复制路径需要启用脚本（在 DSH 侧栏预览中需开启「设置 → 通用 → Coding Tools」，或点预览右上角「在应用外打开」）。</p>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <span class="kicker">Tree Runs · 关系图升级</span>
+      <span class="badge ok">A 已实施</span>
+      <span class="badge warn">B 候选 · 推荐</span>
+      <span class="badge bad">C 候选 · 不推荐</span>
+    </div>
+    <h1>B / C 升级方案图文解读：要不要把树图改成 Flow Runs 那种图？</h1>
+    <p class="sub">这份页面只回答一件事：在已完成 A（点亮置顶 + 障碍感知弧线路由）之后，<strong>是否值得再投入做 B（Hierarchy / Dependency 双视图）或 C（统一 flow 风格单图）</strong>。所有事实来自仓库内的方案记录与代码，不含推演数字。</p>
+    <div class="badges">
+      <span class="badge">session-tree v1.8.4</span>
+      <span class="badge">tree-engine v0.13.1</span>
+      <span class="badge">panel-render 107/107</span>
+      <span class="badge accent">事实截至 2026-11-20</span>
+    </div>
+    <div class="controls">
+      <button class="btn" id="theme-toggle" type="button" aria-live="polite">主题：自动</button>
+      <button class="btn" id="copy-path" type="button">复制本页路径</button>
+      <button class="btn" id="expand-all" type="button">展开全部细节</button>
+      <button class="btn" id="print-page" type="button">打印 / 存 PDF</button>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="页内目录">
+  <div class="wrap">
+    <div class="toc-in">
+      <a href="#sec-0">一页看懂</a>
+      <a href="#sec-1">三套「关系」的语义</a>
+      <a href="#sec-a">A：已经做了什么</a>
+      <a href="#sec-b">B：双视图</a>
+      <a href="#sec-c">C：统一单图</a>
+      <a href="#sec-compare">横向对比</a>
+      <a href="#sec-decide">怎么定</a>
+      <a href="#sec-evid">证据与术语</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<section id="sec-0">
+  <div class="sec-head"><span class="sec-num">00</span><h2>一页看懂</h2></div>
+  <div class="concl ok"><span class="tag">1</span><p><strong>A 已经把「图看不清」这个痛点解决了。</strong>做法是：未点亮的依赖虚线画在节点盒<em>后面</em>、点亮后压到最上层并加同色光晕；依赖边不再走贝塞尔直线，而是「障碍感知」的正交走线 + 圆角弧，绕开节点盒。已随 session-tree <strong>v1.8.3</strong> 交付，相关断言是 panel-render 的 V2-44..47。</p></div>
+  <div class="concl warn"><span class="tag">2</span><p><strong>B 是「加一个视图」，不是「改掉现在的图」。</strong>Hierarchy 视图保持现状（从属树 + 依赖虚线），新增 Dependency 视图：只把 <code>dependencies</code> 当边，按最长路径分层、同源/同目标边扇出、入度 ≥2 的节点加 join 标记。它借用的是 Flow Runs 的<em>布局语言</em>，不是它的语义。成本约 1.5 天，可逆，<strong>推荐作为下一步</strong>。</p></div>
+  <div class="concl bad"><span class="tag">3</span><p><strong>C 是「换一套世界观」，代价最高。</strong>把 <code>parent</code> 也当成边，整张图按 DAG 布局，只用一个视图。视觉上最像 Flow Runs，但会<strong>压平「谁派发谁」的层级</strong>（多层层级退化成并列），且现有按 parent 分层的断言要成片改口径。成本约 3 天，<strong>不建议</strong>，除非明确要求「两个面板视觉完全同构」。</p></div>
+
+  <div class="grid" style="margin-top:16px">
+    <div class="card kpi ok"><div class="t">A · 已实施</div><div class="n">v1.8.3</div><div class="d">点亮置顶 + 16% 光晕 + 障碍感知路由 + 圆角弧（半径 10）</div></div>
+    <div class="card kpi warn"><div class="t">B · 双视图（推荐）</div><div class="n">≈ 1.5 天</div><div class="d">Hierarchy 保持现状；新增 Dependency DAG 视图 + 视图记忆</div></div>
+    <div class="card kpi bad"><div class="t">C · 统一单图</div><div class="n">≈ 3 天</div><div class="d">parent 也当边做 DAG；层级压平 + 断言大改</div></div>
+    <div class="card kpi accent"><div class="t">不可混用的语义</div><div class="n">3 套</div><div class="d">parent=从属 / dependencies=派发前置门 / flow 边=控制流</div></div>
+  </div>
+
+  <div class="quote" style="margin-top:16px">一句话决策：<strong>你要的是「依赖一眼看清」就选 B；你要的是「和 Flow Runs 长得一模一样」才考虑 C</strong>——但 C 会让层级信息让位，需要接受用缩进/面包屑来补。</div>
+</section>
+
+<section id="sec-1">
+  <div class="sec-head"><span class="sec-num">01</span><h2>先分清三套「关系」，这是所有取舍的根</h2></div>
+  <p class="lead">树里的两种边，和 Flow Runs 里的边，语义完全不同；能不能「照抄」，取决于你愿不愿意丢掉其中一层信息。</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>体系</th><th>边的含义</th><th>有条件 / 数据吗</th><th>能成环吗</th><th>现在的画法</th></tr></thead>
+      <tbody>
+        <tr><td><strong>tree <code>parent</code></strong></td><td>组织从属：谁派发了谁（严格树，每叶至多一个父）</td><td>没有</td><td class="ok-t">否（严格树）</td><td>实线（品牌色），父 → 子</td></tr>
+        <tr><td><strong>tree <code>dependencies</code></strong></td><td>派发前置门：目标叶必须等前置叶<em>结算</em>后才能派发</td><td>无数据传递、无条件表达式、无 join 语义</td><td class="warn-t">引擎拦环，但可跨层反向指</td><td>虚线，目标等前置</td></tr>
+        <tr><td><strong>flow 引擎的边</strong></td><td>执行顺序 / 控制流：A 完成后才执行 B，可带 <code>when</code> 条件</td><td>数据走变量池，<strong>不在边上</strong>；入边 ≥2 = <code>join(all)</code></td><td class="ok-t">否（DAG）</td><td>折线 + 扇出偏移 + join 入边序号；未选中虚线，选中实线加粗</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="concl"><span class="tag">!</span><p>所以「把 tree 画成 flow 那种一张 DAG」不是纯视觉改造：要么把 <code>parent</code> 降格成普通边（层级消失），要么保留两套边在同一张图里（视觉噪音与语义混淆）。<strong>B 的做法是「分视图」，C 的做法是「合成一张」</strong>——这就是两者的根本差别。</p></div>
+  <p class="evid">证据：<code>docs/operations/panel-v2/ROADMAP-relations-2026-11-17.md</code> §0；flow 侧只读参照 <code>spike/dsh-flow-plugin/client.js</code>（布局与边绘制章节）。</p>
+</section>
+
+<section id="sec-a">
+  <div class="sec-head"><span class="sec-num">02</span><h2>A（已实施）：不换布局，只让关系「浮上来」</h2></div>
+  <p class="lead">目标只有一个：虚线被节点盒挡住、点亮后仍被压住 —— 这两件事已经结束。</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 900 300" role="img" aria-label="A 方案示意：父子实线，依赖虚线走列间通道并圆角，点亮边位于节点之上">
+      <defs>
+        <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" style="fill:var(--brand)"></path>
+        </marker>
+        <marker id="arrB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" style="fill:var(--muted)"></path>
+        </marker>
+      </defs>
+      <g style="fill:var(--card);stroke:var(--line2);stroke-width:1.2">
+        <rect x="40" y="110" width="170" height="54" rx="9"></rect>
+        <rect x="310" y="30" width="170" height="54" rx="9"></rect>
+        <rect x="310" y="112" width="170" height="54" rx="9"></rect>
+        <rect x="310" y="196" width="170" height="54" rx="9"></rect>
+        <rect x="600" y="112" width="170" height="54" rx="9"></rect>
+      </g>
+      <g style="font:12.5px var(--mono);fill:var(--ink)">
+        <text x="56" y="142">root</text>
+        <text x="326" y="52">C1-release</text>
+        <text x="326" y="134">C2-e2e</text>
+        <text x="326" y="218">A1-budget</text>
+        <text x="616" y="134">D1-integrate</text>
+      </g>
+      <g style="stroke:var(--brand);stroke-width:1.8;fill:none;marker-end:url(#arrA)">
+        <path d="M210 137 C 255 137, 265 57, 310 57"></path>
+        <path d="M210 137 C 255 137, 265 139, 310 139"></path>
+        <path d="M210 137 C 255 137, 265 223, 310 223"></path>
+      </g>
+      <g style="stroke:var(--muted);stroke-width:1.6;fill:none;stroke-dasharray:7 5;marker-end:url(#arrB)">
+        <path d="M480 57 H 536 Q 546 57 546 67 V 130 Q 546 139 556 139 H 600"></path>
+        <path d="M480 139 H 600"></path>
+        <path d="M480 223 H 536 Q 546 223 546 213 V 148 Q 546 139 556 139"></path>
+      </g>
+      <g style="font:11.5px var(--mono);fill:var(--muted)">
+        <text x="884" y="86" text-anchor="end">虚线 = 等待前置结算</text>
+        <text x="700" y="240">虚线走列间通道，圆角折返</text>
+        <text x="700" y="258">（点选后整条压到节点盒之上）</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><i></i>父 → 子（从属，实线）</span>
+      <span><i class="dash"></i>目标等前置（依赖，虚线）</span>
+      <span><span class="box"></span>节点盒（位于边之上）</span>
+    </div>
+    <div class="cap">示意：D1-integrate 依赖 C1 / C2 / A1 三个前置；虚线从列间空道绕行，避免直穿节点盒。</div>
+  </div>
+
+  <div class="cols" style="margin-top:14px">
+    <div class="card panel">
+      <h3><span class="dot ok"></span>四个实现要点</h3>
+      <ul class="tight">
+        <li><strong>边分两层</strong>：<code>st-tr2-edges-back</code> 在节点盒之前，<code>st-tr2-edges-front</code> 在之后——点亮边永远在最上层。</li>
+        <li><strong>障碍感知路由</strong>：<code>depRoutePoints</code> 区分 forward（列间竖直通道）/ same-column（列右侧通道）/ backward（反向，保留兜底曲线但强制进前层）。</li>
+        <li><strong>圆角弧</strong>：<code>roundedPathOf</code> 在折点用二次贝塞尔画圆角（半径 10），也就是你要的「弧形线」。</li>
+        <li><strong>点亮语义不变</strong>：选中节点相关边进前层 + 16% 同色光晕；无关边压到 0.12；悬浮仍显示「A is parent of B / B depends on A」。</li>
+      </ul>
+    </div>
+    <div class="card panel">
+      <h3><span class="dot"></span>它解决不了什么</h3>
+      <ul class="tight">
+        <li>依赖<strong>密度</strong>高时（一棵树里依赖边接近叶数，或单节点入度 ≥3），仍需要「点了才看清」，因为主视图的列是按 <code>parent</code> 层级排的，不按依赖拓扑排。</li>
+        <li>同列多条依赖只能靠列右侧 lane 扇出，极端情况下会形成「梳子」形长通道——可读但不直观。</li>
+        <li>这正是 B 想补的洞，也是 C 想一次性换掉的根。</li>
+      </ul>
+    </div>
+  </div>
+  <p class="evid">证据：ROADMAP §1；代码 <code>packages/dsh-session-tree/client.js</code>（<code>depRoutePoints</code> / <code>roundedPathOf</code> / <code>TreeGraph</code>）；断言 V2-44..47；实测 wave2 的 9 条依赖边在同列场景下画布由 484 扩到 578（v1.8.4 修复裁切）。</p>
+</section>
+
+<section id="sec-b">
+  <div class="sec-head"><span class="sec-num">03</span><h2>B（候选，推荐）：Hierarchy | Dependency 双视图</h2></div>
+  <p class="lead">把「从属」和「依赖」拆成两个视角：需要组织关系时看树，需要判断「谁在等谁」时切到依赖视图——切换成本一次点击。</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 900 320" role="img" aria-label="B 方案示意：依赖视图按最长路径分层，入度三的节点带 join 标记">
+      <defs>
+        <marker id="arrB2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" style="fill:var(--brand)"></path>
+        </marker>
+      </defs>
+      <g style="font:12px var(--mono);fill:var(--muted)">
+        <text x="60" y="26">level 1（可立即派发）</text>
+        <text x="340" y="26">level 2</text>
+        <text x="620" y="26">level 3（收口）</text>
+      </g>
+      <g style="stroke:var(--line);stroke-width:1;stroke-dasharray:3 6">
+        <path d="M300 34 V 290"></path>
+        <path d="M580 34 V 290"></path>
+      </g>
+      <g style="fill:var(--card);stroke:var(--line2);stroke-width:1.2">
+        <rect x="60" y="60" width="160" height="50" rx="8"></rect>
+        <rect x="60" y="140" width="160" height="50" rx="8"></rect>
+        <rect x="60" y="220" width="160" height="50" rx="8"></rect>
+        <rect x="340" y="140" width="160" height="50" rx="8"></rect>
+        <rect x="620" y="104" width="170" height="56" rx="8"></rect>
+      </g>
+      <g style="font:12px var(--mono);fill:var(--ink)">
+        <text x="76" y="90">A1-budget</text>
+        <text x="76" y="170">C1-release</text>
+        <text x="76" y="250">C2-e2e</text>
+        <text x="356" y="170">D1a-docs</text>
+        <text x="636" y="128">D1-integrate</text>
+        <text x="636" y="146" style="font-size:10.5px;fill:var(--muted)">等 3 个前置</text>
+      </g>
+      <g style="stroke:var(--muted);stroke-width:1.5;fill:none;stroke-dasharray:6 4;marker-end:url(#arrB2)">
+        <path d="M220 85 H 262 Q 272 85 272 95 V 155 Q 272 165 282 165 H 340"></path>
+        <path d="M220 165 H 340"></path>
+        <path d="M220 245 H 262 Q 272 245 272 235 V 175 Q 272 165 282 165"></path>
+        <path d="M500 165 H 548 Q 558 165 558 155 V 132 Q 558 122 568 122 H 620"></path>
+      </g>
+      <g>
+        <circle cx="762" cy="132" r="13" style="fill:var(--ok-soft);stroke:var(--ok-line)"></circle>
+      </g>
+      <text x="762" y="137" style="font:11px var(--mono);fill:var(--ok);text-anchor:middle">3</text>
+      <text x="736" y="180" style="font:10.5px var(--mono);fill:var(--muted)">入边数 = 等待的前置数</text>
+      <text x="60" y="300" style="font:11.5px var(--mono);fill:var(--muted)">扇出偏移 bend =（序号 −(n−1)/2）× 14，平行边不重叠；层级序号画在列头</text>
+    </svg>
+    <div class="cap">示意：同一批叶子换成「只画依赖」的 DAG 视图；D1 的三条前置在 level 1/2 一眼看清，不需要点选。</div>
+  </div>
+
+  <div class="cols" style="margin-top:14px">
+    <div class="card panel">
+      <h3><span class="dot ok"></span>收益</h3>
+      <ul class="tight">
+        <li>依赖密集的树（如 wave2 的 D1 等 3 个前置）在依赖视图里<strong>天然可读</strong>，不再依赖「点一下高亮」。</li>
+        <li>join 标记直接回答「它在等几个前置」，比数虚线快。</li>
+        <li>Hierarchy 视图完全不动 —— 从属语义不丢，属于<strong>纯增量</strong>。</li>
+      </ul>
+    </div>
+    <div class="card panel">
+      <h3><span class="dot warn"></span>成本与风险</h3>
+      <ul class="tight">
+        <li>约 <strong>1.5 天</strong>：布局可复用现有分层算法（<code>treeHierarchyOf</code> 的 visited 防环逻辑），加视图切换与测试。</li>
+        <li>风险 1：两套视图的认知负担 —— 缓解办法是视图切换按钮放在图区工具条，并在列头写清「按从属 / 按依赖」。</li>
+        <li>风险 2：记住用户选择（需要持久化，localStorage 已封装且异常静默）。</li>
+        <li>触发条件：单树依赖边 ≥ 叶数，或单节点入度 ≥3 的树占比变多。</li>
+      </ul>
+    </div>
+  </div>
+  <p class="evid">证据：ROADMAP §2；flow 侧布局思路只读参照（最长路径分层 + 扇出偏移），不改变 tree 的任何契约。</p>
+</section>
+
+<section id="sec-c">
+  <div class="sec-head"><span class="sec-num">04</span><h2>C（候选，不推荐）：统一 flow 风格单图</h2></div>
+  <p class="lead">一张图里同时画「从属」和「依赖」，用线型区分，整体按 DAG 布局。视觉最统一，但会牺牲层级直觉。</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 900 320" role="img" aria-label="C 方案示意：parent 与 dependencies 混在同一 DAG，层级被压平">
+      <defs>
+        <marker id="arrC1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" style="fill:var(--brand)"></path>
+        </marker>
+        <marker id="arrC2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" style="fill:var(--bad)"></path>
+        </marker>
+      </defs>
+      <g style="fill:var(--card);stroke:var(--line2);stroke-width:1.2">
+        <rect x="40" y="130" width="150" height="50" rx="8"></rect>
+        <rect x="260" y="40" width="150" height="50" rx="8"></rect>
+        <rect x="260" y="130" width="150" height="50" rx="8"></rect>
+        <rect x="260" y="220" width="150" height="50" rx="8"></rect>
+        <rect x="500" y="130" width="150" height="50" rx="8"></rect>
+        <rect x="720" y="130" width="150" height="50" rx="8"></rect>
+      </g>
+      <g style="font:12px var(--mono);fill:var(--ink)">
+        <text x="56" y="160">root（容器）</text>
+        <text x="276" y="70">commander</text>
+        <text x="276" y="160">worker-1</text>
+        <text x="276" y="250">worker-2</text>
+        <text x="516" y="160">sub-leaf</text>
+        <text x="736" y="160">final</text>
+      </g>
+      <g style="stroke:var(--brand);stroke-width:1.8;fill:none;marker-end:url(#arrC1)">
+        <path d="M190 155 C 220 155, 230 65, 260 65"></path>
+        <path d="M190 155 C 220 155, 230 155, 260 155"></path>
+        <path d="M190 155 C 220 155, 230 245, 260 245"></path>
+        <path d="M410 155 H 500"></path>
+        <path d="M650 155 H 720"></path>
+      </g>
+      <g style="stroke:var(--bad);stroke-width:1.6;fill:none;stroke-dasharray:6 4;marker-end:url(#arrC2)">
+        <path d="M410 65 C 445 65, 445 140, 500 148"></path>
+        <path d="M410 245 C 445 245, 445 176, 500 168"></path>
+      </g>
+      <g style="font:11.5px var(--mono);fill:var(--bad)">
+        <text x="470" y="282">层级被压平：commander 与 worker 变成同层</text>
+      </g>
+      <g style="font:11.5px var(--mono);fill:var(--muted)">
+        <text x="40" y="306" style="fill:var(--brand)">实线 = parent</text>
+        <text x="196" y="306" style="fill:var(--bad)">虚线 = dependencies</text>
+      </g>
+    </svg>
+    <div class="cap">示意：parent 与依赖混在一张 DAG 里，线型能区分，但「谁派发了谁」不再由图本身表达，只能靠缩进/面包屑补。</div>
+  </div>
+
+  <div class="cols" style="margin-top:14px">
+    <div class="card panel">
+      <h3><span class="dot bad"></span>收益</h3>
+      <ul class="tight">
+        <li>视觉上与 Flow Runs 完全一致，一套图语言、一套交互习惯。</li>
+        <li>如果未来 tree 与 flow 的关系进一步融合（例如树节点直接复用 flow 节点），这张图是自然的起点。</li>
+      </ul>
+    </div>
+    <div class="card panel">
+      <h3><span class="dot bad"></span>代价（这是不建议的原因）</h3>
+      <ul class="tight">
+        <li><strong>层级信息丢失</strong>：parent 本质是树，转 DAG 后多层从属退化为并列，直接削弱「根 → 指挥 → 执行」的直觉。</li>
+        <li><strong>回归面最大</strong>：现有 V2-6 / V2-7 / V2-9 / V2-16..20 等按 parent 分层、边数、尺寸的断言要成片改口径；约 3 天。</li>
+        <li><strong>join 语义并不存在</strong>：tree 的 dependencies 没有 join 概念，强行画 join 会误导读者以为存在「全部前置通过才放行」的语义。</li>
+        <li>触发条件：只有当你明确要求「两个面板视觉完全同构」且接受层级用其他形式表达时才考虑。</li>
+      </ul>
+    </div>
+  </div>
+  <p class="evid">证据：ROADMAP §3；断言清单 V2-6/V2-7/V2-9/V2-16..20（parent 分层、边数、尺寸）。</p>
+</section>
+
+<section id="sec-compare">
+  <div class="sec-head"><span class="sec-num">05</span><h2>横向对比：同样一个问题，三种回答</h2></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>维度</th><th>A（已实施）</th><th>B（候选，推荐）</th><th>C（候选，不推荐）</th></tr></thead>
+      <tbody>
+        <tr><td>改动性质</td><td class="ok-t">渲染层增强，零契约变化</td><td class="ok-t">新增视图，Hierarchy 不动</td><td class="bad-t">布局重写，主视图替换</td></tr>
+        <tr><td>从属层级（谁派发谁）</td><td>保留（唯一视图）</td><td>保留（默认视图）</td><td class="bad-t">被压平，需外挂缩进/面包屑</td></tr>
+        <tr><td>依赖可读性</td><td>点选后清晰；密集时仍需逐点</td><td class="ok-t">依赖视图一眼看清 + join 计数</td><td>一张图里两套边，噪音最大</td></tr>
+        <tr><td>与 Flow Runs 的一致性</td><td>局部借鉴（走线、点亮）</td><td>依赖视图借其布局语言</td><td class="ok-t">视觉完全一致</td></tr>
+        <tr><td>成本</td><td class="dim">已完成</td><td>≈ 1.5 天</td><td>≈ 3 天</td></tr>
+        <tr><td>回归面</td><td class="dim">已覆盖 107/107</td><td>新增视图断言，旧断言不动</td><td class="bad-t">成片断言改口径</td></tr>
+        <tr><td>可逆性</td><td class="dim">—</td><td class="ok-t">高（删视图即可回到 A）</td><td class="warn-t">低（主视图换血）</td></tr>
+        <tr><td>建议</td><td>保持</td><td class="ok-t">推荐下一步</td><td class="bad-t">暂不做（除非明确要求同构）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="evid">成本与回归面来自 ROADMAP §2 / §3 的估算口径；测试现状 panel-render 107/107、style-guard 51/51。</p>
+</section>
+
+<section id="sec-decide">
+  <div class="sec-head"><span class="sec-num">06</span><h2>怎么定：三个问题，一条推荐路径</h2></div>
+  <div class="grid2">
+    <div class="choice rec">
+      <h3>选 B <span class="pill">推荐</span></h3>
+      <p>当你满足其中任意一条：<br>① 经常需要判断「谁在等谁」；② 一棵树里依赖边密度接近叶数；③ 希望保留从属语义，同时把依赖看明白。</p>
+      <ul class="steps">
+        <li>依赖视图复用 <code>treeHierarchyOf</code> 的分层与防环，边按 <code>dependencies</code> 生成。</li>
+        <li>同源/同目标边按 <code>bend</code> 扇出；入度 ≥2 画 join 圆标 + 数字。</li>
+        <li>视图切换放图区工具条 + 记住选择；补 V2 断言与真机复验（约 1.5 天）。</li>
+      </ul>
+    </div>
+    <div class="choice">
+      <h3>选 C</h3>
+      <p>只有当你明确说：「我不在乎图上是否还能看出层级，我要两个面板长得一模一样。」<br>否则不划算：成本翻倍、层级直觉丢失、旧断言成片改。</p>
+      <ul class="steps">
+        <li>先把层级信息改由缩进/面包屑承载（否则用户会失去「谁派发谁」）。</li>
+        <li>parent 与 dependencies 进同一 DAG 布局，线型 + 图例强区分。</li>
+        <li>重写 V2-6/V2-7/V2-9/V2-16..20 等断言，并做真机回归（约 3 天）。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="quote" style="margin-top:14px">维持现状也可以：A 已经让「关系可见」不再依赖脑补。<strong>B 是增量，C 是换血</strong>——如果你倾向「先用起来再决定」，B 的风险最低；如果你想彻底统一两套图，再评估 C。</div>
+</section>
+
+<section id="sec-evid">
+  <div class="sec-head"><span class="sec-num">07</span><h2>证据、术语与边界</h2></div>
+  <details>
+    <summary>权威源与证据指针</summary>
+    <div class="tw" style="margin-top:8px">
+      <table>
+        <thead><tr><th>内容</th><th>文件 / 章节</th></tr></thead>
+        <tbody>
+          <tr><td>三案定义、成本、触发条件、边界</td><td><code>docs/operations/panel-v2/ROADMAP-relations-2026-11-17.md</code> §0–§5</td></tr>
+          <tr><td>A 的实现与导出纯函数</td><td><code>packages/dsh-session-tree/client.js</code>（<code>depRoutePoints</code> / <code>roundedPathOf</code> / <code>TreeGraph</code>）</td></tr>
+          <tr><td>A 的断言</td><td><code>packages/dsh-session-tree/test/panel-render.test.cjs</code> V2-44..47</td></tr>
+          <tr><td>flow 侧只读参照</td><td><code>spike/dsh-flow-plugin/client.js</code>（布局 / 边绘制章节）</td></tr>
+          <tr><td>版本与测试口径</td><td><code>README.md</code> 组件表；<code>agent.md</code> §1 D39 行</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+  <details>
+    <summary>术语表（读图前先对齐）</summary>
+    <ul class="tight">
+      <li><strong>leaf（叶）</strong>：树里的一个节点；可能是一个真实子会话，也可能只是容器。</li>
+      <li><strong>root 容器</strong>：建树时自动生成的根叶，通常不接 done 事件，所以「树级状态」不能只看它。</li>
+      <li><strong>结算</strong>：叶的 <code>runtime.state</code> 进入成功/失败/超时等终态（不是 <code>status</code> 字段）。</li>
+      <li><strong>依赖闸</strong>：目标叶的所有 <code>dependencies</code> 结算后才能派发；无依赖时必须<strong>省略该键</strong>（空数组会被拒绝）。</li>
+      <li><strong>join</strong>：flow 的语义（多条入边需全部完成）；tree 的 dependencies <strong>没有</strong> join 概念。</li>
+    </ul>
+  </details>
+  <details>
+    <summary>本页不承诺什么</summary>
+    <ul class="tight">
+      <li>成本是方案记录里的估算（半天 / 1.5 天 / 3 天），不是排期承诺。</li>
+      <li>B / C 的图是<strong>示意</strong>，用于比较结构与取舍，不是实现截图。</li>
+      <li>无论选 B 还是 C，都保持：<code>tree-state.json</code> 契约不变、<code>/tree-panel</code> 投影字段不变、<code>tree_verify</code> 与依赖闸语义不变。</li>
+    </ul>
+  </details>
+  <p class="evid">事实截至 2026-11-20；口径以仓库内 ROADMAP 与 <code>agent.md</code> 为准。若后续 flow 面板推出新的关系图语言并被认可，B/C 的取舍应重新评估。</p>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap" style="padding:0">
+    <p><strong>Tree Runs 关系图升级方案解读</strong> · 生成于 2026-11-20 · 单文件离线页（无外部依赖）</p>
+    <p>页面路径：<span class="path">D:\Codes\dsh-tree-harness\docs\reports\relations-b-c-2026-11-20.html</span></p>
+    <p>在 DSH 侧栏预览中若按钮无反应：设置 → 通用 → Coding Tools 打开，或点预览右上角「在应用外打开」。静态模式下正文与图示依然完整。</p>
+  </div>
+</footer>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var btnTheme = document.getElementById('theme-toggle');
+  var btnCopy = document.getElementById('copy-path');
+  var btnExpand = document.getElementById('expand-all');
+  var btnPrint = document.getElementById('print-page');
+  var toast = document.getElementById('toast');
+  var toastTimer = 0;
+  var modes = ['auto', 'light', 'dark'];
+  var labels = { auto: '主题：自动', light: '主题：浅色', dark: '主题：深色' };
+
+  function currentMode() {
+    var m = root.getAttribute('data-theme');
+    return m === 'light' || m === 'dark' ? m : 'auto';
+  }
+  function applyMode(m) {
+    if (m === 'auto') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', m);
+    try { localStorage.setItem('html-explainer-theme', m); } catch (e) { /* 忽略 */ }
+    if (btnTheme) {
+      btnTheme.textContent = labels[m];
+      btnTheme.setAttribute('data-mode', m);
+    }
+  }
+  function showToast(msg) {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.className = 'on';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.className = ''; }, 1800);
+  }
+
+  if (btnTheme) {
+    btnTheme.textContent = labels[currentMode()];
+    btnTheme.addEventListener('click', function () {
+      var next = modes[(modes.indexOf(currentMode()) + 1) % modes.length];
+      applyMode(next);
+      showToast(labels[next]);
+    });
+  }
+
+  function pagePath() {
+    var fromBody = document.body.getAttribute('data-page-path') || '';
+    if (fromBody) return fromBody;
+    try { return decodeURIComponent(location.pathname); } catch (e) { return ''; }
+  }
+  if (btnCopy) {
+    btnCopy.addEventListener('click', function () {
+      var text = pagePath();
+      function fallback() {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          var ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          showToast(ok ? '路径已复制' : '复制失败，请手动选中页面底部路径');
+        } catch (e) {
+          showToast('复制失败，请手动选中页面底部路径');
+        }
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { showToast('路径已复制'); }).catch(fallback);
+      } else {
+        fallback();
+      }
+    });
+  }
+
+  if (btnExpand) {
+    btnExpand.addEventListener('click', function () {
+      var list = document.querySelectorAll('details');
+      var anyClosed = false;
+      for (var i = 0; i < list.length; i++) { if (!list[i].open) anyClosed = true; }
+      for (var j = 0; j < list.length; j++) list[j].open = anyClosed;
+      showToast(anyClosed ? '已展开全部细节' : '已折叠全部细节');
+    });
+  }
+  if (btnPrint) {
+    btnPrint.addEventListener('click', function () {
+      var list = document.querySelectorAll('details');
+      for (var i = 0; i < list.length; i++) list[i].open = true;
+      setTimeout(function () { try { window.print(); } catch (e) { showToast('当前环境不允许打印'); } }, 60);
+    });
+  }
+})();
+</script>
+</body>
+</html>

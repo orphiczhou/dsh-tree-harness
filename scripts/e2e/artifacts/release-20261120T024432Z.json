@@ -1,0 +1,204 @@
+{
+  "tool": "release-e2e",
+  "version": "1.0.0",
+  "mode": "live",
+  "real_machine": true,
+  "timestamp": "2026-11-20T02:44:34.383Z",
+  "node": "v24.20.0",
+  "repo_root": "D:\\Codes\\dsh-tree-harness",
+  "dsh_home": "C:\\Users\\sir_c\\.dsh",
+  "params": {
+    "source": "session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016",
+    "successor": "session-89dd537d-352f-4242-adf0-6edb8bd70308",
+    "expect_kind": "root",
+    "expect_lang": "zh",
+    "skill_session": "session-89dd537d-352f-4242-adf0-6edb8bd70308",
+    "wait_ms": 120000,
+    "timeout_ms": 180000,
+    "fail_fast": false,
+    "summarize": false,
+    "artifacts_dir": "scripts/e2e/artifacts/release-20261120T024432Z",
+    "artifacts_dir_abs": "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\artifacts\\release-20261120T024432Z",
+    "summary": "scripts/e2e/artifacts/release-20261120T024432Z.json"
+  },
+  "steps": [
+    {
+      "id": "verify-handoff",
+      "title": "接替会话继承与归属",
+      "required": true,
+      "script": "scripts/e2e/verify-handoff.mjs",
+      "argv": [
+        "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\verify-handoff.mjs",
+        "--source",
+        "session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016",
+        "--successor",
+        "session-89dd537d-352f-4242-adf0-6edb8bd70308",
+        "--expect-kind",
+        "root",
+        "--wait",
+        "120000",
+        "--json",
+        "--out",
+        "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\artifacts\\release-20261120T024432Z\\verify-handoff.json"
+      ],
+      "exitCode": 0,
+      "pass": true,
+      "status": "PASS",
+      "duration_ms": 1099,
+      "timedOut": false,
+      "artifact": "scripts/e2e/artifacts/release-20261120T024432Z/verify-handoff.json",
+      "artifactWritten": true,
+      "evidence": {
+        "verdict": "PASS",
+        "total": 12,
+        "passed": 12,
+        "failedCount": 0,
+        "failed": [],
+        "expectKind": "root",
+        "sourceLog": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016\\session.v4.jsonl.zstd",
+        "successorLog": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\session-89dd537d-352f-4242-adf0-6edb8bd70308\\session.v4.jsonl.zstd",
+        "workspaceRegistry": "C:\\Users\\sir_c\\.dsh\\storages\\workspace.json"
+      },
+      "stderr_first": "",
+      "stderr_tail": "",
+      "stdout_tail": "…策略切 ask，发 `flow_run({\\\"flowPath\\\":\\\"D:/Codes/DSH动态流程引擎插件/evidence/m1/rea\"\n          },\n          {\n            \"kind\": \"tool_result_mention\",\n            \"seq\": 2847,\n            \"head\": \"Found 53 matches\\n\\nCHANGELOG.md\\nLine 88: - **版本**：`packages/dsh-session-tree` `1.6.0` → **`1.6.1`**（仓内插件；**未发布 npm / 公开镜像**——镜像 tag 仍为 `v1.4.0` = `0343f0c`）。\\nLine 97: - style-guard **34 → 46/46**：新增 A1\"\n          }\n        ],\n        \"basename\": \"HANDOFF-be9f4f06-20261115-105753.md\"\n      }\n    },\n    {\n      \"id\": \"successor_kind\",\n      \"label\": \"successor 接替类型 == root\",\n      \"pass\": true,\n      \"expected\": \"root\",\n      \"actual\": {\n        \"parentSession\": null,\n        \"delegationDepth\": 0\n      }\n    }\n  ],\n  \"summary\": {\n    \"total\": 12,\n    \"pass\": 12,\n    \"fail\": 0,\n    \"verdict\": \"PASS\"\n  }\n}",
+      "spawn_error": null,
+      "raw": {
+        "stdout": "scripts/e2e/artifacts/release-20261120T024432Z/raw/verify-handoff.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261120T024432Z/raw/verify-handoff.stderr.txt"
+      }
+    },
+    {
+      "id": "verify-kickoff-language",
+      "title": "接替首条提示语种",
+      "required": true,
+      "script": "scripts/e2e/verify-kickoff-language.mjs",
+      "argv": [
+        "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\verify-kickoff-language.mjs",
+        "--session",
+        "session-89dd537d-352f-4242-adf0-6edb8bd70308",
+        "--expect",
+        "zh",
+        "--json"
+      ],
+      "exitCode": 0,
+      "pass": true,
+      "status": "PASS",
+      "duration_ms": 524,
+      "timedOut": false,
+      "artifact": "scripts/e2e/artifacts/release-20261120T024432Z/verify-kickoff-language.json",
+      "artifactWritten": true,
+      "evidence": {
+        "language": "zh",
+        "expect": "zh",
+        "first_message_seq": 10,
+        "mentions_handoff_file": true,
+        "excerpt": "你是 session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016 的接替会话。上一个会话因上下文预算接近上限而把工作交棒给你。 请先读取交接文件：D:\\Codes\\dsh-tree-harness\\HANDOFF-be9f4f06-20261115-105753.md 文件中记录了任务、当前状态、决策、变更文件、下一步与未决问题。 请从「下一步」继续推进：不要重做文件"
+      },
+      "stderr_first": "",
+      "stderr_tail": "",
+      "stdout_tail": "{\n  \"session\": \"89dd537d-352f-4242-adf0-6edb8bd70308\",\n  \"first_message_seq\": 10,\n  \"language\": \"zh\",\n  \"expect\": \"zh\",\n  \"pass\": true,\n  \"mentions_handoff_file\": true,\n  \"excerpt\": \"你是 session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016 的接替会话。上一个会话因上下文预算接近上限而把工作交棒给你。 请先读取交接文件：D:\\\\Codes\\\\dsh-tree-harness\\\\HANDOFF-be9f4f06-20261115-105753.md 文件中记录了任务、当前状态、决策、变更文件、下一步与未决问题。 请从「下一步」继续推进：不要重做文件中已记为完成的工作，保持相同的工作目录与 模型/思考等级，并用一小段话说明你接下来要做什么。\"\n}",
+      "spawn_error": null,
+      "raw": {
+        "stdout": "scripts/e2e/artifacts/release-20261120T024432Z/raw/verify-kickoff-language.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261120T024432Z/raw/verify-kickoff-language.stderr.txt"
+      }
+    },
+    {
+      "id": "collect-skills",
+      "title": "会话可见 skill 列表",
+      "required": true,
+      "script": "scripts/skill-e2e/collect-skills.mjs",
+      "argv": [
+        "D:\\Codes\\dsh-tree-harness\\scripts\\skill-e2e\\collect-skills.mjs",
+        "--session",
+        "session-89dd537d-352f-4242-adf0-6edb8bd70308",
+        "--json",
+        "--out",
+        "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\artifacts\\release-20261120T024432Z\\collect-skills.json"
+      ],
+      "exitCode": 0,
+      "pass": true,
+      "status": "PASS",
+      "duration_ms": 551,
+      "timedOut": false,
+      "artifact": "scripts/e2e/artifacts/release-20261120T024432Z/collect-skills.json",
+      "artifactWritten": true,
+      "evidence": {
+        "verdict": "PASS",
+        "sessionCount": 1,
+        "found": 1,
+        "missingSessions": 0,
+        "expected": [
+          "tree-commander",
+          "tree-worker",
+          "session-handoff"
+        ],
+        "sessions": [
+          {
+            "id": "89dd537d-352f-4242-adf0-6edb8bd70308",
+            "ok": true,
+            "log": "C:\\Users\\sir_c\\.dsh\\sessions\\--D-Codes-dsh-tree-harness--\\session-89dd537d-352f-4242-adf0-6edb8bd70308\\session.v4.jsonl.zstd",
+            "missing": [],
+            "atCreationCount": 14,
+            "latestCount": 15,
+            "skillLoads": 1
+          }
+        ]
+      },
+      "stderr_first": "",
+      "stderr_tail": "",
+      "stdout_tail": "…ree-commander\",\n            \"tree-worker\",\n            \"session-handoff\"\n          ]\n        }\n      ],\n      \"expected\": [\n        \"tree-commander\",\n        \"tree-worker\",\n        \"session-handoff\"\n      ],\n      \"missing\": [],\n      \"skillLoads\": [\n        {\n          \"seq\": 8418,\n          \"name\": \"html-explainer\"\n        }\n      ],\n      \"firstUserMessageSeq\": 10,\n      \"firstUserMessageHead\": \"你是 session-be9f4f06-bb69-48e4-8ddb-710fdfdfc016 的接替会话。上一个会话因上下文预算接近上限而把工作交棒给你。\\n\\n请先读取交接文件：D:\\\\Codes\\\\dsh-tree-harness\\\\HANDOFF-be9f4f06-20261115-105753.md\\n\\n文件中记录了任务、当前状态、决策、变更文件、下一步与未决问题。\\n请从「下一步」继续推进：不要重做文件中已记为完成的工作，保持相同的工作目录与\\n模型/思考等级，并用一小段话说明你…\"\n    }\n  ],\n  \"summary\": {\n    \"sessions\": 1,\n    \"found\": 1,\n    \"missingSessions\": 0,\n    \"allExpectedPresent\": true,\n    \"verdict\": \"PASS\"\n  }\n}",
+      "spawn_error": null,
+      "raw": {
+        "stdout": "scripts/e2e/artifacts/release-20261120T024432Z/raw/collect-skills.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261120T024432Z/raw/collect-skills.stderr.txt"
+      }
+    }
+  ],
+  "overall": {
+    "verdict": "PASS",
+    "required": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "optional_failed": [],
+    "exitCode": 0
+  },
+  "artifacts": {
+    "dir": "scripts/e2e/artifacts/release-20261120T024432Z",
+    "dir_abs": "D:\\Codes\\dsh-tree-harness\\scripts\\e2e\\artifacts\\release-20261120T024432Z",
+    "summary": "scripts/e2e/artifacts/release-20261120T024432Z.json",
+    "files": [
+      "scripts/e2e/artifacts/release-20261120T024432Z/verify-handoff.json",
+      "scripts/e2e/artifacts/release-20261120T024432Z/verify-kickoff-language.json",
+      "scripts/e2e/artifacts/release-20261120T024432Z/collect-skills.json"
+    ],
+    "declared": [
+      "scripts/e2e/artifacts/release-20261120T024432Z/verify-handoff.json",
+      "scripts/e2e/artifacts/release-20261120T024432Z/verify-kickoff-language.json",
+      "scripts/e2e/artifacts/release-20261120T024432Z/collect-skills.json"
+    ],
+    "raw": [
+      {
+        "stdout": "scripts/e2e/artifacts/release-20261120T024432Z/raw/verify-handoff.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261120T024432Z/raw/verify-handoff.stderr.txt"
+      },
+      {
+        "stdout": "scripts/e2e/artifacts/release-20261120T024432Z/raw/verify-kickoff-language.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261120T024432Z/raw/verify-kickoff-language.stderr.txt"
+      },
+      {
+        "stdout": "scripts/e2e/artifacts/release-20261120T024432Z/raw/collect-skills.stdout.txt",
+        "stderr": "scripts/e2e/artifacts/release-20261120T024432Z/raw/collect-skills.stderr.txt"
+      }
+    ]
+  },
+  "notes": [
+    "runner 只编排既有脚本，不发起会话、不消耗模型配额。",
+    "真机断言依赖本机 DSH 会话日志（<DSH_HOME>/sessions/**/session.v4.jsonl.zstd），需在接替会话首轮完成后执行。",
+    "verify-handoff --wait 默认 0（快速失败）；真机发布建议 --wait 120000。",
+    "collect-skills 默认期望 tree-commander / tree-worker / session-handoff；runner 未改动其语义。",
+    "任一必需断言 FAIL/无法判定（子脚本退出码 1 或 2）→ 整体 exit 1。"
+  ]
+}
