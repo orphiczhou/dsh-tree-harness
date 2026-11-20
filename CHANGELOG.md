@@ -2,6 +2,20 @@
 
 本文件记录本仓各包的重要变更：未发布变更归入 `Unreleased`，版本号取自各包 `package.json`，日期为北京时间。
 
+## [Unreleased] — 2026-11-20 · 发布工具修复：`verify-handoff` 会话 id 前缀归一化（无版本变更）
+
+### 变更
+
+- `scripts/e2e/verify-handoff.mjs` 的 `findSessionLog()` 现在先用 `normalizeSessionId()` 归一，再按「裸 id / 带 `session-` 前缀」两种目录名各查一次；`--source` / `--successor` 从此真正支持带或不带前缀。此前不带前缀会被误报 `source session log not found`（2026-11-20 v1.8.4 发布 E2E 实测踩到，当时只能改传带前缀 id 绕过）。
+- 返回结果新增 `sessionDirId`（命中的目录名），便于报告定位；`duplicates` 去重口径不变。
+- `docs/guides/publishing.md` 的 E2E 检查项注明会话 id 前缀可选、脚本自行归一。
+
+### 验证
+
+- 裸 id 实跑：`node scripts/e2e/verify-handoff.mjs --source be9f4f06-bb69-48e4-8ddb-710fdfdfc016 --successor 89dd537d-352f-4242-adf0-6edb8bd70308` → 正确解析到 `…/session-be9f4f06-…/session.v4.jsonl.zstd`（修复前直接报 not found）。
+- 不存在 id：仍报 `source session log not found` 且 exit 1（错误路径未被吞）。
+- 文档门禁 `check-doc-links.mjs` / `check-md-tables.mjs` 保持 OK；本修复不改包版本，`check-version-consistency.mjs` 仍 23 checks OK。
+
 ## [Unreleased] — 2026-11-13 · D24-2/D25：flash 审计第二批修复 + R1 复核跟进收口（tree-engine 0.9.0 → **0.10.0**）+ flow 续接试点任务书（**无发布**）
 
 ### 变更

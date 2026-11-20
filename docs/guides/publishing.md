@@ -290,7 +290,7 @@ node scripts/release-all.mjs --push --mirror-dir <镜像 checkout>      # 真实
 - [ ] 真机 E2E 三断言（W2.5）：`node scripts/e2e/run-release-e2e.mjs --source <id> --successor <id> --expect-kind root|sibling --expect-lang zh --wait 120000` → 三条断言全 PASS 且 `scripts/e2e/artifacts/release-<ts>.json` 落盘（失败注入演练证据见 [e2e-release-runner-2026-11-12.md](../reports/e2e-release-runner-2026-11-12.md)）；
 - [ ] **发布前真机 E2E 门禁（W2.8，强制，见 §5.2）**：`release-all.mjs` 预检自动校验三断言全 PASS + artifact 新鲜（≤168h）；真实运行失败即 exit 1 零写入；豁免仅 `--skip-e2e-gate --skip-e2e-reason "<理由>"` 且必须在发布报告留下 `E2E GATE SKIPPED` 记录；
 - [ ] 门禁逻辑单测（W2.8）：`node --test scripts/e2e/lib/release-gate.test.mjs` → **10/10**，退出码 0（已列入 release-all 工具链回归测试计划）；
-- [ ] 真机 E2E：`scripts/e2e/verify-handoff.mjs` 对 root/sibling 接替会话断言全 PASS（报告 [e2e-handoff-2026-11-11.md](../reports/e2e-handoff-2026-11-11.md)）；
+- [ ] 真机 E2E：`scripts/e2e/verify-handoff.mjs` 对 root/sibling 接替会话断言全 PASS（`--source` / `--successor` 的会话 id 可带或不带 `session-` 前缀，脚本按 `normalizeSessionId` 自行归一；2026-11-20 起）（报告 [e2e-handoff-2026-11-11.md](../reports/e2e-handoff-2026-11-11.md)）；
 - [ ] README / handoff / publishing 中的路径、数字、状态与实际一致（版本号、测试数、装配状态、npm 404 结论）。
 
 ### 发布后核对

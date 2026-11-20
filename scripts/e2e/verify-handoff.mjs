@@ -143,7 +143,14 @@ function readJson(file) {
 // 会话日志解码（多 zstd frame 拼接）
 // ---------------------------------------------------------------------------
 
-/** 在 conversations/sessions 根下递归查找 <sessionId>/session.v4.jsonl.zstd。 */
+/**
+ * 在 conversations/sessions 根下递归查找 <sessionId>/session.v4.jsonl.zstd。
+ *
+ * 日志目录名带 "session-" 前缀（如 `session-be9f4f06-…`），而 --source/--successor
+ * 允许带或不带该前缀（见文件头用法）。此前这里按传入值原样拼路径，导致不带前缀的
+ * 合法 id 被误报 `source session log not found`（2026-11-20 发布 E2E 实测踩到）。
+ * 现在先用 normalizeSessionId 归一，再按「裸 id / 带前缀 id」两种目录名各查一次。
+ */
 function findSessionLog(sessionId) {
   const sessionsRoot = path.join(DSH_HOME, 'sessions');
   let workspaceDirs = [];
@@ -154,10 +161,20 @@ function findSessionLog(sessionId) {
   } catch {
     return null;
   }
+  const bare = normalizeSessionId(sessionId);
+  if (!bare) return null;
+  const dirIds = [];
+  for (const id of [bare, `session-${bare}`]) {
+    if (id && !dirIds.includes(id)) dirIds.push(id);
+  }
   const candidates = [];
   for (const wsDir of workspaceDirs) {
-    const file = path.join(sessionsRoot, wsDir, sessionId, 'session.v4.jsonl.zstd');
-    if (fs.existsSync(file)) candidates.push({ file, workspaceEncoding: wsDir });
+    for (const dirId of dirIds) {
+      const file = path.join(sessionsRoot, wsDir, dirId, 'session.v4.jsonl.zstd');
+      if (!fs.existsSync(file)) continue;
+      if (candidates.some((c) => c.file === file)) continue;
+      candidates.push({ file, workspaceEncoding: wsDir, sessionDirId: dirId });
+    }
   }
   if (candidates.length === 0) return null;
   // 同一会话 id 只应有一份；若多份取修改时间最新者并标注。
